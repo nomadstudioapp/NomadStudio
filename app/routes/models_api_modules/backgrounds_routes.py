@@ -12,16 +12,13 @@ from app.routes.models_api_shared import (
     _load_source_image_bytes_for_style,
     models_api_bp,
 )
+from app import paths
 from app.services import image_service
 
 logger = logging.getLogger(__name__)
 
-_BACKGROUNDS_PATH = (
-    Path(__file__).resolve().parents[2] / "data" / "sfw_backgrounds.json"
-)
-_BACKGROUNDS_IMAGES_DIR = (
-    Path(__file__).resolve().parents[2] / "static" / "images" / "backgrounds"
-)
+_BACKGROUNDS_PATH = paths.data_file("sfw_backgrounds.json")
+_BACKGROUNDS_IMAGES_DIR = paths.user_images("backgrounds")
 _backgrounds_cache: list[dict] | None = None
 
 

@@ -27,7 +27,7 @@ def reset_plan():
     payload = request.get_json(silent=True) or {}
     registry = _ensure_registry()
     plan = reset_service.build_plan(
-        backup_routes.APP_DIR,
+        backup_routes.DATA_DIR,
         registry.get("settings", {}),
         len(registry.get("imports", []) or []),
         include_build=bool(payload.get("includeBuild")),

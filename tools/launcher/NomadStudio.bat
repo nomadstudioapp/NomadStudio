@@ -27,7 +27,8 @@ rem Bundled libraries (app\lib) are registered by python\Lib\site-packages\nomad
 set "PYTHONPATH="
 set "PYTHONNOUSERSITE=1"
 set "PYTHONUTF8=1"
-set "NOMAD_OPEN_BROWSER=1"
+rem The update script sets it to 0: the tab that asked for the update reloads itself.
+if not defined NOMAD_OPEN_BROWSER set "NOMAD_OPEN_BROWSER=1"
 
 title Nomad Studio
 echo Nomad Studio is starting on http://localhost:%PORT%
@@ -35,6 +36,10 @@ echo The browser opens by itself when it is ready.
 echo Close this window to stop Nomad Studio.
 echo.
 "%APPDIR%\python\python.exe" "%APPDIR%\app.py"
+
+rem Exit code 3: Nomad Studio closed itself to install an update
+rem (app\launcher\apply_update.ps1 starts the new version in a new window).
+if %errorlevel%==3 exit
 
 echo.
 echo Nomad Studio has stopped.

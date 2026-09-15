@@ -20,9 +20,10 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from .. import paths
 from . import registry_service
 
-VIEWERS_PATH = Path(__file__).resolve().parents[1] / "data" / "viewers.json"
+VIEWERS_PATH = paths.data_file("viewers.json")
 
 
 def _default_viewers() -> dict[str, Any]:

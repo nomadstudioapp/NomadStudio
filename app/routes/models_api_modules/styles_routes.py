@@ -18,7 +18,9 @@ from app.config import (
     LMSTUDIO_MAX_OUTPUT_TOKENS,
 )
 
-STYLES_IMAGES_DIR = Path(__file__).resolve().parents[2] / "images" / "styles"
+from app import paths  # noqa: E402
+
+STYLES_IMAGES_DIR = paths.user_images("styles")
 from app.services import image_service, registry_service
 from app.services.http_client import http_bytes, http_json
 from app.services.workflow_service import (

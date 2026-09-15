@@ -309,6 +309,47 @@
     </div>
   </article>
 
+  <!-- ── Updates ──────────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2" id="updates">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="refresh-cw" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.updates.title">Updates</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.updates.desc">Install a newer version of Nomad Studio from its release ZIP. Your data is kept outside the program folder and a backup is made before updating.</p>
+    </div>
+    <div class="settings-section-body" id="updates-section">
+
+      <div class="settings-field-block">
+        <p class="settings-field-label" data-i18n="settings.updates.installed">Installed version</p>
+        <p class="settings-field-hint" id="updates-installed"></p>
+        <p class="settings-field-hint" id="updates-data-dir"></p>
+      </div>
+
+      <div class="settings-field-block" id="updates-result" hidden></div>
+
+      <div class="settings-field-block">
+        <input type="file" id="updates-file" accept=".zip,application/zip" hidden />
+        <div>
+          <button type="button" class="btn settings-btn-secondary" id="updates-choose-btn"{% if not is_local_request() %} disabled{% endif %}>
+            <i data-lucide="file-up" aria-hidden="true"></i>
+            <span data-i18n="settings.updates.choose">Update from ZIP…</span>
+          </button>
+        </div>
+        {% if not is_local_request() %}
+        <p class="settings-field-hint" data-i18n="settings.common.localOnly">Only available on the computer where Nomad Studio is installed.</p>
+        {% endif %}
+        <div class="settings-backup-progress" id="updates-progress" hidden>
+          <span class="settings-backup-progress-text" id="updates-progress-text"></span>
+          <span class="settings-backup-bar"><span id="updates-progress-bar"></span></span>
+        </div>
+        <div class="settings-inline-status" id="updates-status"></div>
+        <div class="settings-package-review" id="updates-review" hidden></div>
+      </div>
+
+    </div>
+  </article>
+
   <!-- ── Export ───────────────────────────────────────────────────────── -->
   <article class="panel settings-panel-v2">
     <div class="settings-section-heading">

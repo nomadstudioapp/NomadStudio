@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, render_template, request, url_for
 
+from .. import paths
 from ..services import lmstudio_service, setup_service, viewer_service
 from ..services.workflow_service import _safe_http_url
 from .models_api_shared import _ensure_registry, _registry_transaction, _safe_comfy_url
@@ -27,7 +28,7 @@ from .models_api_shared import _ensure_registry, _registry_transaction, _safe_co
 setup_bp = Blueprint("setup", __name__)
 
 _AVATARS_DIR = Path(__file__).resolve().parents[1] / "static" / "images" / "avatars"
-_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+_DATA_DIR = paths.DATA_DIR
 
 _IMAGE_FORMATS = {"webp", "png"}
 _WIZARD_STEPS = 10
@@ -83,7 +84,7 @@ def get_state():
         "setupCompleted": setup_completed(),
         "settings": _settings_payload(),
         "viewers": len(viewer_service.list_viewers()),
-        "dataDir": {"path": str(_DATA_DIR), "writable": data_writable, "portable": False},
+        "dataDir": {"path": str(_DATA_DIR), "writable": data_writable, "portable": paths.IS_PORTABLE},
         # Proposed image folder: short, always writable, not a synced or
         # antivirus-protected folder (Documents/Pictures), and no second drive
         # needed (laptops often have only C:).

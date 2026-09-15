@@ -15,12 +15,13 @@
 | # | Decisión |
 |---|---|
 | U1 | Las versiones se publican como **GitHub Releases** del repo `NomadStudio`. El repo es privado hasta el lanzamiento y público después. |
-| U2 | Se actualiza la **versión portable**: carpetas hermanas `NomadStudio/app/` (se reemplaza entera) y `NomadStudio/data/` (nunca se toca). Ver `PACKAGE_FORMAT.md` D9, §12.1. |
+| U2 | Se actualiza la **versión portable**: la carpeta `NomadStudio/app/` se reemplaza entera. Los datos del usuario **no están en la carpeta del programa**: viven en `~/Nomad Studio/data` (junto a la carpeta de imágenes por defecto), así que ni actualizar ni borrar `NomadStudio/` los toca. Implementado en `app/paths.py` (2026-09-15); `NOMAD_DATA_DIR` lo cambia; una copia de desarrollo usa `<repo>/data`. |
 | U3 | Cada Release trae un ZIP por plataforma, `SHA256SUMS.txt` y su firma Ed25519 con la **misma clave oficial** que los packs (`PACKAGE_FORMAT.md` §11.4). Una descarga que no verifica se descarta. |
 | U4 | Al detectar una versión nueva, la app **la descarga, verifica y prepara sola en segundo plano** (desactivable). Pero **nunca instala ni reinicia sin que el usuario lo diga**: avisa cuando está lista y el usuario elige cuándo aplicarla. |
 | U5 | El cambio de carpetas lo hace el **lanzador de la raíz**, que no se reemplaza con `app/`, con vuelta atrás automática si la versión nueva no arranca. |
 | U6 | Antes de aplicar una actualización se hace **copia de seguridad de `data/`**. |
 | U7 | Sin telemetría: la comprobación es una petición GET a GitHub, sin identificadores del usuario. |
+| U9 | **Dos orígenes, una tubería**: la actualización puede venir de GitHub Releases (§5–6) o de un **ZIP elegido por el usuario** en Ajustes › Actualizaciones (§7.0). Desde la verificación del ZIP en adelante el proceso es el mismo. La vía ZIP es la primera implementada y permite probar con el repo privado. |
 | U8 | **Canal futuro: Microsoft Store** para Windows, como segundo canal junto al ZIP portable (modelo Blender). Paquete MSIX firmado por Microsoft, actualizado por la Store; el actualizador de GitHub se desactiva en esa versión (§12). |
 
 ---
@@ -260,6 +261,20 @@ La descarga la hace la propia app (Python), no el navegador: en macOS los ficher
 
 ## 7. Aplicar
 
+### 7.0 Estado de la implementación (2026-09-15)
+
+Implementado para Windows, solo con origen **ZIP** (U9):
+
+| Pieza | Dónde |
+|---|---|
+| Carpeta de datos fuera del programa + migración desde `app/data`, `app/workflows/import_registry.json`, `app/images/…`, `app/static/images/…` | `app/paths.py` (`prepare_data_dir`, `migrate_legacy_data`, `fix_pack_dirs`) |
+| Comprobar ZIP (estructura, rutas, `portable.json`, plataforma, versión SemVer mayor), preparar `app.new/`, copia de datos `before-update`, aplicar | `app/services/update_service.py` |
+| API | `app/routes/updates_routes.py` (`/api/updates*`, todo lo que cambia la instalación solo desde el propio equipo) |
+| Ajustes › Actualizaciones (4 idiomas) | `settings.html` + `settings.js` (`updatesSection`) |
+| Cambio de carpetas, arranque, comprobación de `/api/health` y vuelta atrás | `tools/launcher/apply_update.ps1` → `app/launcher/` en el build; la app lo copia a `<raíz>/.nomad-update/` y lo lanza con `-WaitPid` |
+| El lanzador cierra su ventana si la app sale con código 3 (actualización) | `tools/launcher/NomadStudio.bat` |
+
+Diferencias con lo descrito abajo: no hay firma todavía (§6.3 pasos 1–2), la marca de arranque es la propia `/api/health` con la versión nueva (no un fichero `started-ok`), la copia de datos va a la carpeta de copias del usuario, el lanzador lo copia el script antes de arrancar la versión nueva (no la app, porque el `.bat` está en ejecución y cmd lo lee línea a línea), y Linux/macOS aún no.
 ### 7.1 Preparar (con la app en marcha)
 
 1. Extraer el ZIP a `<raíz>/app.new/`, conservando permisos de ejecución.

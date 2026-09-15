@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Blueprint, abort, make_response, redirect, render_template, session, url_for
 
 from .viewers_routes import SESSION_KEY as _VIEWER_SESSION_KEY
+from .. import paths
 from ..services import viewer_service
 
 main_bp = Blueprint("main", __name__)
@@ -42,9 +43,9 @@ def _load_package_flows(category: str, route_prefix: str) -> list[dict]:
     from ..services import package_service
     from . import packages_routes
 
-    app_dir = packages_routes.APP_DIR
-    index = package_service.read_index(app_dir)
-    base = package_service.packages_dir(app_dir)
+    data_dir = packages_routes.DATA_DIR
+    index = package_service.read_index(data_dir)
+    base = package_service.packages_dir(data_dir)
     flows = []
     for flow_id, info in index.get("flows", {}).items():
         if info.get("category") != category:
@@ -423,58 +424,10 @@ def ns_create_assist_page():
     )
 
 
-@main_bp.get("/nomad-studio/create/assist-ideogram")
-def ns_create_assist_ideogram_page():
-    return _render_flow_page(
-        flow_id="create.assist_ideogram",
-        active_page="nomad-studio",
-    )
-
-
-@main_bp.get("/nomad-studio/create/assist-ideogram-lettering")
-def ns_create_assist_ideogram_lettering_page():
-    return _render_flow_page(
-        flow_id="create.assist_ideogram_lettering",
-        active_page="nomad-studio",
-    )
-
-
-@main_bp.get("/nomad-studio/create/assist-ideogram-ref")
-def ns_create_assist_ideogram_ref_page():
-    return _render_flow_page(
-        flow_id="create.assist_ideogram_ref",
-        active_page="nomad-studio",
-    )
-
-
-@main_bp.get("/nomad-studio/create/ideogram-charref")
-def ns_create_ideogram_charref_page():
-    return _render_flow_page(
-        flow_id="create.ideogram_charref",
-        active_page="nomad-studio",
-    )
-
-
 @main_bp.get("/nomad-studio/create/posters")
 def ns_create_posters_page():
     return _render_flow_page(
         flow_id="create.posters",
-        active_page="nomad-studio",
-    )
-
-
-@main_bp.get("/nomad-studio/create/ideogram-poster")
-def ns_create_ideogram_poster_page():
-    return _render_flow_page(
-        flow_id="create.ideogram_poster",
-        active_page="nomad-studio",
-    )
-
-
-@main_bp.get("/nomad-studio/create/ideogram-storyboard")
-def ns_create_ideogram_storyboard_page():
-    return _render_flow_page(
-        flow_id="create.ideogram_storyboard",
         active_page="nomad-studio",
     )
 
@@ -520,11 +473,6 @@ def ns_create_variations_page():
 
 
 
-@main_bp.get("/nomad-studio/create/ideogram-scene")
-def ns_create_ideogram_scene_page():
-    return _render_flow_page(flow_id="create.ideogram_scene", active_page="nomad-studio")
-
-
 @main_bp.get("/nomad-studio/create/portraits")
 def ns_create_portraits_page():
     return _render_flow_page(
@@ -550,12 +498,12 @@ def ns_create_generic_flow_page(slug: str):
     )
 
 
-_TEMPLATE_PACKS_JSON = Path(__file__).parent.parent / "data" / "template_packs.json"
+_TEMPLATE_PACKS_JSON = paths.data_file("template_packs.json")
 
 
 def _pack_slug(text: str) -> str:
     """Same dash-based slug style as every other Nomad Studio route
-    (assist-ideogram, enhance-civitai, ...) — lowercase, non-alnum runs
+    (layout-assist, simple-json, ...) — lowercase, non-alnum runs
     collapsed to a single '-'. Used both ways: to build a pack/theme's URL
     segment, and to resolve an incoming URL segment back to its original
     name (there's no separate slug field stored in template_packs.json)."""

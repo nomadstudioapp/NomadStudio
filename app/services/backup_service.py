@@ -1,22 +1,26 @@
 """Backups of Nomad Studio's own data: create, list, restore.
 
 A backup is a ZIP with a ``manifest.json`` and files laid out by their path
-under ``app/``. Two tiers:
+inside the data folder (app/paths.py). Two tiers:
 
 - **Data** (always, a few MB): settings and engines (import_registry.json),
-  everything in ``data/`` (profiles, Sessions, depots, styles, template
-  packs, stories…) and imported workflow logos.
+  the app stores (profiles, Sessions, depots, styles, template packs,
+  stories…), installed packages and imported workflow logos.
 - **Images** (optional, can be GBs): style previews and Build characters and
   backgrounds.
 
 Never included: generated images (they already live in the user's own output
-folder), ComfyUI models, and files shipped with the app or its packages.
+folder), ComfyUI models, update downloads and files shipped with the app.
+
+Format 1 backups (made before the data folder existed) stored paths relative
+to the ``app`` package (``workflows/import_registry.json``, ``data/…``,
+``static/images/…``); they are mapped to the data folder on restore.
 
 Creating and restoring run as background jobs (a big image tier takes
 minutes) — see ``start_create`` / ``start_restore`` and ``get_job``. The
 reset button (docs/SETUP_WIZARD.md) will run a backup as its first step.
 
-Every function takes ``app_dir`` so tests can point it at a copy.
+Every function takes ``data_dir`` so tests can point it at a copy.
 """
 
 from __future__ import annotations
@@ -33,56 +37,74 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from .. import paths
 from . import registry_service
 
 logger = logging.getLogger(__name__)
 
 FORMAT = "nomad-studio-backup"
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
 
-REGISTRY_REL = "workflows/import_registry.json"
-DATA_SOURCES = (REGISTRY_REL, "data", "images/workflow_logos")
-IMAGE_SOURCES = ("images/styles", "static/images/characters", "static/images/backgrounds")
+REGISTRY_REL = "import_registry.json"
+LOGOS_REL = "images/workflow_logos"
+IMAGE_SOURCES = ("images/styles", "images/characters", "images/backgrounds")
+# Top-level entries of the data folder that are never part of a backup.
+_EXCLUDED_TOP = {"images", "updates", "version.json"}
 
 _NAME_RE = re.compile(r"^nomad-studio-backup-[0-9]{8}-[0-9]{6}(-[a-z-]+)?\.zip$")
-_SKIP_RE = re.compile(r"\.bak($|[-.])|\.partial$|\.tmp$", re.IGNORECASE)
+_SKIP_RE = re.compile(r"\.bak($|[-.])|\.partial$|\.tmp$|^\.restore-|^\.staging$", re.IGNORECASE)
 _STORED_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".zip"}
 
 # Settings that describe THIS install, not the data being restored.
 _KEEP_ON_RESTORE = ("backupDir",)
+_REASON_SUFFIX = {"manual": "", "before-restore": "-before-restore", "before-reset": "-before-reset", "before-update": "-before-update"}
 
 
-def default_backup_dir(app_dir: Path) -> Path:
-    """``backups/`` next to ``app/`` (sibling of app/ and data/ in the
-    portable layout, docs/PACKAGE_FORMAT.md)."""
-    return app_dir.parent / "backups"
+def default_backup_dir(data_dir: Path) -> Path:
+    """``backups/`` next to the data folder (``~/Nomad Studio/backups`` in a
+    portable install) — outside the program folder."""
+    return data_dir.parent / "backups"
 
 
-def resolve_backup_dir(app_dir: Path, settings: dict[str, Any]) -> Path:
+def resolve_backup_dir(data_dir: Path, settings: dict[str, Any]) -> Path:
     raw = str(settings.get("backupDir", "") or "").strip()
-    return Path(raw) if raw and os.path.isabs(raw) else default_backup_dir(app_dir)
+    return Path(raw) if raw and os.path.isabs(raw) else default_backup_dir(data_dir)
 
 
 # ── Inventory ───────────────────────────────────────────────────────────────
 
 
-def _iter_files(app_dir: Path, sources: tuple[str, ...]):
+def data_sources(data_dir: Path) -> tuple[str, ...]:
+    """Everything at the top of the data folder except images and update
+    files, plus the workflow logos. The registry always goes first."""
+    names = [REGISTRY_REL]
+    if data_dir.is_dir():
+        for child in sorted(data_dir.iterdir(), key=lambda p: p.name):
+            if child.name in _EXCLUDED_TOP or child.name == REGISTRY_REL or _SKIP_RE.search(child.name):
+                continue
+            names.append(child.name)
+    names.append(LOGOS_REL)
+    return tuple(names)
+
+
+def _iter_files(data_dir: Path, sources: tuple[str, ...]):
     """Yield (absolute path, archive name) for every file in *sources*."""
     for rel in sources:
-        src = app_dir / rel
+        src = data_dir / rel
         if src.is_file():
             if not _SKIP_RE.search(src.name):
                 yield src, rel
         elif src.is_dir():
             for path in sorted(src.rglob("*")):
-                if path.is_file() and not _SKIP_RE.search(path.name):
-                    yield path, path.relative_to(app_dir).as_posix()
+                rel_parts = path.relative_to(data_dir).parts
+                if path.is_file() and not any(_SKIP_RE.search(part) for part in rel_parts):
+                    yield path, path.relative_to(data_dir).as_posix()
 
 
-def estimate(app_dir: Path) -> dict[str, int]:
+def estimate(data_dir: Path) -> dict[str, int]:
     def total(sources):
         size = count = 0
-        for path, _ in _iter_files(app_dir, sources):
+        for path, _ in _iter_files(data_dir, sources):
             try:
                 size += path.stat().st_size
                 count += 1
@@ -90,7 +112,7 @@ def estimate(app_dir: Path) -> dict[str, int]:
                 pass
         return size, count
 
-    data_bytes, data_files = total(DATA_SOURCES)
+    data_bytes, data_files = total(data_sources(data_dir))
     image_bytes, image_files = total(IMAGE_SOURCES)
     return {"dataBytes": data_bytes, "dataFiles": data_files, "imageBytes": image_bytes, "imageFiles": image_files}
 
@@ -184,7 +206,7 @@ def is_busy() -> bool:
 
 
 def create_backup(
-    app_dir: Path,
+    data_dir: Path,
     backup_dir: Path,
     include_images: bool,
     reason: str = "manual",
@@ -193,14 +215,14 @@ def create_backup(
 ) -> dict[str, Any]:
     """Write the ZIP (to ``.partial`` first, renamed when complete)."""
     backup_dir.mkdir(parents=True, exist_ok=True)
-    files = list(_iter_files(app_dir, DATA_SOURCES))
+    sources = data_sources(data_dir)
+    files = list(_iter_files(data_dir, sources))
     if include_images:
-        files += list(_iter_files(app_dir, IMAGE_SOURCES))
+        files += list(_iter_files(data_dir, IMAGE_SOURCES))
     total = sum(p.stat().st_size for p, _ in files)
 
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    suffix = {"manual": "", "before-restore": "-before-restore", "before-reset": "-before-reset"}.get(reason, "")
-    name = f"nomad-studio-backup-{stamp}{suffix}.zip"
+    name = f"nomad-studio-backup-{stamp}{_REASON_SUFFIX.get(reason, '')}.zip"
     final = backup_dir / name
     partial = backup_dir / (name + ".partial")
 
@@ -211,7 +233,7 @@ def create_backup(
         "appVersion": app_version,
         "reason": reason,
         "includesImages": include_images,
-        "sources": list(DATA_SOURCES) + (list(IMAGE_SOURCES) if include_images else []),
+        "sources": list(sources) + (list(IMAGE_SOURCES) if include_images else []),
         "files": len(files),
         "bytes": total,
     }
@@ -233,13 +255,13 @@ def create_backup(
     return {"name": name, "sizeBytes": final.stat().st_size, "files": len(files), "includesImages": include_images}
 
 
-def start_create(app_dir: Path, backup_dir: Path, include_images: bool, reason: str = "manual", app_version: str | None = None) -> dict[str, Any] | None:
+def start_create(data_dir: Path, backup_dir: Path, include_images: bool, reason: str = "manual", app_version: str | None = None) -> dict[str, Any] | None:
     if not _busy.acquire(blocking=False):
         return None
     job = _new_job("create")
     _update(job, phase="writing")
     _run(job, lambda: create_backup(
-        app_dir, backup_dir, include_images, reason, app_version,
+        data_dir, backup_dir, include_images, reason, app_version,
         progress=lambda d, t, f: _update(job, done=d, total=t, file=f),
     ))
     return get_job(job["id"])
@@ -248,17 +270,43 @@ def start_create(app_dir: Path, backup_dir: Path, include_images: bool, reason: 
 # ── Restore ─────────────────────────────────────────────────────────────────
 
 
-def _allowed_member(name: str, sources: list[str]) -> bool:
-    if name == "manifest.json":
-        return True
+def _safe_rel(name: str) -> bool:
     parts = name.split("/")
-    if not name or name.startswith("/") or "\\" in name or ".." in parts or ":" in parts[0]:
-        return False
-    return any(name == src or name.startswith(src + "/") for src in sources)
+    return bool(name) and not name.startswith("/") and "\\" not in name and ".." not in parts and ":" not in parts[0]
+
+
+def _plan_members(manifest: dict[str, Any], members: list[zipfile.ZipInfo]) -> tuple[list[str], list[tuple[zipfile.ZipInfo, str]]]:
+    """(sources in the data folder, [(member, target path in the data folder)]).
+    Raises ValueError on anything unexpected."""
+    legacy = int(manifest.get("formatVersion", 0)) <= 1
+    raw_sources = [str(s) for s in manifest.get("sources", []) if isinstance(s, str)]
+    planned: list[tuple[zipfile.ZipInfo, str]] = []
+    bad: list[str] = []
+    for m in members:
+        if m.filename == "manifest.json":
+            continue
+        target = (paths.legacy_to_data(m.filename) if legacy else m.filename) if _safe_rel(m.filename) else None
+        if (not target or not _safe_rel(target) or target.split("/")[0] in {"updates", "version.json"}
+                or not (legacy or any(target == s or target.startswith(s + "/") for s in raw_sources))):
+            bad.append(m.filename)
+        else:
+            planned.append((m, target))
+    if bad:
+        raise ValueError(f"Backup contains unexpected files: {bad[:3]}")
+    if legacy:
+        # Format 1 had the sources "workflows/import_registry.json", "data",
+        # "images/…" and "static/images/…": what gets replaced is whatever the
+        # backup actually contains, one top-level entry (or image folder) each.
+        sources = sorted({"/".join(t.split("/")[:2]) if t.startswith("images/") else t.split("/")[0] for _, t in planned})
+    else:
+        sources = raw_sources
+    if REGISTRY_REL not in sources or not any(t == REGISTRY_REL for _, t in planned):
+        raise ValueError("Backup has no settings file")
+    return sources, planned
 
 
 def restore_backup(
-    app_dir: Path,
+    data_dir: Path,
     zip_path: Path,
     progress: Callable[[int, int, str], None] | None = None,
 ) -> dict[str, Any]:
@@ -271,28 +319,24 @@ def restore_backup(
         raise ValueError("Not a Nomad Studio backup")
     if int(manifest.get("formatVersion", 0)) > FORMAT_VERSION:
         raise ValueError("This backup was made by a newer version of Nomad Studio")
-    sources = [s for s in manifest.get("sources", []) if s in DATA_SOURCES + IMAGE_SOURCES]
-    if REGISTRY_REL not in sources:
-        raise ValueError("Backup has no settings file")
 
-    staging = app_dir.parent / f".restore-{uuid.uuid4().hex[:8]}"
+    staging = data_dir.parent / f".restore-{uuid.uuid4().hex[:8]}"
     try:
         with zipfile.ZipFile(zip_path) as zf:
             members = [m for m in zf.infolist() if not m.is_dir()]
-            bad = [m.filename for m in members if not _allowed_member(m.filename, sources)]
-            if bad:
-                raise ValueError(f"Backup contains unexpected files: {bad[:3]}")
-            total = sum(m.file_size for m in members)
+            sources, planned = _plan_members(manifest, members)
+            total = sum(m.file_size for m, _ in planned)
             done = 0
-            for m in members:
-                if m.filename == "manifest.json":
-                    continue
-                zf.extract(m, staging)
+            for m, target in planned:
+                dest = staging / target
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                with zf.open(m) as src, dest.open("wb") as out:
+                    shutil.copyfileobj(src, out)
                 done += m.file_size
                 if progress:
-                    progress(done, total, m.filename)
+                    progress(done, total, target)
 
-        current_settings = (registry_service._read_json_safe(app_dir / REGISTRY_REL) or {}).get("settings", {})
+        current_settings = (registry_service._read_json_safe(data_dir / REGISTRY_REL) or {}).get("settings", {})
         restored_registry = json.loads((staging / REGISTRY_REL).read_text(encoding="utf-8"))
         settings = restored_registry.setdefault("settings", {})
         for key in _KEEP_ON_RESTORE:
@@ -300,12 +344,14 @@ def restore_backup(
                 settings[key] = current_settings[key]
             else:
                 settings.pop(key, None)
+        paths.fix_pack_dirs(restored_registry, data_dir / "packages")
 
         with registry_service._mutation_lock, registry_service._registry_lock:
             for rel in sources:
                 if rel == REGISTRY_REL:
                     continue
-                target = app_dir / rel
+                target = data_dir / rel
+                staged = staging / rel
                 if target.is_dir():
                     for child in target.iterdir():
                         if _SKIP_RE.search(child.name):
@@ -314,12 +360,17 @@ def restore_backup(
                             shutil.rmtree(child)
                         else:
                             child.unlink()
-                staged = staging / rel
+                elif target.is_file() and staged.exists():
+                    target.unlink()
                 if staged.is_dir():
                     target.mkdir(parents=True, exist_ok=True)
                     for child in staged.iterdir():
                         shutil.move(str(child), str(target / child.name))
-            registry_path = app_dir / REGISTRY_REL
+                elif staged.is_file():
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(staged), str(target))
+            paths.fix_pack_dirs(restored_registry, data_dir / "packages")
+            registry_path = data_dir / REGISTRY_REL
             tmp = registry_path.with_name(registry_path.name + ".restore-tmp")
             tmp.write_text(json.dumps(restored_registry, indent=2, ensure_ascii=False), encoding="utf-8")
             os.replace(tmp, registry_path)
@@ -329,7 +380,7 @@ def restore_backup(
     return {"restored": zip_path.name, "includesImages": bool(manifest.get("includesImages")), "createdAt": manifest.get("createdAt")}
 
 
-def start_restore(app_dir: Path, backup_dir: Path, zip_path: Path, app_version: str | None = None) -> dict[str, Any] | None:
+def start_restore(data_dir: Path, backup_dir: Path, zip_path: Path, app_version: str | None = None) -> dict[str, Any] | None:
     if not _busy.acquire(blocking=False):
         return None
     job = _new_job("restore")
@@ -340,11 +391,11 @@ def start_restore(app_dir: Path, backup_dir: Path, zip_path: Path, app_version: 
             raise ValueError("Not a Nomad Studio backup")
         _update(job, phase="safety-backup", done=0, total=0)
         safety = create_backup(
-            app_dir, backup_dir, bool(manifest.get("includesImages")), "before-restore", app_version,
+            data_dir, backup_dir, bool(manifest.get("includesImages")), "before-restore", app_version,
             progress=lambda d, t, f: _update(job, done=d, total=t, file=f),
         )
         _update(job, phase="restoring", done=0, total=0)
-        result = restore_backup(app_dir, zip_path, progress=lambda d, t, f: _update(job, done=d, total=t, file=f))
+        result = restore_backup(data_dir, zip_path, progress=lambda d, t, f: _update(job, done=d, total=t, file=f))
         result["safetyBackup"] = safety["name"]
         return result
 

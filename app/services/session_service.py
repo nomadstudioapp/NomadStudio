@@ -18,9 +18,10 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .. import paths
 from . import registry_service
 
-SESSIONS_PATH = Path(__file__).resolve().parents[1] / "data" / "sessions.json"
+SESSIONS_PATH = paths.data_file("sessions.json")
 
 SCOPE_ALL = "all"
 SCOPE_USER = "user"

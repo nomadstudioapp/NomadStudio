@@ -10,13 +10,14 @@ from typing import Any
 
 from flask import jsonify, request
 
+from app import paths
 from app.routes.models_api_shared import models_api_bp
 
 logger = logging.getLogger(__name__)
 
-_TEMPLATE_PACKS_PATH = Path(__file__).resolve().parents[2] / "data" / "template_packs.json"
-_FIELD_VALUES_PATH = Path(__file__).resolve().parents[2] / "data" / "template_pack_field_values.json"
-_STATIC_IMAGES_DIR = Path(__file__).resolve().parents[2] / "static" / "images"
+_TEMPLATE_PACKS_PATH = paths.data_file("template_packs.json")
+_FIELD_VALUES_PATH = paths.data_file("template_pack_field_values.json")
+_STATIC_IMAGES_DIR = paths.IMAGES_DIR
 _TEMPLATE_PACKS_IMAGES_DIR = _STATIC_IMAGES_DIR / "template_packs"
 _template_packs_cache: list[dict[str, Any]] | None = None
 _field_values_cache: dict[str, dict[str, dict[str, list[str]]]] | None = None

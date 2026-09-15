@@ -66,7 +66,7 @@ def _size(path: Path) -> tuple[int, int, bool]:
     return total, files, False
 
 
-def _item(item_id: str, group: str, paths: list[Path], app_dir: Path, **detail: Any) -> dict[str, Any]:
+def _item(item_id: str, group: str, paths: list[Path], data_dir: Path, **detail: Any) -> dict[str, Any]:
     size = files = 0
     truncated = False
     shown = []
@@ -77,48 +77,48 @@ def _item(item_id: str, group: str, paths: list[Path], app_dir: Path, **detail: 
         truncated = truncated or t
         if p.exists():
             try:
-                shown.append(p.relative_to(app_dir.parent).as_posix())
+                shown.append(p.relative_to(data_dir.parent).as_posix())
             except ValueError:
                 shown.append(str(p))
     return {"id": item_id, "group": group, "bytes": size, "files": files, "truncated": truncated, "paths": shown, **detail}
 
 
 def build_plan(
-    app_dir: Path,
+    data_dir: Path,
     settings: dict[str, Any],
     imports_count: int,
     include_build: bool,
     include_generated: bool,
 ) -> dict[str, Any]:
-    data = app_dir / "data"
+    data = data_dir
     items: list[dict[str, Any]] = []
 
     # ── Always removed ──
-    items.append(_item("profiles", "delete", [data / "viewers.json"], app_dir, count=_count(data / "viewers.json", "viewers")))
-    items.append(_item("sessions", "delete", [data / "sessions.json"], app_dir, count=_count(data / "sessions.json", "sessions")))
-    items.append(_item("depots", "delete", [data / "depots.json", data / "bundles.json"], app_dir,
+    items.append(_item("profiles", "delete", [data / "viewers.json"], data_dir, count=_count(data / "viewers.json", "viewers")))
+    items.append(_item("sessions", "delete", [data / "sessions.json"], data_dir, count=_count(data / "sessions.json", "sessions")))
+    items.append(_item("depots", "delete", [data / "depots.json", data / "bundles.json"], data_dir,
                        count=_count(data / "depots.json", "depots") + _count(data / "bundles.json", "bundles")))
     stories = data / "stories"
-    items.append(_item("stories", "delete", [stories], app_dir,
+    items.append(_item("stories", "delete", [stories], data_dir,
                        count=len(list(stories.glob("*.json"))) if stories.is_dir() else 0))
-    items.append(_item("benchmarks", "delete", [data / "story_benchmarks", data / "vision_benchmarks"], app_dir))
-    items.append(_item("settings", "delete", [app_dir / backup_service.REGISTRY_REL], app_dir,
+    items.append(_item("benchmarks", "delete", [data / "story_benchmarks", data / "vision_benchmarks"], data_dir))
+    items.append(_item("settings", "delete", [data / backup_service.REGISTRY_REL], data_dir,
                        note="engines-kept"))
     items.append({"id": "browser", "group": "delete", "bytes": 0, "files": 0, "truncated": False, "paths": []})
 
     # ── Optional: Build content ──
     build_group = "delete" if include_build else "optional"
-    items.append(_item("styles", build_group, [data / "styles.json", data / "styles_pages.json", app_dir / "images/styles"], app_dir,
+    items.append(_item("styles", build_group, [data / "styles.json", data / "styles_pages.json", data / "images/styles"], data_dir,
                        count=_count(data / "styles.json"), optional="build"))
-    items.append(_item("characters", build_group, [data / "sfw_characters.json", app_dir / "static/images/characters"], app_dir,
+    items.append(_item("characters", build_group, [data / "sfw_characters.json", data / "images/characters"], data_dir,
                        count=_count(data / "sfw_characters.json"), optional="build"))
-    items.append(_item("backgrounds", build_group, [data / "sfw_backgrounds.json", app_dir / "static/images/backgrounds"], app_dir,
+    items.append(_item("backgrounds", build_group, [data / "sfw_backgrounds.json", data / "images/backgrounds"], data_dir,
                        count=_count(data / "sfw_backgrounds.json"), optional="build"))
 
     # ── Optional: generated images ──
     output_dir = str(settings.get("outputDir", "") or "").strip()
     gen = _item("generated", "delete" if include_generated else "optional",
-                [Path(output_dir)] if output_dir and os.path.isabs(output_dir) else [], app_dir, optional="generated")
+                [Path(output_dir)] if output_dir and os.path.isabs(output_dir) else [], data_dir, optional="generated")
     gen["folder"] = output_dir
     items.append(gen)
 
@@ -127,13 +127,13 @@ def build_plan(
     items.append(_item("packContent", "keep", [
         data / "template_packs.json", data / "template_pack_field_values.json",
         data / "sfw_faces.json", data / "sfw_gestures.json", data / "sfw_hair.json", data / "sfw_posture.json",
-        data / "library_flows.json", data / "styles_to_import", app_dir / "images/workflow_logos",
-    ], app_dir, note="not-packages-yet"))
+        data / "library_flows.json", data / "styles_to_import", data / "images/workflow_logos",
+    ], data_dir, note="not-packages-yet"))
     items.append({"id": "models", "group": "keep", "bytes": 0, "files": 0, "truncated": False, "paths": []})
     items.append({"id": "backups", "group": "keep", "bytes": 0, "files": 0, "truncated": False,
-                  "paths": [str(backup_service.resolve_backup_dir(app_dir, settings))]})
+                  "paths": [str(backup_service.resolve_backup_dir(data_dir, settings))]})
 
-    est = backup_service.estimate(app_dir)
+    est = backup_service.estimate(data_dir)
     removed = [i for i in items if i["group"] == "delete"]
     return {
         "simulation": True,
@@ -142,7 +142,7 @@ def build_plan(
         "backup": {
             "includesImages": include_build,
             "estimateBytes": est["dataBytes"] + (est["imageBytes"] if include_build else 0),
-            "folder": str(backup_service.resolve_backup_dir(app_dir, settings)),
+            "folder": str(backup_service.resolve_backup_dir(data_dir, settings)),
         },
         "items": items,
         "totals": {

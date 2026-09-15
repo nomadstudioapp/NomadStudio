@@ -14,9 +14,10 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .. import paths
 from . import registry_service
 
-DEPOTS_PATH = Path(__file__).resolve().parents[1] / "data" / "depots.json"
+DEPOTS_PATH = paths.data_file("depots.json")
 
 # What a generated image gets classified as when it's added to the active
 # depot. "character"/"background"/"asset" come from the manual "Send to

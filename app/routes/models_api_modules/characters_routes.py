@@ -12,14 +12,13 @@ from app.routes.models_api_shared import (
     _load_source_image_bytes_for_style,
     models_api_bp,
 )
+from app import paths
 from app.services import image_service
 
 logger = logging.getLogger(__name__)
 
-_CHARACTERS_PATH = Path(__file__).resolve().parents[2] / "data" / "sfw_characters.json"
-_CHARACTERS_IMAGES_DIR = (
-    Path(__file__).resolve().parents[2] / "static" / "images" / "characters"
-)
+_CHARACTERS_PATH = paths.data_file("sfw_characters.json")
+_CHARACTERS_IMAGES_DIR = paths.user_images("characters")
 _characters_cache: list[dict] | None = None
 
 

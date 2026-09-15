@@ -28,6 +28,7 @@ from app.config import (
 from app.services.http_client import http_bytes, http_json, http_multipart_upload_image
 from app.services import lmstudio_service
 from app.services import registry_service
+from app import paths
 from app.services import image_service
 from app.services import viewer_service
 from app.services.workflow_service import (  # noqa: F401 — re-exported for backward compat
@@ -112,15 +113,16 @@ models_api_bp = Blueprint("models_api", __name__)
 logger = logging.getLogger(__name__)
 
 WORKFLOWS_DIR = Path(__file__).resolve().parents[1] / "workflows"
-FALLBACK_OUTPUT_DIR = Path(__file__).resolve().parents[1] / "images" / "originals"
+FALLBACK_OUTPUT_DIR = paths.user_images("originals")
 
 # Must match viewers_routes.SESSION_KEY — duplicated as a plain string (rather
 # than importing viewers_routes here) to avoid a route-module import cycle.
 _VIEWER_SESSION_KEY = "active_viewer_id"
-REGISTRY_PATH = WORKFLOWS_DIR / "import_registry.json"
-STYLES_PATH = Path(__file__).resolve().parents[1] / "data" / "styles.json"
-STYLES_IMAGES_DIR = Path(__file__).resolve().parents[1] / "images" / "styles"
-STYLES_PAGES_PATH = Path(__file__).resolve().parents[1] / "data" / "styles_pages.json"
+# User data lives outside the program folder (app/paths.py).
+REGISTRY_PATH = paths.REGISTRY_PATH
+STYLES_PATH = paths.data_file("styles.json")
+STYLES_IMAGES_DIR = paths.user_images("styles")
+STYLES_PAGES_PATH = paths.data_file("styles_pages.json")
 STYLE_PREVIEW_FALLBACK_URL = "/static/images/style-default-sd.svg"
 _styles_lock = Lock()
 _styles_pages_lock = Lock()

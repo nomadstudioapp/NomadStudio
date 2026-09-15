@@ -8,11 +8,12 @@ from pathlib import Path
 
 from flask import jsonify, request
 
+from app import paths
 from app.routes.models_api_shared import models_api_bp
 
 logger = logging.getLogger(__name__)
 
-_LIBRARY_FLOWS_PATH = Path(__file__).resolve().parents[2] / "data" / "library_flows.json"
+_LIBRARY_FLOWS_PATH = paths.data_file("library_flows.json")
 _library_flows_cache: list[dict] | None = None
 
 

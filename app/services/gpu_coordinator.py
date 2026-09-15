@@ -42,9 +42,11 @@ from typing import Any
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from .. import paths
+
 logger = logging.getLogger(__name__)
 
-_REGISTRY_PATH = Path(__file__).resolve().parent.parent / "workflows" / "import_registry.json"
+_REGISTRY_PATH = paths.REGISTRY_PATH
 
 _cond = threading.Condition()
 _active: dict[str, dict[str, float | None]] = {"comfy": {}, "lmstudio": {}}

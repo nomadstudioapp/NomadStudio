@@ -6,6 +6,8 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from .. import paths
+
 # Per-story JSON files — one file per Create Story session, living alongside
 # the app's other small JSON data stores (see app/data/*.json). Structure per
 # the spec: two parallel 1:1 arrays (narrative_thread / scene_thread) instead
@@ -24,7 +26,7 @@ from typing import Any
 # kept per-story for continuity/context purposes (see context_window below),
 # not a replacement for either.
 
-STORIES_DIR = Path(__file__).resolve().parents[1] / "data" / "stories"
+STORIES_DIR = paths.data_file("stories")
 
 _lock = threading.Lock()
 

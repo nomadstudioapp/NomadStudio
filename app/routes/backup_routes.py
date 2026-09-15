@@ -1,7 +1,7 @@
 """Backups in Settings — API over app/services/backup_service.py.
 
 The backup folder is chosen by the user (``settings.backupDir``); by default
-it is ``backups/`` next to ``app/``. Folder picker and "open folder" act on
+it is ``backups/`` next to the data folder (``~/Nomad Studio/backups``). Folder picker and "open folder" act on
 the server machine, like the other folder pickers in Settings (local use).
 """
 
@@ -15,19 +15,20 @@ from pathlib import Path
 
 from flask import Blueprint, jsonify, request
 
+from .. import paths
 from ..services import app_info, backup_service
 from ..services.local_access import local_only, request_is_local
 from .models_api_shared import _ensure_registry, _registry_transaction
 
 backup_bp = Blueprint("backup", __name__)
 
-APP_DIR = Path(__file__).resolve().parents[1]  # app/ — tests point this at a copy
+DATA_DIR = paths.DATA_DIR  # tests point this at a copy
 
 _browse_lock = threading.Lock()
 
 
 def _backup_dir() -> Path:
-    return backup_service.resolve_backup_dir(APP_DIR, _ensure_registry().get("settings", {}))
+    return backup_service.resolve_backup_dir(DATA_DIR, _ensure_registry().get("settings", {}))
 
 
 def _version() -> str | None:
@@ -46,7 +47,7 @@ def backup_overview():
         "isDefaultDir": not str(settings.get("backupDir", "") or "").strip(),
         "dirExists": backup_dir.is_dir(),
         "backups": backup_service.list_backups(backup_dir),
-        "estimate": backup_service.estimate(APP_DIR),
+        "estimate": backup_service.estimate(DATA_DIR),
         "busy": backup_service.is_busy(),
         # Restore, delete, folder changes and pickers only from the machine
         # Nomad Studio runs on (app/services/local_access.py).
@@ -133,7 +134,7 @@ def open_backup_folder():
 @backup_bp.post("/api/backup/create")
 def create_backup():
     payload = request.get_json(silent=True) or {}
-    job = backup_service.start_create(APP_DIR, _backup_dir(), bool(payload.get("includeImages")), "manual", _version())
+    job = backup_service.start_create(DATA_DIR, _backup_dir(), bool(payload.get("includeImages")), "manual", _version())
     if job is None:
         return jsonify({"ok": False, "error": "A backup or restore is already running"}), 409
     return jsonify({"ok": True, "job": job})
@@ -149,7 +150,7 @@ def restore_backup():
         return jsonify({"ok": False, "error": "Backup not found"}), 404
     if backup_service.read_manifest(path) is None:
         return jsonify({"ok": False, "error": "This file is not a valid Nomad Studio backup"}), 400
-    job = backup_service.start_restore(APP_DIR, backup_dir, path, _version())
+    job = backup_service.start_restore(DATA_DIR, backup_dir, path, _version())
     if job is None:
         return jsonify({"ok": False, "error": "A backup or restore is already running"}), 409
     return jsonify({"ok": True, "job": job})

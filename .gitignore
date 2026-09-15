@@ -10,6 +10,15 @@ portable.json
 bundled-packages/
 
 # User data and generated content — never in git
+# (source checkouts keep their data in data/, app/paths.py)
+/data/
+# Portable update files (app/services/update_service.py)
+/app.new/
+/app.old/
+/.nomad-update/
+update-pending.json
+update-result.json
+update.log
 app/data/*
 app/workflows/import_registry.json*
 app/images/styles/

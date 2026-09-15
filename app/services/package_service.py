@@ -13,8 +13,7 @@ Install is two steps, as in §11.1:
    moves it to ``packages/<id>/``, then the caller applies the contributions
    to the registry (``apply_to_registry``) and the index is rewritten.
 
-Where things go (§12.1 — the sibling ``data/`` folder is not implemented yet,
-so ``<data>`` is ``app/data`` for now):
+Where things go (§12.1; ``<data>`` is the user's data folder, app/paths.py):
 
     <data>/packages/
     ├── index.json
@@ -64,12 +63,12 @@ class PackageError(ValueError):
 # ── Locations ───────────────────────────────────────────────────────────────
 
 
-def packages_dir(app_dir: Path) -> Path:
-    return app_dir / "data" / "packages"
+def packages_dir(data_dir: Path) -> Path:
+    return data_dir / "packages"
 
 
-def _staging(app_dir: Path) -> Path:
-    path = packages_dir(app_dir) / ".staging"
+def _staging(data_dir: Path) -> Path:
+    path = packages_dir(data_dir) / ".staging"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -81,8 +80,8 @@ def _empty_index() -> dict[str, Any]:
     return {"schema_version": 1, "generated_at": None, "packages": {}, "flows": {}, "engines": {}, "bundled": {}}
 
 
-def read_index(app_dir: Path) -> dict[str, Any]:
-    base = packages_dir(app_dir)
+def read_index(data_dir: Path) -> dict[str, Any]:
+    base = packages_dir(data_dir)
     for name in ("index.json", "index.json.bak"):
         try:
             data = json.loads((base / name).read_text(encoding="utf-8"))
@@ -95,9 +94,9 @@ def read_index(app_dir: Path) -> dict[str, Any]:
     return _empty_index()
 
 
-def write_index(app_dir: Path, index: dict[str, Any]) -> None:
+def write_index(data_dir: Path, index: dict[str, Any]) -> None:
     """Atomic write; the previous good index is kept as index.json.bak (§12.3)."""
-    base = packages_dir(app_dir)
+    base = packages_dir(data_dir)
     base.mkdir(parents=True, exist_ok=True)
     index["generated_at"] = _now()
     target = base / "index.json"
@@ -351,11 +350,11 @@ def _missing_requirements(manifest: dict[str, Any], index: dict[str, Any], own_e
     return missing
 
 
-def save_upload(app_dir: Path, stream, filename: str) -> tuple[str, Path]:
+def save_upload(data_dir: Path, stream, filename: str) -> tuple[str, Path]:
     """Store an uploaded ZIP in .staging and return (token, path)."""
-    _cleanup_staging(app_dir)
+    _cleanup_staging(data_dir)
     token = uuid.uuid4().hex
-    path = _staging(app_dir) / f"upload-{token}.zip"
+    path = _staging(data_dir) / f"upload-{token}.zip"
     written = 0
     with path.open("wb") as fh:
         while True:
@@ -371,22 +370,22 @@ def save_upload(app_dir: Path, stream, filename: str) -> tuple[str, Path]:
     return token, path
 
 
-def upload_path(app_dir: Path, token: str) -> Path | None:
+def upload_path(data_dir: Path, token: str) -> Path | None:
     if not re.fullmatch(r"[0-9a-f]{32}", str(token or "")):
         return None
-    path = _staging(app_dir) / f"upload-{token}.zip"
+    path = _staging(data_dir) / f"upload-{token}.zip"
     return path if path.is_file() else None
 
 
-def discard_upload(app_dir: Path, token: str) -> None:
-    path = upload_path(app_dir, token)
+def discard_upload(data_dir: Path, token: str) -> None:
+    path = upload_path(data_dir, token)
     if path:
         path.unlink(missing_ok=True)
 
 
-def _cleanup_staging(app_dir: Path) -> None:
+def _cleanup_staging(data_dir: Path) -> None:
     now = time.time()
-    for item in _staging(app_dir).iterdir():
+    for item in _staging(data_dir).iterdir():
         try:
             if now - item.stat().st_mtime > TOKEN_TTL_S:
                 shutil.rmtree(item) if item.is_dir() else item.unlink()
@@ -397,15 +396,15 @@ def _cleanup_staging(app_dir: Path) -> None:
 # ── Install / uninstall ─────────────────────────────────────────────────────
 
 
-def install(app_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str]) -> dict[str, Any]:
+def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str]) -> dict[str, Any]:
     """Extract and move the package into place and update the index in memory.
     Returns {"manifest", "engine", "flows", "summary"} for apply_to_registry.
     Any error before the final move leaves the installation as it was."""
     summary = inspect_zip(zip_path, index, builtin_flow_ids)
     manifest, members = _read_container(zip_path)
     pkg_id = manifest["id"]
-    base = packages_dir(app_dir)
-    stage = _staging(app_dir) / f"{pkg_id}-{uuid.uuid4().hex[:6]}"
+    base = packages_dir(data_dir)
+    stage = _staging(data_dir) / f"{pkg_id}-{uuid.uuid4().hex[:6]}"
     try:
         with zipfile.ZipFile(zip_path) as zf:
             for m in members:
@@ -481,7 +480,7 @@ def _group_id(manifest: dict[str, Any], flow: dict[str, Any]) -> str:
     return str(flow.get("group") or "core")
 
 
-def uninstall(app_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, Any]:
+def uninstall(data_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, Any]:
     if pkg_id not in index.get("packages", {}):
         raise PackageError(f"Package not installed: {pkg_id}")
     info = index["packages"].pop(pkg_id)
@@ -493,7 +492,7 @@ def uninstall(app_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, An
         if flow.get("package") == pkg_id:
             del index["flows"][flow_id]
     index.get("engines", {}).pop(pkg_id, None)
-    base = packages_dir(app_dir).resolve()
+    base = packages_dir(data_dir).resolve()
     for folder in (base / pkg_id, base / ".previous" / pkg_id):
         if folder.is_dir() and folder.resolve().parent in (base, base / ".previous"):
             shutil.rmtree(folder)
@@ -501,12 +500,6 @@ def uninstall(app_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, An
 
 
 # ── Packages included with the app ──────────────────────────────────────────
-
-
-def bundled_dir(app_dir: Path) -> Path:
-    """``bundled-packages/`` next to app.py: the free engines and base flows
-    the portable build ships, installed on the first start."""
-    return app_dir.parent / "bundled-packages"
 
 
 def _version_tuple(version: str) -> tuple[int, ...]:
@@ -517,12 +510,12 @@ def _version_tuple(version: str) -> tuple[int, ...]:
         return (0,)
 
 
-def plan_bundled(app_dir: Path, index: dict[str, Any], builtin_flow_ids: set[str]) -> list[tuple[Path, str]]:
+def plan_bundled(folder: Path, index: dict[str, Any], builtin_flow_ids: set[str]) -> list[tuple[Path, str]]:
     """Which included ZIPs to install or update now, engines first:
     [(zip, "install" | "update")]. Skips packages the user uninstalled and
     ones already at the same or a newer version. Broken ZIPs are skipped (and
-    left to the caller's log) so they never block the app from starting."""
-    folder = bundled_dir(app_dir)
+    left to the caller's log) so they never block the app from starting.
+    ``folder`` is ``bundled-packages/`` next to app.py (paths.BUNDLED_PACKAGES_DIR)."""
     if not folder.is_dir():
         return []
     plan: list[tuple[tuple, Path, str]] = []
@@ -555,7 +548,7 @@ def mark_bundled(index: dict[str, Any], manifest: dict[str, Any]) -> None:
 # ── Registry integration ────────────────────────────────────────────────────
 
 
-def apply_to_registry(data: dict[str, Any], app_dir: Path, result: dict[str, Any]) -> None:
+def apply_to_registry(data: dict[str, Any], data_dir: Path, result: dict[str, Any]) -> None:
     """Register the installed engine as an import and the package's flows as
     an installed pack (read by flow_engine and the hub)."""
     manifest = result["manifest"]
@@ -600,7 +593,7 @@ def apply_to_registry(data: dict[str, Any], app_dir: Path, result: dict[str, Any
     if result["flows"]:
         packs.append({
             "packId": pkg_id,
-            "packDir": str(packages_dir(app_dir) / pkg_id),
+            "packDir": str(packages_dir(data_dir) / pkg_id),
             "name": text_for(manifest.get("name"), "en", manifest["default_lang"]),
             "version": manifest["version"],
             "installDate": _now(),
@@ -621,15 +614,15 @@ def remove_from_registry(data: dict[str, Any], pkg_id: str) -> None:
 # ── Listing ─────────────────────────────────────────────────────────────────
 
 
-def list_packages(app_dir: Path, lang: str = "en") -> list[dict[str, Any]]:
-    index = read_index(app_dir)
+def list_packages(data_dir: Path, lang: str = "en") -> list[dict[str, Any]]:
+    index = read_index(data_dir)
     engines = index.get("engines", {})
     out = []
     for pkg_id, info in sorted(index.get("packages", {}).items()):
         default_lang = info.get("default_lang") or "en"
         missing = []
         try:
-            manifest = json.loads((packages_dir(app_dir) / pkg_id / "manifest.json").read_text(encoding="utf-8"))
+            manifest = json.loads((packages_dir(data_dir) / pkg_id / "manifest.json").read_text(encoding="utf-8"))
             missing = _missing_requirements(manifest, index, [])
         except (OSError, json.JSONDecodeError):
             info = {**info, "state": "broken"}

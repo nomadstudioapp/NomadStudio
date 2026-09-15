@@ -13,10 +13,10 @@ are only allowed from the computer Nomad Studio runs on (local_access).
 from __future__ import annotations
 
 import threading
-from pathlib import Path
 
 from flask import Blueprint, jsonify, request
 
+from .. import paths
 from ..services import flow_engine, package_service
 from ..services.local_access import local_only, request_is_local
 from ..services.package_service import PackageError
@@ -24,7 +24,9 @@ from .models_api_shared import _registry_transaction
 
 packages_bp = Blueprint("packages", __name__)
 
-APP_DIR = Path(__file__).resolve().parents[1]  # app/ — tests point this at a copy
+# Tests point these at temporary folders.
+DATA_DIR = paths.DATA_DIR
+BUNDLED_DIR = paths.BUNDLED_PACKAGES_DIR
 
 _lock = threading.Lock()
 
@@ -47,20 +49,20 @@ def install_bundled_packages() -> list[str]:
     log = logging.getLogger(__name__)
     done: list[str] = []
     with _lock:
-        index = package_service.read_index(APP_DIR)
-        plan = package_service.plan_bundled(APP_DIR, index, _builtin_flow_ids())
+        index = package_service.read_index(DATA_DIR)
+        plan = package_service.plan_bundled(BUNDLED_DIR, index, _builtin_flow_ids())
         if not plan:
             return done
         for zip_path, action in plan:
             try:
-                result = package_service.install(APP_DIR, zip_path, index, _builtin_flow_ids())
+                result = package_service.install(DATA_DIR, zip_path, index, _builtin_flow_ids())
                 package_service.mark_bundled(index, result["manifest"])
                 with _registry_transaction() as data:
-                    package_service.apply_to_registry(data, APP_DIR, result)
+                    package_service.apply_to_registry(data, DATA_DIR, result)
                 done.append(f"{action} {result['manifest']['id']} {result['manifest']['version']}")
             except Exception:  # noqa: BLE001
                 log.exception("bundled package failed: %s", zip_path.name)
-        package_service.write_index(APP_DIR, index)
+        package_service.write_index(DATA_DIR, index)
     if done:
         log.info("bundled packages: %s", ", ".join(done))
     return done
@@ -70,7 +72,7 @@ def install_bundled_packages() -> list[str]:
 def list_packages():
     return jsonify({
         "ok": True,
-        "packages": package_service.list_packages(APP_DIR, _lang()),
+        "packages": package_service.list_packages(DATA_DIR, _lang()),
         "local": request_is_local(),
     })
 
@@ -82,13 +84,13 @@ def inspect_package():
     if upload is None or not upload.filename:
         return jsonify({"ok": False, "error": "Choose a package (.zip) to install"}), 400
     try:
-        token, path = package_service.save_upload(APP_DIR, upload.stream, upload.filename)
+        token, path = package_service.save_upload(DATA_DIR, upload.stream, upload.filename)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     try:
-        summary = package_service.inspect_zip(path, package_service.read_index(APP_DIR), _builtin_flow_ids(), _lang())
+        summary = package_service.inspect_zip(path, package_service.read_index(DATA_DIR), _builtin_flow_ids(), _lang())
     except PackageError as exc:
-        package_service.discard_upload(APP_DIR, token)
+        package_service.discard_upload(DATA_DIR, token)
         return jsonify({"ok": False, "error": str(exc)}), 400
     return jsonify({"ok": True, "token": token, "package": summary})
 
@@ -97,21 +99,21 @@ def inspect_package():
 @local_only
 def install_package():
     token = str((request.get_json(silent=True) or {}).get("token", ""))
-    path = package_service.upload_path(APP_DIR, token)
+    path = package_service.upload_path(DATA_DIR, token)
     if path is None:
         return jsonify({"ok": False, "error": "The upload expired. Choose the package again."}), 404
     if not _lock.acquire(blocking=False):
         return jsonify({"ok": False, "error": "Another package is being installed"}), 409
     try:
-        index = package_service.read_index(APP_DIR)
-        result = package_service.install(APP_DIR, path, index, _builtin_flow_ids())
+        index = package_service.read_index(DATA_DIR)
+        result = package_service.install(DATA_DIR, path, index, _builtin_flow_ids())
         with _registry_transaction() as data:
-            package_service.apply_to_registry(data, APP_DIR, result)
-        package_service.write_index(APP_DIR, index)
+            package_service.apply_to_registry(data, DATA_DIR, result)
+        package_service.write_index(DATA_DIR, index)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     finally:
-        package_service.discard_upload(APP_DIR, token)
+        package_service.discard_upload(DATA_DIR, token)
         _lock.release()
     return jsonify({"ok": True, "package": result["summary"]})
 
@@ -119,7 +121,7 @@ def install_package():
 @packages_bp.post("/api/packages/discard")
 @local_only
 def discard_package():
-    package_service.discard_upload(APP_DIR, str((request.get_json(silent=True) or {}).get("token", "")))
+    package_service.discard_upload(DATA_DIR, str((request.get_json(silent=True) or {}).get("token", "")))
     return jsonify({"ok": True})
 
 
@@ -129,11 +131,11 @@ def uninstall_package(pkg_id: str):
     if not _lock.acquire(blocking=False):
         return jsonify({"ok": False, "error": "Another package operation is running"}), 409
     try:
-        index = package_service.read_index(APP_DIR)
-        package_service.uninstall(APP_DIR, pkg_id, index)
+        index = package_service.read_index(DATA_DIR)
+        package_service.uninstall(DATA_DIR, pkg_id, index)
         with _registry_transaction(deleted_import_ids={pkg_id}) as data:
             package_service.remove_from_registry(data, pkg_id)
-        package_service.write_index(APP_DIR, index)
+        package_service.write_index(DATA_DIR, index)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 404
     finally:

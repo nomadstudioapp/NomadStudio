@@ -38,6 +38,7 @@ import socket
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 import urllib.request
 import zipfile
@@ -121,11 +122,14 @@ def strip_library_tests(lib_dir: Path) -> int:
 
 
 def write_launchers(app_dir: Path, root: Path) -> None:
-    text = (REPO / "tools" / "launcher" / "NomadStudio.bat").read_text(encoding="utf-8")
-    crlf = text.replace("\r\n", "\n").replace("\n", "\r\n").encode("utf-8")
+    """Launcher at the root and in app/launcher/ (the copy an update brings),
+    plus the update script (app/services/update_service.py)."""
     (app_dir / "launcher").mkdir(parents=True, exist_ok=True)
-    (app_dir / "launcher" / "NomadStudio.bat").write_bytes(crlf)
-    (root / "NomadStudio.bat").write_bytes(crlf)
+    for name in ("NomadStudio.bat", "apply_update.ps1"):
+        text = (REPO / "tools" / "launcher" / name).read_text(encoding="utf-8")
+        crlf = text.replace("\r\n", "\n").replace("\n", "\r\n").encode("ascii")
+        (app_dir / "launcher" / name).write_bytes(crlf)
+    (root / "NomadStudio.bat").write_bytes((app_dir / "launcher" / "NomadStudio.bat").read_bytes())
 
 
 def free_port() -> int:
@@ -137,8 +141,11 @@ def free_port() -> int:
 def smoke_test(app_dir: Path, version: str) -> None:
     """Start the built app exactly as the launcher does and wait for /api/health."""
     port = free_port()
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "VIRTUAL_ENV"))}
-    env.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1", PORT=str(port))  # lib/ comes from nomad-lib.pth
+    # A portable build keeps its data in ~/Nomad Studio/data (app/paths.py):
+    # the smoke test must not create or touch that folder on the build machine.
+    data_dir = Path(tempfile.mkdtemp(prefix="nomad-smoke-data-"))
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "VIRTUAL_ENV", "NOMAD_"))}
+    env.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1", PORT=str(port), NOMAD_DATA_DIR=str(data_dir))  # lib/ comes from nomad-lib.pth
     proc = subprocess.Popen([str(app_dir / "python" / "python.exe"), str(app_dir / "app.py")],
                             cwd=app_dir, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
@@ -175,22 +182,23 @@ def smoke_test(app_dir: Path, version: str) -> None:
                               env=env, capture_output=True, text=True, check=True).stdout
         if any(str(app_dir).lower() not in line.lower() for line in leak.strip().splitlines()):
             raise SystemExit("smoke test failed: modules loaded from outside the bundle:\n" + leak)
+        print(f"  data folder: registry={(data_dir / 'import_registry.json').is_file()} packages={(data_dir / 'packages' / 'index.json').is_file()}")
+        if not (data_dir / "import_registry.json").is_file():
+            raise SystemExit("smoke test failed: the app did not use NOMAD_DATA_DIR")
+        stray = [p.name for p in (app_dir / "app" / "data").iterdir() if p.name not in ("sfw_characters.json", "sfw_backgrounds.json")]
+        if stray or (app_dir / "app" / "workflows" / "import_registry.json").exists():
+            raise SystemExit(f"smoke test failed: user data written inside the program folder: {stray}")
     finally:
         proc.terminate()
         try:
             proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
             proc.kill()
+        shutil.rmtree(data_dir, ignore_errors=True)
 
 
 def clean_runtime_files(app_dir: Path) -> None:
-    """Remove what the smoke test created (registry, data) so the ZIP is empty."""
-    shutil.rmtree(app_dir / "app" / "workflows", ignore_errors=True)
-    data = app_dir / "app" / "data"
-    keep = {"sfw_characters.json", "sfw_backgrounds.json"}
-    for p in data.iterdir() if data.is_dir() else []:
-        if p.name not in keep:
-            shutil.rmtree(p) if p.is_dir() else p.unlink()
+    """Remove the caches the smoke test left (its data went to a temp folder)."""
     for cache in app_dir.rglob("__pycache__"):
         if "python" not in cache.relative_to(app_dir).parts[:1] and "lib" not in cache.relative_to(app_dir).parts[:1]:
             shutil.rmtree(cache, ignore_errors=True)

@@ -12,6 +12,9 @@ from .routes.setup_routes import setup_bp
 from .routes.backup_routes import backup_bp
 from .routes.reset_routes import reset_bp
 from .routes.packages_routes import packages_bp
+from .routes.user_images_routes import user_images_bp
+from .routes.updates_routes import updates_bp
+from . import paths
 from .services.addon_loader import load_addons, get_registry
 from .services import app_info
 from .services.local_access import request_is_local
@@ -30,6 +33,22 @@ def create_app() -> Flask:
     app.register_blueprint(backup_bp)
     app.register_blueprint(reset_bp)
     app.register_blueprint(packages_bp)
+    app.register_blueprint(user_images_bp)
+    app.register_blueprint(updates_bp)
+
+    # User data lives outside the program folder (app/paths.py): create it,
+    # move data left inside app/ by older versions, and point installed packs
+    # at the current packages folder.
+    try:
+        paths.prepare_data_dir()
+        from .routes.models_api_shared import REGISTRY_PATH, _registry_transaction
+        from .services import registry_service
+
+        if paths.fix_pack_dirs(registry_service._read_json_safe(REGISTRY_PATH) or {}):
+            with _registry_transaction() as data:
+                paths.fix_pack_dirs(data)
+    except Exception:  # noqa: BLE001 — the app still starts; the log says why
+        app.logger.exception("preparing the data folder failed (%s)", paths.DATA_DIR)
 
     # Free engines and base flows shipped with the app (bundled-packages/):
     # installed on the first start, updated when the app brings newer ones,

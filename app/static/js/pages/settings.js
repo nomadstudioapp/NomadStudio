@@ -1869,6 +1869,263 @@ function t(key, fallback, vars) {
 })();
 
 // ---------------------------------------------------------------------------
+// Updates — from a release ZIP (app/services/update_service.py)
+// Choose ZIP → check → prepare (extract + data backup) → restart. The page
+// then waits for /api/health to answer again and reloads.
+// ---------------------------------------------------------------------------
+(function updatesSection() {
+  const section = document.getElementById('updates-section');
+  if (!section) return;
+  const installedEl = document.getElementById('updates-installed');
+  const dataDirEl = document.getElementById('updates-data-dir');
+  const resultEl = document.getElementById('updates-result');
+  const fileInput = document.getElementById('updates-file');
+  const chooseBtn = document.getElementById('updates-choose-btn');
+  const progressEl = document.getElementById('updates-progress');
+  const progressText = document.getElementById('updates-progress-text');
+  const progressBar = document.getElementById('updates-progress-bar');
+  const statusEl = document.getElementById('updates-status');
+  const reviewEl = document.getElementById('updates-review');
+
+  let state = null;
+  let candidate = null;   // { token, update } after /inspect
+  let busy = false;
+  let restarting = null;  // { to, from, since }
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function setStatus(msg, isError = false) {
+    statusEl.textContent = msg || '';
+    statusEl.classList.toggle('status-error', isError);
+  }
+  async function api(method, url, body, isForm) {
+    const opts = { method, cache: 'no-store' };
+    if (isForm) opts.body = body;
+    else if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
+    const res = await fetch(url, opts);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json.ok === false) throw new Error(json.error || ('HTTP ' + res.status));
+    return json;
+  }
+  function mb(bytes) { return (Number(bytes || 0) / 1048576).toFixed(0) + ' MB'; }
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function reasonText(reason) {
+    return {
+      'did-not-start': t('settings.updates.reasonDidNotStart', 'the new version did not start'),
+      'folder-locked': t('settings.updates.reasonLocked', 'the program folder was in use (close any window open inside it)'),
+      'app-did-not-exit': t('settings.updates.reasonNoExit', 'Nomad Studio did not close'),
+      'no-prepared-update': t('settings.updates.reasonMissing', 'the prepared update was missing'),
+    }[reason] || reason || '';
+  }
+
+  function renderResult() {
+    const r = state && state.lastResult;
+    if (!r) { resultEl.hidden = true; resultEl.innerHTML = ''; return; }
+    const msg = r.ok
+      ? t('settings.updates.resultOk', 'Nomad Studio was updated to {to}.', { to: r.to })
+      : t('settings.updates.resultFailed', 'Could not update to {to}: {reason}. Nomad Studio went back to {from}; your data was not changed.', { to: r.to, from: r.from || '—', reason: reasonText(r.reason) });
+    resultEl.hidden = false;
+    resultEl.innerHTML = '<p class="settings-inline-status' + (r.ok ? '' : ' status-error') + '">' + esc(msg) + '</p>' +
+      '<button type="button" class="btn settings-btn-ghost" data-update-dismiss>' + esc(t('settings.updates.dismiss', 'OK')) + '</button>';
+  }
+
+  function renderReview() {
+    const pending = state && state.pending;
+    if (restarting) {
+      reviewEl.hidden = true;
+      return;
+    }
+    if (pending) {
+      reviewEl.hidden = false;
+      reviewEl.innerHTML = '<div class="settings-backup-item"><div class="settings-backup-info">' +
+        '<span class="settings-backup-date">' + esc(t('settings.updates.ready', 'Nomad Studio {to} is ready to install', { to: pending.to })) + '</span>' +
+        '<span class="settings-backup-meta">' + esc(t('settings.updates.readyHint', 'Nomad Studio closes and opens again with the new version. It takes about a minute; this page reloads by itself.')) + '</span>' +
+        (pending.backup ? '<span class="settings-backup-meta">' + esc(t('settings.updates.backupDone', 'Data backup: {path}', { path: pending.backup })) + '</span>' : '') +
+        '</div></div>' +
+        '<div class="settings-backup-actions settings-package-actions">' +
+          '<button type="button" class="btn settings-btn-ghost" data-update-discard' + (busy ? ' disabled' : '') + '>' + esc(t('settings.updates.discard', 'Discard')) + '</button>' +
+          '<button type="button" class="btn settings-btn-secondary" data-update-apply' + (busy || !state.local ? ' disabled' : '') + '>' + esc(t('settings.updates.restart', 'Restart and update')) + '</button>' +
+        '</div>';
+      return;
+    }
+    if (candidate) {
+      const u = candidate.update;
+      reviewEl.hidden = false;
+      reviewEl.innerHTML = '<div class="settings-backup-item"><div class="settings-backup-info">' +
+        '<span class="settings-backup-date">' + esc(t('settings.updates.candidate', 'Nomad Studio {to} · you have {from}', { to: u.version, from: u.from })) + '</span>' +
+        '<span class="settings-backup-meta">' + esc([u.platform, u.commit ? 'commit ' + u.commit : '', u.builtAt ? String(u.builtAt).slice(0, 10) : '', mb(u.zipBytes)].filter(Boolean).join(' · ')) + '</span>' +
+        '<span class="settings-backup-meta">' + esc(t('settings.updates.whatHappens', 'Preparing extracts the new version next to the current one and backs up your data. Nothing changes until you restart.')) + '</span>' +
+        '</div></div>' +
+        '<p class="settings-field-hint settings-package-unsigned">' + esc(t('settings.updates.unsigned', 'Releases are not signed yet: use only ZIPs you downloaded from Nomad Studio.')) + '</p>' +
+        '<div class="settings-backup-actions settings-package-actions">' +
+          '<button type="button" class="btn settings-btn-ghost" data-update-cancel' + (busy ? ' disabled' : '') + '>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
+          '<button type="button" class="btn settings-btn-secondary" data-update-prepare' + (busy ? ' disabled' : '') + '>' + esc(t('settings.updates.prepare', 'Prepare update')) + '</button>' +
+        '</div>';
+      return;
+    }
+    reviewEl.hidden = true;
+    reviewEl.innerHTML = '';
+  }
+
+  function render() {
+    if (!state) return;
+    const inst = state.installed || {};
+    installedEl.textContent = inst.portable
+      ? [inst.version, inst.platform, inst.commit ? 'commit ' + inst.commit : ''].filter(Boolean).join(' · ')
+      : t('settings.updates.devCopy', 'Development copy (update it with git)');
+    dataDirEl.textContent = t('settings.updates.dataDir', 'Your data: {path}', { path: state.dataDir });
+    const unsupported = state.unsupported;  // null | 'dev' | 'platform' | 'layout'
+    chooseBtn.disabled = busy || !state.local || !!unsupported || !!state.pending || !!restarting;
+    if (unsupported && !busy && !restarting) {
+      setStatus(unsupported === 'dev'
+        ? t('settings.updates.unsupportedDev', 'This is a development copy: updating from a ZIP is only for the portable version.')
+        : unsupported === 'platform'
+          ? t('settings.updates.unsupportedPlatform', 'Updating from here is only available on Windows for now.')
+          : t('settings.updates.unsupportedLayout', 'This copy is not in the portable folder layout, so it cannot update itself.'));
+    }
+    renderResult();
+    renderReview();
+  }
+
+  async function load() {
+    try {
+      state = await api('GET', '/api/updates');
+      render();
+      if (state.job && state.job.state === 'running') followPrepare();
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  function showProgress(job) {
+    progressEl.hidden = false;
+    const pct = job.total ? Math.min(100, Math.round(job.done * 100 / job.total)) : 0;
+    progressText.textContent = job.phase === 'backup'
+      ? t('settings.updates.phaseBackup', 'Backing up your data…')
+      : t('settings.updates.phaseExtract', 'Extracting the new version… {pct}%', { pct });
+    progressBar.style.width = (job.phase === 'backup' ? 100 : pct) + '%';
+  }
+
+  async function followPrepare() {
+    if (busy) return;
+    busy = true;
+    candidate = null;
+    render();
+    try {
+      for (;;) {
+        const { job } = await api('GET', '/api/updates/job');
+        if (!job) break;
+        showProgress(job);
+        if (job.state === 'error') throw new Error(job.error || 'error');
+        if (job.state !== 'running') break;
+        await sleep(800);
+      }
+      setStatus('');
+    } catch (error) {
+      setStatus(error.message, true);
+    } finally {
+      busy = false;
+      progressEl.hidden = true;
+      await load();
+    }
+  }
+
+  async function waitForRestart() {
+    const started = Date.now();
+    let warned = false;
+    await sleep(3000);
+    for (;;) {
+      try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        const health = await res.json();
+        // New version up, or the old one back after a rollback: reload either way.
+        if (health.version === restarting.to || (Date.now() - started > 15000 && health.version === restarting.from)) {
+          window.location.reload();
+          return;
+        }
+      } catch (_) { /* restarting */ }
+      if (!warned && Date.now() - started > 180000) {
+        warned = true;
+        setStatus(t('settings.updates.slow', 'This is taking longer than expected. Check the Nomad Studio window, or open {log}.', { log: 'update.log' }), true);
+      }
+      await sleep(2000);
+    }
+  }
+
+  chooseBtn.addEventListener('click', () => { if (!busy) fileInput.click(); });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    if (candidate) { api('POST', '/api/updates/discard-upload', { token: candidate.token }).catch(() => {}); candidate = null; }
+    busy = true;
+    render();
+    setStatus(t('settings.updates.checking', 'Checking the release… ({size})', { size: mb(file.size) }));
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api('POST', '/api/updates/inspect', form, true);
+      candidate = { token: res.token, update: res.update };
+      setStatus('');
+    } catch (error) {
+      setStatus(error.message, true);
+    } finally {
+      busy = false;
+      render();
+    }
+  });
+
+  reviewEl.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-update-cancel]')) {
+      if (candidate) api('POST', '/api/updates/discard-upload', { token: candidate.token }).catch(() => {});
+      candidate = null;
+      return render();
+    }
+    if (e.target.closest('[data-update-prepare]') && candidate) {
+      setStatus('');
+      try {
+        await api('POST', '/api/updates/prepare', { token: candidate.token });
+        followPrepare();
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+      return;
+    }
+    if (e.target.closest('[data-update-discard]')) {
+      try { await api('POST', '/api/updates/discard'); } catch (error) { setStatus(error.message, true); }
+      return load();
+    }
+    if (e.target.closest('[data-update-apply]') && state && state.pending) {
+      busy = true;
+      render();
+      try {
+        const res = await api('POST', '/api/updates/apply');
+        restarting = { to: res.to, from: state.installed.version, since: Date.now() };
+        render();
+        setStatus(t('settings.updates.restarting', 'Restarting into Nomad Studio {to}… this page reloads by itself.', { to: res.to }));
+        waitForRestart();
+      } catch (error) {
+        busy = false;
+        setStatus(error.message, true);
+        render();
+      }
+    }
+  });
+
+  resultEl.addEventListener('click', async (e) => {
+    if (!e.target.closest('[data-update-dismiss]')) return;
+    try { await api('POST', '/api/updates/dismiss-result'); } catch (_) { /* ignore */ }
+    load();
+  });
+
+  document.addEventListener('nomad-i18n-applied', render);
+  load();
+})();
+
+// ---------------------------------------------------------------------------
 // Total reset — SIMULATION ONLY (app/services/reset_service.py)
 // Step 1: what gets removed / kept + options. Step 2: type RESET. Result:
 // the simulated plan. Nothing is deleted; there is no execute endpoint yet.

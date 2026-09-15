@@ -5,10 +5,11 @@ from pathlib import Path
 import re
 from typing import Any
 
+from .. import paths
+
 
 def _benchmark_dir() -> Path:
-    app_dir = Path(__file__).resolve().parents[1]
-    return app_dir / "data" / "vision_benchmarks"
+    return paths.data_file("vision_benchmarks")
 
 
 def resolve_report_path(filename: str) -> Path | None:

@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from flask import Response, jsonify, make_response, request
 
 from app.config import DEFAULT_COMFY_URL, MAX_IMPORT_NAME_LENGTH
+from app import paths
 from app.services.http_client import http_json
 from app.routes.models_api_shared import (
     _analyze_workflow,
@@ -33,7 +34,7 @@ from app.routes.models_api_shared import (
 )
 
 
-WORKFLOW_LOGOS_DIR = Path(__file__).resolve().parents[2] / "images" / "workflow_logos"
+WORKFLOW_LOGOS_DIR = paths.user_images("workflow_logos")
 WORKFLOW_LOGOS_ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 
 

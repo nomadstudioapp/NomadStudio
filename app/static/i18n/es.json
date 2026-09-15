@@ -72,6 +72,12 @@
     "packs": {
       "gallerySubtitle": "{n} estilos seleccionados. Elige uno, ajusta los detalles y genera.",
       "empty": "Este pack todavía no tiene estilos."
+    },
+    "empty": {
+      "title": "Esta sección está vacía",
+      "create": "Instala paquetes de flows para empezar a crear imágenes.",
+      "refine": "Instala paquetes de flows para empezar a retocar tus imágenes.",
+      "mix": "Instala paquetes de flows para empezar a combinar imágenes."
     }
   },
   "who": {

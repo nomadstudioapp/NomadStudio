@@ -2701,6 +2701,42 @@
   width: 100%;
 }
 
+/* Empty section (no flows installed yet) — nomad_studio.html empty_section() */
+.cs-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 34rem;
+  margin: 4rem auto 0;
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--line);
+  text-align: center;
+}
+.cs-empty-state-icon {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.cs-empty-state-icon svg { width: 1.5rem; height: 1.5rem; }
+.cs-empty-state-title {
+  margin: 0.5rem 0 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--text);
+}
+.cs-empty-state-text {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 /* Free-text search box above the Create/Refine/Mix hub grid — filters the
    same cards the tag sidebar does, by name/description/tags (see
    initTagFilter's searchQuery in nomad_studio.js). */

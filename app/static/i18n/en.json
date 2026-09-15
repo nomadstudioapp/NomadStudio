@@ -72,6 +72,12 @@
     "packs": {
       "gallerySubtitle": "{n} curated looks. Pick one, tweak the details, generate.",
       "empty": "No looks in this pack yet."
+    },
+    "empty": {
+      "title": "This section is empty",
+      "create": "Install flow packages to start creating images.",
+      "refine": "Install flow packages to start refining your images.",
+      "mix": "Install flow packages to start mixing images."
     }
   },
   "who": {

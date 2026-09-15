@@ -23,13 +23,16 @@ if %errorlevel%==0 (
   exit /b 0
 )
 
-set "PYTHONPATH=%APPDIR%\lib"
+rem Bundled libraries (app\lib) are registered by python\Lib\site-packages\nomad-lib.pth.
+set "PYTHONPATH="
 set "PYTHONNOUSERSITE=1"
 set "PYTHONUTF8=1"
 set "PYTHONDONTWRITEBYTECODE="
 
-rem Open the browser in the background as soon as /api/health answers (max 60 s).
-start "" /b powershell -NoProfile -WindowStyle Hidden -Command "for ($i=0; $i -lt 120; $i++) { try { Invoke-RestMethod '%URL%/api/health' -TimeoutSec 2 | Out-Null; Start-Process '%URL%'; break } catch { Start-Sleep -Milliseconds 500 } }"
+rem Open the browser as soon as /api/health answers (max 60 s). Runs in its own
+rem minimized window: with "start /b" + "-WindowStyle Hidden" it shared this
+rem console and minimized the Nomad Studio log window instead.
+start "Nomad Studio - opening browser" /min powershell -NoProfile -Command "for ($i=0; $i -lt 120; $i++) { try { Invoke-RestMethod '%URL%/api/health' -TimeoutSec 2 | Out-Null; Start-Process '%URL%'; break } catch { Start-Sleep -Milliseconds 500 } }"
 
 title Nomad Studio
 echo Nomad Studio is starting on %URL%

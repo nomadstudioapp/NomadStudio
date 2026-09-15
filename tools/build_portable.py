@@ -83,7 +83,16 @@ def copy_python(src: Path, dest: Path) -> str:
         return skipped
 
     shutil.copytree(src, dest, ignore=ignore)
-    (dest / "Lib" / "site-packages").mkdir(parents=True, exist_ok=True)
+    site_packages = dest / "Lib" / "site-packages"
+    site_packages.mkdir(parents=True, exist_ok=True)
+    # Register app/lib as a *site* directory, not via PYTHONPATH: only site
+    # directories get their .pth files processed, and pywin32 (needed by the
+    # mcp package on Windows) relies on pywin32.pth. With PYTHONPATH,
+    # `import mcp` failed with "No module named 'pywintypes'".
+    (site_packages / "nomad-lib.pth").write_text(
+        "import os, site, sys; site.addsitedir(os.path.normpath(os.path.join(sys.prefix, os.pardir, 'lib')))\n",
+        encoding="ascii",
+    )
     if not (dest / "DLLs" / "_tkinter.pyd").is_file():
         raise SystemExit("bundled Python has no tkinter (_tkinter.pyd): the folder pickers would fail")
     return version
@@ -94,6 +103,19 @@ def lock_python_version() -> str | None:
         if "--python-version" in line:
             return line.split("--python-version", 1)[1].split()[0]
     return None
+
+
+def strip_library_tests(lib_dir: Path) -> int:
+    """Delete the test suites bundled inside third-party packages (scipy,
+    scikit-learn, numpy… ~57 MB). Nomad Studio never imports them. Only
+    folders named exactly ``tests`` are removed; ``numpy.testing`` and
+    similar runtime helpers are kept."""
+    freed = 0
+    for tests in sorted(lib_dir.rglob("tests"), key=lambda p: len(p.parts), reverse=True):
+        if tests.is_dir() and tests.exists():
+            freed += sum(f.stat().st_size for f in tests.rglob("*") if f.is_file())
+            shutil.rmtree(tests)
+    return freed
 
 
 def write_launchers(app_dir: Path, root: Path) -> None:
@@ -114,7 +136,7 @@ def smoke_test(app_dir: Path, version: str) -> None:
     """Start the built app exactly as the launcher does and wait for /api/health."""
     port = free_port()
     env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "VIRTUAL_ENV"))}
-    env.update(PYTHONPATH=str(app_dir / "lib"), PYTHONNOUSERSITE="1", PYTHONUTF8="1", PORT=str(port))
+    env.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1", PORT=str(port))  # lib/ comes from nomad-lib.pth
     proc = subprocess.Popen([str(app_dir / "python" / "python.exe"), str(app_dir / "app.py")],
                             cwd=app_dir, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
@@ -137,8 +159,11 @@ def smoke_test(app_dir: Path, version: str) -> None:
         if not health.get("portable") or health.get("version") != version:
             raise SystemExit("smoke test failed: portable.json not picked up")
         # The app must not import anything from outside the bundle.
+        # The base libraries for add-ons (PACKAGE_FORMAT.md, level 1) must still
+        # import after their test suites were removed.
         leak = subprocess.run([str(app_dir / "python" / "python.exe"), "-c",
-                               "import sys,flask,numpy;print(flask.__file__);print(numpy.__file__);print(sys.prefix)"],
+                               "import sys,flask,numpy,scipy.ndimage,scipy.spatial,sklearn.cluster,PIL.Image,mcp,mcp.server.fastmcp,pywintypes,tkinter;"
+                               "print(flask.__file__);print(numpy.__file__);print(sys.prefix)"],
                               env=env, capture_output=True, text=True, check=True).stdout
         if any(str(app_dir).lower() not in line.lower() for line in leak.strip().splitlines()):
             raise SystemExit("smoke test failed: modules loaded from outside the bundle:\n" + leak)
@@ -209,6 +234,8 @@ def main() -> None:
     run([str(args.python_home / "python.exe"), "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
          "--require-hashes", "--only-binary=:all:", "--no-deps",
          "--target", str(app_dir / "lib"), "-r", str(REPO / "requirements.lock")])
+    freed = strip_library_tests(app_dir / "lib")
+    print(f"  removed library test suites: {freed / 2**20:.0f} MB")
 
     print("4/6 portable.json + launcher")
     (app_dir / "portable.json").write_text(json.dumps({

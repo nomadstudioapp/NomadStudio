@@ -10,7 +10,10 @@ package the app accepts.
 Packages:
 - the 7 free image engines (nomad.engine.*), one per engine in
   import_registry.json
-- nomad.core-create: Create › Simple, needs any image engine
+- nomad.core-create: the Create › core flows (CORE_CREATE_FLOWS), needs any
+  image engine
+- nomad.create-layout: the Create › Layout flows (LAYOUT_FLOWS), renamed from
+  their source ids
 
 Engines ship the workflow's own defaults (analysis), never the values saved in
 the source registry: those include the developer's last prompts and choices.
@@ -180,27 +183,89 @@ def build_engine(source: Path, version: str, name: str) -> Path:
     return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT})
 
 
+# Create › core flows shipped with the app. They only need an image engine,
+# plus LM Studio for the LLM ones. Left out: the CivitAI flows (their own free
+# pack later), From Template (needs template packs, which packages cannot
+# carry yet) and the unfinished ones (Character, From Brief, Style).
+CORE_CREATE_FLOWS = [
+    "create.simple", "create.simple_json", "create.assist", "create.chat",
+    "create.variations", "create.variations_json", "create.story", "create.scenes",
+    "create.portraits", "create.posters", "create.describe_image", "create.bulk_vision",
+]
+CORE_CREATE_VERSION = "0.2.0"
+
+
 def build_core_create(source: Path, version: str) -> Path:
-    flow = flow_from_source(source, "create.simple")
+    files: dict[str, object] = {}
+    for flow_id in CORE_CREATE_FLOWS:
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow_from_source(source, flow_id)
     manifest = {
         "schema_version": 1,
         "id": "nomad.core-create",
-        "version": version,
+        # 0.1.0 carried Simple only; bundled packages update only to a higher version.
+        "version": CORE_CREATE_VERSION,
         "default_lang": "en",
         "name": {"en": "Core Create", "es": "Create básico", "zh": "基础创作", "ko": "기본 만들기"},
         "summary": {
-            "en": "Simple: write a prompt, pick an engine, generate.",
-            "es": "Simple: escribe un prompt, elige un motor y genera.",
-            "zh": "简单：写提示词，选择引擎，生成。",
-            "ko": "간단: 프롬프트를 쓰고 엔진을 고른 뒤 생성합니다.",
+            "en": "The base Create flows: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters and image description. The AI-assisted ones use LM Studio.",
+            "es": "Los flows base de Create: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters y descripción de imágenes. Los que usan IA necesitan LM Studio.",
+            "zh": "Create 基础流程：Simple、Assist、Chat、Variations、Story、Scenes、Portraits、Posters 以及图像描述。AI 辅助流程需要 LM Studio。",
+            "ko": "Create 기본 플로우: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters, 이미지 설명. AI 보조 플로우는 LM Studio가 필요합니다.",
         },
         "author": AUTHOR,
         "license": "proprietary",
         "group": {"id": "core", "label": {"en": "Core"}},
         "requires": {"engines": [{"category": "image"}]},
-        "contributes": {"flows": ["flows/simple.json"]},
+        "contributes": {"flows": list(files)},
     }
-    return write_zip("nomad.core-create", {"manifest.json": manifest, "flows/simple.json": flow, "LICENSE": LICENSE_TEXT})
+    return write_zip("nomad.core-create", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT})
+
+
+# Create › Layout: composition flows (Ideogram JSON layouts). Source id → the
+# id they ship with, so ids and URLs say "layout" instead of an engine name.
+# Internal names (step type ideogram_composer, llm.ideogram_* calls) stay.
+LAYOUT_FLOWS = {
+    "create.assist_ideogram": "create.layout_assist",
+    "create.assist_ideogram_ref": "create.layout_reference",
+    "create.assist_ideogram_lettering": "create.layout_lettering",
+    "create.ideogram_charref": "create.layout_character_reference",
+    "create.ideogram_poster": "create.layout_poster",
+    "create.ideogram_scene": "create.layout_scene",
+    "create.ideogram_storyboard": "create.layout_storyboard",
+    "create.character_sheet": "create.character_sheet",
+}
+
+
+def build_create_layout(source: Path, version: str) -> Path:
+    files: dict[str, object] = {}
+    for source_id, flow_id in LAYOUT_FLOWS.items():
+        flow = flow_from_source(source, source_id)
+        if flow.get("id") != source_id:
+            raise SystemExit(f"{source_id}: flow file declares id {flow.get('id')!r}")
+        flow["id"] = flow_id
+        text = json.dumps(flow)
+        if source_id != flow_id and source_id in text:
+            raise SystemExit(f"{source_id}: old id still referenced inside the flow")
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.create-layout",
+        "version": version,
+        "default_lang": "en",
+        "name": {"en": "Layout", "es": "Layout", "zh": "版式布局", "ko": "레이아웃"},
+        "summary": {
+            "en": "Compose the image by parts: layout, lettering, posters, scenes, storyboards, character references and sheets. Best with Ideogram 4; the AI-assisted ones use LM Studio.",
+            "es": "Compón la imagen por partes: layout, rótulos, pósters, escenas, storyboards, referencias y hojas de personaje. Mejor con Ideogram 4; los que usan IA necesitan LM Studio.",
+            "zh": "分部分构图：版式、字体、海报、场景、分镜、角色参考与角色设定图。搭配 Ideogram 4 效果最佳；AI 辅助流程需要 LM Studio。",
+            "ko": "이미지를 부분별로 구성: 레이아웃, 레터링, 포스터, 장면, 스토리보드, 캐릭터 레퍼런스와 시트. Ideogram 4와 가장 잘 맞으며, AI 보조 플로우는 LM Studio가 필요합니다.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "layout", "label": {"en": "Layout"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "contributes": {"flows": list(files)},
+    }
+    return write_zip("nomad.create-layout", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT})
 
 
 def main() -> None:
@@ -208,7 +273,8 @@ def main() -> None:
     ap.add_argument("--source", type=Path, default=Path(r"D:\OPENHIKER"))
     ap.add_argument("--version", default="0.1.0")
     args = ap.parse_args()
-    paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [build_core_create(args.source, args.version)]
+    paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
+        build_core_create(args.source, args.version), build_create_layout(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

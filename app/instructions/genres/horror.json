@@ -1,0 +1,8 @@
+{
+  "id": "horror",
+  "label": "Horror",
+  "icon": "🕯️",
+  "flair": 75,
+  "level": "scene",
+  "context_hint": "Unsettling, dread-soaked atmosphere — decayed or wrong-feeling environments, oppressive darkness broken by weak, flickering, or sourceless light. Compositions distort normal perspective slightly (too-empty rooms, too-long hallways, something just out of frame). Figures may be partially obscured or subtly inhuman. Avoid overt gore in favor of psychological unease — the wrongness should be felt more than seen."
+}

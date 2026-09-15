@@ -1831,21 +1831,6 @@
         return;
       }
 
-      if (action === 'assist_ideogram') {
-        window.location.href = '/nomad-studio/create/assist-ideogram';
-        return;
-      }
-
-      if (action === 'assist_ideogram_ref') {
-        window.location.href = '/nomad-studio/create/assist-ideogram-ref';
-        return;
-      }
-
-      if (action === 'assist_ideogram_lettering') {
-        window.location.href = '/nomad-studio/create/assist-ideogram-lettering';
-        return;
-      }
-
       if (action === 'enhance_civitai') {
         window.location.href = '/nomad-studio/create/enhance-civitai';
         return;
@@ -1868,12 +1853,6 @@
 
       if (action === 'variations_json') {
         window.location.href = '/nomad-studio/create/variations-json';
-        return;
-      }
-
-      
-      if (action === 'ideogram_scene') {
-        window.location.href = '/nomad-studio/create/ideogram-scene';
         return;
       }
 

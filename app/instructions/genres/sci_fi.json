@@ -1,0 +1,8 @@
+{
+  "id": "sci_fi",
+  "label": "Sci-Fi",
+  "icon": "🛰️",
+  "flair": 60,
+  "level": "scene",
+  "context_hint": "Sleek, speculative futurism — clean or brutalist architecture, advanced technology integrated naturally into the environment (holograms, neon signage, mechanized structures), and lighting that mixes cool artificial sources with dramatic shadow. Compositions favor scale contrasts (vast megastructures vs. small human figures) or intimate technical detail. Palette ranges from cold chrome-and-blue to saturated cyberpunk neon depending on context."
+}

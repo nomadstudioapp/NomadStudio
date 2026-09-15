@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from flask import Blueprint, abort, redirect, render_template, session, url_for
+from flask import Blueprint, abort, make_response, redirect, render_template, session, url_for
 
 from .viewers_routes import SESSION_KEY as _VIEWER_SESSION_KEY
 from ..services import viewer_service
@@ -298,7 +298,7 @@ def _render_nomad_studio(initial_view: str | None = None):
     create_flows = _load_create_flows()
     refine_flows = _load_refine_flows()
     mix_flows = _load_mix_flows()
-    return render_template(
+    html = render_template(
         "pages/nomad_studio.html",
         active_page="nomad-studio",
         flows=create_flows,
@@ -315,6 +315,11 @@ def _render_nomad_studio(initial_view: str | None = None):
         initial_view_label=_NOMAD_STUDIO_VIEW_LABELS.get(initial_view or ""),
         **_active_viewer_context(),
     )
+    # The cards come from installed packages: never serve a cached hub, or
+    # coming back after installing one still shows the old, empty sections.
+    response = make_response(html)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @main_bp.get("/nomad-studio")

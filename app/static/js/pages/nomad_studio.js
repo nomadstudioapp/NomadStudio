@@ -10,6 +10,13 @@
   window.__nomadStudioLoaded = true;
   console.log('nomad_studio.js cargado correctamente');
 
+  // Back/forward can restore this page from the browser's memory (bfcache)
+  // without asking the server: after installing a package in Settings the
+  // hub would still show the old cards. Reload in that case.
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) window.location.reload();
+  });
+
   var viewMain   = document.getElementById('cs-view-main');
   var viewCreate = document.getElementById('cs-view-create');
   var viewRefine = document.getElementById('cs-view-refine');

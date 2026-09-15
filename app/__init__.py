@@ -31,6 +31,16 @@ def create_app() -> Flask:
     app.register_blueprint(reset_bp)
     app.register_blueprint(packages_bp)
 
+    # Free engines and base flows shipped with the app (bundled-packages/):
+    # installed on the first start, updated when the app brings newer ones,
+    # never reinstalled after the user removes them.
+    try:
+        from .routes.packages_routes import install_bundled_packages
+
+        install_bundled_packages()
+    except Exception:  # noqa: BLE001 — never block startup on a package
+        app.logger.exception("installing bundled packages failed")
+
     # Discover and register addons from addons/ directory
     load_addons(app)
 

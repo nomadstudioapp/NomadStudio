@@ -78,7 +78,7 @@ def _staging(app_dir: Path) -> Path:
 
 
 def _empty_index() -> dict[str, Any]:
-    return {"schema_version": 1, "generated_at": None, "packages": {}, "flows": {}, "engines": {}}
+    return {"schema_version": 1, "generated_at": None, "packages": {}, "flows": {}, "engines": {}, "bundled": {}}
 
 
 def read_index(app_dir: Path) -> dict[str, Any]:
@@ -87,7 +87,7 @@ def read_index(app_dir: Path) -> dict[str, Any]:
         try:
             data = json.loads((base / name).read_text(encoding="utf-8"))
             if isinstance(data, dict) and isinstance(data.get("packages"), dict):
-                for key in ("flows", "engines"):
+                for key in ("flows", "engines", "bundled"):
                     data.setdefault(key, {})
                 return data
         except (FileNotFoundError, json.JSONDecodeError, OSError):
@@ -332,6 +332,9 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
         "requiresMissing": missing,
         "warnings": warnings,
         "sizeBytes": zip_path.stat().st_size,
+        # Optional install order for packages shipped with the app (lower
+        # first): the first image engine installed becomes the default one.
+        "order": manifest.get("order") if isinstance(manifest.get("order"), int) else 100,
     }
 
 
@@ -433,6 +436,7 @@ def install(app_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_i
         if info.get("package") == pkg_id:
             del index["flows"][flow_id]
     index.get("engines", {}).pop(pkg_id, None)
+    was_bundled = bool((index.get("packages", {}).get(pkg_id) or {}).get("bundled"))
     default_lang = manifest["default_lang"]
     for rel, flow in zip(manifest["contributes"].get("flows", []), flows):
         index["flows"][flow["id"]] = {
@@ -465,6 +469,7 @@ def install(app_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_i
         "flows": [f["id"] for f in flows],
         "engines": [pkg_id] if engine else [],
         "has_code": False,
+        "bundled": was_bundled,
     }
     return {"manifest": manifest, "engine": engine, "flows": flows, "summary": summary}
 
@@ -480,6 +485,10 @@ def uninstall(app_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, An
     if pkg_id not in index.get("packages", {}):
         raise PackageError(f"Package not installed: {pkg_id}")
     info = index["packages"].pop(pkg_id)
+    # A package that ships with the app and the user removes on purpose must
+    # not come back on the next start (install_bundled).
+    if pkg_id in index.get("bundled", {}):
+        index["bundled"][pkg_id]["removed"] = True
     for flow_id, flow in list(index.get("flows", {}).items()):
         if flow.get("package") == pkg_id:
             del index["flows"][flow_id]
@@ -489,6 +498,58 @@ def uninstall(app_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, An
         if folder.is_dir() and folder.resolve().parent in (base, base / ".previous"):
             shutil.rmtree(folder)
     return info
+
+
+# ── Packages included with the app ──────────────────────────────────────────
+
+
+def bundled_dir(app_dir: Path) -> Path:
+    """``bundled-packages/`` next to app.py: the free engines and base flows
+    the portable build ships, installed on the first start."""
+    return app_dir.parent / "bundled-packages"
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    core = str(version or "0").split("+", 1)[0].split("-", 1)[0]
+    try:
+        return tuple(int(p) for p in core.split("."))
+    except ValueError:
+        return (0,)
+
+
+def plan_bundled(app_dir: Path, index: dict[str, Any], builtin_flow_ids: set[str]) -> list[tuple[Path, str]]:
+    """Which included ZIPs to install or update now, engines first:
+    [(zip, "install" | "update")]. Skips packages the user uninstalled and
+    ones already at the same or a newer version. Broken ZIPs are skipped (and
+    left to the caller's log) so they never block the app from starting."""
+    folder = bundled_dir(app_dir)
+    if not folder.is_dir():
+        return []
+    plan: list[tuple[tuple, Path, str]] = []
+    for zip_path in sorted(folder.glob("*.zip")):
+        try:
+            summary = inspect_zip(zip_path, index, builtin_flow_ids)
+        except PackageError:
+            continue
+        pkg_id = summary["id"]
+        if (index.get("bundled", {}).get(pkg_id) or {}).get("removed"):
+            continue
+        installed = index.get("packages", {}).get(pkg_id)
+        if installed is None:
+            action = "install"
+        elif _version_tuple(summary["version"]) > _version_tuple(installed.get("version", "0")):
+            action = "update"
+        else:
+            continue
+        plan.append(((0 if summary["engines"] else 1, summary["order"], zip_path.name), zip_path, action))
+    return [(p, a) for _, p, a in sorted(plan, key=lambda x: x[0])]
+
+
+def mark_bundled(index: dict[str, Any], manifest: dict[str, Any]) -> None:
+    pkg_id = manifest["id"]
+    index.setdefault("bundled", {})[pkg_id] = {"version": manifest["version"], "removed": False}
+    if pkg_id in index.get("packages", {}):
+        index["packages"][pkg_id]["bundled"] = True
 
 
 # ── Registry integration ────────────────────────────────────────────────────
@@ -525,9 +586,14 @@ def apply_to_registry(data: dict[str, Any], app_dir: Path, result: dict[str, Any
         else:
             imports.append(record)
         if engine["category"] == "image":
-            active = [i for i in (data.get("activeImportIds") or []) if isinstance(i, str)]
-            if pkg_id not in active:
-                active.append(pkg_id)
+            # Only becomes the active engine when there is none yet: Custom
+            # mode starts from the active list, and generating on every
+            # installed engine at once (most without their model files in
+            # ComfyUI) is not a sensible default.
+            image_ids = {r.get("id") for r in imports if r.get("category") == "image"}
+            active = [i for i in (data.get("activeImportIds") or []) if isinstance(i, str) and i in image_ids]
+            if not active:
+                active = [pkg_id]
             data["activeImportIds"] = active
             data["activeImportId"] = active[0]
     packs = [p for p in data.get("installedPacks", []) if p.get("packId") != pkg_id]
@@ -582,5 +648,7 @@ def list_packages(app_dir: Path, lang: str = "en") -> list[dict[str, Any]]:
                         for e in info.get("engines", [])],
             "installedAt": info.get("installed_at"),
             "infoUrl": info.get("info_url"),
+            "bundled": bool(info.get("bundled")),
+            "license": info.get("license"),
         })
     return out

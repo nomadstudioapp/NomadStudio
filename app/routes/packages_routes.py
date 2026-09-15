@@ -37,6 +37,35 @@ def _builtin_flow_ids() -> set[str]:
     return {str(e.get("id")) for e in flow_engine._load_index_entries() if e.get("id")}
 
 
+def install_bundled_packages() -> list[str]:
+    """Install or update the packages shipped with the app (bundled-packages/)
+    — called once at startup so a fresh install already has the free engines
+    and base flows. Respects packages the user uninstalled. Never raises: a
+    broken bundled package is logged and skipped, the app still starts."""
+    import logging
+
+    log = logging.getLogger(__name__)
+    done: list[str] = []
+    with _lock:
+        index = package_service.read_index(APP_DIR)
+        plan = package_service.plan_bundled(APP_DIR, index, _builtin_flow_ids())
+        if not plan:
+            return done
+        for zip_path, action in plan:
+            try:
+                result = package_service.install(APP_DIR, zip_path, index, _builtin_flow_ids())
+                package_service.mark_bundled(index, result["manifest"])
+                with _registry_transaction() as data:
+                    package_service.apply_to_registry(data, APP_DIR, result)
+                done.append(f"{action} {result['manifest']['id']} {result['manifest']['version']}")
+            except Exception:  # noqa: BLE001
+                log.exception("bundled package failed: %s", zip_path.name)
+        package_service.write_index(APP_DIR, index)
+    if done:
+        log.info("bundled packages: %s", ", ".join(done))
+    return done
+
+
 @packages_bp.get("/api/packages")
 def list_packages():
     return jsonify({

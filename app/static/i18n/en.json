@@ -442,7 +442,8 @@
       "kindFlow": "Flow",
       "sectionEngines": "Engines",
       "sectionFlows": "Flows",
-      "sectionOther": "Other"
+      "sectionOther": "Other",
+      "bundled": "Included with Nomad Studio"
     }
   },
   "album": {

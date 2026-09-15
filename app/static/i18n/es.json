@@ -774,7 +774,8 @@
       "kindFlow": "Flow",
       "sectionEngines": "Motores",
       "sectionFlows": "Flows",
-      "sectionOther": "Otros"
+      "sectionOther": "Otros",
+      "bundled": "Incluido con Nomad Studio"
     }
   },
   "album": {

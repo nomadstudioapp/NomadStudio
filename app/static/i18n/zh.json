@@ -774,7 +774,8 @@
       "kindFlow": "流程",
       "sectionEngines": "引擎",
       "sectionFlows": "流程",
-      "sectionOther": "其他"
+      "sectionOther": "其他",
+      "bundled": "Nomad Studio 自带"
     }
   },
   "album": {

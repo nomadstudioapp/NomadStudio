@@ -160,6 +160,12 @@ def smoke_test(app_dir: Path, version: str) -> None:
         print(f"  health: {health}  | /setup: {setup_status}")
         if not health.get("portable") or health.get("version") != version:
             raise SystemExit("smoke test failed: portable.json not picked up")
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/packages", timeout=10) as r:
+            pkgs = json.loads(r.read().decode()).get("packages", [])
+        expected = len(list((app_dir / "bundled-packages").glob("*.zip")))
+        print(f"  bundled packages installed on first start: {sum(1 for p in pkgs if p.get('bundled'))}/{expected}")
+        if sum(1 for p in pkgs if p.get("bundled")) != expected:
+            raise SystemExit("smoke test failed: bundled packages were not installed")
         # The app must not import anything from outside the bundle.
         # The base libraries for add-ons (PACKAGE_FORMAT.md, level 1) must still
         # import after their test suites were removed.
@@ -210,6 +216,8 @@ def main() -> None:
     ap.add_argument("--version", required=True, help="SemVer, e.g. 0.1.0-internal.1")
     ap.add_argument("--python-home", required=True, type=Path, help="CPython install to bundle")
     ap.add_argument("--update-repo", default="juanpaexpedite/NomadStudio")
+    ap.add_argument("--packages-dir", type=Path, default=REPO / "dist" / "packages",
+                    help="package ZIPs to ship in bundled-packages/ (tools/packages/build_packages.py writes them)")
     args = ap.parse_args()
 
     if platform.system() != "Windows":
@@ -238,6 +246,15 @@ def main() -> None:
          "--target", str(app_dir / "lib"), "-r", str(REPO / "requirements.lock")])
     freed = strip_library_tests(app_dir / "lib")
     print(f"  removed library test suites: {freed / 2**20:.0f} MB")
+
+    # Free engines and base flows, installed by the app on its first start.
+    bundled = sorted(args.packages_dir.glob("*.zip")) if args.packages_dir.is_dir() else []
+    if not bundled:
+        raise SystemExit(f"no package ZIPs in {args.packages_dir} — run tools/packages/build_packages.py first")
+    (app_dir / "bundled-packages").mkdir()
+    for z in bundled:
+        shutil.copy2(z, app_dir / "bundled-packages" / z.name)
+    print(f"  bundled packages: {len(bundled)} ({', '.join(z.stem for z in bundled)})")
 
     print("4/6 portable.json + launcher")
     (app_dir / "portable.json").write_text(json.dumps({

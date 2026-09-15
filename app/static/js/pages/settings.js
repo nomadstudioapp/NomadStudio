@@ -1561,7 +1561,9 @@ function t(key, fallback, vars) {
         '<div class="settings-backup-info">' +
           '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.version) + '</small></span>' +
           contentsHtml(p) +
-          '<span class="settings-backup-meta">' + esc(stateLabel(p)) + ' · ' + esc(p.id) + '</span>' +
+          '<span class="settings-backup-meta">' + esc(stateLabel(p)) +
+            (p.bundled ? ' · ' + esc(t('settings.packages.bundled', 'Included with Nomad Studio')) : '') +
+            ' · ' + esc(p.id) + '</span>' +
         '</div>' +
         '<div class="settings-backup-actions">' +
           '<button type="button" class="btn settings-btn-ghost" data-pkg-ask="' + esc(p.id) + '"' + (busy || !local ? ' disabled' : '') + '>' + esc(t('settings.packages.uninstall', 'Uninstall')) + '</button>' +

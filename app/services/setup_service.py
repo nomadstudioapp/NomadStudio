@@ -26,7 +26,6 @@ from .http_client import http_json
 
 logger = logging.getLogger(__name__)
 
-_EXTRA_DOWNLOADS_PATH = Path(__file__).resolve().parents[1] / "static" / "data" / "engine_downloads_extra.json"
 
 MODEL_EXTENSIONS = (".safetensors", ".gguf", ".pth", ".pt", ".bin", ".ckpt", ".sft")
 
@@ -344,13 +343,12 @@ def comfy_model_index(comfy_url: str) -> tuple[dict[str, list[str]], list[str]]:
 # ── Engines ─────────────────────────────────────────────────────────────────
 
 
-def _load_extra_downloads() -> dict[str, list[dict[str, str]]]:
-    try:
-        data = json.loads(_EXTRA_DOWNLOADS_PATH.read_text(encoding="utf-8"))
-        engines = data.get("engines", {})
-        return engines if isinstance(engines, dict) else {}
-    except Exception:  # noqa: BLE001
-        return {}
+def _engine_downloads(imp: dict[str, Any]) -> list[dict[str, str]]:
+    """Downloads an engine carries besides its workflow: annotation.downloads
+    (engine packages put there the addresses their workflow does not declare,
+    and the import screen stores the ones added by hand)."""
+    annotation = imp.get("annotation") if isinstance(imp.get("annotation"), dict) else {}
+    return [d for d in (annotation.get("downloads") or []) if isinstance(d, dict)]
 
 
 def _loader_refs(workflow: dict[str, Any]) -> list[dict[str, str]]:
@@ -436,7 +434,6 @@ def detect_engines(
     helpers (imports_routes), passed in to avoid an import cycle.
     """
     index, available = comfy_model_index(comfy_url)
-    extra = _load_extra_downloads()
 
     def locate(value: str) -> str | None:
         hits = index.get(_basename(value).lower())
@@ -449,7 +446,7 @@ def detect_engines(
         config = parse_config(workflow) or {}
 
         downloads: dict[str, dict[str, str]] = {}
-        for d in list(extract_downloads(workflow)) + list(extra.get(name, [])):
+        for d in list(extract_downloads(workflow)) + _engine_downloads(imp):
             fname = _basename(d.get("filename", ""))
             if fname and d.get("url"):
                 downloads.setdefault(fname.lower(), {"subfolder": str(d.get("subfolder", "")), "url": d["url"]})

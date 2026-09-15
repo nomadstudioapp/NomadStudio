@@ -302,7 +302,7 @@ Montado para revisarlo antes de migrar al repo `NomadStudio`.
 | Estilos | `app/static/css/setup.css` |
 | API y página | `app/routes/setup_routes.py` (blueprint `setup`, registrado en `app/__init__.py`) |
 | Comprobaciones y detección de motores | `app/services/setup_service.py` |
-| URLs que faltan en los workflows | `app/static/data/engine_downloads_extra.json` (del vault: Z Anime, LoRA Lightning de Qwen, codificador y VAE de Krea2 Roma) |
+| URLs que faltan en los workflows | Dentro de cada paquete de motor, en `annotation.downloads` (las pone `tools/packages/build_packages.py`, del vault: Z Anime, LoRA Lightning de Qwen, codificador y VAE de Krea2 Roma). El núcleo no guarda listas de descargas por motor. |
 | Textos | `setup.*` y `settings.setup.*` en `en/es/zh/ko.json` (113 claves) |
 | Entrada desde Ajustes | Sección "Asistente de configuración" › **Ver el asistente** → `/setup?preview=1` |
 | Primer arranque | `/` redirige a `/setup` si no está terminado; `nav_status.js` también. Las instalaciones que ya tenían carpeta de salida cuentan como terminadas |

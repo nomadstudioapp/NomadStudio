@@ -774,7 +774,8 @@
       "kindFlow": "흐름",
       "sectionEngines": "엔진",
       "sectionFlows": "흐름",
-      "sectionOther": "기타"
+      "sectionOther": "기타",
+      "bundled": "Nomad Studio 기본 포함"
     }
   },
   "album": {

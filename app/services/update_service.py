@@ -376,11 +376,19 @@ def apply(port: int) -> dict[str, Any]:
         "-Root", str(root), "-WaitPid", str(os.getpid()), "-From", str(info.get("from") or ""),
         "-To", str(info["to"]), "-Port", str(port),
     ]
-    flags = 0
-    for name in ("DETACHED_PROCESS", "CREATE_NEW_PROCESS_GROUP", "CREATE_NO_WINDOW"):
-        flags |= getattr(subprocess, name, 0)
-    subprocess.Popen(cmd, cwd=str(root), creationflags=flags, close_fds=True,  # noqa: S603 — fixed script, local app
-                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # A hidden console of its own (CREATE_NO_WINDOW), not DETACHED_PROCESS:
+    # PowerShell started without any console exits at once (measured). Break
+    # away from the parent's job when Windows allows it, so closing the
+    # launcher window cannot take the script down with it.
+    base_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    for flags in (base_flags | getattr(subprocess, "CREATE_BREAKAWAY_FROM_JOB", 0), base_flags):
+        try:
+            subprocess.Popen(cmd, cwd=str(root), creationflags=flags, close_fds=True,  # noqa: S603 — fixed script, local app
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            break
+        except OSError:
+            if flags == base_flags:
+                raise UpdateError("Could not start the update script") from None
     logger.info("update %s → %s: handing over to %s", info.get("from"), info["to"], script)
     # Give the HTTP response time to reach the browser, then exit so the
     # script can rename app/ (Windows keeps a running program's folder locked).

@@ -1,0 +1,520 @@
+{#- Shared body for a single flow (steps + results feed + all its modals),
+   reused by:
+   - ns_create_flow.html (standalone /nomad-studio/create|refine|mix/<slug>
+     pages) — renders its own topbar (embedded not set / falsy).
+   - ns_session_workspace.html (Session workspace's native flow mount,
+     #cs-session-flow-native) — passes embedded=true to skip the topbar
+     entirely; the session page's own topbar carries the equivalent
+     controls instead (same ids: #nsc-flow-breadcrumb, #nit-tray-btn,
+     #ncf-mode-toggle — flowBootLoad()/ns_image_tray.js/flow-history.js
+     already look those up by plain document.getElementById(), so
+     reusing the ids is what makes this transparent — no JS branching
+     needed for the embedded case). See Fase 4 of the Session iframe
+     removal work for the full rationale. -#}
+<div class="nsc-page" id="nsc-flow-root" data-flow-id="{{ flow_id }}">
+
+  <!-- ── Top bar ──────────────────────────────────────────────────────────── -->
+  {% set _section = section | default('create') %}
+  {% set _section_label = 'Refine' if _section == 'refine' else ('Mix' if _section == 'mix' else 'Create') %}
+  {% if not embedded %}
+  <div class="nsc-topbar">
+    <a href="/nomad-studio#{{ _section }}" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="/nomad-studio">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <a href="/nomad-studio#{{ _section }}">{{ _section_label }}</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current" id="nsc-flow-breadcrumb">…</span>
+    </p>
+    <div class="nsc-topbar-center">
+      {% if viewer_is_vanish %}
+      <a class="nsc-topbar-viewer nsc-topbar-vanish" href="{{ url_for('viewers.switch_viewer') }}" title="Vanish Session — nothing is saved. Click to end it.">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 21c0-3 2-4 4-4s4 1 4 4M12 3a5 5 0 0 0-5 5v7l2-1.5 1.5 1.5L12 14l1.5 1.5L15 14l2 1.5V8a5 5 0 0 0-5-5z"/></svg>
+        <span data-i18n="flow.vanishActive">Vanish Session — nothing is saved</span>
+      </a>
+      {% elif viewer_name %}
+      <p class="nsc-topbar-viewer" id="nsc-topbar-viewer" title="Current session">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>{{ viewer_name }}</span>
+      </p>
+      {% endif %}
+      <!-- Only shown while a Depot is active (session["active_depot_id"],
+           see depots_routes.py) — populated by services/depot_indicator.js,
+           right next to the viewer badge since this is the topbar visible
+           while actually generating (where "Send to Depot" gets used). -->
+      <a class="nsc-topbar-depot" id="nsc-topbar-depot" href="/build" title="Active Depot — click to manage" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
+        <span id="nsc-topbar-depot-name"></span>
+      </a>
+    </div>
+    <div style="flex:1"></div>
+    <button class="nit-tray-btn" id="nit-tray-btn" type="button" aria-label="Image Tray">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>
+      <span data-i18n="flow.tray.shortLabel">Tray</span>
+      <span class="nit-tray-badge" id="nit-tray-badge" hidden>0</span>
+    </button>
+    <div class="cs-mode-toggle nsc-topbar-toggle" id="ncf-mode-toggle" role="group" aria-label="Interface mode">
+      <button class="cs-mode-btn" data-ncf-mode="simple" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span data-i18n="hub.mode.simple">Simple</span>
+        <span class="cs-mode-tip" data-i18n="hub.mode.simpleTip">Fastest · zero setup</span>
+      </button>
+      <button class="cs-mode-btn" data-ncf-mode="basic" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 15l-4.9 3.2 1.9-5.8L4 8.8h6.1z"/></svg>
+        <span data-i18n="hub.mode.guided">Guided</span>
+        <span class="cs-mode-tip" data-i18n="hub.mode.guidedTip">Simple · one model</span>
+      </button>
+      <button class="cs-mode-btn" data-ncf-mode="advanced" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="17" cy="18" r="2"/><path d="M15 18h-4"/></svg>
+        <span data-i18n="hub.mode.custom">Custom</span>
+        <span class="cs-mode-tip" data-i18n="hub.mode.customTip">Personalized · many models</span>
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Two-panel layout ─────────────────────────────────────────────────── -->
+  <div class="nsc-main nsc-main--scenes">
+
+    <!-- LEFT: all steps rendered at once by JS. Split into a scrolling area
+         (every step) + a static footer (the Generate/action step) so the
+         button never moves when the params list scrolls. -->
+    <aside class="nsc-inputs" id="nsc-flow-steps">
+      <div class="nsc-steps-scroll" id="ncf-steps-scroll">
+        <!-- Populated by ns_create_flow.js -->
+      </div>
+      <div class="nsc-steps-footer" id="ncf-steps-footer"></div>
+    </aside>
+
+    <!-- MIDDLE: per-model Custom params (shown only in Custom mode with 1+ selected workflows) -->
+    <aside class="nsc-model-params" id="ncf-model-params-aside" hidden>
+      <p class="nsc-param-title" data-i18n="flow.customParams">Custom params</p>
+      <div class="nsc-field-row">
+        <label class="nsc-field-label" for="ncf-wf-aside-seed" data-i18n="flow.seed">Seed</label>
+        <input class="nsc-input nsc-input--seed" id="ncf-wf-aside-seed" type="number" value="-1" min="-1" placeholder="-1 = random"/>
+        <button class="nsc-icon-btn" id="ncf-wf-aside-seed-random" type="button" aria-label="Randomize">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l3 3-3 3M2 20l5-5M2 4l5 5-5 5M21 7H7M7 17H3"/></svg>
+        </button>
+      </div>
+      <div class="ncf-wf-tabs" id="ncf-wf-tabs" role="tablist" aria-label="Selected models"></div>
+      <div class="ncf-wf-tab-bodies" id="ncf-wf-tab-bodies"></div>
+    </aside>
+
+    <!-- MIDDLE (2nd): Live Preview — only shown when the flow's workflow_params
+         step declares "live_preview": true (e.g. Remove Background) -->
+    <aside class="nsc-live-preview-aside" id="ncf-live-preview-aside" hidden>
+      <!-- Populated by flow-step-workflow-params.js -->
+    </aside>
+
+    <!-- MIDDLE (3rd): Options panel — Aspect ratio / Assist options / Model,
+         opened by their respective icon buttons instead of a centered modal. -->
+    <aside class="nsc-options-panel" id="ncf-options-panel" hidden>
+      <div class="nsc-options-panel-header">
+        <span class="nsc-options-panel-title" id="ncf-options-panel-title"></span>
+        <button class="nsc-options-panel-action" id="ncf-options-panel-action" type="button" hidden></button>
+        <button class="nse-modal-close" id="ncf-options-panel-close" type="button" aria-label="Close">
+          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+      <div class="nsc-options-panel-body" id="ncf-options-panel-body"></div>
+    </aside>
+
+    <!-- MIDDLE (4th): Nested options panel — opened FROM inside an
+         already-open options panel (e.g. "Choose a LoRA" clicked from within
+         the Advanced panel's LoRAs section) so it doesn't replace/lose that
+         panel's own content and scroll position. Marked nsc-options-exempt
+         so the panel-1 outside-click handler above doesn't treat clicks in
+         here as "outside" and close Advanced out from under it. -->
+    <aside class="nsc-options-panel nsc-options-exempt" id="ncf-options-panel-2" hidden>
+      <div class="nsc-options-panel-header">
+        <span class="nsc-options-panel-title" id="ncf-options-panel-2-title"></span>
+        <button class="nse-modal-close" id="ncf-options-panel-2-close" type="button" aria-label="Close">
+          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+      <div class="nsc-options-panel-body" id="ncf-options-panel-2-body"></div>
+    </aside>
+
+    <!-- RIGHT: generated images feed -->
+    <div class="nss-scenes-area" id="ncf-results-area">
+      <div class="ncf-results-header" id="ncf-results-header">
+      <!-- Vertical stack, Refine on top — same widget family as the hub's
+           .cs-card-zoom column (reset, +, -). Order here is DOM order, not a
+           CSS `order` trick, so keyboard tab order matches what's on screen. -->
+      <div class="ncf-results-toolbar ncf-results-toolbar--rail">
+        <button class="btn create-action-btn nsc-options-trigger" type="button" id="ncf-gallery-refine-btn" aria-label="Refine">
+          <svg class="explore-zoom-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+          </svg>
+          <span class="action-tip" data-i18n="flow.results.refine">Refine</span>
+        </button>
+        <button class="btn create-action-btn" type="button" id="ncf-gallery-zoom-in" aria-label="Zoom in">
+          <svg class="explore-zoom-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+          <span class="action-tip" data-i18n="flow.results.zoomIn">Zoom in</span>
+        </button>
+        <button class="btn create-action-btn" type="button" id="ncf-gallery-zoom-out" aria-label="Zoom out">
+          <svg class="explore-zoom-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+          <span class="action-tip" data-i18n="flow.results.zoomOut">Zoom out</span>
+        </button>
+      </div>
+      </div>
+      <div class="ncf-results-scroll">
+        <div class="nsc-empty" id="ncf-results-empty">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          <p class="nsc-empty-title" data-i18n="flow.results.emptyTitle">Your scenes will appear here</p>
+          <p class="nsc-empty-sub" id="ncf-results-sub" data-i18n="flow.results.emptySub">Fill in the world context and generate your first scene.</p>
+        </div>
+        <div class="ncf-results-grid" id="ncf-results-grid" style="display:none"></div>
+      </div>
+
+      <!-- ── Chat bar — only shown for .chat flows after first image ──── -->
+      <div class="ncf-chat-bar" id="ncf-chat-bar" hidden>
+        <div class="ncf-bottom-tabpanel" data-tab-panel="main">
+          <div class="ncf-chat-wf-row" id="ncf-chat-wf-row">
+            <label class="ncf-chat-ep-toggle" id="ncf-chat-ep-label">
+              <input type="checkbox" id="ncf-chat-ep-toggle" class="ncf-chat-ep-input">
+              <span class="ncf-chat-ep-track"><span class="ncf-chat-ep-thumb"></span></span>
+              <span class="ncf-chat-ep-text" data-i18n="flow.chat.refineImage">Refine Image</span>
+              <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.chat.refineImageTip">On: an AI rewrites your instruction into a full prompt before sending. Off: your text is sent to the workflow as-is.</span>
+            </label>
+            <span class="ncf-chat-wf-sep" id="ncf-chat-wf-sep" hidden></span>
+            <div class="ncf-chat-wf-editwith" id="ncf-chat-wf-editwith" hidden>
+              <span class="ncf-chat-wf-label" data-i18n="flow.chat.editWith">Edit with</span>
+              <div class="ncf-chat-wf-wrapper">
+                <select class="ncf-chat-wf-select" id="ncf-chat-wf-select" aria-label="Edit workflow">
+                  <option value="" data-i18n="flow.chat.generateNewOption">— generate new —</option>
+                </select>
+                <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+              </div>
+              <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.chat.editWithTip">Pick a refine workflow to apply your instruction to the last image. Leave on "— generate new —" to create a brand-new image instead.</span>
+            </div>
+            <span class="ncf-chat-wf-sep"></span>
+            <div class="ncf-chat-scene-wrap">
+              <span class="ncf-chat-wf-label" data-i18n="flow.chat.scene">Scene</span>
+              <div class="ncf-chat-wf-wrapper ncf-chat-scene-wrapper">
+                <select class="ncf-chat-wf-select" id="ncf-chat-scene-select" aria-label="Scene to edit"></select>
+                <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+              </div>
+              <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.chat.sceneTip">Choose which scene your next message works from. With "Edit with", it's the image edited. With "— generate new —", it's the prompt your instruction is layered onto.</span>
+            </div>
+          </div>
+          <div class="ncf-chat-bar-inner">
+            <textarea
+              class="ncf-chat-input"
+              id="ncf-chat-input"
+              rows="1"
+              placeholder="Describe what to change… (Ctrl+Enter to send)"
+              aria-label="Chat instruction"
+              data-i18n-attr="placeholder:flow.chat.placeholder"
+            ></textarea>
+            <button class="ncf-chat-send-btn" id="ncf-chat-send-btn" type="button" aria-label="Send">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+              </svg>
+              <span class="ncf-chat-tip" role="tooltip" data-i18n="flow.chat.sendTip">Send · Ctrl+Enter</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Story bar — only shown for story flows after the first image ──── -->
+      <div class="ncf-chat-bar ncf-story-bar" id="ncf-story-bar" hidden>
+        <div class="ncf-bottom-tabpanel" data-tab-panel="main">
+          <div class="ncf-chat-wf-row">
+            <div class="ncf-chat-wf-editwith" id="ncf-story-reasoning-wrap">
+              <span class="ncf-chat-wf-label" data-i18n="flow.story.think">Think</span>
+              <div class="ncf-chat-wf-wrapper">
+                <select class="ncf-chat-wf-select" id="ncf-story-reasoning-select" aria-label="Reasoning level">
+                  <option value="off" data-i18n="flow.story.reasoning.off">Off</option>
+                  <option value="low" data-i18n="flow.story.reasoning.low">Low</option>
+                  <option value="medium" data-i18n="flow.story.reasoning.medium">Medium</option>
+                  <option value="high" data-i18n="flow.story.reasoning.high">High</option>
+                  <option value="on" data-i18n="flow.story.reasoning.on">On</option>
+                </select>
+                <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+              </div>
+              <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.story.thinkTip">Off: fast, no reasoning. Low/Medium/High: graduated reasoning depth (models that only support Off/On fall back to On). On: full step-by-step reasoning before each scene.</span>
+            </div>
+            <span class="ncf-chat-wf-sep"></span>
+            <label class="ncf-chat-ep-toggle" id="ncf-story-consistency-label">
+              <input type="checkbox" id="ncf-story-consistency-toggle" class="ncf-chat-ep-input">
+              <span class="ncf-chat-ep-track"><span class="ncf-chat-ep-thumb"></span></span>
+              <span class="ncf-chat-ep-text" data-i18n="flow.story.vision">Vision</span>
+              <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.story.visionTip">On: before writing each scene, analyzes the image the previous scene just produced with the vision model to lock in character/environment details, and reuses the same seed for every scene in this batch.</span>
+            </label>
+            <span class="ncf-chat-wf-sep"></span>
+            <div class="ncf-chat-wf-editwith" id="ncf-story-scenes-wrap">
+              <span class="ncf-chat-wf-label" data-i18n="flow.story.scenes">Scenes</span>
+              <div class="ncf-chat-wf-wrapper">
+                <select class="ncf-chat-wf-select" id="ncf-story-scenes-select" aria-label="Number of scenes to generate"></select>
+                <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+              </div>
+              <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.story.scenesTip">How many consecutive scenes to write and generate from this one instruction.</span>
+            </div>
+            <span class="ncf-chat-wf-sep"></span>
+            <button class="ncf-story-json-btn nsc-options-trigger" id="ncf-story-json-btn" type="button" aria-label="View story JSON" title="View story JSON">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 4H7a2 2 0 0 0-2 2v3a2 2 0 0 1-2 3 2 2 0 0 1 2 3v3a2 2 0 0 0 2 2h2"/>
+                <path d="M15 4h2a2 2 0 0 1 2 2v3a2 2 0 0 0 2 3 2 2 0 0 0-2 3v3a2 2 0 0 1-2 2h-2"/>
+              </svg>
+              <span class="ncf-chat-tip" role="tooltip" data-i18n="flow.story.viewJson">View story JSON</span>
+            </button>
+          </div>
+          <div class="ncf-chat-bar-inner">
+            <textarea
+              class="ncf-chat-input"
+              id="ncf-story-input"
+              rows="1"
+              placeholder="What happens next? (Ctrl+Enter to send)"
+              aria-label="Story direction"
+              data-i18n-attr="placeholder:flow.story.placeholder"
+            ></textarea>
+            <button class="ncf-chat-send-btn" id="ncf-story-send-btn" type="button" aria-label="Send">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+              </svg>
+              <span class="ncf-chat-tip" role="tooltip" data-i18n="flow.chat.sendTip">Send · Ctrl+Enter</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ── Vision model picker modal ─────────────────────────────────────────── -->
+<div class="nse-modal-backdrop" id="ncf-vision-model-modal" role="dialog" aria-modal="true" aria-label="Select vision model" hidden>
+  <div class="nse-modal">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.visionModal.title">Vision Model</span>
+      <button class="nse-modal-close" id="ncf-vision-modal-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <div class="nse-modal-body">
+      <p class="nse-modal-section-label" style="margin-bottom:0.6rem;font-size:0.72rem;color:var(--muted)" data-i18n="flow.visionModal.desc">Model used to analyze reference images.</p>
+      <div class="nse-model-list" id="ncf-vision-model-list" role="listbox" aria-label="Available vision models">
+        <p class="nse-model-empty" data-i18n="flow.visionModal.loading">Loading models…</p>
+      </div>
+    </div>
+    <footer class="nse-modal-footer">
+      <button class="nse-modal-apply" id="ncf-vision-modal-apply" type="button" data-i18n="flow.common.apply">Apply</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ── Compose prompt picker modal ───────────────────────────────────────── -->
+<div class="nse-modal-backdrop" id="ncf-compose-prompt-modal" role="dialog" aria-modal="true" aria-label="Select compose prompt" hidden>
+  <div class="nse-modal">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.composePrompt.title">Compose Prompt</span>
+      <button class="nse-modal-close" id="ncf-compose-prompt-modal-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <div class="nse-modal-body">
+      <div class="nse-model-list" id="ncf-compose-prompt-modal-list" role="listbox" aria-label="Compose prompts"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CivitAI generation panel content — rendered into the shared lateral
+     options panel (flow-options-panel.js) instead of its own modal, same
+     pattern as Aspect ratio / Advanced / JSON Prompt. Kept as a detached,
+     reusable DOM subtree that flow-step-civitai-paste.js moves in and out
+     of #ncf-options-panel-body on open/close, so every existing id-based
+     lookup in that file keeps working unchanged. ───────────────────────── -->
+<div id="ncf-civitai-panel-content" hidden>
+  <div class="ncf-civitai-section">
+    <div class="ncf-civitai-paste-row">
+      <p class="nse-modal-section-label" data-i18n="flow.civitai.pasteInfo">Paste generation info</p>
+      <button id="ncf-civitai-paste-btn" type="button" class="ncf-json-file-btn" title="Paste from clipboard">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="2.5" width="8" height="11" rx="1"/><path d="M6.5 2.5V1.5h3v1"/>
+        </svg>
+        <span data-i18n="flow.civitai.paste">Paste</span>
+      </button>
+    </div>
+    <textarea id="ncf-civitai-paste-ta" class="ncf-civitai-textarea" rows="5" placeholder="Paste the full CivitAI generation block here — positive prompt, negative, and parameters…" data-i18n-attr="placeholder:flow.civitai.pastePlaceholder"></textarea>
+  </div>
+  <div id="ncf-civitai-detected" class="ncf-civitai-section" hidden>
+    <p class="nse-modal-section-label" data-i18n="flow.civitai.detected">Detected</p>
+    <div id="ncf-civitai-detected-list" class="ncf-civitai-detected-list"></div>
+  </div>
+  <div class="ncf-civitai-section">
+    <p class="nse-modal-section-label" data-i18n="flow.civitai.workflow">Workflow</p>
+    <div class="ncf-civitai-match-row-ctrl">
+      <select id="ncf-civitai-wf-select" class="nsc-select ncf-civitai-wf-select"></select>
+      <button id="ncf-civitai-match-btn" type="button" class="ncf-btn ncf-btn--secondary" data-i18n="flow.civitai.match">Match</button>
+    </div>
+  </div>
+  <div id="ncf-civitai-match-results" class="ncf-civitai-section" hidden>
+    <p class="nse-modal-section-label" data-i18n="flow.civitai.matchResults">Match results</p>
+    <div id="ncf-civitai-match-list" class="ncf-civitai-match-list"></div>
+  </div>
+  <div class="ncf-json-panel-footer">
+    <button id="ncf-civitai-cancel-btn" type="button" class="nse-modal-secondary" data-i18n="flow.common.cancel">Cancel</button>
+    <button id="ncf-civitai-apply-btn" type="button" class="nse-modal-apply ncf-civitai-apply-btn" disabled data-i18n="flow.common.apply">Apply</button>
+  </div>
+</div>
+
+<!-- ── Workflow queue modal ──────────────────────────────────────────────── -->
+<div class="nse-modal-backdrop" id="ncf-wq-modal" role="dialog" aria-modal="true" aria-label="Select workflows" hidden>
+  <div class="nse-modal">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.wq.title">Workflows</span>
+      <button class="nse-modal-close" id="ncf-wq-modal-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <div class="nse-modal-body">
+      <p class="nse-modal-section-label" style="margin-bottom:0.5rem" data-i18n="flow.wq.desc">Select one or more workflows to use in Custom mode. Generate will run all selected workflows in parallel.</p>
+      <div class="nse-model-list" id="ncf-wq-modal-list" role="listbox" aria-multiselectable="true" aria-label="Available workflows">
+        <p class="nse-model-empty" data-i18n="flow.wq.loading">Loading…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Lightbox ──────────────────────────────────────────────────────────── -->
+<div class="nsc-lightbox" id="nsc-lightbox" hidden role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button class="nsc-lightbox-close" id="nsc-lightbox-close" aria-label="Close viewer" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
+  <button class="nsc-lightbox-nav" id="nsc-lightbox-prev" aria-label="Previous image" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="nsc-lightbox-inner">
+    <img class="nsc-lightbox-img" id="nsc-lightbox-img" src="" alt="Generated image" />
+    <canvas class="nsc-lightbox-bbox-canvas" id="nsc-lightbox-bbox-canvas" aria-hidden="true"></canvas>
+  </div>
+  <button class="nsc-lightbox-nav" id="nsc-lightbox-next" aria-label="Next image" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+  <p class="nsc-lightbox-prompt" id="nsc-lightbox-prompt" hidden></p>
+  <p class="nsc-lightbox-counter" id="nsc-lightbox-counter" aria-live="polite"></p>
+</div>
+
+<!-- ── Ideogram Composer modal ────────────────────────────────────────────── -->
+<div class="nse-modal-backdrop ncf-idg-backdrop" id="ncf-ideogram-modal" role="dialog" aria-modal="true" aria-label="Edit composition" hidden>
+  <div class="nse-modal nse-modal--ideogram">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.ideogram.title">Edit Composition</span>
+      <div class="ncf-idg-header-actions">
+        <button class="ncf-btn ncf-btn--ghost ncf-idg-json-toggle" id="ncf-idg-json-toggle" type="button" data-i18n="flow.ideogram.rawJson">Raw JSON</button>
+        <button class="nse-modal-close" id="ncf-ideogram-modal-close" type="button" aria-label="Close">
+          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="nse-modal-body ncf-idg-body">
+      <!-- Visual mode -->
+      <div class="ncf-idg-visual" id="ncf-idg-visual">
+        <div class="ncf-idg-cards-panel" id="ncf-idg-cards-panel">
+          <!-- Element cards injected by JS -->
+        </div>
+        <div class="ncf-idg-canvas-panel">
+          <div class="ncf-idg-canvas-wrap" id="ncf-idg-canvas-wrap">
+            <svg class="ncf-idg-canvas" id="ncf-idg-canvas" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
+              <rect width="1000" height="1000" fill="var(--nss-bg-2, #1a1a1a)" rx="4"/>
+              <!-- Element rects injected by JS -->
+            </svg>
+          </div>
+          <p class="ncf-idg-canvas-hint" data-i18n="flow.ideogram.hint">Drag to move · Corner handles to resize</p>
+        </div>
+      </div>
+      <!-- Raw JSON mode -->
+      <div class="ncf-idg-raw" id="ncf-idg-raw" hidden>
+        <textarea class="ncf-idg-raw-ta" id="ncf-idg-raw-ta" spellcheck="false" rows="24"></textarea>
+        <p class="ncf-idg-raw-status" id="ncf-idg-raw-status"></p>
+      </div>
+    </div>
+    <footer class="nse-modal-footer">
+      <button class="nse-modal-apply" id="ncf-ideogram-modal-apply" type="button" data-i18n="flow.common.apply">Apply</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ── Layer Composer modal ───────────────────────────────────────────────── -->
+<div class="nse-modal-backdrop ncf-lc-backdrop" id="ncf-layer-modal" role="dialog" aria-modal="true" aria-label="Position layer" hidden>
+  <div class="nse-modal nse-modal--layer-composer">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.layerComposer.title">Position &amp; Scale Layer</span>
+      <button class="nse-modal-close" id="ncf-lc-modal-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <div class="nse-modal-body ncf-lc-body">
+      <div class="ncf-lc-canvas-panel">
+        <div class="ncf-lc-canvas-wrap" id="ncf-lc-canvas-wrap">
+          <svg class="ncf-lc-canvas" id="ncf-lc-canvas" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
+            <rect width="1000" height="1000" fill="var(--nss-bg-2, #1a1a1a)" rx="4"/>
+            <!-- bg image + layer group injected by JS -->
+          </svg>
+        </div>
+        <p class="ncf-lc-canvas-hint" data-i18n="flow.layerComposer.hint">Drag the layer to move · Corner handle to resize (aspect ratio locked)</p>
+      </div>
+      <div class="ncf-lc-lighting-panel">
+        <p class="ncf-lc-lighting-title" data-i18n="flow.layerComposer.lighting">Lighting</p>
+        <div class="ncf-lc-slider-row">
+          <label><span data-i18n="flow.layerComposer.brightness">Brightness</span> <span id="ncf-lc-brightness-val">0</span></label>
+          <input type="range" id="ncf-lc-brightness" min="-100" max="100" step="1" value="0">
+        </div>
+        <div class="ncf-lc-slider-row">
+          <label><span data-i18n="flow.layerComposer.warmth">Warmth</span> <span id="ncf-lc-warmth-val">0</span></label>
+          <input type="range" id="ncf-lc-warmth" min="-100" max="100" step="1" value="0">
+        </div>
+        <div class="ncf-lc-slider-row">
+          <label><span data-i18n="flow.layerComposer.hue">Hue</span> <span id="ncf-lc-hue-val">0</span></label>
+          <input type="range" id="ncf-lc-hue" min="-180" max="180" step="1" value="0">
+        </div>
+        <label class="ncf-lc-checkbox-label">
+          <input type="checkbox" id="ncf-lc-match-enabled">
+          <span data-i18n="flow.layerComposer.matchLighting">Match lighting to background</span>
+        </label>
+        <div class="ncf-lc-slider-row" id="ncf-lc-match-strength-row" hidden>
+          <label><span data-i18n="flow.layerComposer.matchStrength">Match strength</span> <span id="ncf-lc-match-strength-val">0.3</span></label>
+          <input type="range" id="ncf-lc-match-strength" min="0" max="1" step="0.05" value="0.3">
+        </div>
+        <p class="ncf-lc-lighting-hint" id="ncf-lc-lighting-hint"></p>
+      </div>
+    </div>
+    <footer class="nse-modal-footer">
+      <button class="nse-modal-apply" id="ncf-lc-modal-apply" type="button" data-i18n="flow.common.apply">Apply</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ── Image Tray modal ───────────────────────────────────────────────────── -->
+<div class="nse-modal-backdrop" id="nit-tray-modal" role="dialog" aria-modal="true" aria-label="Image Tray" hidden>
+  <div class="nse-modal nse-modal--wide">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.tray.title">Image Tray</span>
+      <button class="nse-modal-close" id="nit-tray-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <div class="nse-modal-body">
+      <p class="nse-model-empty" id="nit-tray-empty" hidden data-i18n="flow.tray.empty">No images in tray yet.</p>
+      <div class="nit-tray-grid" id="nit-tray-grid"></div>
+    </div>
+  </div>
+</div>

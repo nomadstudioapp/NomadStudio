@@ -1,0 +1,48 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page nsc-flow-page{% endblock %}
+
+{% block content %}
+{% include 'layout/_flow_body.html' %}
+{% endblock %}
+
+{% block scripts %}
+{# Flow engine — split from ns_create_flow.js; load in dependency order #}
+<script src="{{ url_for('static', filename='js/pages/flow/flow-state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-helpers.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-history.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-generate-btn.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-model-picker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-json-modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-quality.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-quantization.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-enum-modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-options-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-aspect-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-llm-options-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-model-options-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-workflow-picker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-prompt-input.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-json-input.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-civitai-paste.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-compose-prompt.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-llm-transform.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-image-picker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-template-picker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-lettering.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-upscale.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-workflow-params.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-workflow-params-aside.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-vision-describe.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-bulk-vision.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-scene-builder.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-ideogram.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-step-layer-compositor.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-render-all.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-params-reuse.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-generation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-gallery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/flow/flow-boot.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/ns_image_tray.js') }}"></script>
+{% endblock %}

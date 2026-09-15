@@ -1,0 +1,105 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page album-page{% endblock %}
+
+{% block content %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="/nomad-studio" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current" data-i18n="hub.cards.album.name">Album</span>
+    </p>
+    <!-- Only relevant in Images mode — hidden in Flows mode via
+         body.explore-page-body (view_mode.js toggles that class page-wide
+         already, this just keys off it instead of the elements' own
+         hidden/shown container like before, since they now live in the
+         always-rendered topbar instead of inside #album-images-view). -->
+    <div class="explore-toolbar-top" id="album-topbar-toolbar">
+      <div class="explore-searchbar" role="search">
+        <input type="text" id="album-images-search-input" placeholder="Search words in prompt..." data-i18n-attr="placeholder:album.images.searchPlaceholder" />
+      </div>
+      <div class="explore-filter-tools" aria-label="Images filter toggles">
+        <button class="btn" type="button" id="album-images-favorites-toggle" title="Show favorites only" aria-label="Show favorites only" aria-pressed="false" data-i18n-attr="title:album.images.favoritesOnly,aria-label:album.images.favoritesOnly">
+          <i data-lucide="heart" class="explore-toolbar-icon" aria-hidden="true"></i>
+        </button>
+        <button class="btn" type="button" id="album-images-diamond-toggle" title="Hide diamond images" aria-label="Hide diamond images" aria-pressed="false" data-i18n-attr="title:album.images.hideDiamond,aria-label:album.images.hideDiamond">
+          <i data-lucide="diamond" class="explore-toolbar-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <span class="album-count" id="album-count"></span>
+  </div>
+
+  <!-- ── Card grid (filters column removed) ─────────────────────────────── -->
+  <div class="album-layout">
+
+    <div class="album-main" id="album-flows-view">
+      <nav class="rp-grid album-grid" id="album-grid" aria-label="Album entries"></nav>
+      <div class="album-empty" id="album-empty" hidden>
+        <p data-i18n="album.empty.title">Todavía no hay nada en tu Álbum.</p>
+        <p class="muted-note" data-i18n="album.empty.hint">Genera algo en Create y aparecerá aquí — para siempre, sin límite.</p>
+      </div>
+    </div>
+
+    <div class="album-main explore-page" id="album-images-view" hidden>
+      <div class="explore-toolbar">
+        <p class="explore-inline-status" id="album-images-status" hidden data-i18n="album.images.loading">Loading gallery...</p>
+      </div>
+
+      <div id="album-images-groups" class="explore-groups"></div>
+      <div id="album-images-empty" class="muted-note" style="display:none;" data-i18n="album.images.empty">No images yet. Generate images in Studio first.</div>
+
+      <div class="gallery-viewer-modal" id="album-images-viewer-modal" aria-hidden="true"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Card size zoom (reset/+/-, right side) — same widget/positioning
+       as Nomad Studio's own (see .cs-card-zoom in nomad_studio.css), wired
+       up in album_gallery.js since this page doesn't load nomad_studio.js. -->
+  <div class="cs-card-zoom" id="album-card-zoom">
+    <button class="cs-card-zoom-btn" id="album-view-toggle" type="button" aria-label="Switch to Images view" aria-pressed="false">
+      <svg id="album-view-toggle-icon" viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/></svg>
+      <span class="cs-mode-tip" id="album-view-toggle-tip" data-i18n="album.zoom.imagesView">Images view</span>
+    </button>
+    <button class="cs-card-zoom-btn" id="album-card-zoom-reset" type="button" aria-label="Reset card size">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      <span class="cs-mode-tip" data-i18n="album.zoom.reset">Reset card size</span>
+    </button>
+    <button class="cs-card-zoom-btn" id="album-card-zoom-in" type="button" aria-label="Larger cards">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="cs-mode-tip" data-i18n="album.zoom.larger">Larger cards</span>
+    </button>
+    <button class="cs-card-zoom-btn" id="album-card-zoom-out" type="button" aria-label="Smaller cards">
+      <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+      <span class="cs-mode-tip" data-i18n="album.zoom.smaller">Smaller cards</span>
+    </button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Both album_gallery.js and album_images.js (+ its two dependencies) must
+     load BEFORE view_mode.js: view_mode.js's initial apply() call — which
+     may auto-activate either mode right away depending on the last-saved
+     view — reads window.albumImagesPage / window.albumGalleryPage to decide
+     whether to call init()/refresh(). Loaded after, that check would
+     silently see "not defined yet" on the very first page load (leaving the
+     active mode visually shown but never actually populated until a later
+     user click happened to occur after every script had finished loading —
+     this exact bug already bit the Images side once, see git history). -->
+<script src="{{ url_for('static', filename='js/pages/album/pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/album/mapper.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/album/album_images.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/album_gallery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/album/view_mode.js') }}"></script>
+{% endblock %}

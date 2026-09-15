@@ -1,0 +1,198 @@
+{% extends 'layout/base.html' %}
+
+{# Set server-side (not just by mobile.js at runtime) so body.mobile-page-body
+   .sidebar{display:none} (responsive.css) applies before first paint —
+   otherwise the legacy sidebar renders visible for ~500ms until the bottom
+   <script> tag runs and adds the class itself. #}
+{% block body_class %}mobile-page-body{% endblock %}
+
+{% block content %}
+<section class="mobile-page">
+
+  <!-- Single-image gallery viewer -->
+  <div class="mobile-viewer" id="mobile-viewer">
+    <p class="mobile-viewer-status" id="mobile-viewer-status">Loading...</p>
+
+    <div class="mobile-slide" id="mobile-slide" hidden>
+      <img class="mobile-slide-image" id="mobile-slide-image" alt="" />
+
+      <!-- Prev / Next arrows (always visible) -->
+      <button type="button" class="mobile-slide-nav prev" id="mobile-prev-btn" aria-label="Previous image">
+        <i data-lucide="chevron-left" class="nav-icon" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="mobile-slide-nav next" id="mobile-next-btn" aria-label="Next image">
+        <i data-lucide="chevron-right" class="nav-icon" aria-hidden="true"></i>
+      </button>
+
+      <!-- Bottom actions (always visible) -->
+      <div class="mobile-slide-actions">
+        <button type="button" class="mobile-slide-action-btn" id="mobile-edit-btn" aria-label="Edit image">
+          <i data-lucide="wand-2" class="nav-icon" aria-hidden="true"></i>
+          <span>Edit</span>
+        </button>
+        <button
+          type="button"
+          class="mobile-slide-action-btn mobile-slide-lock-btn"
+          id="mobile-move-lock-btn"
+          aria-label="Toggle image movement lock"
+          aria-pressed="false"
+          title="Lock image movement"
+        >
+          <i data-lucide="move-horizontal" class="nav-icon" aria-hidden="true"></i>
+          <span>Lock</span>
+        </button>
+        <button
+          type="button"
+          class="mobile-slide-action-btn mobile-slide-diamond-btn"
+          id="mobile-diamond-toggle-btn"
+          aria-label="Hide diamond images"
+          aria-pressed="false"
+          title="Hide diamond images"
+        >
+          <span class="mobile-diamond-glyph" aria-hidden="true">◇</span>
+          <span>Diamond</span>
+        </button>
+        <a class="mobile-slide-action-btn" id="mobile-save-btn" aria-label="Download image" download>
+          <i data-lucide="download" class="nav-icon" aria-hidden="true"></i>
+          <span>Save</span>
+        </a>
+      </div>
+
+      <!-- Image counter -->
+      <div class="mobile-slide-counter" id="mobile-slide-counter" aria-live="polite"></div>
+
+      <!-- Mini carousel (opens from counter tap) -->
+      <div class="mobile-thumbstrip" id="mobile-thumbstrip" hidden aria-hidden="true">
+        <div class="mobile-thumbstrip-track" id="mobile-thumbstrip-track" role="listbox" aria-label="Image quick picker"></div>
+      </div>
+
+      <!-- Floating progress while generating (keeps visible outside edit panel) -->
+      <div class="mobile-floating-progress" id="mobile-floating-progress" hidden>
+        <div class="mobile-floating-progress-track" aria-hidden="true">
+          <span class="mobile-floating-progress-bar" id="mobile-floating-progress-bar"></span>
+        </div>
+        <p class="mobile-floating-progress-text" id="mobile-floating-progress-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit panel (slides up from bottom) -->
+  <div class="mobile-edit-panel" id="mobile-edit-panel" aria-hidden="true">
+    <div class="mobile-edit-backdrop" id="mobile-edit-backdrop"></div>
+    <div class="mobile-edit-shell" role="dialog" aria-modal="true" aria-label="Edit image">
+
+      <!-- Handle bar -->
+      <div class="mobile-edit-handle" id="mobile-edit-handle" aria-hidden="true"><span></span></div>
+
+      <!-- Result image (hidden until generated) -->
+      <div class="mobile-edit-result-wrap" id="mobile-edit-result-wrap" hidden>
+        <img class="mobile-edit-result-image" id="mobile-edit-result-image" alt="Generated result" />
+        <div class="mobile-edit-result-actions">
+          <a class="btn mobile-edit-result-download" id="mobile-edit-result-download" download>
+            <i data-lucide="download" class="nav-icon" aria-hidden="true"></i>
+            Save
+          </a>
+        </div>
+      </div>
+
+      <div class="mobile-seed-randomize-row">
+        <button
+          type="button"
+          class="btn mobile-seed-randomize-toggle"
+          id="mobile-seed-randomize-toggle"
+          aria-label="Toggle random seed for edits"
+          aria-pressed="false"
+          title="Random seed for edits: Off"
+        >
+          <i data-lucide="dice-5" class="nav-icon" aria-hidden="true"></i>
+          <span id="mobile-seed-randomize-label">Off</span>
+        </button>
+        <button
+          type="button"
+          class="btn mobile-think-toggle"
+          id="mobile-think-toggle"
+          aria-label="Toggle Think mode for LLM"
+          aria-pressed="false"
+          title="Think mode: Off"
+        >
+          <i data-lucide="brain" class="nav-icon" aria-hidden="true"></i>
+          <span id="mobile-think-label">Off</span>
+        </button>
+      </div>
+
+      <!-- Preset buttons -->
+      <div class="mobile-edit-presets">
+        <button type="button" class="btn mobile-preset-btn" id="mobile-prompt-toggle-btn" data-edit-type="prompt" aria-label="Edit with custom prompt instruction">
+          <i data-lucide="message-square" class="nav-icon" aria-hidden="true"></i>
+          <span>Prompt</span>
+        </button>
+        <button type="button" class="btn mobile-preset-btn" data-edit-type="person" aria-label="Change person">
+          <i data-lucide="user" class="nav-icon" aria-hidden="true"></i>
+          <span>Person</span>
+        </button>
+        <button type="button" class="btn mobile-preset-btn" data-edit-type="background" aria-label="Change background">
+          <i data-lucide="image" class="nav-icon" aria-hidden="true"></i>
+          <span>Background</span>
+        </button>
+        <button type="button" class="btn mobile-preset-btn" data-edit-type="pose" aria-label="Change pose">
+          <i data-lucide="activity" class="nav-icon" aria-hidden="true"></i>
+          <span>Pose</span>
+        </button>
+        <button
+          type="button"
+          class="btn mobile-preset-btn mobile-seed-action-btn"
+          id="mobile-seed-action-btn"
+          data-edit-type="seed"
+          aria-label="Regenerate with random seed"
+          title="Same image with new random seed"
+        >
+          <i data-lucide="sprout" class="nav-icon" aria-hidden="true"></i>
+          <span>Seed</span>
+        </button>
+
+        <!-- Divider: presets above rewrite the prompt (LM Studio) and
+             re-generate from scratch; presets below call the real Refine
+             flow engine and edit the existing pixels directly. -->
+        <div class="mobile-preset-divider" aria-hidden="true"></div>
+
+        <button type="button" class="btn mobile-preset-btn" data-refine-action="relight" aria-label="Relight image">
+          <i data-lucide="sun" class="nav-icon" aria-hidden="true"></i>
+          <span>Relight</span>
+        </button>
+        <button type="button" class="btn mobile-preset-btn" data-refine-action="remove_background" aria-label="Remove background">
+          <i data-lucide="scissors" class="nav-icon" aria-hidden="true"></i>
+          <span>Remove BG</span>
+        </button>
+      </div>
+
+      <div class="mobile-edit-input-stack" id="mobile-edit-input-stack" hidden>
+        <textarea
+          class="mobile-edit-input"
+          id="mobile-edit-custom-input"
+          rows="3"
+          placeholder="Describe the change you want..."
+          aria-label="Custom prompt instruction"
+        ></textarea>
+        <button type="button" class="btn mobile-edit-send-wide" id="mobile-edit-custom-send" aria-label="Send custom prompt">
+          <i data-lucide="send" class="nav-icon" aria-hidden="true"></i>
+          <span>Send</span>
+        </button>
+      </div>
+
+      <!-- Status / progress -->
+      <div class="mobile-edit-status-row" id="mobile-edit-status-row" hidden>
+        <div class="mobile-edit-progress-track" aria-hidden="true">
+          <span class="mobile-edit-progress-bar" id="mobile-edit-progress-bar"></span>
+        </div>
+        <p class="mobile-edit-status" id="mobile-edit-status"></p>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/mobile.js') }}"></script>
+{% endblock %}

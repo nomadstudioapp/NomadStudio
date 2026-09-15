@@ -1,0 +1,45 @@
+{
+  "_comment": "Language models recommended by the setup wizard (docs/SETUP_WIZARD.md). Same list and sizes as the Engines page of the website (engines.html, measured September 2026). 'download' goes to LM Studio's POST /api/v1/models/download; 'match' finds an installed copy among LM Studio's model keys.",
+  "models": [
+    {
+      "id": "qwythos-9b",
+      "name": "Qwythos 9B",
+      "quant": "Q4",
+      "download": "https://huggingface.co/empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF",
+      "quantization": "Q4_K_M",
+      "match": ["qwythos-9b-claude-mythos", "qwythos-9b"],
+      "sizeGb": 6.1,
+      "vramGb": 8
+    },
+    {
+      "id": "ornith-1.5-9b",
+      "name": "Ornith 1.5 9B",
+      "quant": "Q4",
+      "download": "https://huggingface.co/ornith-ai/Ornith-1.5-9B-GGUF",
+      "quantization": "Q4_K_M",
+      "match": ["ornith-1.5-9b"],
+      "sizeGb": 6.2,
+      "vramGb": 8
+    },
+    {
+      "id": "gemma-4-12b",
+      "name": "Gemma 4 12B",
+      "quant": "QAT",
+      "download": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+      "quantization": null,
+      "match": ["gemma-4-12b"],
+      "sizeGb": 6.7,
+      "vramGb": 12
+    },
+    {
+      "id": "ministral-3-14b",
+      "name": "Ministral 3 14B Reasoning",
+      "quant": "reasoning",
+      "download": "https://huggingface.co/lmstudio-community/Ministral-3-14B-Reasoning-2512-GGUF",
+      "quantization": "Q4_K_M",
+      "match": ["ministral-3-14b"],
+      "sizeGb": 8.5,
+      "vramGb": 12
+    }
+  ]
+}

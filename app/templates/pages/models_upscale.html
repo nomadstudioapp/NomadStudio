@@ -1,0 +1,93 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page models-import-page{% endblock %}
+
+{% block content %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="/nomad-studio" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">Upscale Import</span>
+    </p>
+  </div>
+
+<section class="models-import-layout">
+  <article class="panel import-panel">
+    <h2 class="page-title">Upscale Import</h2>
+    <p class="muted-note">Configure ComfyUI and import upscale workflow JSON files.</p>
+
+    <div class="import-subtitle-row import-subtitle-row-status">
+      <h3 class="import-subtitle">ComfyUI Server</h3>
+      <div class="subtitle-status-right">
+        <span class="info-tip" tabindex="0" aria-label="Set the ComfyUI API URI used by Upscale workflows.">i
+          <span class="info-tip-text">Set the ComfyUI API URI used by Upscale workflows.</span>
+        </span>
+        <div class="availability-chip" id="upscale-import-availability-chip" aria-hidden="true">
+          <span class="availability-led" id="upscale-import-availability-led" aria-hidden="true"></span>
+        </div>
+        <span class="availability-text" id="upscale-import-availability-text" aria-live="polite">Checking ComfyUI...</span>
+      </div>
+    </div>
+
+    <div class="stack">
+      <label>
+        ComfyUI URI
+        <input type="text" id="upscale-import-comfy-uri" placeholder="http://127.0.0.1:8188" />
+      </label>
+      <div class="btn-row">
+        <button type="button" class="btn" id="upscale-import-test-connection">Test Connection</button>
+      </div>
+      <div class="preview" id="upscale-import-comfy-status">Loading settings...</div>
+    </div>
+
+    <div class="import-subtitle-row">
+      <h3 class="import-subtitle">ComfyUI Workflow</h3>
+      <span class="info-tip" tabindex="0" aria-label="Import an upscale workflow JSON and detect parameters automatically.">i
+        <span class="info-tip-text">Import an upscale workflow JSON and detect parameters automatically.</span>
+      </span>
+    </div>
+
+    <div class="stack">
+      <label>
+        Workflow Name
+        <input type="text" id="upscale-import-name" placeholder="flux2 klein upscale" />
+      </label>
+
+      <label>
+        Workflow JSON
+        <input type="file" id="upscale-workflow-file" class="hidden-file-input" accept=".json,application/json" />
+      </label>
+
+      <div class="btn-row">
+        <button type="button" class="btn" id="upscale-workflow-file-trigger">Choose File</button>
+        <button type="button" class="btn" id="upscale-analyze-workflow-btn" disabled>Analyze</button>
+        <button type="button" class="btn primary" id="upscale-save-workflow-btn" disabled>Save Import</button>
+      </div>
+
+      <div class="preview" id="upscale-import-status">No file loaded.</div>
+    </div>
+  </article>
+
+  <article class="panel import-panel">
+    <h2 class="page-title">Analysis</h2>
+    <div id="upscale-analysis-output" class="stack"></div>
+  </article>
+
+  <article class="panel import-panel">
+    <h2 class="page-title">Saved Upscale Imports</h2>
+    <div id="upscale-saved-imports" class="stack"></div>
+  </article>
+</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/models_upscale.js') }}"></script>
+{% endblock %}

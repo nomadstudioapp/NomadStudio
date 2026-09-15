@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}NomadStudio{% endblock %}</title>
+    <meta name="theme-color" id="theme-color-meta" content="#0c121f" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo/raccoon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ asset_v }}" />
+    <script>
+      /* Sets data-theme on <html> synchronously, before the stylesheet's
+         default :root values (--accent: #ffffff, an achromatic white) ever
+         get painted. Without this, the page briefly renders with the
+         default --accent, and since hsl(from var(--accent) h ...) resolves
+         an achromatic color's hue to 0deg, every --cs-card-bg-derived color
+         (card backgrounds, scrims, etc.) flashes RED for one frame before
+         the body-level theme script (further down) applies the saved theme
+         and the `background`/`box-shadow` transitions animate away from it.
+         CSS below matches both html[data-theme] and body[data-theme], so
+         this doesn't require touching the later script or other pages. */
+      document.documentElement.setAttribute('data-theme', localStorage.getItem('oj-theme-v1') || '4');
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <section class="sidebar-section sidebar-header">
+          <h1 class="brand">
+            <img src="{{ url_for('static', filename='images/logo/raccoon.svg') }}" alt="NomadStudio logo" class="brand-logo">
+            <div class="brand-text">NomadStudio<span>V0 ALPHA</span></div>
+          </h1>
+          <a href="{{ url_for('main.settings_page') }}" class="sidebar-icon-btn" aria-label="Open settings" title="Settings">
+            <i data-lucide="settings" class="nav-icon" aria-hidden="true"></i>
+          </a>
+        </section>
+
+        <section class="sidebar-section">
+          <p class="group-label">WORKSPACE</p>
+          <nav class="nav-block">
+            <a href="{{ url_for('main.nomad_studio_page') }}" class="nav-item {{ 'active' if active_page == 'nomad-studio' else '' }}" {% if active_page == 'nomad-studio' %}aria-current="page"{% endif %}>
+              <i data-lucide="wand-2" class="nav-icon" aria-hidden="true"></i>
+              Nomad Studio
+            </a>
+          </nav>
+        </section>
+
+        <section class="sidebar-section">
+          <p class="group-label">MODELS</p>
+          <nav class="nav-block compact">
+            <a href="{{ url_for('main.models_import_page') }}" class="nav-item nav-item-model {{ 'active' if active_page == 'models-import' else '' }}" {% if active_page == 'models-import' %}aria-current="page"{% endif %}>
+              <span class="nav-model-left">
+                <span class="nav-led" id="nav-led-images" aria-label="Images service status" title="Checking Images service"></span>
+                <span>Images</span>
+              </span>
+              <span class="models-ready-text">ready</span>
+            </a>
+            <a href="{{ url_for('main.models_upscale_page') }}" class="nav-item nav-item-model {{ 'active' if active_page == 'models-upscale' else '' }}" {% if active_page == 'models-upscale' %}aria-current="page"{% endif %}>
+              <span class="nav-model-left">
+                <span class="nav-led" id="nav-led-upscale" aria-label="Upscale service status" title="Checking Upscale service"></span>
+                <span>Upscales</span>
+              </span>
+              <span class="models-ready-text">ready</span>
+            </a>
+            <a href="{{ url_for('main.models_compose_page') }}" class="nav-item nav-item-model {{ 'active' if active_page == 'models-compose' else '' }}" {% if active_page == 'models-compose' %}aria-current="page"{% endif %}>
+              <span class="nav-model-left">
+                <span class="nav-led" id="nav-led-compose" aria-label="Compose service status" title="Checking Compose service"></span>
+                <span>Composes</span>
+              </span>
+              <span class="models-ready-text">ready</span>
+            </a>
+            <a href="{{ url_for('main.models_chat_page') }}" class="nav-item nav-item-model {{ 'active' if active_page == 'models-chat' else '' }}" {% if active_page == 'models-chat' %}aria-current="page"{% endif %}>
+              <span class="nav-model-left">
+                <span class="nav-led" id="nav-led-chat" aria-label="Prompts service status" title="Checking Prompts service"></span>
+                <span>Prompts</span>
+              </span>
+              <span class="models-ready-text">ready</span>
+            </a>
+            <a href="{{ url_for('main.models_vision_page') }}" class="nav-item nav-item-model {{ 'active' if active_page == 'models-vision' else '' }}" {% if active_page == 'models-vision' %}aria-current="page"{% endif %}>
+              <span class="nav-model-left">
+                <span class="nav-led" id="nav-led-vision" aria-label="Vision service status" title="Checking Vision service"></span>
+                <span>Vision</span>
+              </span>
+              <span class="models-ready-text">ready</span>
+            </a>
+          </nav>
+        </section>
+
+        <div class="sidebar-flex-spacer" aria-hidden="true"></div>
+
+        <!-- Only visible while a Depot is active (session["active_depot_id"],
+             see depots_routes.py) — populated by services/depot_indicator.js
+             on every page load, since generation happens on Create/Refine/
+             Mix/Upscale, not on the Depot page itself. -->
+        <section class="sidebar-section sidebar-depot-panel" id="sidebar-depot-panel" hidden>
+          <p class="group-label">ACTIVE DEPOT</p>
+          <div class="sidebar-depot-row">
+            <a href="/build" class="sidebar-depot-name" id="sidebar-depot-name"></a>
+            <button type="button" id="sidebar-depot-deactivate-btn" class="sidebar-queue-clear-btn" aria-label="Deactivate Depot" title="Deactivate">
+              <i data-lucide="x" class="nav-icon" aria-hidden="true"></i>
+            </button>
+          </div>
+        </section>
+
+        <section class="sidebar-section sidebar-queue-panel" id="sidebar-queue-panel" aria-live="polite" aria-label="Task queue">
+          <p class="group-label">QUEUE</p>
+          <div class="sidebar-queue-row">
+            <p class="sidebar-queue-progress-line">
+              <span class="sidebar-queue-dot" aria-hidden="true"></span>
+              <span class="sidebar-queue-progress" id="sidebar-queue-progress">Idle</span>
+            </p>
+            <div class="sidebar-queue-actions">
+              <p class="sidebar-queue-count-line">
+                <span class="sidebar-queue-count" id="sidebar-queue-count">0</span>
+              </p>
+              <button type="button" id="sidebar-queue-clear-btn" class="sidebar-queue-clear-btn" aria-label="Clear queue" title="Clear queue">
+                <i data-lucide="x" class="nav-icon" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="sidebar-queue-progress-track" aria-hidden="true">
+            <span class="sidebar-queue-progress-bar" id="sidebar-queue-progress-bar"></span>
+          </div>
+          <div class="sidebar-queue-list" id="sidebar-queue-list">
+            <p class="sidebar-queue-empty">No pending tasks.</p>
+          </div>
+        </section>
+
+        <section id="sidebar-footer" class="sidebar-section sidebar-saturn-row">
+          <button type="button" id="theme-cycle-btn" class="sidebar-saturn-btn" aria-label="Cycle theme">
+            <span id="theme-cycle-icon" class="sidebar-theme-icon" aria-hidden="true">🌑</span>
+            <span id="theme-cycle-label" class="sidebar-saturn-name">Saturn</span>
+          </button>
+          <a href="{{ url_for('main.help_page') }}" class="sidebar-icon-btn" aria-label="Open help" title="Help">
+            <i data-lucide="circle-help" class="nav-icon" aria-hidden="true"></i>
+          </a>
+          <a href="{{ url_for('viewers.switch_viewer') }}" class="sidebar-icon-btn" aria-label="Switch viewer" title="Cambiar de perfil">
+            <i data-lucide="users" class="nav-icon" aria-hidden="true"></i>
+          </a>
+        </section>
+      </aside>
+
+      <main class="main-wrap">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <!-- ── Video caption overlay — dev tool for recording tutorials. Click-through
+         (pointer-events: none) so it never blocks the real UI underneath; edited
+         via the small tab, persisted in localStorage so it survives navigation. ── -->
+    <div class="ns-caption-overlay" id="ns-caption-overlay" hidden aria-hidden="true">
+      <p class="ns-caption-text" id="ns-caption-text"></p>
+    </div>
+    <div class="ns-caption-editor" id="ns-caption-editor" hidden>
+      <textarea class="ns-caption-editor-input" id="ns-caption-editor-input" rows="2" placeholder="Texto del caption…" spellcheck="false"></textarea>
+      <label class="ns-caption-editor-toggle">
+        <input type="checkbox" id="ns-caption-editor-visible">
+        Mostrar overlay
+      </label>
+    </div>
+    <button type="button" class="ns-caption-tab cs-icon-btn" id="ns-caption-tab" aria-label="Editar caption de video">
+      <i data-lucide="captions" aria-hidden="true"></i>
+      <span class="cs-mode-tip">Editar caption de video</span>
+    </button>
+
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/state/store.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/api.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/nav_status.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/folder_access.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/session-store.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/depot_indicator.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/video_caption.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/i18n.js') }}?v={{ asset_v }}"></script>
+    <script data-shell-script="1" src="https://unpkg.com/lucide@latest"></script>
+    <script data-shell-script="1">
+      lucide.createIcons();
+    </script>
+    <script data-shell-script="1">
+      (function () {
+        const THEME_KEY = 'oj-theme-v1';
+        const THEMES = [
+          { id: '1', icon: '🌕', label: 'Dawn', bg: '#f2f6fd' },
+          { id: '2', icon: '🌔', label: 'Dusk', bg: '#161f2f' },
+          { id: '3', icon: '🌓', label: 'Twilight', bg: '#0d111f' },
+          { id: '4', icon: '🌒', label: 'Night', bg: '#0c121f' },
+          { id: '5', icon: '🌑', label: 'Void', bg: '#040a12' },
+          { id: '6', icon: '🔴', label: 'Mars', bg: '#140a05' },
+          { id: '7', icon: '🟣', label: 'Jupiter', bg: '#0d0620' },
+          { id: '8', icon: '🩵', label: 'Saturn', bg: '#030d16' },
+        ];
+
+        function applyTheme(id) {
+          document.body.setAttribute('data-theme', id);
+          const t = THEMES.find((x) => x.id === id) || THEMES[3];
+          const iconEl = document.getElementById('theme-cycle-icon');
+          const labelEl = document.getElementById('theme-cycle-label');
+          const metaEl = document.getElementById('theme-color-meta');
+          if (iconEl) iconEl.textContent = t.icon;
+          if (labelEl) labelEl.textContent = t.label;
+          if (metaEl) metaEl.setAttribute('content', t.bg);
+        }
+
+        const saved = localStorage.getItem(THEME_KEY) || '4';
+        applyTheme(saved);
+
+        const btn = document.getElementById('theme-cycle-btn');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            const current = document.body.getAttribute('data-theme') || '4';
+            const idx = THEMES.findIndex((x) => x.id === current);
+            const next = THEMES[(idx + 1) % THEMES.length];
+            localStorage.setItem(THEME_KEY, next.id);
+            applyTheme(next.id);
+          });
+        }
+      })();
+    </script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/page_runtime.js') }}"></script>
+    <script data-shell-script="1" src="{{ url_for('static', filename='js/services/shell_router.js') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,42 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page help-page{% endblock %}
+
+{% block content %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="/nomad-studio" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">Help</span>
+    </p>
+  </div>
+
+<section class="settings-layout">
+  <article class="panel">
+    <h2 class="page-title">Help</h2>
+    <p class="muted-note">Guia rapida para lanzar ComfyUI en modo mas veloz (Windows + NVIDIA).</p>
+
+    <div class="stack" style="margin-top: 10px;">
+      <div class="preview help-command-block">
+set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8
+set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8
+.\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --fast fp16_accumulation --use-sage-attention --listen --windows-standalone-build --port 6901
+      </div>
+
+      <div class="preview help-warning-note">
+If you see this and ComfyUI did not start try updating your Nvidia Drivers to the latest. If you get a c10.dll error you need to install vc redist that you can find: https://aka.ms/vc14/vc_redist.x64.exe
+      </div>
+
+      <p class="muted-note">Tip: ejecuta estos comandos en una terminal dentro de la carpeta raiz de ComfyUI.</p>
+    </div>
+  </article>
+</section>
+</div>
+{% endblock %}

@@ -1,0 +1,424 @@
+/* ── Canvas Composer (Mix addon) ─────────────────────────────────────── */
+
+/* ── Sidebar: hidden on Canvas Composer, replaced by the Tray panel ─────── */
+body.cc-page .app-shell {
+  grid-template-columns: 0px 1fr;
+}
+body.cc-page .sidebar {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  border-right-color: transparent;
+}
+
+.cc-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.cc-main-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* ── Tray panel (left) ───────────────────────────────────────────────── */
+
+.cc-tray-panel {
+  flex: 0 0 200px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.cc-canvas-size-section {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cc-panel-section-title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.cc-canvas-dims {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cc-canvas-mode-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.cc-canvas-mode-btn {
+  flex: 1;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.cc-canvas-mode-btn + .cc-canvas-mode-btn {
+  border-left: 1px solid var(--line);
+}
+.cc-canvas-mode-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.cc-crop-to-image-btn {
+  width: 100%;
+  padding: 7px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.cc-crop-to-image-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cc-align-row {
+  display: flex;
+  gap: 6px;
+}
+
+.cc-align-btn {
+  flex: 1;
+  padding: 7px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: var(--fs-xxs);
+  cursor: pointer;
+}
+.cc-align-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cc-tray-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.cc-tray-refresh-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+}
+
+.cc-tray-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px;
+  align-content: start;
+}
+
+.cc-tray-thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: grab;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  padding: 0;
+}
+.cc-tray-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.cc-tray-thumb:hover { border-color: var(--accent); }
+
+.cc-tray-empty {
+  padding: 16px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-align: center;
+}
+
+.cc-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--toolbar-border);
+  background: var(--toolbar-bg);
+  flex: 0 0 auto;
+}
+
+.cc-back-btn { flex: 0 0 auto; }
+
+.cc-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--page-title-text);
+}
+
+.cc-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cc-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cc-topbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--toolbar-border);
+  flex: 0 0 auto;
+}
+
+.cc-quality-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cc-quality-toggle input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.cc-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 24px;
+}
+
+.cc-stage-viewport {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.cc-stage {
+  position: relative;
+  /* width/height are set from JS (cc-layer.js applyStageSize) — the stage
+     grows to fit its content, see CC.recalcStageBounds. */
+  background:
+    linear-gradient(45deg, rgba(255,255,255,0.04) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.04) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.04) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.04) 75%);
+  background-size: 40px 40px;
+  background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transform-origin: top left;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.cc-stage.cc-drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+}
+
+.cc-stage-empty-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--fs-md);
+  padding: 24px;
+  pointer-events: none;
+}
+
+.cc-stage.cc-has-layers .cc-stage-empty-hint { display: none; }
+
+/* ── Layer ────────────────────────────────────────────────────────────── */
+
+.cc-layer {
+  position: absolute;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: move;
+  user-select: none;
+}
+
+/* A locked layer is otherwise inert — clicks pass straight through to
+   whatever sits underneath it, so it can never again "steal" a click meant
+   for a layer below (e.g. a title card locked on top of a photo stack).
+   Its lock icon opts back into pointer-events so it stays the one and only
+   way to reach it again. */
+.cc-layer.cc-locked {
+  cursor: default;
+  pointer-events: none;
+}
+
+.cc-layer.cc-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+/* Sibling of #cc-stage (not a descendant) — sits outside its overflow:hidden
+   clip so lock badges stay visible/clickable even when a locked layer's own
+   corner is off-canvas. Populated by CC.renderLockOverlay (cc-layer.js). */
+.cc-lock-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cc-lock-badge {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  opacity: 0.9;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.cc-lock-badge:hover { background: rgba(0, 0, 0, 0.85); opacity: 1; }
+.cc-lock-badge svg { width: 18px; height: 18px; }
+
+.cc-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+.cc-handle[data-corner="nw"] { top: 0; left: 0; cursor: nwse-resize; }
+.cc-handle[data-corner="ne"] { top: 0; left: 100%; cursor: nesw-resize; }
+.cc-handle[data-corner="sw"] { top: 100%; left: 0; cursor: nesw-resize; }
+.cc-handle[data-corner="se"] { top: 100%; left: 100%; cursor: nwse-resize; }
+
+/* ── Context menu ─────────────────────────────────────────────────────── */
+
+.cc-ctx-menu {
+  position: fixed;
+  z-index: 500;
+  min-width: 220px;
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* An explicit `display` on an author rule beats the UA stylesheet's
+   `[hidden] { display: none }`, so the hidden attribute alone won't hide
+   this menu — restate it here with matching specificity. */
+.cc-ctx-menu[hidden] {
+  display: none;
+}
+
+.cc-ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.cc-ctx-item:hover { background: rgba(255, 255, 255, 0.08); }
+.cc-ctx-item--danger { color: #ff8a8a; }
+
+.cc-ctx-position {
+  margin: 2px 10px 4px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.cc-ctx-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 2px;
+}
+
+.cc-ctx-slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+.cc-ctx-slider-row input[type="range"] { flex: 1; }

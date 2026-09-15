@@ -1,0 +1,378 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page settings-page{% endblock %}
+
+{% block content %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="/nomad-studio" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current" data-i18n="settings.title">Settings</span>
+    </p>
+  </div>
+
+<section class="settings-layout settings-layout-v2">
+
+  <header class="settings-page-header">
+    <h2 class="settings-page-title" data-i18n="settings.title">Settings</h2>
+    <p class="settings-page-subtitle" data-i18n="settings.subtitle">Output paths and AI prompt configuration.</p>
+  </header>
+
+  <!-- ── Setup wizard ─────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="wand-2" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.setup.title">Setup wizard</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.setup.desc">Review the first-run steps again: services, engines, folders and image format.</p>
+    </div>
+    <div class="settings-section-body">
+      <div class="settings-field-block">
+        <a href="{{ url_for('setup.setup_page', preview=1) }}" class="btn settings-btn-secondary">
+          <i data-lucide="play" aria-hidden="true"></i>
+          <span data-i18n="settings.setup.preview">View the wizard</span>
+        </a>
+      </div>
+    </div>
+  </article>
+
+  <!-- ── Output ───────────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="hard-drive" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.output.title">Output</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.output.desc">Where generated images are saved on the server filesystem.</p>
+    </div>
+    <div class="settings-section-body">
+
+      <div class="settings-field-block">
+        <label class="settings-field-label" for="output-dir-input" data-i18n="settings.output.folderLabel">Output folder</label>
+        <p class="settings-field-hint" data-i18n="settings.output.folderHint">Absolute OS path, writable by the server.</p>
+        <div class="settings-folder-row">
+          <input type="text" id="output-dir-input" class="settings-input" placeholder="e.g. C:\Users\you\Pictures\OpenJourney" data-i18n-attr="placeholder:settings.output.folderPlaceholder" autocomplete="off" spellcheck="false" />
+          <button type="button" class="btn settings-btn-secondary" id="browse-output-dir-btn"{% if not is_local_request() %} disabled data-i18n-attr="title:settings.common.localOnly" title="Only available on the computer where Nomad Studio is installed."{% endif %}>
+            <i data-lucide="folder-open" aria-hidden="true"></i>
+            <span data-i18n="settings.common.browse">Browse</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-field-block">
+        <p class="settings-field-label" data-i18n="settings.common.status">Status</p>
+        <div class="settings-status-row" id="output-dir-status-row">
+          <span class="settings-status-dot" id="output-dir-status-dot" aria-hidden="true"></span>
+          <span class="settings-status-text" id="output-dir-status">Loading...</span>
+          <div class="settings-status-actions">
+            <button type="button" class="btn settings-btn-ghost" id="test-output-dir-btn" data-i18n="settings.common.test">Test</button>
+            <button type="button" class="btn settings-btn-ghost" id="clear-output-dir-btn" data-i18n="settings.common.clear">Clear</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- ── ComfyUI ──────────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="folder-cog" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.comfy.title">ComfyUI</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.comfy.desc">Where your ComfyUI installation keeps its models. Shared by every import — used to check which files you already have and where to save new downloads.</p>
+    </div>
+    <div class="settings-section-body">
+
+      <div class="settings-field-block">
+        <label class="settings-field-label" for="comfy-models-folder-input" data-i18n="settings.comfy.folderLabel">ComfyUI Models folder</label>
+        <p class="settings-field-hint" data-i18n="settings.comfy.folderHint">e.g. C:\ComfyUI\models — the folder containing diffusion_models, text_encoders, vae, loras...</p>
+        <div class="settings-folder-row">
+          <input type="text" id="comfy-models-folder-input" class="settings-input" placeholder="e.g. C:\ComfyUI\models" data-i18n-attr="placeholder:settings.comfy.folderPlaceholder" autocomplete="off" spellcheck="false" />
+          <button type="button" class="btn settings-btn-secondary" id="browse-comfy-models-folder-btn"{% if not is_local_request() %} disabled data-i18n-attr="title:settings.common.localOnly" title="Only available on the computer where Nomad Studio is installed."{% endif %}>
+            <i data-lucide="folder-open" aria-hidden="true"></i>
+            <span data-i18n="settings.common.browse">Browse</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-field-block">
+        <p class="settings-field-label" data-i18n="settings.common.status">Status</p>
+        <div class="settings-status-row" id="comfy-models-folder-status-row">
+          <span class="settings-status-dot" id="comfy-models-folder-status-dot" aria-hidden="true"></span>
+          <span class="settings-status-text" id="comfy-models-folder-status">Loading...</span>
+          <div class="settings-status-actions">
+            <button type="button" class="btn settings-btn-ghost" id="test-comfy-models-folder-btn" data-i18n="settings.common.test">Test</button>
+            <button type="button" class="btn settings-btn-ghost" id="clear-comfy-models-folder-btn" data-i18n="settings.common.clear">Clear</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- ── System Prompts ───────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2">
+    <div class="settings-section-heading settings-section-heading-prompts">
+      <div class="settings-section-heading-top">
+        <i data-lucide="bot" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.systemPrompts.title">System Prompts</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.systemPrompts.desc">Customize the system prompts used by each AI operation. Leave empty to use the built-in default.</p>
+      <div class="settings-prompts-actions">
+        <span id="prompts-summary" class="settings-prompts-summary">0 prompts - 0 customized</span>
+        <button type="button" class="btn settings-btn-secondary" id="save-prompts-btn" style="display:none;" data-i18n="settings.common.save">Save</button>
+        <button type="button" class="btn settings-btn-ghost" id="reset-prompts-btn" data-i18n="settings.common.resetAll">Reset All</button>
+      </div>
+    </div>
+    <div class="settings-section-body">
+
+      <div class="settings-prompts-tabs" id="prompts-tabs" role="tablist" aria-label="Prompt tabs"></div>
+
+      <div class="settings-prompt-panel" id="prompt-active-panel">
+        <div class="settings-prompt-panel-header">
+          <div class="settings-prompt-title-wrap">
+            <h4 id="active-prompt-title">Prompt</h4>
+            <span class="settings-prompt-badge" id="active-prompt-badge">DEFAULT</span>
+          </div>
+          <button type="button" class="btn settings-btn-reset" id="reset-active-prompt-btn" style="display:none;" data-i18n="settings.common.reset">Reset</button>
+        </div>
+        <textarea id="active-prompt-textarea" spellcheck="false" placeholder="Empty — using built-in default" data-i18n-attr="placeholder:settings.common.emptyPlaceholder"></textarea>
+        <div id="describe-full-variants-slot"></div>
+      </div>
+
+      <div class="settings-inline-status" id="prompts-status"></div>
+
+    </div>
+  </article>
+
+  <!-- ── Compose Prompts ──────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2" id="compose-prompts-panel">
+    <div class="settings-section-heading settings-section-heading-prompts">
+      <div class="settings-section-heading-top">
+        <i data-lucide="layout" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.composePrompts.title">Compose Prompts</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.composePrompts.desc">Customize the system prompt used by the Ideogram Compose step. Add variants to switch between them from the flow.</p>
+      <div class="settings-prompts-actions">
+        <span id="compose-prompts-summary" class="settings-prompts-summary"></span>
+        <button type="button" class="btn settings-btn-secondary" id="compose-save-prompts-btn" style="display:none;" data-i18n="settings.common.save">Save</button>
+        <button type="button" class="btn settings-btn-ghost" id="compose-reset-prompts-btn" data-i18n="settings.common.reset">Reset</button>
+      </div>
+    </div>
+    <div class="settings-section-body">
+      <div class="settings-prompt-panel" id="compose-prompt-active-panel">
+        <div class="settings-prompt-panel-header">
+          <div class="settings-prompt-title-wrap">
+            <h4 id="compose-active-prompt-title">Compose Prompt</h4>
+            <span class="settings-prompt-badge" id="compose-active-prompt-badge">DEFAULT</span>
+          </div>
+          <button type="button" class="btn settings-btn-reset" id="compose-reset-active-prompt-btn" style="display:none;" data-i18n="settings.common.reset">Reset</button>
+        </div>
+        <textarea id="compose-active-prompt-textarea" spellcheck="false" placeholder="Empty — using built-in default" data-i18n-attr="placeholder:settings.common.emptyPlaceholder"></textarea>
+        <div id="compose-variants-slot"></div>
+      </div>
+      <div class="settings-inline-status" id="compose-prompts-status"></div>
+    </div>
+  </article>
+
+  <!-- ── Studio Prompts ───────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2" id="studio-prompts-panel">
+    <div class="settings-section-heading settings-section-heading-prompts">
+      <div class="settings-section-heading-top">
+        <i data-lucide="sparkles" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.studioPrompts.title">Studio Prompts</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.studioPrompts.desc">Customize the enhancement prompts used by each level in the Studio New modal. Leave empty to use the built-in default.</p>
+      <div class="settings-prompts-actions">
+        <span id="studio-prompts-summary" class="settings-prompts-summary">0 prompts - 0 customized</span>
+        <button type="button" class="btn settings-btn-secondary" id="studio-save-prompts-btn" style="display:none;" data-i18n="settings.common.save">Save</button>
+        <button type="button" class="btn settings-btn-ghost" id="studio-reset-prompts-btn" data-i18n="settings.common.resetAll">Reset All</button>
+      </div>
+    </div>
+    <div class="settings-section-body">
+
+      <div class="settings-prompts-tabs" id="studio-prompts-tabs" role="tablist" aria-label="Studio prompt tabs"></div>
+
+      <div class="settings-prompt-panel" id="studio-prompt-active-panel">
+        <div class="settings-prompt-panel-header">
+          <div class="settings-prompt-title-wrap">
+            <h4 id="studio-active-prompt-title">Prompt</h4>
+            <span class="settings-prompt-badge" id="studio-active-prompt-badge">DEFAULT</span>
+          </div>
+          <button type="button" class="btn settings-btn-reset" id="studio-reset-active-prompt-btn" style="display:none;" data-i18n="settings.common.reset">Reset</button>
+        </div>
+        <textarea id="studio-active-prompt-textarea" spellcheck="false" placeholder="Empty — using built-in default" data-i18n-attr="placeholder:settings.common.emptyPlaceholder"></textarea>
+        <div id="studio-variants-slot"></div>
+      </div>
+
+      <div class="settings-inline-status" id="studio-prompts-status"></div>
+
+    </div>
+  </article>
+
+  <!-- ── Backups ──────────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2" id="backup-section">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="life-buoy" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.backup.title">Backups</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.backup.desc">Save a copy of your settings, engines, profiles, Sessions, depots, styles and template packs, and restore it whenever you need. Your generated images are not included: they are already files in your image folder.</p>
+    </div>
+    <div class="settings-section-body">
+
+      <div class="settings-field-block">
+        <label class="settings-field-label" for="backup-dir-input" data-i18n="settings.backup.folderLabel">Backup folder</label>
+        <div class="settings-folder-row">
+          <input type="text" id="backup-dir-input" class="settings-input" autocomplete="off" spellcheck="false" />
+          <button type="button" class="btn settings-btn-secondary" id="backup-browse-btn">
+            <i data-lucide="folder-open" aria-hidden="true"></i>
+            <span data-i18n="settings.common.browse">Browse</span>
+          </button>
+          <button type="button" class="btn settings-btn-ghost" id="backup-open-btn" data-i18n="settings.backup.open">Open</button>
+        </div>
+        <div class="settings-inline-status" id="backup-dir-status"></div>
+      </div>
+
+      <div class="settings-field-block">
+        <label class="settings-chip-toggle" for="backup-images-toggle">
+          <input type="checkbox" id="backup-images-toggle" />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="settings.backup.imagesLabel">Also include style, character and background images</span>
+        </label>
+        <p class="settings-field-hint" id="backup-estimate"></p>
+      </div>
+
+      <div class="settings-field-block">
+        <button type="button" class="btn settings-btn-secondary" id="backup-create-btn">
+          <i data-lucide="save" aria-hidden="true"></i>
+          <span data-i18n="settings.backup.create">Create backup</span>
+        </button>
+        <div class="settings-backup-progress" id="backup-progress" hidden>
+          <span class="settings-backup-progress-text" id="backup-progress-text"></span>
+          <span class="settings-backup-bar"><span id="backup-progress-bar"></span></span>
+        </div>
+        <div class="settings-inline-status" id="backup-status"></div>
+      </div>
+
+      <div class="settings-field-block">
+        <p class="settings-field-label" data-i18n="settings.backup.listLabel">Saved backups</p>
+        <ul class="settings-backup-list" id="backup-list"></ul>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- ── Export ───────────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="archive" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.export.title">Export Configuration</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.export.desc">Download a ZIP with all imported workflows, settings and custom prompts. Use it to clone this setup to another server.</p>
+    </div>
+    <div class="settings-section-body">
+      <button type="button" class="btn settings-btn-secondary" id="export-config-btn">
+        <i data-lucide="download" aria-hidden="true"></i>
+        <span data-i18n="settings.export.btn">Export ZIP</span>
+      </button>
+      <div class="settings-inline-status" id="export-config-status"></div>
+    </div>
+  </article>
+
+  <!-- ── Advanced ─────────────────────────────────────────────────────── -->
+  <article class="panel settings-panel-v2">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="sliders-horizontal" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.advanced.title">Advanced</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.advanced.desc">Developer options and experimental features.</p>
+    </div>
+    <div class="settings-section-body">
+
+      <div class="settings-field-block">
+        <label class="settings-chip-toggle" for="allow-concurrent-gpu-toggle">
+          <input type="checkbox" id="allow-concurrent-gpu-toggle" />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="settings.advanced.allowConcurrentLabel">Allow ComfyUI and LM Studio to run at the same time</span>
+        </label>
+        <p class="settings-field-hint" data-i18n="settings.advanced.allowConcurrentHint">By default, image generation and LM Studio (chat/vision/prompt-assist) take turns so they don't fight over the same GPU on a shared server. Turn this on only if your hardware has enough headroom to run both at once.</p>
+        <div class="settings-inline-status" id="allow-concurrent-gpu-status"></div>
+      </div>
+
+      <div class="settings-field-block">
+        <label class="settings-chip-toggle" for="common-queue-gpu-toggle">
+          <input type="checkbox" id="common-queue-gpu-toggle" />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="settings.advanced.commonQueueLabel">Common queue for ComfyUI and LM Studio</span>
+        </label>
+        <p class="settings-field-hint" data-i18n="settings.advanced.commonQueueHint">Stricter than the option above: only one job runs at a time across BOTH ComfyUI and LM Studio, in a single shared queue — even two ComfyUI generations from different clients won't overlap. Overrides "Allow ComfyUI and LM Studio to run at the same time" when both are on.</p>
+        <div class="settings-inline-status" id="common-queue-gpu-status"></div>
+      </div>
+
+      <div class="settings-field-block">
+        <label class="settings-chip-toggle" for="skip-comfy-output-toggle">
+          <input type="checkbox" id="skip-comfy-output-toggle" />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="setup.comfy.saveSpace">Save space: do not keep a copy in the ComfyUI folder</span>
+        </label>
+        <p class="settings-field-hint" data-i18n="setup.comfy.saveSpaceHint">Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder.</p>        <div class="settings-inline-status" id="skip-comfy-output-status"></div>
+      </div>
+
+      <div class="settings-field-block settings-danger-zone">
+        <p class="settings-field-label" data-i18n="settings.reset.zone">Danger zone</p>
+        <p class="settings-field-hint" data-i18n="settings.reset.zoneHint">Leave Nomad Studio as if it had just been installed. A backup is made first.</p>
+        <div>
+          <button type="button" class="btn settings-btn-danger" id="reset-open-btn"{% if not is_local_request() %} disabled{% endif %}>
+            <i data-lucide="triangle-alert" aria-hidden="true"></i>
+            <span data-i18n="settings.reset.button">Reset Nomad Studio</span>
+            <span class="settings-sim-tag" data-i18n="settings.reset.simTag">simulation</span>
+          </button>
+        </div>
+        {% if not is_local_request() %}
+        <p class="settings-field-hint" data-i18n="settings.common.localOnly">Only available on the computer where Nomad Studio is installed.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </article>
+
+</section>
+
+  <!-- ── Reset modal (simulation) ─────────────────────────────────────── -->
+  <div class="settings-modal-backdrop" id="reset-modal" hidden>
+    <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+      <div class="settings-modal-header">
+        <h3 id="reset-modal-title" data-i18n="settings.reset.title">Reset Nomad Studio</h3>
+        <button type="button" class="settings-modal-close" id="reset-close-btn" aria-label="Close">×</button>
+      </div>
+      <div class="settings-modal-body" id="reset-modal-body"></div>
+      <div class="settings-modal-footer" id="reset-modal-footer"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/settings.js') }}"></script>
+{% endblock %}

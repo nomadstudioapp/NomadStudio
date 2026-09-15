@@ -1,0 +1,376 @@
+/* ============================================================
+   Nomad Studio — Ideogram Scene Composer  |  prefix: nis-
+   ============================================================ */
+
+/* ── Page shell ─────────────────────────────────────────────── */
+.nis-page-body .main-wrap { overflow: hidden; display: flex; flex-direction: column; }
+.nis-page {
+  display: flex; flex-direction: column;
+  height: 100%; min-height: 0; overflow: hidden; background: var(--bg);
+}
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+.nis-topbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0 1rem; height: 52px; min-height: 52px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-panel); flex-shrink: 0;
+}
+.nis-topbar .cs-back-btn {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s;
+}
+.nis-topbar .cs-back-btn:hover { color: var(--text); }
+.nis-topbar .cs-back-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nis-topbar .cs-breadcrumb { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--muted); margin: 0; }
+.nis-topbar .cs-breadcrumb svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+.nis-topbar .cs-breadcrumb-current { color: var(--text); font-weight: 600; }
+.nis-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+
+/* ── Main layout ─────────────────────────────────────────────── */
+.nis-main { display: grid; grid-template-columns: 320px 1fr; min-height: 0; flex: 1; overflow: hidden; }
+
+/* ── Left panel ──────────────────────────────────────────────── */
+.nis-left { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-soft); }
+.nis-left-scroll {
+  flex: 1; overflow-y: auto; padding: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.nis-left-scroll::-webkit-scrollbar { width: 5px; }
+.nis-left-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+/* ── Section headers ─────────────────────────────────────────── */
+.nis-section-hdr { display: flex; align-items: center; gap: 0.4rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--line); }
+.nis-section-hdr h3 { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; margin: 0; flex: 1; }
+
+/* ── Image drop zone ─────────────────────────────────────────── */
+.nis-drop-zone {
+  position: relative; border: 1.5px dashed var(--line); border-radius: var(--radius-md);
+  background: var(--bg-panel); cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 72px;
+}
+.nis-drop-zone:hover, .nis-drop-zone.is-drag-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg-panel)); }
+.nis-drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.nis-drop-zone-inner { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.6rem; pointer-events: none; text-align: center; }
+.nis-drop-zone-inner svg { width: 18px; height: 18px; stroke: var(--muted); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.nis-drop-zone-inner p { font-size: 0.68rem; color: var(--muted); margin: 0; line-height: 1.3; }
+.nis-drop-zone-inner em { font-style: normal; font-size: 0.62rem; color: var(--muted); opacity: 0.6; }
+.nis-drop-zone.has-image .nis-drop-zone-inner { display: none; }
+.nis-drop-zone-preview { display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.nis-drop-zone.has-image .nis-drop-zone-preview { display: block; }
+.nis-drop-zone-actions { position: absolute; bottom: 4px; right: 4px; display: none; gap: 3px; }
+.nis-drop-zone.has-image .nis-drop-zone-actions { display: flex; }
+.nis-dz-btn { width: 22px; height: 22px; border-radius: 4px; border: none; background: rgba(0,0,0,0.65); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
+.nis-dz-btn:hover { background: rgba(0,0,0,0.9); }
+.nis-dz-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.nis-drop-status { font-size: 0.63rem; color: var(--muted); min-height: 1em; line-height: 1.2; }
+
+/* ── Inputs ──────────────────────────────────────────────────── */
+.nis-textarea {
+  width: 100%; box-sizing: border-box;
+  background: var(--input-bg); border: 1px solid var(--input-border); border-radius: var(--radius-sm);
+  color: var(--input-text); font-size: 0.73rem; font-family: inherit; line-height: 1.4;
+  padding: 0.42rem 0.52rem; resize: vertical; transition: border-color 0.15s;
+}
+.nis-textarea:focus { outline: none; border-color: var(--input-focus-border); }
+.nis-textarea::placeholder { color: var(--muted); opacity: 0.6; }
+.nis-field-label { font-size: 0.65rem; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+
+/* ── Add character button ────────────────────────────────────── */
+.nis-add-char-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  width: 100%; padding: 0.42rem; border-radius: var(--radius-md);
+  border: 1.5px dashed var(--line); background: transparent; color: var(--muted);
+  font-size: 0.73rem; font-weight: 500; cursor: pointer; transition: all 0.12s;
+}
+.nis-add-char-btn:hover { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.nis-add-char-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Character card ──────────────────────────────────────────── */
+.nis-char-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-panel); overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; }
+.nis-char-card.is-active { border-color: var(--char-color, var(--accent)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--char-color, var(--accent)) 18%, transparent); }
+.nis-char-hdr { display: flex; align-items: center; gap: 0.45rem; padding: 0.48rem 0.6rem; cursor: pointer; user-select: none; }
+.nis-char-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--char-color, var(--accent)); flex-shrink: 0; }
+.nis-char-name { flex: 1; font-size: 0.75rem; font-weight: 600; color: var(--text); }
+.nis-char-hdr-btns { display: flex; align-items: center; gap: 0.2rem; }
+.nis-char-icon-btn { width: 20px; height: 20px; border-radius: var(--radius-xs); border: none; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s, color 0.12s; }
+.nis-char-icon-btn:hover { background: color-mix(in srgb, var(--muted) 12%, transparent); color: var(--text); }
+.nis-char-icon-btn.is-danger:hover { color: #f87171; }
+.nis-char-icon-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nis-char-chevron { width: 13px; height: 13px; stroke: var(--muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.18s; flex-shrink: 0; }
+.nis-char-card.is-open .nis-char-chevron { transform: rotate(180deg); }
+.nis-char-body { display: none; flex-direction: column; gap: 0.45rem; padding: 0.5rem 0.6rem 0.6rem; }
+.nis-char-card.is-open .nis-char-body { display: flex; }
+.nis-char-drop { height: 68px; min-height: 68px; }
+
+/* ── Orientation chips ───────────────────────────────────────── */
+.nis-orientation-chips { display: flex; flex-wrap: wrap; gap: 0.28rem; }
+.nis-chip {
+  padding: 0.18rem 0.45rem; border-radius: var(--radius-pill);
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  font-size: 0.63rem; font-weight: 500; cursor: pointer; transition: all 0.12s;
+}
+.nis-chip:hover { border-color: var(--muted); color: var(--text); }
+.nis-chip.is-active { background: color-mix(in srgb, var(--char-color, var(--accent)) 16%, transparent); border-color: var(--char-color, var(--accent)); color: var(--char-color, var(--accent)); }
+
+/* ── Settings section ────────────────────────────────────────── */
+.nis-settings-block { display: flex; flex-direction: column; gap: 0.55rem; }
+.nis-select-wrap { position: relative; }
+.nis-select {
+  width: 100%; appearance: none;
+  background: var(--input-bg); border: 1px solid var(--input-border); border-radius: var(--radius-sm);
+  color: var(--input-text); font-size: 0.73rem; padding: 0.4rem 1.6rem 0.4rem 0.52rem;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.nis-select:focus { outline: none; border-color: var(--input-focus-border); }
+.nis-select-chevron { position: absolute; right: 0.45rem; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; pointer-events: none; stroke: var(--muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.nis-aspect-row { display: flex; gap: 0.35rem; }
+.nis-aspect-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  padding: 0.35rem 0.15rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: transparent; color: var(--muted); font-size: 0.58rem; cursor: pointer; transition: all 0.12s;
+}
+.nis-aspect-btn:hover { border-color: var(--muted); color: var(--text); }
+.nis-aspect-btn.is-active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); }
+.nis-aspect-btn svg { stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Left footer ─────────────────────────────────────────────── */
+.nis-left-footer { padding: 0.55rem 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; flex-shrink: 0; }
+.nis-generate-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  padding: 0.6rem 1rem; border-radius: var(--radius-md); border: none;
+  background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+}
+.nis-generate-btn:hover:not(:disabled) { opacity: 0.87; }
+.nis-generate-btn:active:not(:disabled) { transform: scale(0.98); }
+.nis-generate-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.nis-generate-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nis-status-text { font-size: 0.68rem; color: var(--muted); text-align: center; min-height: 1em; line-height: 1.3; }
+.nis-status-text.is-error { color: #f87171; }
+.nis-status-text.is-ok { color: var(--good); }
+
+/* ── JSON preview btn ────────────────────────────────────────── */
+.nis-preview-json-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+  padding: 0.32rem; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: transparent; color: var(--muted); font-size: 0.65rem; cursor: pointer; transition: all 0.12s;
+}
+.nis-preview-json-btn:hover { border-color: var(--muted); color: var(--text); }
+
+/* ── Canvas area ─────────────────────────────────────────────── */
+.nis-right { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.nis-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 1rem; }
+.nis-canvas { display: block; border-radius: var(--radius-md); box-shadow: 0 4px 32px rgba(0,0,0,0.45); max-width: 100%; max-height: calc(100vh - 200px); touch-action: none; }
+.nis-canvas-hint { font-size: 0.63rem; color: var(--muted); text-align: center; padding: 0.35rem; flex-shrink: 0; }
+
+/* ── Output strip ────────────────────────────────────────────── */
+.nis-output-strip {
+  background: var(--bg-panel); flex-shrink: 0;
+  max-height: 200px; overflow-x: auto; overflow-y: hidden;
+  padding: 0.5rem 0.75rem; display: none; align-items: center; gap: 0.5rem;
+}
+.nis-output-strip.is-visible { display: flex; }
+.nis-output-img-wrap { position: relative; flex-shrink: 0; }
+.nis-output-img { width: 148px; height: 148px; object-fit: cover; border-radius: var(--radius-sm); display: block; cursor: zoom-in; border: 1px solid var(--line); }
+.nis-output-overlay { position: absolute; bottom: 4px; right: 4px; display: flex; gap: 3px; }
+.nis-output-btn { width: 24px; height: 24px; border-radius: 4px; border: none; background: rgba(0,0,0,0.65); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
+.nis-output-btn:hover { background: rgba(0,0,0,0.9); }
+.nis-output-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nis-output-gen-placeholder { width: 148px; height: 148px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg-soft); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; flex-shrink: 0; }
+.nis-spinner { width: 24px; height: 24px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: nis-spin 0.85s linear infinite; }
+@keyframes nis-spin { to { transform: rotate(360deg); } }
+.nis-output-gen-placeholder p { font-size: 0.62rem; color: var(--muted); margin: 0; text-align: center; }
+
+/* ── Modals ──────────────────────────────────────────────────── */
+.nis-modal-backdrop {
+  position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.72);
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.nis-modal-backdrop[hidden] { display: none; }
+.nis-modal { background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; }
+.nis-modal--json { width: min(94vw, 780px); max-height: 85vh; }
+.nis-modal-hdr { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.nis-modal-title { flex: 1; margin: 0; font-size: 0.88rem; font-weight: 700; color: var(--text); }
+.nis-modal-close { width: 26px; height: 26px; border-radius: var(--radius-xs); border: none; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s, color 0.12s; }
+.nis-modal-close:hover { background: var(--bg-soft); color: var(--text); }
+.nis-modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nis-modal-body { flex: 1; overflow: auto; padding: 0.75rem 1rem; }
+.nis-json-ta { width: 100%; min-height: 340px; box-sizing: border-box; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: var(--radius-sm); color: var(--input-text); font-size: 0.7rem; font-family: monospace; line-height: 1.5; padding: 0.5rem 0.65rem; resize: vertical; }
+.nis-json-ta:focus { outline: none; border-color: var(--input-focus-border); }
+.nis-modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 0.45rem; padding: 0.6rem 1rem; flex-shrink: 0; }
+.nis-btn { display: inline-flex; align-items: center; gap: 0.32rem; padding: 0.38rem 0.8rem; border-radius: var(--radius-md); border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 0.73rem; font-weight: 500; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+.nis-btn:hover { border-color: var(--muted); background: var(--bg-soft); }
+.nis-btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.nis-btn--primary:hover { opacity: 0.88; }
+
+/* ── Lightbox ─────────────────────────────────────────────────── */
+.nis-lightbox { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.93); display: flex; align-items: center; justify-content: center; }
+.nis-lightbox[hidden] { display: none; }
+.nis-lightbox img { max-width: 92vw; max-height: 92vh; border-radius: var(--radius-md); object-fit: contain; }
+.nis-lb-close { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(255,255,255,0.12); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
+.nis-lb-close:hover { background: rgba(255,255,255,0.28); }
+.nis-lb-close svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   scene_builder step  (nsb-*)
+   ══════════════════════════════════════════════════════════════════════════ */
+.nsb-wrap { display: flex; flex-direction: column; gap: 0; }
+
+.nsb-section {
+  padding: 14px 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+.nsb-section:last-of-type { border-bottom: none; }
+
+.nsb-section-hdr, .nsb-chars-hdr .nsb-section-hdr {
+  font-size: 11px; font-weight: 600; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 8px;
+}
+
+.nsb-chars-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.nsb-chars-hdr .nsb-section-hdr { margin: 0; }
+
+/* Trigger rows for Scene fields / Characters — label+status on the left,
+   .nsc-options-trigger button on the right (see makeTriggerRow in
+   flow-step-scene-builder.js). Reuses .nsb-chars-hdr as the row layout. */
+.nsb-row-title-wrap {
+  display: flex; align-items: baseline; gap: 6px; min-width: 0;
+}
+.nsb-row-status {
+  font-size: 11px; color: var(--muted); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; max-width: 160px;
+}
+
+.nsb-add-btn {
+  font-size: 12px; padding: 4px 10px; border-radius: var(--radius-sm);
+  background: var(--bg-soft); border: 1px solid var(--line);
+  color: var(--text); cursor: pointer;
+}
+.nsb-add-btn:hover { background: var(--bg-panel); }
+
+/* ── compact drop zone ── */
+.nsb-drop {
+  border: 1.5px dashed var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 72px; cursor: pointer; position: relative;
+  overflow: hidden; transition: border-color .15s;
+  margin-bottom: 8px;
+}
+.nsb-drop:hover, .nsb-drop.is-over { border-color: var(--accent); }
+.nsb-drop.has-image { cursor: default; }
+
+.nsb-drop-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 16px; color: var(--muted);
+}
+.nsb-drop-inner svg { width: 20px; height: 20px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+.nsb-drop-inner span { font-size: 12px; }
+
+.nsb-drop-preview {
+  width: 100%; max-height: 120px; object-fit: cover; border-radius: var(--radius-sm);
+}
+
+.nsb-drop-acts {
+  display: flex; gap: 6px; padding: 6px 8px; width: 100%; justify-content: flex-end;
+}
+.nsb-drop-btn {
+  font-size: 11px; padding: 3px 8px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--bg-soft);
+  color: var(--text); cursor: pointer;
+}
+.nsb-drop-btn:hover { background: var(--bg-panel); }
+.nsb-drop-clear { color: var(--muted); }
+.nsb-drop-status { font-size: 11px; color: var(--muted); margin: 0 0 4px; min-height: 14px; }
+
+/* ── textarea ── */
+.nsb-textarea {
+  width: 100%; resize: vertical; min-height: 48px;
+  background: var(--input-bg); border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-size: 13px; padding: 8px 10px; line-height: 1.5;
+  font-family: inherit; box-sizing: border-box;
+}
+.nsb-textarea:focus { outline: none; border-color: var(--input-focus-border); }
+
+.nsb-field-label {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  letter-spacing: .04em; text-transform: uppercase; margin: 8px 0 4px;
+}
+
+/* ── character cards ── */
+.nsb-chars-list { display: flex; flex-direction: column; gap: 8px; }
+
+.nsb-char-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  overflow: hidden;
+  border-left: 3px solid var(--char-color, var(--accent));
+}
+
+.nsb-char-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+}
+.nsb-char-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--char-color, var(--accent)); flex-shrink: 0;
+}
+.nsb-char-name-input {
+  flex: 1; background: transparent; border: none;
+  color: var(--text); font-size: 13px; font-weight: 600;
+  padding: 0; font-family: inherit;
+}
+.nsb-char-name-input:focus { outline: none; }
+.nsb-char-rm {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px;
+}
+.nsb-char-rm:hover { color: var(--text); }
+
+.nsb-char-body { padding: 0 10px 10px; }
+
+/* ── orientation chips ── */
+.nsb-chips {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;
+}
+.nsb-chip {
+  font-size: 11px; padding: 3px 9px; border-radius: 99px;
+  border: 1px solid var(--line); background: var(--bg);
+  color: var(--muted); cursor: pointer; white-space: nowrap;
+}
+.nsb-chip:hover { border-color: var(--accent); color: var(--text); }
+.nsb-chip.is-active {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-weight: 600;
+}
+
+.nsb-free-input {
+  width: 100%; background: var(--input-bg); border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 12px;
+  padding: 6px 8px; font-family: inherit; box-sizing: border-box; margin-bottom: 4px;
+}
+.nsb-free-input:focus { outline: none; border-color: var(--input-focus-border); }
+
+/* ── build button ── */
+.nsb-build-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 0 4px;
+}
+.nsb-build-btn {
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  background: var(--accent); border: none; color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.nsb-build-btn:hover { opacity: .88; }
+.nsb-build-hint { font-size: 11px; color: var(--muted); }
+                                     

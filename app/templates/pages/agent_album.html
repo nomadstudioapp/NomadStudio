@@ -1,0 +1,98 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page album-page{% endblock %}
+
+{% block content %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="{{ url_for('viewers.who_screen') }}" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span>BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span>Agentes</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">{{ agent.name }}</span>
+    </p>
+    <div style="flex:1"></div>
+    <span class="album-count" id="album-count"></span>
+  </div>
+
+  <!-- ── Card grid — same rp-card / Album styling as /album, sourced from
+       this agent's own server-side generations instead of localStorage
+       flow sessions (see agent_album_gallery.js). ─────────────────────── -->
+  <div class="album-layout" id="agent-album-root" data-agent-slug="{{ agent.slug }}" data-agent-name="{{ agent.name }}">
+
+    <div class="album-main">
+      <nav class="rp-grid album-grid" id="album-grid" aria-label="Agent album entries"></nav>
+      <div class="album-empty" id="album-empty" hidden>
+        <p>{{ agent.name }} todavía no ha generado nada.</p>
+        <p class="muted-note">Las imágenes que genere por MCP aparecerán aquí.</p>
+      </div>
+      <button type="button" class="rp-btn rp-btn--ghost album-load-more" id="album-load-more" hidden>
+        Cargar más
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Card size zoom (reset/+/-) — same widget as /album. ─────────────── -->
+  <div class="cs-card-zoom" id="album-card-zoom">
+    <button class="cs-card-zoom-btn" id="album-card-zoom-reset" type="button" aria-label="Reset card size">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      <span class="cs-mode-tip">Reset card size</span>
+    </button>
+    <button class="cs-card-zoom-btn" id="album-card-zoom-in" type="button" aria-label="Larger cards">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="cs-mode-tip">Larger cards</span>
+    </button>
+    <button class="cs-card-zoom-btn" id="album-card-zoom-out" type="button" aria-label="Smaller cards">
+      <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+      <span class="cs-mode-tip">Smaller cards</span>
+    </button>
+  </div>
+
+  <!-- ── Lightbox ──────────────────────────────────────────────────────────
+       Same visual language as Create's .nsc-lightbox (dark backdrop, round
+       nav/close buttons, counter) but "windowed": every control is anchored
+       to the bounded .agent-lightbox-window box instead of the full-viewport
+       overlay, so prev/next/close stay next to the image instead of drifting
+       out to the browser's edges when the image doesn't fill the screen. -->
+  <div class="agent-lightbox" id="agent-lightbox" hidden role="dialog" aria-modal="true" aria-label="Image viewer">
+    <div class="agent-lightbox-window">
+      <button class="agent-lightbox-close" id="agent-lightbox-close" aria-label="Close viewer" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <button class="agent-lightbox-nav agent-lightbox-prev" id="agent-lightbox-prev" aria-label="Previous image" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="agent-lightbox-nav agent-lightbox-next" id="agent-lightbox-next" aria-label="Next image" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      <div class="agent-lightbox-media">
+        <img class="agent-lightbox-img" id="agent-lightbox-img" src="" alt="Generated image">
+        <span class="agent-lightbox-badge" id="agent-lightbox-badge"></span>
+        <span class="agent-lightbox-counter" id="agent-lightbox-counter"></span>
+      </div>
+      <div class="agent-lightbox-bottom">
+        <p class="agent-lightbox-prompt" id="agent-lightbox-prompt"></p>
+        <button class="agent-lightbox-copy" id="agent-lightbox-copy" type="button" aria-label="Copy prompt">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+          </svg>
+          <span class="cs-mode-tip">Copy prompt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/agent_album_gallery.js') }}"></script>
+{% endblock %}

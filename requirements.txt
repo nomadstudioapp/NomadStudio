@@ -1,0 +1,21 @@
+# Every direct dependency is pinned to an exact, working version. Their own
+# (indirect) dependencies are pinned in requirements.lock — regenerate it
+# whenever this file changes (docs/APP_UPDATES.md §4.3).
+Flask==3.1.0
+lmstudio==1.5.0
+bleach==6.2.0
+websocket-client==1.9.0
+mcp[cli]==1.29.0
+
+# Base libraries for addons — pinned to the exact versions the current
+# addons (Pixel Matcher, Chroma Key, Layer Composer, Edge Defringe) are
+# tested with. Addon packages declare these in requires.python_packages
+# instead of bundling wheels (docs/PACKAGE_FORMAT.md §9.5). All have
+# cp313 wheels for Windows x64, macOS arm64/x64 and Linux x64/arm64.
+# Change them only together with a re-test of every addon.
+numpy==2.4.6
+scipy==1.17.1
+Pillow==12.2.0
+scikit-learn==1.9.0
+joblib==1.5.3
+threadpoolctl==3.6.0

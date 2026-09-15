@@ -1,0 +1,759 @@
+from __future__ import annotations
+
+import io
+import json
+import logging
+import time
+import uuid
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import urlencode, quote
+
+from flask import jsonify, request
+from PIL import Image
+
+from app.config import DEFAULT_COMFY_URL
+from app.services.http_client import http_json, http_bytes, http_multipart_upload_image
+from app.services import gpu_coordinator
+from app.services.workflow_service import _extract_lora_options_from_object_info, _analyze_workflow
+from app.routes.models_api_shared import (
+    _apply_comfy_output_policy,
+    _ensure_registry,
+    _inject_uploaded_image_into_workflow,
+    _parse_image_data_url,
+    _safe_comfy_url,
+    _select_output_images,
+    _try_save_image_to_output_dir,
+    models_api_bp,
+)
+
+_APP_DIR = Path(__file__).parent.parent.parent  # app/
+logger = logging.getLogger(__name__)
+
+# Extensions ComfyUI happily lists (it just enumerates the folder) but that
+# spandrel — the loader ComfyUI's upscale/model nodes use — can never load,
+# since these aren't PyTorch model formats at all (NCNN/ONNX exports some
+# users keep alongside real .pth/.safetensors files in the same folder for
+# their own testing). Filtering them out of combo-list responses avoids
+# offering a choice that's guaranteed to fail with spandrel.UnsupportedModelError
+# the moment it's actually used.
+_UNLOADABLE_MODEL_EXTENSIONS = (".bin", ".onnx", ".param")
+
+
+def _drop_unloadable_model_files(options: list[str]) -> list[str]:
+    return [o for o in options if not str(o).lower().endswith(_UNLOADABLE_MODEL_EXTENSIONS)]
+
+
+def _load_workflow_file(relative_path: str) -> dict:
+    safe = Path(relative_path).as_posix()
+    if ".." in safe or safe.startswith("/"):
+        raise ValueError("Invalid workflow_file path")
+    full = (_APP_DIR / relative_path).resolve()
+    if not str(full).startswith(str(_APP_DIR.resolve())):
+        raise ValueError("Invalid workflow_file path")
+    raw = json.loads(full.read_text(encoding="utf-8"))
+    return {k: v for k, v in raw.items() if not str(k).startswith("_")}
+
+
+def _extract_combo_options(input_def) -> list[str]:
+    """Pull a combo's list of string choices out of a ComfyUI object_info
+    input definition, across the schema variants seen in the wild:
+
+      Classic:      [["opt1", "opt2", ...], {metadata}]
+      Newer/v3-ish: ["COMBO", {"options": ["opt1", "opt2", ...], ...}]
+                    ["COMBO", {"choices": [...]}]
+      Dict-first:   [{"options": [...]}, ...]  (options/choices nested in a
+                    dict that is itself the first element instead of the type
+                    name string)
+
+    Returns [] if none of these shapes match — callers can then log the raw
+    shape for further diagnosis.
+    """
+    if not isinstance(input_def, list) or not input_def:
+        return []
+
+    first = input_def[0]
+
+    # Classic: first element IS the list of choices.
+    if isinstance(first, list):
+        return [str(v) for v in first if str(v).strip()]
+
+    # Newer variants: choices live in a dict, either as the second element
+    # (type-name string + metadata dict) or as the first element itself.
+    meta_candidates = []
+    if isinstance(first, dict):
+        meta_candidates.append(first)
+    if len(input_def) > 1 and isinstance(input_def[1], dict):
+        meta_candidates.append(input_def[1])
+
+    for meta in meta_candidates:
+        for key in ("options", "choices", "values", "enum"):
+            candidates = meta.get(key)
+            if isinstance(candidates, list) and candidates:
+                return [str(v) for v in candidates if str(v).strip()]
+
+    return []
+
+
+@models_api_bp.get("/models/workflow-file/analysis")
+def get_workflow_file_analysis():
+    """Analysis (quantization/quality/downloads/etc.) for a plain `workflow_file`
+    flow (Refine's Qwen 2511 Edit, Flux Klein Edit, ...) — the workflow_file
+    counterpart to an import record's `analysis`, so the frontend can reuse the
+    same Advanced/Quantization panel that Create's imports already use, even
+    though these flows never go through the Imports registry.
+
+    Query params: file (workflow_file relative path).
+
+    Response: { "analysis": {...} } — same shape as `import.analysis`
+    (detected/basicParameters/advancedParameters/quantization/configNode/...).
+    Returns { "analysis": null } (not an error) on any failure, so callers can
+    just hide the Advanced panel when there's nothing to show.
+    """
+    workflow_file = str(request.args.get("file", "")).strip()
+    if not workflow_file:
+        return jsonify({"analysis": None})
+
+    try:
+        workflow = _load_workflow_file(workflow_file)
+    except (ValueError, FileNotFoundError) as exc:
+        logger.warning("workflow-file/analysis: could not load workflow_file=%r (%s)", workflow_file, exc)
+        return jsonify({"analysis": None})
+
+    try:
+        analysis = _analyze_workflow(workflow)
+    except Exception as exc:
+        logger.warning("workflow-file/analysis: analysis failed for workflow_file=%r (%s)", workflow_file, exc)
+        return jsonify({"analysis": None})
+
+    return jsonify({"analysis": analysis})
+
+
+@models_api_bp.get("/models/workflow-file/param-options")
+def get_workflow_file_param_options():
+    """Live enum options for a single node input of a plain `workflow_file`
+    flow (Remove Background, Lettering, etc.) — the lightweight counterpart to
+    /models/imports/<id>/param-options for flows that don't go through the
+    Imports registry and so have no cached `analysis.advancedParameters`.
+
+    Query params: file (workflow_file relative path), node (node id in that
+    workflow), key (input name on that node, e.g. "model").
+
+    Response: { "options": ["opt1", "opt2", ...] } — empty list (not an error)
+    on any failure, so callers can just fall back to their static list.
+    """
+    workflow_file = str(request.args.get("file", "")).strip()
+    node_id = str(request.args.get("node", "")).strip()
+    input_key = str(request.args.get("key", "")).strip()
+    if not workflow_file or not node_id or not input_key:
+        logger.warning("param-options: missing query params file=%r node=%r key=%r", workflow_file, node_id, input_key)
+        return jsonify({"options": []})
+
+    try:
+        workflow = _load_workflow_file(workflow_file)
+    except (ValueError, FileNotFoundError) as exc:
+        logger.warning("param-options: could not load workflow_file=%r (%s)", workflow_file, exc)
+        return jsonify({"options": []})
+
+    node = workflow.get(node_id)
+    class_type = str(node.get("class_type", "")).strip() if isinstance(node, dict) else ""
+    if not class_type:
+        logger.warning("param-options: node id=%r not found (or has no class_type) in %r — keys present: %s", node_id, workflow_file, list(workflow.keys()))
+        return jsonify({"options": []})
+
+    data = _ensure_registry()
+    comfy_api_url = str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip() or DEFAULT_COMFY_URL
+    try:
+        comfy_api_url = _safe_comfy_url(comfy_api_url)
+        object_info = http_json(f"{comfy_api_url}/object_info/{class_type}", timeout=20)
+    except Exception as exc:
+        logger.warning("param-options: /object_info/%s request to %s failed: %s", class_type, comfy_api_url, exc)
+        return jsonify({"options": []})
+
+    node_info = object_info.get(class_type, {}) if isinstance(object_info, dict) else {}
+    if not node_info:
+        logger.warning(
+            "param-options: ComfyUI's /object_info/%s response has no entry for class_type %r — returned keys: %s",
+            class_type, class_type, list(object_info.keys()) if isinstance(object_info, dict) else type(object_info),
+        )
+    input_spec = node_info.get("input", {}) if isinstance(node_info, dict) else {}
+    options: list[str] = []
+    raw_input_def = None
+    for section_name in ("required", "optional"):
+        section = input_spec.get(section_name, {}) if isinstance(input_spec, dict) else {}
+        input_def = section.get(input_key) if isinstance(section, dict) else None
+        if input_def is not None:
+            raw_input_def = input_def
+        options = _extract_combo_options(input_def)
+        if options:
+            break
+
+    if not options and node_info:
+        logger.warning(
+            "param-options: found node_info for %s but no combo list at input_key=%r — input keys available: required=%s optional=%s — raw shape: %r",
+            class_type, input_key,
+            list((input_spec.get("required") or {}).keys()) if isinstance(input_spec, dict) else None,
+            list((input_spec.get("optional") or {}).keys()) if isinstance(input_spec, dict) else None,
+            raw_input_def,
+        )
+
+    options = _drop_unloadable_model_files(options)
+    return jsonify({"options": options})
+
+
+def _get_flow_preprocess(workflow: dict) -> dict | None:
+    for node in workflow.values():
+        if not isinstance(node, dict):
+            continue
+        if str(node.get("_meta", {}).get("title", "")) != "flow_data":
+            continue
+        raw = str(node.get("inputs", {}).get("value", "")).strip()
+        if not raw:
+            continue
+        try:
+            meta = json.loads(raw)
+            p = meta.get("preprocess")
+            return p if isinstance(p, dict) else None
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def _pad_canvas(
+    raw_bytes: bytes,
+    target_w: int,
+    target_h: int,
+    background: str = "white",
+    position: str = "center",
+    scale_pct: float = 100.0,
+    offset_x: float = 0.0,
+    offset_y: float = 0.0,
+) -> bytes:
+    from PIL import ImageFilter
+    img = Image.open(io.BytesIO(raw_bytes)).convert("RGBA")
+    orig_w, orig_h = img.size
+    # Scale relative to the canvas: 100% = image fitted to fill the canvas
+    # (keeping aspect ratio); lower values shrink it inside the canvas,
+    # leaving more area to outpaint. Resolution-independent.
+    try:
+        factor = float(scale_pct) / 100.0
+    except (TypeError, ValueError):
+        factor = 1.0
+    if factor <= 0:
+        factor = 1.0
+    fit = min(target_w / orig_w, target_h / orig_h)
+    eff = fit * min(factor, 1.0)
+    img = img.resize(
+        (max(1, round(orig_w * eff)), max(1, round(orig_h * eff))),
+        Image.LANCZOS,
+    )
+    orig_w, orig_h = img.size
+    if "left" in position:
+        x = 0
+    elif "right" in position:
+        x = target_w - orig_w
+    else:
+        x = (target_w - orig_w) // 2
+    if "top" in position:
+        y = 0
+    elif "bottom" in position:
+        y = target_h - orig_h
+    else:
+        y = (target_h - orig_h) // 2
+    # Fine offset (px) on top of the grid anchor, clamped back onto the
+    # canvas the same way the client-side preview does — a large offset just
+    # pins the image against whichever edge it was heading towards, instead
+    # of pushing it (or the canvas math) out of range.
+    try:
+        x += round(float(offset_x))
+        y += round(float(offset_y))
+    except (TypeError, ValueError):
+        pass
+    x = max(0, min(x, max(0, target_w - orig_w)))
+    y = max(0, min(y, max(0, target_h - orig_h)))
+    if background in ("transparent", "alpha", "none"):
+        # Pad with real transparency and keep the alpha channel (RGBA PNG).
+        canvas = Image.new("RGBA", (target_w, target_h), (0, 0, 0, 0))
+        canvas.paste(img, (x, y), img)
+        buf = io.BytesIO()
+        canvas.save(buf, format="PNG")
+        return buf.getvalue()
+    if background == "edge_blur":
+        bg = img.convert("RGB").resize((target_w, target_h), Image.LANCZOS)
+        blur_r = max(target_w, target_h) // 8
+        bg = bg.filter(ImageFilter.GaussianBlur(radius=blur_r)).convert("RGBA")
+        bg.paste(img, (x, y))
+        canvas = bg
+    else:
+        # Solid fill. Accept "r,g,b" / "r,g,b,a" strings (e.g. "0,255,0" green)
+        # as well as PIL colour names, since PIL doesn't parse comma strings.
+        fill = background
+        bg_str = str(background).strip()
+        if "," in bg_str:
+            try:
+                comps = [int(float(c)) for c in bg_str.split(",")]
+                if len(comps) == 3:
+                    fill = (comps[0], comps[1], comps[2], 255)
+                elif len(comps) == 4:
+                    fill = (comps[0], comps[1], comps[2], comps[3])
+            except ValueError:
+                fill = background
+        canvas = Image.new("RGBA", (target_w, target_h), fill)
+        canvas.paste(img, (x, y), img)
+    buf = io.BytesIO()
+    canvas.convert("RGB").save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _apply_preprocess(
+    raw_bytes: bytes,
+    mime: str,
+    raw_workflow: dict,
+    merged_advanced: dict,
+) -> tuple[bytes, str]:
+    preprocess = _get_flow_preprocess(raw_workflow)
+    if not preprocess:
+        return raw_bytes, mime
+    if str(preprocess.get("type", "")) != "pad_canvas":
+        return raw_bytes, mime
+    width_key = str(preprocess.get("width_key", "")).strip()
+    height_key = str(preprocess.get("height_key", "")).strip()
+    target_w = int(merged_advanced.get(width_key, 0))
+    target_h = int(merged_advanced.get(height_key, 0))
+    if target_w <= 0 or target_h <= 0:
+        return raw_bytes, mime
+    background = str(merged_advanced.get("_preprocess.background") or preprocess.get("background", "white"))
+    position = str(merged_advanced.get("_preprocess.position") or preprocess.get("position", "center"))
+    try:
+        scale_pct = float(merged_advanced.get("_preprocess.scale", 100) or 100)
+    except (TypeError, ValueError):
+        scale_pct = 100.0
+    try:
+        offset_x = float(merged_advanced.get("_preprocess.offset_x", 0) or 0)
+    except (TypeError, ValueError):
+        offset_x = 0.0
+    try:
+        offset_y = float(merged_advanced.get("_preprocess.offset_y", 0) or 0)
+    except (TypeError, ValueError):
+        offset_y = 0.0
+    padded = _pad_canvas(raw_bytes, target_w, target_h, background, position, scale_pct, offset_x, offset_y)
+    return padded, "image/png"
+
+
+def _apply_advanced_values(workflow: dict, advanced_values: dict) -> None:
+    for dot_key, value in advanced_values.items():
+        parts = str(dot_key).split(".", 1)
+        if len(parts) != 2:
+            continue
+        node_id, input_key = parts
+        node = workflow.get(node_id)
+        if not isinstance(node, dict):
+            continue
+        if input_key == "_mode":
+            try:
+                node["mode"] = int(value)
+            except (ValueError, TypeError):
+                pass
+        elif isinstance(node.get("inputs"), dict):
+            node["inputs"][input_key] = value
+
+
+@models_api_bp.get("/models/comfy/loras")
+def list_comfy_loras():
+    """Returns LoRA filenames available in ComfyUI."""
+    data = _ensure_registry()
+    comfy_api_url = (
+        str(request.args.get("comfyApiUrl", "")).strip()
+        or str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+        or DEFAULT_COMFY_URL
+    )
+    try:
+        comfy_api_url = _safe_comfy_url(comfy_api_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    try:
+        object_info = http_json(f"{comfy_api_url}/object_info", timeout=15)
+    except Exception as exc:
+        return jsonify({"error": f"ComfyUI unreachable: {exc}"}), 502
+
+    loras = _extract_lora_options_from_object_info(object_info)
+    prefix = str(request.args.get("prefix", "")).strip()
+    if prefix:
+        loras = [l for l in loras if l.startswith(prefix)]
+    return jsonify({"loras": loras})
+
+
+_PLACEHOLDER_PNG_CACHE: bytes | None = None
+
+
+def _neutral_placeholder_png() -> bytes:
+    """Flat mid-gray 768x768 PNG, cached — stand-in for an optional mix image
+    slot the user left empty (see prepare_mix_workflow). Size doesn't matter
+    much: every mix workflow re-scales its LoadImage output with its own
+    ImageScaleToTotalPixels node before it reaches the model."""
+    global _PLACEHOLDER_PNG_CACHE
+    if _PLACEHOLDER_PNG_CACHE is None:
+        buf = io.BytesIO()
+        Image.new("RGB", (768, 768), (128, 128, 128)).save(buf, format="PNG")
+        _PLACEHOLDER_PNG_CACHE = buf.getvalue()
+    return _PLACEHOLDER_PNG_CACHE
+
+
+@models_api_bp.post("/models/mix/prepare")
+def prepare_mix_workflow():
+    """Prepare a mix workflow (2+ image inputs) for direct JS submission to ComfyUI.
+
+    Accepts:
+      workflowFile  – relative path to the workflow JSON
+      images        – list of {dataUrl, nodeId} dicts, one per LoadImage node
+      advancedValues – dot-notation overrides (e.g. {"135.text": "...", "125.noise_seed": 42})
+
+    Returns {workflow, clientId, comfyApiUrl} — same contract as refine/prepare.
+    """
+    payload = request.get_json(silent=True) or {}
+    workflow_file = str(payload.get("workflowFile", "")).strip()
+    images = payload.get("images", [])
+    advanced_values = payload.get("advancedValues", {})
+
+    if not workflow_file:
+        return jsonify({"error": "workflowFile is required"}), 400
+    if not isinstance(images, list) or len(images) < 1:
+        return jsonify({"error": "images must be a non-empty list"}), 400
+
+    try:
+        raw_workflow = _load_workflow_file(workflow_file)
+    except (ValueError, FileNotFoundError) as exc:
+        return jsonify({"error": f"Workflow file error: {exc}"}), 400
+
+    data = _ensure_registry()
+    comfy_api_url = (
+        str(payload.get("comfyApiUrl", "")).strip()
+        or str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+        or DEFAULT_COMFY_URL
+    )
+    try:
+        comfy_api_url = _safe_comfy_url(comfy_api_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    merged_advanced: dict = {}
+    if isinstance(advanced_values, dict):
+        for key, value in advanced_values.items():
+            key_text = str(key or "").strip()
+            if key_text and isinstance(value, (str, int, float, bool)):
+                merged_advanced[key_text] = value
+
+    prepared_workflow = deepcopy(raw_workflow)
+    _apply_advanced_values(prepared_workflow, merged_advanced)
+
+    # Upload each image and inject into its node
+    for img_entry in images:
+        if not isinstance(img_entry, dict):
+            continue
+        data_url = str(img_entry.get("dataUrl", "")).strip()
+        node_id = str(img_entry.get("nodeId", "")).strip() or None
+        if not data_url:
+            if not node_id:
+                continue
+            # Optional image slot left empty (e.g. Clothes Mix run text-only,
+            # no reference photo) — the node still needs SOME uploaded image
+            # to keep the graph valid, and leaving the workflow file's own
+            # baked-in LoadImage filename in place would reference whatever
+            # test image the flow's author had on their own ComfyUI input
+            # folder, which won't exist on the user's server. A flat neutral
+            # placeholder stands in for it instead; the prompt (already
+            # required for this case by updateGenerateBtn client-side) is
+            # what actually drives the result.
+            mime, raw_bytes = "image/png", _neutral_placeholder_png()
+        else:
+            try:
+                mime, raw_bytes = _parse_image_data_url(data_url)
+            except ValueError as exc:
+                return jsonify({"error": f"Invalid image dataUrl: {exc}"}), 400
+
+        image_ext = "png" if mime == "image/png" else ("jpg" if mime == "image/jpeg" else "webp")
+        upload_filename = f"oj-mix-{uuid.uuid4().hex}.{image_ext}"
+        try:
+            upload_result = http_multipart_upload_image(
+                f"{comfy_api_url}/upload/image",
+                upload_filename,
+                raw_bytes,
+                mime,
+            )
+            comfy_filename = str(upload_result.get("name", "")).strip() or upload_filename
+        except Exception as exc:
+            return jsonify({"error": f"ComfyUI image upload failed: {exc}"}), 502
+
+        if node_id and node_id in prepared_workflow:
+            node = prepared_workflow[node_id]
+            if isinstance(node, dict) and isinstance(node.get("inputs"), dict):
+                node["inputs"]["image"] = comfy_filename
+        else:
+            # Fallback: inject into first available LoadImage node not yet overridden
+            if not _inject_uploaded_image_into_workflow(prepared_workflow, comfy_filename, node_id=node_id):
+                return jsonify({"error": f"No LoadImage node found for nodeId={node_id}"}), 400
+
+    _apply_comfy_output_policy(data, prepared_workflow)
+    gpu_coordinator.wait_external("comfy")  # browser submits directly (superqueue)
+    client_id = uuid.uuid4().hex
+    return jsonify({
+        "workflow": prepared_workflow,
+        "clientId": client_id,
+        "comfyApiUrl": comfy_api_url,
+    })
+
+
+@models_api_bp.post("/models/refine/preprocess-preview")
+def preprocess_preview():
+    """Return the preprocessed image as a base64 data URL (no ComfyUI involved)."""
+    import base64
+    payload        = request.get_json(silent=True) or {}
+    image_data_url = str(payload.get("imageDataUrl", "")).strip()
+    workflow_file  = str(payload.get("workflowFile", "")).strip()
+    advanced_values = payload.get("advancedValues", {})
+
+    if not image_data_url:
+        return jsonify({"error": "imageDataUrl required"}), 400
+
+    try:
+        mime, raw_bytes = _parse_image_data_url(image_data_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    merged_advanced: dict = {}
+    if isinstance(advanced_values, dict):
+        for k, v in advanced_values.items():
+            k = str(k or "").strip()
+            if k and isinstance(v, (str, int, float, bool)):
+                merged_advanced[k] = v
+
+    if workflow_file:
+        try:
+            raw_workflow = _load_workflow_file(workflow_file)
+            raw_bytes, mime = _apply_preprocess(raw_bytes, mime, raw_workflow, merged_advanced)
+        except Exception:
+            pass
+
+    data_url = "data:" + mime + ";base64," + base64.b64encode(raw_bytes).decode()
+    return jsonify({"dataUrl": data_url})
+
+
+@models_api_bp.post("/models/refine/prepare")
+def prepare_refine_workflow():
+    """Prepare refine workflow for direct JS submission to ComfyUI.
+
+    Loads the workflow file, uploads the source image to ComfyUI, applies
+    advanced values, and returns {workflow, clientId, comfyApiUrl} — same
+    contract as /models/imports/prepare-queue.
+    """
+    payload = request.get_json(silent=True) or {}
+    workflow_file = str(payload.get("workflowFile", "")).strip()
+    image_data_url = str(payload.get("imageDataUrl", "")).strip()
+    advanced_values = payload.get("advancedValues", {})
+    image_node_id = str(payload.get("imageNodeId", "")).strip() or None
+
+    if not workflow_file:
+        return jsonify({"error": "workflowFile is required"}), 400
+    if not image_data_url:
+        return jsonify({"error": "imageDataUrl is required"}), 400
+
+    try:
+        raw_workflow = _load_workflow_file(workflow_file)
+    except (ValueError, FileNotFoundError) as exc:
+        return jsonify({"error": f"Workflow file error: {exc}"}), 400
+
+    data = _ensure_registry()
+    comfy_api_url = (
+        str(payload.get("comfyApiUrl", "")).strip()
+        or str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+        or DEFAULT_COMFY_URL
+    )
+
+    try:
+        comfy_api_url = _safe_comfy_url(comfy_api_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    try:
+        mime, raw_bytes = _parse_image_data_url(image_data_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    merged_advanced: dict = {}
+    if isinstance(advanced_values, dict):
+        for key, value in advanced_values.items():
+            key_text = str(key or "").strip()
+            if key_text and isinstance(value, (str, int, float, bool)):
+                merged_advanced[key_text] = value
+
+    raw_bytes, mime = _apply_preprocess(raw_bytes, mime, raw_workflow, merged_advanced)
+
+    image_ext = "png" if mime == "image/png" else ("jpg" if mime == "image/jpeg" else "webp")
+    upload_filename = f"oj-refine-{uuid.uuid4().hex}.{image_ext}"
+    try:
+        upload_result = http_multipart_upload_image(
+            f"{comfy_api_url}/upload/image",
+            upload_filename,
+            raw_bytes,
+            mime,
+        )
+        comfy_filename = str(upload_result.get("name", "")).strip() or upload_filename
+    except Exception as exc:
+        return jsonify({"error": f"ComfyUI image upload failed: {exc}"}), 502
+
+    prepared_workflow = deepcopy(raw_workflow)
+    _apply_advanced_values(prepared_workflow, merged_advanced)
+
+    if not _inject_uploaded_image_into_workflow(
+        prepared_workflow, comfy_filename, node_id=image_node_id
+    ):
+        return jsonify({"error": "Workflow has no LoadImage node for input image"}), 400
+
+    _apply_comfy_output_policy(data, prepared_workflow)
+    gpu_coordinator.wait_external("comfy")  # browser submits directly (superqueue)
+    client_id = uuid.uuid4().hex
+
+    input_image_url = (
+        f"{comfy_api_url}/view?filename={quote(comfy_filename)}&type=input"
+    )
+
+    return jsonify({
+        "workflow":      prepared_workflow,
+        "clientId":      client_id,
+        "comfyApiUrl":   comfy_api_url,
+        "inputImageUrl": input_image_url,
+    })
+
+
+@models_api_bp.post("/models/refine/generate")
+def generate_refine_image():
+    payload = request.get_json(silent=True) or {}
+    workflow_file = str(payload.get("workflowFile", "")).strip()
+    image_data_url = str(payload.get("imageDataUrl", "")).strip()
+    advanced_values = payload.get("advancedValues", {})
+    image_node_id = str(payload.get("imageNodeId", "")).strip() or None
+
+    if not workflow_file:
+        return jsonify({"error": "workflowFile is required"}), 400
+    if not image_data_url:
+        return jsonify({"error": "imageDataUrl is required"}), 400
+
+    try:
+        raw_workflow = _load_workflow_file(workflow_file)
+    except (ValueError, FileNotFoundError) as exc:
+        return jsonify({"error": f"Workflow file error: {exc}"}), 400
+
+    data = _ensure_registry()
+    comfy_api_url = (
+        str(payload.get("comfyApiUrl", "")).strip()
+        or str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+        or DEFAULT_COMFY_URL
+    )
+
+    try:
+        comfy_api_url = _safe_comfy_url(comfy_api_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    try:
+        mime, raw_bytes = _parse_image_data_url(image_data_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    merged_advanced: dict = {}
+    if isinstance(advanced_values, dict):
+        for key, value in advanced_values.items():
+            key_text = str(key or "").strip()
+            if key_text and isinstance(value, (str, int, float, bool)):
+                merged_advanced[key_text] = value
+
+    raw_bytes, mime = _apply_preprocess(raw_bytes, mime, raw_workflow, merged_advanced)
+
+    image_ext = "png" if mime == "image/png" else ("jpg" if mime == "image/jpeg" else "webp")
+    upload_filename = f"oj-refine-{uuid.uuid4().hex}.{image_ext}"
+
+    try:
+        upload_result = http_multipart_upload_image(
+            f"{comfy_api_url}/upload/image",
+            upload_filename,
+            raw_bytes,
+            mime,
+        )
+        comfy_filename = str(upload_result.get("name", "")).strip() or upload_filename
+    except Exception as exc:
+        return jsonify({"error": f"ComfyUI image upload failed: {exc}"}), 502
+
+    try:
+        prepared_workflow = deepcopy(raw_workflow)
+        _apply_advanced_values(prepared_workflow, merged_advanced)
+
+        if not _inject_uploaded_image_into_workflow(
+            prepared_workflow, comfy_filename, node_id=image_node_id
+        ):
+            return jsonify(
+                {"error": "Workflow has no LoadImage node for input image"}
+            ), 400
+
+        _apply_comfy_output_policy(data, prepared_workflow)
+
+        with gpu_coordinator.held("comfy"):
+            prompt_response = http_json(
+                f"{comfy_api_url}/prompt",
+                method="POST",
+                payload={"prompt": prepared_workflow, "client_id": uuid.uuid4().hex},
+                timeout=30,
+            )
+            prompt_id = str(prompt_response.get("prompt_id", "")).strip()
+            if not prompt_id:
+                return jsonify({"error": f"ComfyUI rejected prompt: {prompt_response}"}), 502
+
+            history_payload: dict = {}
+            for _ in range(720):
+                time.sleep(0.5)
+                history_payload = http_json(
+                    f"{comfy_api_url}/history/{prompt_id}", timeout=120
+                )
+                if isinstance(history_payload, dict) and prompt_id in history_payload:
+                    outputs = history_payload.get(prompt_id, {}).get("outputs", {})
+                    if outputs:
+                        break
+
+        _output_node_id, image_entries = _select_output_images(
+            history_payload, prompt_id, []
+        )
+        if not image_entries:
+            return jsonify({"error": "No output image found in ComfyUI history"}), 502
+
+        first = image_entries[0]
+        query = urlencode(
+            {
+                "filename": first.get("filename", ""),
+                "subfolder": first.get("subfolder", ""),
+                "type": first.get("type", "output"),
+            }
+        )
+        image_bytes = http_bytes(f"{comfy_api_url}/view?{query}", timeout=180)
+
+        meta: dict[str, str] = {
+            "source": "refine",
+            "session": prompt_id,
+            "workflow_file": workflow_file,
+            "advanced_values": json.dumps(merged_advanced, ensure_ascii=False),
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+        saved_filename = _try_save_image_to_output_dir(
+            data, image_bytes, meta, "refine", 0
+        )
+    except Exception as exc:
+        return jsonify({"error": f"ComfyUI refine workflow failed: {exc}"}), 502
+
+    return jsonify(
+        {
+            "ok": True,
+            "workflowFile": workflow_file,
+            "promptId": prompt_id,
+            "savedFilename": saved_filename,
+        }
+    )

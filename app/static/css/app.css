@@ -1,0 +1,32 @@
+/* CSS split into parts for better manageability */
+
+/* Variables and themes must come first */
+@import url('./parts/variables.css');
+
+/* Base reset and body */
+@import url('./parts/base.css');
+
+/* Sidebar and nav */
+@import url('./parts/sidebar.css');
+
+/* Create page styles */
+@import url('./parts/create.css');
+
+/* Modals and chat */
+@import url('./parts/modals.css');
+
+/* Describe benchmark page */
+@import url('./parts/benchmark.css');
+
+/* Nomad Studio */
+@import url('./parts/nomad_studio.css');
+@import url('./parts/canvas_composer.css');
+@import url('./parts/ideogram_scene.css');
+@import url('./parts/refine_presets.css');
+
+/* Responsive and remaining */
+@import url('./parts/responsive.css');
+
+/* Video caption overlay (tutorial recording dev tool) */
+@import url('./parts/video_caption.css');
+@import url('./parts/lang_panel.css');

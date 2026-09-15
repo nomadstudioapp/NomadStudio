@@ -1,0 +1,107 @@
+/* ─── Video caption overlay ──────────────────────────────────────────────
+   Dev tool for recording tutorial videos: a bottom-anchored, white caption
+   card in --font-display. Click-through by design (pointer-events: none)
+   so it never blocks interacting with the real UI during a recording —
+   only the small tab + its editor popover are actually clickable. */
+
+.ns-caption-overlay {
+  position: fixed;
+  left: 50%;
+  bottom: 14vh;
+  transform: translateX(-50%);
+  z-index: 9000;
+  max-width: min(70vw, 900px);
+  pointer-events: none;
+}
+
+.ns-caption-text {
+  margin: 0;
+  padding: 1rem 1.75rem;
+  background: #fff;
+  color: #14151a;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.2vw, 1.8rem);
+  line-height: 1.3;
+  text-align: center;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  white-space: pre-wrap;
+}
+
+.ns-caption-tab {
+  /* Right inset (0.75rem) matches .cs-history-toggle's so the right-hand
+     column lines up top-to-bottom; bottom inset matches .cs-theme-cycle-btn's
+     so both bottom-corner buttons sit the same distance from the edge. */
+  position: fixed;
+  right: 0.75rem;
+  bottom: 1.25rem;
+  z-index: 9001;
+}
+
+/* Same .cs-mode-tip fade-in tooltip as .cs-settings-btn/.cs-history-toggle,
+   flipped to open upward — this button sits at the bottom of the viewport,
+   so the default below-trigger placement would render off-screen. */
+.ns-caption-tab .cs-mode-tip {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(3px);
+}
+
+.ns-caption-tab:hover .cs-mode-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ns-caption-editor[hidden] {
+  display: none;
+}
+
+.ns-caption-editor {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 4.25rem;
+  z-index: 9001;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 9px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.ns-caption-editor-input {
+  width: 100%;
+  resize: vertical;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text);
+  font-size: var(--fs-base);
+  padding: 0.5rem 0.6rem;
+  font-family: inherit;
+}
+
+.ns-caption-editor-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Phone-width main hub — .ns-caption-tab shares the same bottom-right
+   corner the icon row (responsive.css) now uses for Theme, so it would
+   sit right on top of it. Hidden here (not in responsive.css) because
+   this file @imports after responsive.css, so a duplicate rule there
+   would lose the cascade back to the unconditional `position:fixed`
+   block above. */
+@media (max-width: 560px) {
+  .ns-caption-tab {
+    display: none;
+  }
+}

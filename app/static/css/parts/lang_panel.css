@@ -1,0 +1,228 @@
+/* ─── Language panel — same collapsible pattern as .cs-history-panel ────────
+   Self-contained (only depends on tokens from variables.css) so it works on
+   both base.html pages (via app.css @import) and the standalone who.html
+   (linked directly), without needing the full nomad_studio.css bundle. */
+
+.cs-lang-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: auto;
+  z-index: 100;
+}
+
+/* Text-only trigger (no icon, per design) — round + bordered, matching the
+   shared .cs-icon-btn spec in nomad_studio.css (avatar/settings/history/
+   theme-cycle/caption-tab), reimplemented standalone here since this file
+   also has to work on who.html without the full nomad_studio.css bundle.
+   Sits left of History's 40px hit area (right:0.75rem) with the same
+   0.5rem gap as the logo/settings pair on the opposite corner, when both
+   exist on the same page; who.html has no other icon in that corner so the
+   default position works there unmodified. top: 0.5rem matches the avatar
+   row. */
+.cs-lang-toggle {
+  position: fixed;
+  top: 0.5rem;
+  right: 3.75rem;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.cs-lang-toggle:hover,
+.cs-lang-toggle[aria-expanded="true"] {
+  background: var(--bg-toggle, var(--bg-soft));
+  border-color: var(--accent);
+}
+
+/* Self-contained tooltip (not .cs-mode-tip — who.html doesn't load
+   nomad_studio.css, so this file can't depend on it) */
+.cs-lang-tip {
+  pointer-events: none;
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-3px);
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: var(--tooltip-bg, var(--bg-panel));
+  border: 1px solid var(--tooltip-border, var(--line));
+  border-radius: 7px;
+  padding: 6px 14px;
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+  z-index: 300;
+}
+
+.cs-lang-toggle:hover .cs-lang-tip,
+.cs-lang-toggle:focus-visible .cs-lang-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* who.html: no History toggle sharing the corner, sit flush right instead.
+   A modifier class, not a `.ns-screen .cs-lang-toggle` descendant selector —
+   the toggle lives outside #ns-screen (see who.html), so it can't be scoped
+   by ancestry. */
+.cs-lang-toggle--flush {
+  right: 1.25rem;
+}
+
+.cs-lang-panel.is-open .cs-lang-content {
+  transform: translateX(0) !important;
+}
+
+.cs-lang-content {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 360px;
+  max-width: 92vw;
+  height: 100vh;
+  background: var(--bg-soft);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transform: translateX(100%);
+}
+
+.cs-lang-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  flex-shrink: 0;
+}
+
+.cs-lang-header h3 {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02rem;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--text);
+}
+
+.cs-lang-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.cs-lang-close:hover {
+  color: var(--text);
+  background: var(--bg-toggle, var(--bg-panel));
+}
+
+.cs-lang-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cs-lang-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+  overflow-y: auto;
+}
+
+.cs-lang-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-panel);
+  border: none;
+  box-shadow: inset 0 0 0 1.5px var(--scrollbar-hover);
+  border-radius: var(--radius-md, 9px);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: box-shadow 0.15s ease;
+}
+
+.cs-lang-option:hover {
+  box-shadow: inset 0 0 0 1.5px var(--text-secondary);
+}
+
+.cs-lang-option.is-active {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+  color: var(--accent);
+}
+
+.cs-lang-option.is-disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.cs-lang-option-soon {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.cs-lang-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 98;
+  display: none;
+}
+
+.cs-lang-panel.is-open ~ .cs-lang-overlay {
+  opacity: 1;
+  pointer-events: auto;
+  display: block;
+}
+
+/* Phone-width main hub — folded into the single bottom icon row (see
+   responsive.css). Duplicated here (not just in responsive.css) because
+   this file is @imported AFTER responsive.css in app.css, so at equal
+   selector specificity it would otherwise win back the top-right spot. */
+@media (max-width: 560px) {
+  .cs-lang-toggle {
+    top: auto;
+    bottom: 1rem;
+    right: auto;
+    left: 50%;
+    transform: translateX(-46px);
+  }
+}

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nomad Studio — ¿Quién genera?</title>
+    <meta name="theme-color" content="#101014" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo/raccoon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/variables.css') }}?v={{ asset_v }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/base.css') }}?v={{ asset_v }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/lang_panel.css') }}?v={{ asset_v }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/who.css') }}?v={{ asset_v }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script>
+      (function () {
+        var THEME_KEY = 'oj-theme-v1';
+        var saved = localStorage.getItem(THEME_KEY) || '4';
+        document.documentElement.style.visibility = 'hidden';
+        document.addEventListener('DOMContentLoaded', function () {
+          document.body.setAttribute('data-theme', saved);
+          document.documentElement.style.visibility = 'visible';
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- ── Language panel (collapsible, top right) ───────────────────────────
+         Deliberately OUTSIDE #ns-screen: who.css has `.ns-screen > * { position:
+         relative }` (a reset so every direct child sits above the grid/radial
+         background pseudo-elements), which has the same specificity as and
+         loads after this component's own `position: fixed` rule — nesting it
+         inside #ns-screen silently strips the fixed positioning, collapsing
+         the 100vh-tall panel wrapper into normal flow and pushing/clipping
+         everything else off-screen (ns-screen has overflow:hidden). Keeping
+         it a body-level sibling, like the PIN/Add-profile modals below,
+         sidesteps that cascade entirely. -->
+    <div class="cs-lang-panel" id="cs-lang-panel">
+      <button class="cs-lang-toggle cs-lang-toggle--flush" id="cs-lang-toggle" aria-label="Change language" aria-expanded="false"
+              data-i18n-lang-toggle="cs-lang-panel" data-i18n-lang-overlay="cs-lang-overlay">
+        <span data-i18n-lang-current>EN</span>
+        <span class="cs-lang-tip" data-i18n="lang.panelTitle">Language</span>
+      </button>
+      <div class="cs-lang-content">
+        <div class="cs-lang-header">
+          <h3 data-i18n="lang.panelTitle">Language</h3>
+          <button class="cs-lang-close" data-i18n-lang-close aria-label="Close language panel">
+            <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="cs-lang-list" data-i18n-lang-list></div>
+      </div>
+    </div>
+    <div class="cs-lang-overlay" id="cs-lang-overlay"></div>
+
+    <div class="ns-screen" id="ns-screen"
+         data-api-verify="{{ url_for('viewers.verify_pin') }}"
+         data-api-select="{{ url_for('viewers.select_viewer') }}"
+         data-api-create="{{ url_for('viewers.create_viewer') }}"
+         data-api-vanish="{{ url_for('viewers.select_vanish_viewer') }}"
+         data-go-home="{{ url_for('main.nomad_studio_page') }}"
+         data-go-create="{{ url_for('main.nomad_studio_create_page') }}">
+
+      <div class="ns-brand">
+        <img src="{{ url_for('static', filename='images/logo/raccoon.svg') }}" alt="" class="ns-brand-logo">
+        <span class="ns-brand-text">NOMAD STUDIO</span>
+      </div>
+      <h1 class="ns-title" data-i18n="who.title">¿Quién genera?</h1>
+
+      <div class="ns-grid" id="ns-grid">
+        {% for viewer in viewers %}
+        <div class="ns-card"
+             data-viewer-id="{{ viewer.id }}"
+             data-has-pin="{{ 'true' if viewer.has_pin else 'false' }}"
+             data-name="{{ viewer.name }}"
+             data-avatar="{{ url_for('static', filename='images/avatars/' + viewer.avatar) }}"
+             style="animation-delay: {{ (loop.index0 * 0.07) | round(2) }}s">
+          <div class="ns-avatar">
+            <img src="{{ url_for('static', filename='images/avatars/' + viewer.avatar) }}" alt="{{ viewer.name }}">
+          </div>
+          <div class="ns-name">{{ viewer.name }}</div>
+          {% if viewer.has_pin %}
+          <div class="ns-lock"><i data-lucide="lock" class="ns-lock-icon"></i> PIN</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="ns-card ns-add-card" id="ns-add-viewer"
+             style="animation-delay: {{ (viewers|length * 0.07) | round(2) }}s">
+          <div class="ns-avatar ns-avatar-add"><i data-lucide="plus"></i></div>
+          <div class="ns-name ns-name-muted" data-i18n="who.addProfile">Añadir perfil</div>
+        </div>
+
+        <div class="ns-card ns-vanish-card" id="ns-vanish-viewer"
+             title="{{ 'Create only — nothing is saved. Closing the window leaves no trace.' }}"
+             style="animation-delay: {{ ((viewers|length + 1) * 0.07) | round(2) }}s">
+          <div class="ns-avatar ns-avatar-vanish">
+            <img src="{{ url_for('static', filename='images/avatars/' + vanish_avatar) }}" alt="">
+          </div>
+          <div class="ns-name" data-i18n="who.vanish">Vanish Session</div>
+          <div class="ns-lock ns-vanish-tag" data-i18n="who.vanishTag">Nothing saved</div>
+        </div>
+      </div>
+
+      {% if agent_viewers %}
+      <div class="ns-agents-section">
+        <p class="ns-agents-label" data-i18n="who.agentsLabel">Agentes conectados</p>
+        <div class="ns-agents-grid">
+          {% for agent in agent_viewers %}
+          <a class="ns-agent-card" href="{{ url_for('main.agent_album', slug=agent.slug) }}"
+             style="animation-delay: {{ (loop.index0 * 0.06) | round(2) }}s">
+            <div class="ns-agent-avatar">
+              <img src="{{ url_for('static', filename='images/avatars/' + agent.avatar) }}" alt="{{ agent.name }}">
+            </div>
+            <div class="ns-agent-name">{{ agent.name }}</div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {# ---------- Modal de PIN ---------- #}
+    <div class="ns-overlay" id="ns-pin-overlay">
+      <div class="ns-modal">
+        <div class="ns-pin-avatar"><img id="ns-pin-avatar-img" src="" alt=""></div>
+        <div class="ns-pin-name" id="ns-pin-name"></div>
+        <div class="ns-pin-dots" id="ns-pin-dots">
+          <span class="ns-dot"></span><span class="ns-dot"></span>
+          <span class="ns-dot"></span><span class="ns-dot"></span>
+        </div>
+        <div class="ns-pin-error" id="ns-pin-error" data-i18n="who.pin.error">PIN incorrecto, prueba de nuevo</div>
+        <div class="ns-keypad">
+          <button class="ns-key" data-key="1">1</button>
+          <button class="ns-key" data-key="2">2</button>
+          <button class="ns-key" data-key="3">3</button>
+          <button class="ns-key" data-key="4">4</button>
+          <button class="ns-key" data-key="5">5</button>
+          <button class="ns-key" data-key="6">6</button>
+          <button class="ns-key" data-key="7">7</button>
+          <button class="ns-key" data-key="8">8</button>
+          <button class="ns-key" data-key="9">9</button>
+          <button class="ns-key ns-key-ghost" id="ns-pin-cancel" data-i18n="who.pin.cancel">Cancelar</button>
+          <button class="ns-key" data-key="0">0</button>
+          <button class="ns-key ns-key-ghost" id="ns-pin-backspace"><i data-lucide="delete"></i></button>
+        </div>
+      </div>
+    </div>
+
+    {# ---------- Modal de "Añadir perfil" ---------- #}
+    <div class="ns-overlay" id="ns-add-overlay">
+      <div class="ns-modal ns-add-modal">
+        <h3 class="ns-add-title" data-i18n="who.addModal.title">Nuevo perfil</h3>
+        <input type="text" id="ns-add-name" class="ns-input" placeholder="Nombre del perfil" maxlength="20"
+               data-i18n-attr="placeholder:who.addModal.namePlaceholder">
+
+        <div class="ns-label" data-i18n="who.addModal.chooseAvatar">Elige un avatar</div>
+        <div class="ns-avatar-picker" id="ns-avatar-picker">
+          {% for avatar_file in available_avatars %}
+          <div class="ns-avatar-option" data-avatar="{{ avatar_file }}">
+            <img src="{{ url_for('static', filename='images/avatars/' + avatar_file) }}" alt="">
+          </div>
+          {% endfor %}
+        </div>
+
+        <label class="ns-label ns-pin-toggle">
+          <input type="checkbox" id="ns-add-pin-toggle"> <span data-i18n="who.addModal.protectPin">Proteger con PIN</span>
+        </label>
+        <input type="password" id="ns-add-pin-input" class="ns-input" placeholder="PIN de 4 dígitos"
+               maxlength="4" inputmode="numeric" style="display:none"
+               data-i18n-attr="placeholder:who.addModal.pinPlaceholder">
+
+        <div class="ns-add-actions">
+          <button class="ns-key-ghost ns-add-btn" id="ns-add-cancel" data-i18n="who.addModal.cancel">Cancelar</button>
+          <button class="ns-add-btn ns-add-save" id="ns-add-save" data-i18n="who.addModal.save">Guardar perfil</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
+    <script src="{{ url_for('static', filename='js/services/i18n.js') }}?v={{ asset_v }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/who.js') }}?v={{ asset_v }}"></script>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="vanishBg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#3a2f66"/>
+      <stop offset="100%" stop-color="#181229"/>
+    </radialGradient>
+    <linearGradient id="vanishGhost" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f3ff"/>
+      <stop offset="100%" stop-color="#c9c2f0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#vanishBg)"/>
+  <path fill="url(#vanishGhost)" opacity="0.94"
+    d="M100 38c-27.6 0-50 22.4-50 50v54c0 4 4.6 6.2 7.7 3.7l11-8.8 11 8.8a5 5 0 0 0 6.2 0l11-8.8 11 8.8a5 5 0 0 0 6.2 0l11-8.8 11 8.8c3.1 2.5 7.7.3 7.7-3.7V88c0-27.6-22.4-50-50-50z"/>
+  <circle cx="82" cy="94" r="8" fill="#2a2140"/>
+  <circle cx="118" cy="94" r="8" fill="#2a2140"/>
+  <path d="M88 116c4 5 20 5 24 0" stroke="#2a2140" stroke-width="4" stroke-linecap="round" fill="none"/>
+</svg>

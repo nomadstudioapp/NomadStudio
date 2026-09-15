@@ -1,0 +1,454 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page library-page{% endblock %}
+
+{% block content %}
+<div class="cs-layout">
+  <div class="cs-views-col">
+    <div class="cs-view cs-view--library" id="cs-view-library">
+
+      <div class="cs-sub-header">
+        <a href="/nomad-studio" class="cs-back-btn">
+          <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>BACK</span>
+        </a>
+        <p class="cs-breadcrumb">
+          <a href="/nomad-studio">Nomad Studio</a>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          <a href="/build">Build</a>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          <!-- Only shown while a specific Depot is open (showDepotDetail) —
+               doubles as the "back to the Depot list" affordance, so a
+               separate back button inside the aside is unnecessary. -->
+          <a href="/build" id="lib-breadcrumb-depots" hidden>Depots</a>
+          <svg viewBox="0 0 24 24" aria-hidden="true" id="lib-breadcrumb-depots-arrow" hidden><path d="M9 18l6-6-6-6"/></svg>
+          <span class="cs-breadcrumb-current" id="lib-breadcrumb-current">Styles</span>
+        </p>
+      </div>
+
+      <div class="cs-create-body" id="lib-body">
+
+        <aside class="cs-tag-filter cs-tag-filter--sidebar" id="lib-category-nav" role="tablist" aria-label="Build categories"></aside>
+
+        <!-- Styles-only vertical params panel — same .nsc-inputs shape as a
+             Create flow's left sidebar, sitting between the category nav and
+             the card grid, instead of a horizontal toolbar above the grid.
+             Everything that used to be in #lib-styles-toolbar (model select,
+             Generate/Create buttons, grid zoom) lives here now, plus a new
+             Advanced section (quantization + resolution) — see library.js. -->
+        <!-- Split scroll (params) + static footer (actions) — same structure
+             _flow_body.html's own step panel uses (.nsc-steps-scroll /
+             .nsc-steps-footer) so the action buttons never move when the
+             params above them scroll, instead of trailing off wherever the
+             content happens to end. -->
+        <aside class="nsc-inputs" id="lib-styles-aside" hidden>
+          <div class="nsc-steps-scroll">
+            <div class="nsc-step">
+              <p class="nsc-step-label">Model</p>
+              <select id="lib-model-select" class="nsc-select">
+                <option value="">Loading models…</option>
+              </select>
+            </div>
+
+            <!-- Quantization + Resolution shown directly — no "Advanced"
+                 expander (there was nothing else in the panel to justify
+                 hiding these behind a toggle, so it was just an extra click
+                 plus dead space when collapsed). -->
+            <div class="nsc-step">
+              <div class="lib-advanced-panel" id="lib-advanced-panel">
+                <div class="nsc-param-block" id="lib-quant-block" style="display:none">
+                  <p class="nsc-param-title">Quantization</p>
+                  <div class="lib-quant-list" id="lib-quant-list" role="radiogroup"></div>
+                </div>
+                <div class="nsc-param-block">
+                  <p class="nsc-param-title">Resolution</p>
+                  <div class="nsc-res-btns" role="group" id="lib-res-btns">
+                    <button class="nsc-res-btn" data-res="sd" type="button" aria-pressed="false"><span class="nsc-res-label">SD</span><span class="nsc-res-sub" id="lib-res-sub-sd"></span></button>
+                    <button class="nsc-res-btn is-active" data-res="md" type="button" aria-pressed="true"><span class="nsc-res-label">MD</span><span class="nsc-res-sub" id="lib-res-sub-md"></span></button>
+                    <button class="nsc-res-btn" data-res="hd" type="button" aria-pressed="false"><span class="nsc-res-label">HD</span><span class="nsc-res-sub" id="lib-res-sub-hd"></span></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="nsc-steps-footer">
+            <div class="rp-composer-actions">
+              <button type="button" class="nsc-generate-btn" id="lib-generate-images-btn">
+                <span class="lib-toolbar-generate-btn-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg></span>
+                <span class="lib-toolbar-generate-btn-label">Generate images</span>
+              </button>
+              <button type="button" class="nsc-generate-btn nsc-generate-btn--ghost" id="lib-create-style-btn">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span>Create Style</span>
+              </button>
+            </div>
+
+            <!-- Surfaces the actual error message from a failed generation
+                 right here instead of only console.error-ing it — the bulk
+                 button's own label just shows "N/M failed" with no detail. -->
+            <p class="lib-generate-error" id="lib-generate-error" hidden></p>
+
+            <!-- Export bundles every style (name/prompt/category) plus every
+                 model's preview images into a .zip another install can hand
+                 to /styles/import-zip — see styles_routes.py. Import resolves
+                 images by matching the exported model NAME against this
+                 install's own imported models, and only fills gaps: it never
+                 overwrites an image this install already has. -->
+            <div class="rp-composer-actions">
+              <a class="nsc-generate-btn nsc-generate-btn--ghost" id="lib-styles-export-btn" href="/api/styles/export" download>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m0 0l-4.5-4.5M12 16l4.5-4.5"/><path d="M4 20h16"/></svg>
+                <span>Export styles</span>
+              </a>
+              <button type="button" class="nsc-generate-btn nsc-generate-btn--ghost" id="lib-styles-import-btn">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V8m0 0l-4.5 4.5M12 8l4.5 4.5"/><path d="M4 20h16"/></svg>
+                <span>Import styles</span>
+              </button>
+              <input type="file" accept=".zip" id="lib-styles-import-input" hidden>
+            </div>
+            <p class="lib-generate-error" id="lib-styles-import-status" hidden></p>
+          </div>
+        </aside>
+
+        <aside class="lib-style-edit-panel is-closed" id="lib-style-edit-modal" aria-labelledby="lib-style-edit-title" aria-hidden="true">
+          <header class="lib-style-edit-panel-header">
+            <span class="lib-style-edit-panel-title" id="lib-style-edit-title">Edit Style</span>
+            <button class="lib-style-edit-panel-close" id="lib-style-edit-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="lib-style-edit-panel-body">
+            <div class="nsc-step" id="lib-style-edit-image-step">
+              <p class="nsc-step-label">Image</p>
+              <div class="lib-style-edit-image-wrap" id="lib-style-edit-image-wrap">
+                <img class="lib-style-edit-image" id="lib-style-edit-image" alt="" hidden>
+                <i data-lucide="palette" class="lib-style-edit-image-fallback" aria-hidden="true"></i>
+              </div>
+              <input type="file" accept="image/*" id="lib-style-edit-image-input" hidden>
+              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-style-edit-image-btn">Change image</button>
+            </div>
+            <div class="nsc-step">
+              <p class="nsc-step-label">Details</p>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-style-edit-name">Name</label>
+                <input class="nsc-input" id="lib-style-edit-name" type="text" maxlength="120" autocomplete="off">
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-style-edit-category">Category</label>
+                <input class="nsc-input" id="lib-style-edit-category" type="text" maxlength="120" autocomplete="off">
+              </div>
+            </div>
+            <div class="nsc-step">
+              <p class="nsc-step-label">Prompt</p>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-style-edit-prompt">Prompt</label>
+                <textarea class="nsc-input" id="lib-style-edit-prompt" rows="3" spellcheck="false"></textarea>
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-style-edit-prefix">Prefix</label>
+                <input class="nsc-input" id="lib-style-edit-prefix" type="text" autocomplete="off">
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-style-edit-suffix">Suffix</label>
+                <input class="nsc-input" id="lib-style-edit-suffix" type="text" autocomplete="off">
+              </div>
+            </div>
+            <p class="lib-style-edit-status" id="lib-style-edit-status"></p>
+          </div>
+          <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-style-edit-delete" type="button">Delete</button>
+            <button class="lib-style-edit-panel-apply" id="lib-style-edit-save" type="button">Save</button>
+          </footer>
+        </aside>
+
+        <aside class="lib-style-edit-panel is-closed" id="lib-template-edit-modal" aria-labelledby="lib-template-edit-title" aria-hidden="true">
+          <header class="lib-style-edit-panel-header">
+            <span class="lib-style-edit-panel-title" id="lib-template-edit-title">Edit Template</span>
+            <button class="lib-style-edit-panel-close" id="lib-template-edit-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="lib-style-edit-panel-body">
+            <div class="nsc-step" id="lib-template-edit-image-step">
+              <p class="nsc-step-label"><span class="nsc-step-num">1</span> Image</p>
+              <div class="lib-style-edit-image-wrap" id="lib-template-edit-image-wrap">
+                <img class="lib-style-edit-image" id="lib-template-edit-image" alt="" hidden>
+                <i data-lucide="layout-template" class="lib-style-edit-image-fallback" aria-hidden="true"></i>
+              </div>
+              <input type="file" accept="image/*" id="lib-template-edit-image-input" hidden>
+              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-template-edit-image-btn">Change image</button>
+            </div>
+            <div class="nsc-step">
+              <p class="nsc-step-label"><span class="nsc-step-num">2</span> Details</p>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-template-edit-name">Name</label>
+                <input class="nsc-input" id="lib-template-edit-name" type="text" maxlength="120" autocomplete="off">
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-template-edit-theme">Theme</label>
+                <input class="nsc-input" id="lib-template-edit-theme" type="text" maxlength="120" autocomplete="off" placeholder="e.g. 90s Smalltown">
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-template-edit-pack">Template Pack</label>
+                <input class="nsc-input" id="lib-template-edit-pack" type="text" maxlength="120" autocomplete="off" placeholder="e.g. Cinematic">
+              </div>
+            </div>
+            <div class="nsc-step">
+              <p class="nsc-step-label"><span class="nsc-step-num">3</span> Template</p>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-template-edit-template">Template</label>
+                <textarea class="nsc-input" id="lib-template-edit-template" rows="6" spellcheck="false" placeholder="Prompt scaffold with {placeholders}…"></textarea>
+              </div>
+            </div>
+            <div class="nsc-step" id="lib-template-edit-values-step">
+              <p class="nsc-step-label"><span class="nsc-step-num">4</span> Field Values</p>
+              <p class="lib-template-values-hint muted-note">Preset options for each <code>{placeholder}</code> above — shared by every template in this pack.</p>
+              <div class="lib-template-values-list" id="lib-template-edit-values"></div>
+            </div>
+            <p class="lib-style-edit-status" id="lib-template-edit-status"></p>
+          </div>
+          <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-template-edit-delete" type="button">Delete</button>
+            <button class="lib-style-edit-panel-apply" id="lib-template-edit-save" type="button">Save</button>
+          </footer>
+        </aside>
+
+        <!-- Second panel, opened from the field list in the Edit Template
+             panel's step 4. A field's preset values are a list of their own —
+             some of them full sentences — so they get their own surface beside
+             the editor instead of unfolding inside it. Same .lib-style-edit-panel
+             shell, so it slides in and pushes the grid exactly like its sibling. -->
+        <aside class="lib-style-edit-panel lib-template-values-panel is-closed" id="lib-template-values-panel" aria-labelledby="lib-template-values-panel-title" aria-hidden="true">
+          <header class="lib-style-edit-panel-header">
+            <span class="lib-style-edit-panel-title" id="lib-template-values-panel-title">Field</span>
+            <button class="lib-style-edit-panel-close" id="lib-template-values-panel-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="lib-style-edit-panel-body">
+            <p class="lib-template-values-hint muted-note" id="lib-template-values-panel-hint"></p>
+            <div id="lib-template-values-panel-body"></div>
+          </div>
+        </aside>
+
+        <!-- Create Depot — name + description only for now. A Depot is
+             always private to whoever creates it (no shared/global scope,
+             unlike Sessions), so creating one with nobody logged in isn't
+             offered — see library.js's openCreateDepotModal. -->
+        <aside class="lib-style-edit-panel is-closed" id="lib-depot-edit-modal" aria-labelledby="lib-depot-edit-title" aria-hidden="true">
+          <header class="lib-style-edit-panel-header">
+            <span class="lib-style-edit-panel-title" id="lib-depot-edit-title">Create Depot</span>
+            <button class="lib-style-edit-panel-close" id="lib-depot-edit-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="lib-style-edit-panel-body">
+            <div class="nsc-step">
+              <p class="nsc-step-label">Details</p>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-depot-edit-name">Name</label>
+                <input class="nsc-input" id="lib-depot-edit-name" type="text" maxlength="120" autocomplete="off">
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-depot-edit-description">Description</label>
+                <textarea class="nsc-input" id="lib-depot-edit-description" rows="3" spellcheck="false"></textarea>
+              </div>
+            </div>
+            <p class="lib-style-edit-status" id="lib-depot-edit-status"></p>
+          </div>
+          <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-depot-edit-delete" type="button" hidden>Delete</button>
+            <button class="lib-style-edit-panel-apply" id="lib-depot-edit-save" type="button">Create</button>
+          </footer>
+        </aside>
+
+        <!-- Edit/delete a Character or Background — same shell as the other
+             lib-style-edit-panel instances above. keyword is shown read-only
+             (not an input): it doubles as this item's reference image
+             filename on disk (<keyword>.png), so renaming it here would
+             orphan that file — see update_character's docstring in
+             characters_routes.py. Shared between both categories since the
+             field shape (keyword/description/prompt/neutral_prompt) is
+             identical; which endpoint Save/Delete hit depends on which
+             category was open when the card was clicked (see library.js's
+             openItemEditModal). -->
+        <aside class="lib-style-edit-panel is-closed" id="lib-item-edit-modal" aria-labelledby="lib-item-edit-title" aria-hidden="true">
+          <header class="lib-style-edit-panel-header">
+            <span class="lib-style-edit-panel-title" id="lib-item-edit-title">Edit</span>
+            <button class="lib-style-edit-panel-close" id="lib-item-edit-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="lib-style-edit-panel-body">
+            <div class="nsc-step" id="lib-item-edit-image-step">
+              <p class="nsc-step-label">Image</p>
+              <div class="lib-style-edit-image-wrap" id="lib-item-edit-image-wrap">
+                <img class="lib-style-edit-image" id="lib-item-edit-image" alt="" hidden>
+                <i data-lucide="image" class="lib-style-edit-image-fallback" aria-hidden="true"></i>
+              </div>
+              <input type="file" accept="image/*" id="lib-item-edit-image-input" hidden>
+              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-item-edit-image-btn">Change image</button>
+            </div>
+            <div class="nsc-step">
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-item-edit-keyword">Identifier</label>
+                <!-- "$" prefix baked into the control, not just a label —
+                     visual cue that this is a variable-like reference token
+                     (the way a shell var or template placeholder reads),
+                     not free text like Description below it. -->
+                <div class="lib-item-edit-identifier-wrap">
+                  <span class="lib-item-edit-identifier-prefix" aria-hidden="true">$</span>
+                  <input class="lib-item-edit-identifier-input" id="lib-item-edit-keyword" type="text" maxlength="16" autocomplete="off" spellcheck="false" pattern="[a-z0-9]+([_-][a-z0-9]+)*">
+                </div>
+              </div>
+              <p class="lib-item-edit-keyword-hint muted-note">Lowercase letters/numbers only, max 16 characters — use <code>-</code> or <code>_</code> instead of spaces.</p>
+            </div>
+            <div class="nsc-step">
+              <p class="nsc-step-label">Details</p>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-item-edit-description">Description</label>
+                <textarea class="nsc-input" id="lib-item-edit-description" rows="2" spellcheck="false"></textarea>
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-item-edit-prompt">Prompt</label>
+                <textarea class="nsc-input" id="lib-item-edit-prompt" rows="3" spellcheck="false"></textarea>
+              </div>
+              <div class="nsc-field-row nsc-field-row--compose">
+                <label class="nsc-field-label" for="lib-item-edit-neutral-prompt">Neutral Prompt</label>
+                <textarea class="nsc-input" id="lib-item-edit-neutral-prompt" rows="3" spellcheck="false"></textarea>
+              </div>
+            </div>
+            <p class="lib-style-edit-status" id="lib-item-edit-status"></p>
+          </div>
+          <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-item-edit-delete" type="button">Delete</button>
+            <button class="lib-style-edit-panel-apply" id="lib-item-edit-save" type="button">Save</button>
+          </footer>
+        </aside>
+
+        <!-- Depot detail's secondary panel (issue #57) — same .nsc-inputs
+             shape as #lib-styles-aside: the Depot's own fixed info (name,
+             description, Activate, per-category counters) up top, plus a
+             variable "Selected" section that fills in when a card in the
+             main grid is clicked (see library.js's selectDepotItem). Shown
+             only while showDepotDetail() is the active view; the Depot
+             list (grid of depot cards) uses #lib-depot-toolbar instead. -->
+        <aside class="nsc-inputs lib-depot-aside" id="lib-depot-aside" hidden>
+          <div class="nsc-steps-scroll">
+            <div class="nsc-step">
+              <div class="lib-depot-aside-titlerow">
+                <p class="lib-depot-aside-name" id="lib-depot-aside-name"></p>
+                <!-- Same edit affordance as the pencil on a Depot card in the
+                     list view (.lib-depot-card-edit-btn → openEditDepotModal)
+                     — the detail view has no other way back to that form. -->
+                <button type="button" class="cs-card-zoom-btn" id="lib-depot-aside-edit-btn" aria-label="Edit Depot">
+                  <i data-lucide="pencil" aria-hidden="true"></i>
+                </button>
+              </div>
+              <p class="lib-depot-aside-desc" id="lib-depot-aside-desc" hidden></p>
+              <button type="button" class="nsc-generate-btn nsc-generate-btn--ghost lib-depot-activate-btn" id="lib-depot-activate-btn">
+                <i data-lucide="zap" aria-hidden="true"></i>
+                <span></span>
+              </button>
+            </div>
+            <div class="nsc-step">
+              <p class="nsc-step-label">Contents</p>
+              <div class="lib-depot-counters" id="lib-depot-counters"></div>
+            </div>
+            <div class="nsc-step lib-depot-item-detail" id="lib-depot-item-detail" hidden>
+              <p class="nsc-step-label">Selected</p>
+              <div class="lib-depot-item-detail-media" id="lib-depot-item-detail-media"></div>
+              <p class="lib-depot-item-detail-category" id="lib-depot-item-detail-category"></p>
+              <p class="lib-depot-item-detail-caption" id="lib-depot-item-detail-caption" hidden></p>
+              <p class="lib-depot-item-detail-date" id="lib-depot-item-detail-date"></p>
+              <a class="nsc-generate-btn nsc-generate-btn--ghost lib-depot-item-detail-open" id="lib-depot-item-detail-open" target="_blank" rel="noopener">
+                <i data-lucide="external-link" aria-hidden="true"></i>
+                <span>Open flow</span>
+              </a>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Same floating round-button zoom widget Album/Create use over
+             their own results grid (.cs-card-zoom/.cs-card-zoom-btn) — used
+             to live inside #lib-styles-aside (Styles-only), moved out here
+             since --lib-grid-min (what these buttons actually drive) applies
+             to #lib-grid regardless of which Build tab is active; shown/hidden
+             in library.js alongside #lib-grid itself, not tied to one tab. -->
+        <!-- Same 3-button order/icons/labels as Album's own card-zoom widget
+             (album.html: reset/in/out, plain +/− lines + a reset arrow, not
+             magnifying-glass icons) — issue #55 follow-up, matching it
+             exactly instead of Build's own slightly different icon set. -->
+        <div class="cs-card-zoom" id="lib-grid-zoom-toolbar" hidden>
+          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-reset" aria-label="Reset card size">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            <span class="cs-mode-tip">Reset card size</span>
+          </button>
+          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-in" aria-label="Larger cards">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span class="cs-mode-tip">Larger cards</span>
+          </button>
+          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-out" aria-label="Smaller cards">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+            <span class="cs-mode-tip">Smaller cards</span>
+          </button>
+        </div>
+
+        <div class="cs-create-main">
+
+          <div class="lib-toolbar" id="lib-templates-toolbar" hidden>
+            <button type="button" class="ncf-btn ncf-btn--secondary lib-toolbar-create-btn" id="lib-create-template-btn">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Create Template</span>
+            </button>
+            <!-- 2274 templates across 410 themes, and until now the only way
+                 through them was scrolling the theme list. Every other picker
+                 in the product leads with a search box; this one had none. -->
+            <input type="search" class="nsc-input lib-toolbar-search" id="lib-templates-search"
+                   placeholder="Search templates…" aria-label="Search templates" autocomplete="off">
+            <span class="lib-toolbar-count" id="lib-templates-count"></span>
+          </div>
+
+          <!-- Vertical rail of round icon buttons to the left of the Depot
+               grid — same .cs-card-zoom-btn circular treatment (+ .cs-mode-tip
+               hover label) Album's grid-zoom controls already use, reused
+               here for a single action instead of zoom. -->
+          <div class="lib-depot-rail" id="lib-depot-toolbar" hidden>
+            <button type="button" class="cs-card-zoom-btn" id="lib-create-depot-btn" aria-label="Create Depot">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              <span class="cs-mode-tip">Create Depot</span>
+            </button>
+          </div>
+
+          <p class="cs-tag-filter-empty" id="lib-empty" hidden>Nothing here yet.</p>
+          <nav class="cs-sub-grid" id="lib-grid" aria-label="Build items"></nav>
+          <div class="lib-depot-detail" id="lib-depot-detail" hidden></div>
+        </div>
+
+        <div class="lib-lightbox is-closed" id="lib-template-lightbox" aria-hidden="true">
+          <div class="lib-lightbox-backdrop" id="lib-template-lightbox-backdrop"></div>
+          <div class="lib-lightbox-shell" role="dialog" aria-modal="true" aria-label="Reference image viewer">
+            <button class="lib-lightbox-close" id="lib-template-lightbox-close" type="button" aria-label="Close">&times;</button>
+            <button class="lib-lightbox-nav lib-lightbox-prev" id="lib-template-lightbox-prev" type="button" aria-label="Previous image">&#8249;</button>
+            <figure class="lib-lightbox-figure">
+              <img id="lib-template-lightbox-img" alt="">
+            </figure>
+            <button class="lib-lightbox-nav lib-lightbox-next" id="lib-template-lightbox-next" type="button" aria-label="Next image">&#8250;</button>
+            <div class="lib-lightbox-meta">
+              <p class="lib-lightbox-counter" id="lib-template-lightbox-counter"></p>
+              <p class="lib-lightbox-prompt" id="lib-template-lightbox-prompt"></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/library.js') }}"></script>
+{% endblock %}

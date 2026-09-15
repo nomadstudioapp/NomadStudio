@@ -1,0 +1,584 @@
+/* ── Refine > Presets subpage ─────────────────────────────────────────── */
+
+/* Full-height shell matching the Nomad Studio look (subtle grid background,
+   no left sidebar — set via the `nomad-studio-page` body class). Mirrors
+   .cs-layout / .nsc-page's ::before/::after grid pattern. */
+.rp-page-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  /* Same elevated-contrast tokens as .nsc-page (nomad_studio.css) — needed
+     locally since custom properties there are scoped to that class. */
+  --nsc-sub:  color-mix(in srgb, var(--text) 70%, var(--muted));
+  --nsc-hint: color-mix(in srgb, var(--text) 55%, var(--muted));
+}
+
+.rp-page-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--line) 50%, var(--text) 50%) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 50%, var(--text) 50%) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.rp-page-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 70% at 50% 40%, transparent 20%, var(--bg) 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Match the flow pages' topbar coloring (.nsc-page .cs-back-btn / .cs-breadcrumb) */
+.rp-page-shell .cs-back-btn  { color: var(--nsc-sub); }
+.rp-page-shell .cs-breadcrumb { color: var(--nsc-hint); opacity: 1; }
+.rp-shell {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  /* Same 8rem side breathing room as the rest of Nomad Studio's grids
+     (.cs-view--create/--refine) instead of a fixed 1200px cap — the page
+     now uses the full available width. */
+  padding: 8px 8rem 60px;
+}
+
+.rp-topbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+.rp-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin: 0;
+}
+
+.rp-subtitle {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.rp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* Album overrides the grid with flex-wrap + a per-card width instead (see
+   .album-rp-card in nomad_studio.css) — animating grid-template-columns
+   via a custom property doesn't reliably transition once auto-fill's
+   column COUNT changes, since browsers can't interpolate between grid
+   templates with a different number of tracks. A plain `width` on each
+   card is a standard, always-animatable property, so the zoom buttons
+   (album_gallery.js) resize smoothly instead of snapping. */
+.album-grid {
+  display: flex;
+  flex-wrap: wrap;
+  /* Fixed-width cards (.album-rp-card) never fill a row's leftover width —
+     distribute it as extra gap between cards instead of leaving it as dead
+     space after the last card (issue #78). Doesn't touch each card's own
+     width/transition, so the zoom buttons' smooth resize is unaffected. */
+  justify-content: space-between;
+}
+
+/* Refine-card treatment: the photo IS the card — name/desc sit on top of
+   it inside a scrim that fades in from transparent and reaches full
+   opacity (alpha 255) right at the bottom edge, instead of a separate
+   solid-color body block below the image. */
+.rp-card {
+  position: relative;
+  /* Taller than the plain 4/5 photo ratio — restores the extra height the
+     old below-the-image body+footer used to add, now folded into the
+     overlay instead of being cropped down to just the photo's own ratio. */
+  aspect-ratio: 3 / 4.6;
+  border: none;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--bg-soft);
+  /* `width` is included here (not just on .album-rp-card in
+     nomad_studio.css) on purpose: this file loads AFTER nomad_studio.css
+     in app.css, so a `transition` declared there for the same element
+     (.rp-card + .album-rp-card, equal specificity) would get silently
+     replaced whole by this rule instead of merging. Keeping every
+     transition this element needs in one place avoids that trap. Inert
+     for Presets, which never changes a card's width. */
+  transition: box-shadow 0.2s ease, width 0.28s ease;
+  /* Same accent-tinted panel color the Refine cards use (.cs-card's
+     --cs-card-bg) — the scrim below fades toward this instead of black. */
+  --cs-card-bg: color-mix(in srgb, hsl(from var(--accent) h 78% 25%) 70%, var(--bg-panel));
+}
+
+/* Top accent line — same treatment as .cs-card::before (Create/Refine/Mix
+   cards): hidden by default, fades in on hover. */
+.rp-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+/* Spotlight gradient that follows the cursor — position set via JS on
+   --cs-mx/--cs-my (see ns_refine_presets.html), same mechanism as .cs-card. */
+.rp-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    160px circle at var(--cs-mx, 50%) var(--cs-my, 50%),
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.rp-card:hover,
+.rp-card:focus-visible {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+
+.rp-card:focus-visible {
+  outline: none;
+}
+
+.rp-card:hover::before,
+.rp-card:hover::after,
+.rp-card:focus-visible::before,
+.rp-card:focus-visible::after {
+  opacity: 1;
+}
+
+.rp-card-media {
+  position: absolute;
+  /* A few px of breathing room from the card edge so the hover border
+     (drawn on the card itself, see .rp-card:hover) reads as a clean frame
+     against the card's own background instead of sitting flush on the
+     photo's pixels. */
+  inset: 4px;
+  border-radius: calc(var(--radius-xl) - 4px);
+  overflow: hidden;
+}
+
+/* Missing-file placeholder (issue #82) — replaces .rp-card-media's <img>
+   when it fails to load, same accent-tinted panel color as the rest of the
+   card family instead of the browser's broken-image glyph. */
+.rp-card-media--broken {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  background: var(--cs-card-bg);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+.rp-card-media--broken svg {
+  width: 32px;
+  height: 32px;
+  opacity: 0.6;
+}
+
+/* Same corner reveal-on-hover treatment as .cs-session-recent-del, scoped
+   to Album's own card class since that button only appears on this card
+   family for now (issue #82). */
+.album-rp-card .album-card-del { opacity: 0; }
+.album-rp-card:hover .album-card-del,
+.album-rp-card .album-card-del:focus-visible { opacity: 1; }
+
+.rp-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rp-card-body {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  /* Scrim now spans the top 65% of the card down to the bottom, instead of
+     just an auto-height sliver around the text — so the fade visibly
+     starts much higher up over the photo. Text still sits at the very
+     bottom of this taller region. */
+  top: 35%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 16px 14px;
+  border-radius: 0 0 calc(var(--radius-xl) - 4px) calc(var(--radius-xl) - 4px);
+  overflow: hidden;
+  /* Alpha climbs from 0 at the top of this region to a fully opaque 1
+     (255) of the theme's card color (--cs-card-bg) at the very bottom
+     edge of the card — not black. */
+  background: linear-gradient(
+    to top,
+    var(--cs-card-bg) 0%,
+    color-mix(in srgb, var(--cs-card-bg) 70%, transparent) 28%,
+    color-mix(in srgb, var(--cs-card-bg) 10%, transparent) 40%,
+    transparent 100%
+  );
+}
+
+.rp-card-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  letter-spacing: 0.02em;
+  margin: 0 0 4px;
+  /* --cs-card-bg is always a dark, accent-tinted color (see .rp-card),
+     regardless of light/dark theme — same reasoning Refine's own cards
+     use var(--text) as-is instead of a hardcoded light color. */
+  color: var(--text);
+}
+
+.rp-card-desc {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rp-empty {
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
+}
+
+/* ── Section headers (Packs / One-click looks split) ─────────────────── */
+.rp-section-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-base);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+}
+
+.rp-grid--packs {
+  margin-bottom: 40px;
+}
+
+/* ── Pack card (Cinematic, etc.) — same photo-card treatment as a preset,
+   plus a "N looks" badge and a persistent arrow (rp-card's own hover
+   affordances still apply via the shared .rp-card rules above). ────────── */
+.rp-card--pack .rp-card-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rp-card-pack-badge {
+  font-size: var(--fs-xs, 11px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.rp-card-pack-arrow {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--text);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rp-card-pack-arrow svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.rp-card--pack:hover .rp-card-pack-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Pack theme gallery reuses .rp-shell/.rp-topbar/.rp-grid (centered,
+   max-width — a browsing page, same as Presets). The composer below is a
+   flow page instead: it reuses the real .nsc-main/.nsc-inputs/
+   .nss-scenes-area/.nss-scenes-grid classes directly (full-bleed, fixed
+   360px sidebar, no centering) so it's structurally the same page shape
+   as ns_create_flow.html, not a one-off. Only the bits those classes don't
+   already cover live here. ─────────────────────────────────────────────── */
+.rp-composer-gallery {
+  margin-top: 8px;
+}
+
+/* .nss-scenes-area / .nsc-inputs (nomad_studio.css) both set `display:
+   flex` at class specificity, which outranks the UA stylesheet's `[hidden]
+   { display: none }` default — without this, toggling the `hidden`
+   attribute via JS (ns_refine_pack_composer.js /
+   ns_refine_pack_generate_panel.js) leaves the previous panel's content
+   visible underneath the new one instead of actually hiding it. Same fix
+   pattern already used elsewhere in this app for the same
+   class-vs-attribute conflict (see .cs-theme-cycle-btn[hidden] in
+   nomad_studio.css). */
+#rp-scenes-area[hidden],
+#rp-generate-area[hidden],
+#rp-composer-aside[hidden],
+#rp-generate-aside[hidden] {
+  display: none !important;
+}
+
+/* Variant card — same .nss-card/.nss-card-header/.nss-card-img-wrap shell
+   the real flow uses for its own "Choose Template" browser, plus a prompt
+   snippet. Clickable: acts as an alternate way to pick the variant (same
+   effect as its chip in the left panel). */
+.rp-variant-card {
+  cursor: pointer;
+}
+
+.rp-variant-card-prompt {
+  margin: 0;
+  padding: 8px 10px 10px;
+  font-size: var(--fs-xs, 12px);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rp-composer-variants {
+  margin-top: 4px;
+}
+
+.rp-composer-variant-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rp-chip {
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.rp-chip.is-active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-soft));
+}
+
+/* .nsc-step-label (global) covers labels here now — Preview/Choose a
+   Variant/per-field headers all use it, for consistency with every other
+   flow step in the app. */
+
+.rp-composer-field-row {
+  display: flex;
+  gap: 8px;
+}
+
+.rp-field-combo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Visual styling (background/border/padding) comes from the global
+   .nsc-input class (also applied on this element) — only sizing lives
+   here, so the field matches every other text input in the app. */
+.rp-composer-field-input {
+  width: 100%;
+}
+
+/* Custom options dropdown — see ns_refine_pack_composer.js for why this
+   replaces a native <input list="..."> + <datalist>: the native version
+   filters suggestions against the input's current value, so a prefilled
+   field (every field defaults to its first option) hid every OTHER
+   option instead of listing them. */
+.rp-field-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-panel, var(--bg-soft));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.rp-field-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.rp-field-option:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-soft));
+}
+
+.rp-field-options-empty {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.rp-dice {
+  cursor: pointer;
+  min-width: 42px;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.rp-dice:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-soft));
+}
+
+/* Visual styling comes from the global .nsc-textarea class (also applied
+   on this element) — just a taller minimum height for this longer preview. */
+.rp-composer-textarea {
+  min-height: 120px;
+}
+
+.rp-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.rp-btn {
+  cursor: pointer;
+  border-radius: var(--radius-md, 10px);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  padding: 10px 18px;
+  font-family: inherit;
+}
+
+.rp-btn--primary {
+  border: none;
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.rp-btn--ghost {
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+}
+
+.rp-btn--text {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 10px 6px;
+}
+
+.rp-btn--text:hover {
+  color: var(--text);
+}
+
+.rp-composer-copied {
+  font-size: var(--fs-xs, 12px);
+  color: var(--accent);
+}
+
+/* ── Embedded generate panel (Apply Template target) — swaps in for
+   #rp-composer-aside (left, vertical .nsc-inputs sidebar) and
+   #rp-scenes-area (right, results grid), same two-pane shape as every real
+   Create flow page instead of a horizontal toolbar. See
+   ns_refine_pack_generate_panel.js. ─────────────────────────────────────── */
+.rp-generate-head {
+  margin-bottom: 4px;
+}
+
+#rp-generate-back {
+  padding-left: 0;
+}
+
+.rp-generate-status {
+  margin: 10px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  min-height: 1.2em;
+}
+
+@media (max-width: 1100px) {
+  .rp-shell {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .rp-shell {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

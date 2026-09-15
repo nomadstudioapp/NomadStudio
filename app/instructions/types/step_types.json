@@ -1,0 +1,161 @@
+{
+  "_meta": {
+    "version": "0.1",
+    "description": "Definición de todos los tipos de step reutilizables. Cada flujo usa estos tipos en su lista de steps. Añadir un tipo aquí lo hace disponible para cualquier flujo."
+  },
+
+  "step_types": {
+
+    "workflow_picker": {
+      "label": "Selector de workflow",
+      "description": "Muestra la lista de workflows importados activos. El usuario elige uno. El resultado se pasa como contexto al resto del flujo.",
+      "inputs": [],
+      "outputs": ["import_id", "workflow_meta"],
+      "ui_component": "WorkflowPicker",
+      "required_action": "workflows.list",
+      "notes": "Si solo hay un workflow activo, puede autoseleccionarse y saltar el step."
+    },
+
+    "prompt_input": {
+      "label": "Input de prompt",
+      "description": "Campo de texto para escribir el prompt. Puede recibir un valor inicial de un step previo (ej: output de llm_transform).",
+      "inputs": ["initial_value_optional"],
+      "outputs": ["prompt_text"],
+      "ui_component": "PromptInput",
+      "required_action": null,
+      "optional_fields": {
+        "triggered_by": "Acción del result_view que activa este step (ej: 'result.action.continue_story'). Si se define, el step permanece oculto hasta que esa acción se dispara.",
+        "loop_back_to": "ID del step al que debe volver el flow tras confirmar este input. Habilita el patrón de loop para flujos iterativos como create.story.",
+        "on_confirm": "Efectos de sesión al confirmar el input. Ej: { set_session: { world_context: 'steps.world.output.prompt_text' } }"
+      }
+    },
+
+    "param_group": {
+      "label": "Grupo de parámetros",
+      "description": "Expone un conjunto configurable de parámetros del workflow (seed, steps, CFG, num_images, aspect_ratio, etc.). Los campos visibles se definen en el flujo.",
+      "inputs": ["workflow_meta"],
+      "outputs": ["basic_values", "advanced_values"],
+      "ui_component": "ParamGroup",
+      "required_action": null,
+      "available_fields": [
+        "seed", "steps", "cfg", "num_images",
+        "width", "height", "aspect_ratio", "denoise"
+      ]
+    },
+
+    "json_input": {
+      "label": "Input JSON de variables",
+      "description": "Muestra un JSON de variables definido en el flujo. El usuario puede editar los valores clave a clave a través de un modal. Output: cada clave como campo directo (steps.<id>.output.<key>).",
+      "inputs": [],
+      "outputs": ["<key> por cada clave del template"],
+      "ui_component": "JsonInput",
+      "required_action": null,
+      "notes": "Útil cuando el workflow necesita múltiples valores estructurados en vez de un único texto de prompt. Cada key del template se inicializa con su valor por defecto y se puede sobrescribir desde el modal."
+    },
+
+    "llm_transform": {
+      "label": "Transformación LLM",
+      "description": "Envía el contenido de un step previo al LLM con una instrucción y reemplaza el output con el resultado. No bloquea — muestra el resultado en un área editable antes de continuar.",
+      "inputs": ["input_text", "instruction_or_mode"],
+      "outputs": ["transformed_text"],
+      "ui_component": "LLMTransform",
+      "required_action": "llm.studio_enhance | llm.studio_templateize | llm.edit_prompt | llm.blend_prompts | llm.story_continue | llm.studio_variations",
+      "notes": "El usuario puede editar el resultado antes de pasar al siguiente step.",
+      "optional_fields": {
+        "context_from": "Mapa de claves adicionales a pasar al LLM: { world_context, scene_history }. Usado en flujos stateful como create.story.",
+        "input_from": "Referencia a output de step previo. Soporta fallback con ||: 'steps.instruction.output.prompt_text || steps.world.output.prompt_text'",
+        "continuous_chat": "Boolean. Si true, cada llamada al LLM incluye las variaciones previas como historial de chat, forzando diversidad real entre ellas. Solo aplica a llm.studio_variations.",
+        "continue_message": "Mensaje de usuario entre llamadas continuas. Default: 'Generate another variation. Use completely different values for every bracket.'",
+        "genre_param": "Si params.genre está definido con render:'cards' y source:'api:/api/flows/genres', se muestra una galería de cards de género (thriller, adventure, fairy_tale, etc.) cargada desde instructions/genres/*.json. Elegir una card aplica su flair/level sugeridos (editables) y añade su context_hint al system prompt del LLM."
+      }
+    },
+
+    "llm_chat": {
+      "label": "Chat creativo con LLM",
+      "description": "Interfaz de chat abierta. El LLM hace preguntas y construye el prompt de forma incremental. El usuario puede aceptar el prompt sugerido o seguir refinando.",
+      "inputs": ["initial_context_optional"],
+      "outputs": ["prompt_text"],
+      "ui_component": "LLMChat",
+      "required_action": "llm.edit_prompt",
+      "notes": "Modo From Brief. El system prompt define el rol del LLM como director creativo."
+    },
+
+    "style_picker": {
+      "label": "Selector de estilo",
+      "description": "Galería de estilos del catálogo. El usuario elige uno o varios. El output es el prompt del estilo seleccionado.",
+      "inputs": [],
+      "outputs": ["style_id", "style_prompt"],
+      "ui_component": "StylePicker",
+      "required_action": "styles.list"
+    },
+
+    "character_picker": {
+      "label": "Selector de personaje",
+      "description": "Lista de personajes guardados. El usuario elige uno. El output incluye el keyword de activación del personaje.",
+      "inputs": [],
+      "outputs": ["character_keyword", "character_description"],
+      "ui_component": "CharacterPicker",
+      "required_action": "characters.list"
+    },
+
+    "image_picker": {
+      "label": "Selector de imagen de entrada",
+      "description": "Permite elegir una imagen: desde el álbum, subiendo un archivo, o arrastrando. Usada en flujos de compose, upscale e img2img.",
+      "inputs": [],
+      "outputs": ["image_url", "image_filename", "image_meta"],
+      "ui_component": "ImagePicker",
+      "required_action": "images.list"
+    },
+
+    "action": {
+      "label": "Acción de ejecución",
+      "description": "Llama a una acción de app_actions y muestra el resultado. Es el step final de la mayoría de flujos.",
+      "inputs": ["varies — definido en el flujo"],
+      "outputs": ["varies — definido en la acción"],
+      "ui_component": "ActionRunner",
+      "required_action": "— definido por el flujo —",
+      "optional_fields": {
+        "on_success": "Efectos de sesión al completar la acción. Ej: { append_to_session: { story_history: '...' }, increment_session: 'scene_index' }"
+      }
+    },
+
+    "workflow_params": {
+      "label": "Parámetros de workflow",
+      "description": "Panel de parámetros mapeados a inputs de ComfyUI via adv_key (dot notation nodeId.inputKey). Generado automáticamente desde _oj_refine_meta del workflow. Usado por refine flows.",
+      "inputs": [],
+      "outputs": ["workflow_file", "adv_values", "field_prompt"],
+      "ui_component": "WorkflowParams",
+      "required_action": null,
+      "notes": "workflow_file e image_node vienen de la definición del step, no del usuario. Cada field usa adv_key para el routing dot-notation."
+    },
+
+    "vision_describe": {
+      "label": "Descripción por visión",
+      "description": "Muestra una miniatura de la imagen de referencia y un botón '✨ Describe' que llama a /api/models/chat/describe-image. El resultado (texto) se muestra en un textarea editable y se puede pre-rellenar automáticamente en un step prompt_input vinculado vía output_to.",
+      "inputs": ["image_from (resolveRef path to a data URL)"],
+      "outputs": ["description"],
+      "ui_component": "VisionDescribe",
+      "required_action": null,
+      "fields": {
+        "image_from": "Dot-notation ref al dataUrl de la imagen upstream. Ej: 'steps.image_2.output.image_data_url'",
+        "output_to": "ID del step prompt_input al que se pre-rellena la descripción",
+        "system_prompt": "System prompt para el modelo de vision. Define el tipo de descripcion que se genera."
+      },
+      "notes": "Usado en mix flows para describir la imagen de referencia (ropa, estilo, etc.) y pre-rellenar el prompt antes de generar."
+    },
+
+    "result_view": {
+      "label": "Vista de resultado",
+      "description": "Muestra las imagenes generadas con opciones: guardar, upscalear, enviar a otro flujo, regenerar.",
+      "inputs": ["image_list", "generation_meta"],
+      "outputs": ["selected_image_optional"],
+      "ui_component": "ResultView",
+      "required_action": "images.list",
+      "available_actions": ["save", "upscale", "send_to_refine", "regenerate", "re_enhance", "continue_story", "end_story"],
+      "optional_fields": {
+        "shows_story_timeline": "Boolean. Si true, muestra un carrusel horizontal con todas las escenas generadas en la sesion, ordenadas como timeline narrativo.",
+        "shows_scene_index": "Boolean. Si true, muestra el numero de escena actual (ej: 'Scene 3')."
+      }
+    }
+  }
+}

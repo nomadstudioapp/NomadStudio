@@ -1,0 +1,615 @@
+{
+  "common": {
+    "back": "BACK"
+  },
+  "lang": {
+    "panelTitle": "Language",
+    "comingSoon": "Coming soon"
+  },
+  "hub": {
+    "subtitle": "What do you want to create today?",
+    "mode": {
+      "simple": "Simple",
+      "simpleTip": "Fastest · zero setup",
+      "guided": "Guided",
+      "guidedTip": "Simple · one model",
+      "custom": "Custom",
+      "customTip": "Personalized · many models"
+    },
+    "cards": {
+      "create": {
+        "name": "Create",
+        "desc": "Generate images from an idea, a brief, or a prompt, with or without AI guidance."
+      },
+      "refine": {
+        "name": "Refine",
+        "desc": "Improve, upscale, or transform an existing image. Start from what you already have."
+      },
+      "mix": {
+        "name": "Mix",
+        "desc": "Blend styles, merge references, or cross-pollinate images to create something new."
+      },
+      "album": {
+        "name": "Album",
+        "desc": "Browse your generated images, organize collections, and revisit your creative history."
+      },
+      "session": {
+        "name": "Session",
+        "desc": "Build creative campaigns as Sessions, bundling images, flows and history into one portable package."
+      },
+      "build": {
+        "name": "Build",
+        "desc": "Store reference characters and backgrounds, each with a name and notes, ready to reuse across flows."
+      }
+    },
+    "historyTitle": "History",
+    "history": {
+      "sessionBadge": "Session",
+      "oneFlow": "1 flow",
+      "manyFlows": "{n} flows",
+      "untitledSession": "Untitled Session"
+    },
+    "settingsTip": "Settings",
+    "themeTip": "Theme",
+    "mobileModeTip": "Mobile mode",
+    "sections": {
+      "noMatch": "No flows match.",
+      "searchCreate": "Search create flows…",
+      "searchRefine": "Search refine flows…",
+      "searchMix": "Search mix flows…",
+      "looks": "{n} looks",
+      "filters": "Filters",
+      "clearFilter": "Clear ×"
+    },
+    "complexity": {
+      "level1": "Easy",
+      "level2": "Medium",
+      "level3": "Advanced",
+      "aria1": "Complexity level 1 of 3 — Easy",
+      "aria2": "Complexity level 2 of 3 — Medium",
+      "aria3": "Complexity level 3 of 3 — Advanced"
+    },
+    "packs": {
+      "gallerySubtitle": "{n} curated looks. Pick one, tweak the details, generate.",
+      "empty": "No looks in this pack yet."
+    }
+  },
+  "who": {
+    "title": "Who's generating?",
+    "addProfile": "Add profile",
+    "agentsLabel": "Connected agents",
+    "pin": {
+      "error": "Wrong PIN, try again",
+      "cancel": "Cancel"
+    },
+    "addModal": {
+      "title": "New profile",
+      "namePlaceholder": "Profile name",
+      "chooseAvatar": "Choose an avatar",
+      "protectPin": "Protect with PIN",
+      "pinPlaceholder": "4-digit PIN",
+      "cancel": "Cancel",
+      "save": "Save profile"
+    }
+  },
+  "flow": {
+    "vanishActive": "Vanish Session — nothing is saved",
+    "customParams": "Custom params",
+    "seed": "Seed",
+    "common": {
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
+    "pose": {
+      "button": "Pose",
+      "panelTitle": "Pose",
+      "fromPicture": "From Picture 1",
+      "fromPictureHint": "Keep the pose the subject already has"
+    },
+    "results": {
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "refine": "Refine",
+      "emptyTitle": "Your scenes will appear here",
+      "emptySub": "Fill in the world context and generate your first scene."
+    },
+    "chat": {
+      "refineImage": "Refine Image",
+      "refineImageTip": "On: an AI rewrites your instruction into a full prompt before sending. Off: your text is sent to the workflow as-is.",
+      "editWith": "Edit with",
+      "editWithTip": "Pick a refine workflow to apply your instruction to the last image. Leave on \"— generate new —\" to create a brand-new image instead.",
+      "generateNewOption": "— generate new —",
+      "scene": "Scene",
+      "sceneTip": "Choose which scene your next message works from. With \"Edit with\", it's the image edited. With \"— generate new —\", it's the prompt your instruction is layered onto.",
+      "placeholder": "Describe what to change… (Ctrl+Enter to send)",
+      "sendTip": "Send · Ctrl+Enter"
+    },
+    "story": {
+      "think": "Think",
+      "thinkTip": "Off: fast, no reasoning. Low/Medium/High: graduated reasoning depth (models that only support Off/On fall back to On). On: full step-by-step reasoning before each scene.",
+      "reasoning": {
+        "off": "Off",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "on": "On"
+      },
+      "vision": "Vision",
+      "visionTip": "On: before writing each scene, analyzes the image the previous scene just produced with the vision model to lock in character/environment details, and reuses the same seed for every scene in this batch.",
+      "scenes": "Scenes",
+      "scenesTip": "How many consecutive scenes to write and generate from this one instruction.",
+      "viewJson": "View story JSON",
+      "placeholder": "What happens next? (Ctrl+Enter to send)"
+    },
+    "templatePicker": {
+      "title": "Choose a Template",
+      "loadingThemes": "Loading themes…",
+      "loadingTemplates": "Loading templates…",
+      "useTemplate": "Use Template"
+    },
+    "visionModal": {
+      "title": "Vision Model",
+      "desc": "Model used to analyze reference images.",
+      "loading": "Loading models…"
+    },
+    "composePrompt": {
+      "title": "Compose Prompt"
+    },
+    "civitai": {
+      "pasteInfo": "Paste generation info",
+      "paste": "Paste",
+      "pastePlaceholder": "Paste the full CivitAI generation block here — positive prompt, negative, and parameters…",
+      "detected": "Detected",
+      "workflow": "Workflow",
+      "match": "Match",
+      "matchResults": "Match results"
+    },
+    "wq": {
+      "title": "Workflows",
+      "desc": "Select one or more workflows to use in Custom mode. Generate will run all selected workflows in parallel.",
+      "loading": "Loading…"
+    },
+    "ideogram": {
+      "title": "Edit Composition",
+      "rawJson": "Raw JSON",
+      "hint": "Drag to move · Corner handles to resize"
+    },
+    "layerComposer": {
+      "title": "Position & Scale Layer",
+      "hint": "Drag the layer to move · Corner handle to resize (aspect ratio locked)",
+      "lighting": "Lighting",
+      "brightness": "Brightness",
+      "warmth": "Warmth",
+      "hue": "Hue",
+      "matchLighting": "Match lighting to background",
+      "matchStrength": "Match strength"
+    },
+    "tray": {
+      "shortLabel": "Tray",
+      "title": "Image Tray",
+      "empty": "No images in tray yet."
+    },
+    "flowLabels": {
+      "Choose engine": "Choose engine",
+      "Result": "Result",
+      "Generate Image": "Generate Image",
+      "Generate Images": "Generate Images",
+      "Generate": "Generate",
+      "Generate variations": "Generate variations",
+      "Parameters": "Parameters",
+      "Advanced": "Advanced",
+      "Format": "Format",
+      "Composition": "Composition",
+      "Compose": "Compose",
+      "Scene prompt": "Scene prompt",
+      "Reference image": "Reference image",
+      "Your idea": "Your idea",
+      "Your prompt": "Your prompt",
+      "Style": "Style",
+      "Enhanced prompt": "Enhanced prompt",
+      "Assist": "Assist",
+      "Simple": "Simple",
+      "Queue": "Queue",
+      "Create Session": "Create Session",
+      "Session name…": "Session name…",
+      "Untitled Session": "Untitled Session"
+    },
+    "creativity": {
+      "title": "Creativity",
+      "faithful": "Faithful",
+      "balanced": "Balanced",
+      "inventive": "Inventive",
+      "bold": "Bold",
+      "faithful.hint": "Sticks close to what you wrote. Best for iterating on a result you already like.",
+      "balanced.hint": "Real variation between runs, keeping your idea intact.",
+      "inventive.hint": "Looser interpretation. Expect to be surprised.",
+      "bold.hint": "Furthest from the prompt. Can drift off your subject."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Output paths and AI prompt configuration.",
+    "common": {
+      "status": "Status",
+      "loading": "Loading...",
+      "test": "Test",
+      "clear": "Clear",
+      "browse": "Browse",
+      "save": "Save",
+      "reset": "Reset",
+      "resetAll": "Reset All",
+      "emptyPlaceholder": "Empty — using built-in default",
+      "saving": "Saving...",
+      "saved": "Saved.",
+      "toggleSaveFailed": "Failed to save toggle.",
+      "toggleLoadFailed": "Failed to load toggle settings: {reason}",
+      "localOnly": "Only available on the computer where Nomad Studio is installed."
+    },
+    "output": {
+      "title": "Output",
+      "desc": "Where generated images are saved on the server filesystem.",
+      "folderLabel": "Output folder",
+      "folderHint": "Absolute OS path, writable by the server.",
+      "folderPlaceholder": "e.g. C:\\Users\\you\\Pictures\\OpenJourney",
+      "noConfig": "No output folder configured.",
+      "noConfigHint": "No output folder configured. Add one to enable file output.",
+      "saveFailed": "Failed to save output folder: {reason}",
+      "verified": "Path verified and writable.",
+      "testFailed": "Path test failed: {reason}"
+    },
+    "comfy": {
+      "title": "ComfyUI",
+      "desc": "Where your ComfyUI installation keeps its models. Shared by every import — used to check which files you already have and where to save new downloads.",
+      "folderLabel": "ComfyUI Models folder",
+      "folderHint": "e.g. C:\\ComfyUI\\models — the folder containing diffusion_models, text_encoders, vae, loras...",
+      "folderPlaceholder": "e.g. C:\\ComfyUI\\models",
+      "noConfig": "No ComfyUI models folder configured.",
+      "noConfigHint": "No ComfyUI models folder configured. Add one to see file status and enable auto-download.",
+      "saveFailed": "Failed to save models folder: {reason}",
+      "verified": "Folder found and readable.",
+      "testFailed": "Folder test failed: {reason}"
+    },
+    "folderStatus": {
+      "selectedAndSaved": "Folder selected and saved.",
+      "pathSavedAuto": "Path saved automatically.",
+      "pathLoaded": "Path loaded from current settings.",
+      "loadFailed": "Failed to load current settings.",
+      "openingPicker": "Opening folder picker...",
+      "pickerCanceled": "Folder picker canceled.",
+      "pickerFailed": "Folder picker failed: {reason}",
+      "enterPathFirst": "Enter a path before testing."
+    },
+    "systemPrompts": {
+      "title": "System Prompts",
+      "desc": "Customize the system prompts used by each AI operation. Leave empty to use the built-in default."
+    },
+    "composePrompts": {
+      "title": "Compose Prompts",
+      "desc": "Customize the system prompt used by the Ideogram Compose step. Add variants to switch between them from the flow."
+    },
+    "studioPrompts": {
+      "title": "Studio Prompts",
+      "desc": "Customize the enhancement prompts used by each level in the Studio New modal. Leave empty to use the built-in default."
+    },
+    "export": {
+      "title": "Export Configuration",
+      "desc": "Download a ZIP with all imported workflows, settings and custom prompts. Use it to clone this setup to another server.",
+      "btn": "Export ZIP",
+      "exporting": "Exporting...",
+      "failed": "Export failed: {reason}",
+      "success": "Exported: {filename}"
+    },
+    "promptEditor": {
+      "variants": "Variants",
+      "activeDefault": "Active: Default",
+      "activeVariant": "Active: {label}",
+      "noVariants": "No variants saved yet.",
+      "useDefault": "Use Default",
+      "activate": "Activate",
+      "delete": "Delete",
+      "saveVariant": "Save variant",
+      "variantNamePlaceholder": "Variant name",
+      "switchedToDefault": "Switched to default prompt.",
+      "variantActivated": "Variant \"{label}\" activated.",
+      "variantDeleted": "Variant \"{label}\" deleted.",
+      "variantSaved": "Variant \"{label}\" saved.",
+      "enterTextFirst": "Enter prompt text before saving a variant.",
+      "resetToDefault": "Prompt reset to default. Click Save to confirm.",
+      "savingPrompts": "Saving prompts...",
+      "promptsSaved": "Prompts saved.",
+      "saveFailed": "Failed to save prompts: {reason}",
+      "allResetToDefaults": "All prompts reset to defaults. Click Save to confirm.",
+      "composeSaved": "Compose prompt saved.",
+      "composeSaveFailed": "Failed to save: {reason}"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "desc": "Developer options and experimental features.",
+      "allowConcurrentLabel": "Allow ComfyUI and LM Studio to run at the same time",
+      "allowConcurrentHint": "By default, image generation and LM Studio (chat/vision/prompt-assist) take turns so they don't fight over the same GPU on a shared server. Turn this on only if your hardware has enough headroom to run both at once.",
+      "commonQueueLabel": "Common queue for ComfyUI and LM Studio",
+      "commonQueueHint": "Stricter than the option above: only one job runs at a time across BOTH ComfyUI and LM Studio, in a single shared queue — even two ComfyUI generations from different clients won't overlap. Overrides \"Allow ComfyUI and LM Studio to run at the same time\" when both are on."
+    },
+    "setup": {
+      "title": "Setup wizard",
+      "desc": "Review the first-run steps again: services, engines, folders and image format.",
+      "preview": "View the wizard"
+    },
+    "backup": {
+      "title": "Backups",
+      "desc": "Save a copy of your settings, engines, profiles, Sessions, depots, styles and template packs, and restore it whenever you need. Your generated images are not included: they are already files in your image folder.",
+      "folderLabel": "Backup folder",
+      "open": "Open",
+      "imagesLabel": "Also include style, character and background images",
+      "estimate": "This backup will take about {size}. Images alone: {images}.",
+      "create": "Create backup",
+      "created": "Backup saved ({size}).",
+      "listLabel": "Saved backups",
+      "empty": "No backups in this folder yet.",
+      "withImages": "Data and images",
+      "dataOnly": "Data only",
+      "beforeRestore": "automatic, before a restore",
+      "beforeReset": "automatic, before a reset",
+      "invalid": "damaged or not a backup",
+      "restore": "Restore",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "confirmRestore": "Your current data will be replaced by this backup. A copy of the current state is saved first.",
+      "restoreNow": "Restore now",
+      "confirmDelete": "This backup file will be deleted. This cannot be undone.",
+      "deleteNow": "Delete",
+      "phaseCreate": "Creating backup… {pct}%",
+      "phaseSafety": "Saving a copy of the current state… {pct}%",
+      "phaseRestore": "Restoring… {pct}%",
+      "restored": "Backup restored. Reloading…"
+    },
+    "reset": {
+      "zone": "Danger zone",
+      "zoneHint": "Leave Nomad Studio as if it had just been installed. A backup is made first.",
+      "button": "Reset Nomad Studio",
+      "simTag": "simulation",
+      "title": "Reset Nomad Studio",
+      "simNote": "Simulation: this shows what the reset would do. Nothing is deleted.",
+      "lead": "Nomad Studio will be left as if it had just been installed.",
+      "backupFirst": "First, a backup is saved to {folder} (about {size}).",
+      "optBuild": "Also delete styles, characters and backgrounds",
+      "optGenerated": "Also delete the generated images in my image folder",
+      "willDelete": "Will be deleted",
+      "willKeep": "Will be kept",
+      "continue": "Continue",
+      "confirmLead": "This cannot be undone except by restoring the backup. {count} items will be deleted ({size}).",
+      "typeLabel": "Type {word} to confirm",
+      "back": "Back",
+      "runSim": "Simulate reset",
+      "simDone": "Simulation finished. Nothing was deleted and no backup was made.",
+      "wouldHappen": "What the reset would have done, in order",
+      "stepDelete": "Delete: {what}",
+      "stepWizard": "Reload Nomad Studio and open the setup wizard.",
+      "close": "Close",
+      "notPackagesYet": "Kept in this version: they are not packages yet.",
+      "enginesKept": "Installed engines are kept.",
+      "item": {
+        "profiles": "Profiles ({n})",
+        "sessions": "Sessions ({n})",
+        "depots": "Depots and bundles ({n})",
+        "stories": "Stories ({n})",
+        "benchmarks": "Model benchmark results",
+        "settings": "Settings (the setup wizard opens again)",
+        "browser": "Data cached in this browser",
+        "styles": "Styles ({n}) and their images",
+        "characters": "Build characters ({n}) and their images",
+        "backgrounds": "Build backgrounds ({n}) and their images",
+        "generated": "Generated images in your image folder",
+        "engines": "Image engines ({n})",
+        "packContent": "Template packs, tag catalogs and library flows",
+        "models": "Models in ComfyUI and LM Studio",
+        "backups": "Your backups"
+      }
+    }
+  },
+  "album": {
+    "empty": {
+      "title": "Nothing in your Album yet.",
+      "hint": "Generate something in Create and it'll show up here — forever, no limit."
+    },
+    "images": {
+      "searchPlaceholder": "Search words in prompt...",
+      "favoritesOnly": "Show favorites only",
+      "hideDiamond": "Hide diamond images",
+      "loading": "Loading gallery...",
+      "empty": "No images yet. Generate images in Studio first."
+    },
+    "zoom": {
+      "imagesView": "Images view",
+      "reset": "Reset card size",
+      "larger": "Larger cards",
+      "smaller": "Smaller cards"
+    },
+    "viewer": {
+      "fullSize": "Full size",
+      "copyPrompt": "Copy Prompt",
+      "upscale": "Upscale",
+      "describe": "Describe",
+      "imageOf": "Image {current} of {total}",
+      "promptLabel": "Prompt: {text}",
+      "promptNotAvailable": "Prompt: not available",
+      "negative": "Negative:",
+      "checkpoint": "Checkpoint:",
+      "workflow": "Workflow:",
+      "params": "Params:",
+      "date": "Date:",
+      "copied": "Copied",
+      "copyFailed": "Copy failed",
+      "scrollToLoadMore": "Scroll to load more..."
+    }
+  },
+  "setup": {
+    "comfy": {
+      "checking": "Checking ComfyUI…",
+      "fail": "ComfyUI is not responding",
+      "failHelp": "Start ComfyUI and check the address, then retry. You can continue without it, but you will not be able to generate images until it is running.",
+      "gpu": "GPU: {name} · {vram} of video memory",
+      "lead": "ComfyUI is the engine that generates the images. Nomad Studio talks to it through its local address.",
+      "ok": "ComfyUI is running",
+      "saveSpace": "Save space: do not keep a copy in the ComfyUI folder",
+      "saveSpaceHint": "Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder.",
+      "title": "Connect to ComfyUI",
+      "urlLabel": "ComfyUI address",
+      "version": "version {v}",
+      "remote": "Running on another computer on your network."
+    },
+    "common": {
+      "browse": "Browse",
+      "check": "Check",
+      "checking": "Checking…",
+      "optional": "Optional",
+      "retry": "Retry",
+      "soon": "Coming soon"
+    },
+    "data": {
+      "devNote": "In this development version the data folder is fixed inside the app. In the portable version it will be the \"data\" folder next to the program, and you will be able to choose another one here.",
+      "label": "Data folder",
+      "lead": "Profiles, Sessions, settings and installed packages are kept in one visible folder next to the program, so you can back it up or move it easily.",
+      "title": "Where your data lives"
+    },
+    "done": {
+      "connected": "Connected",
+      "downloading": "Downloads are still running. Keep this page open until they finish.",
+      "lead": "Here is a summary. You can change any of it later in Settings.",
+      "notChecked": "Not checked",
+      "notConnected": "Not connected",
+      "previewLead": "This is the end of the preview. Nothing was saved.",
+      "title": "All set"
+    },
+    "engines": {
+      "chooseVariant": "Variant",
+      "detecting": "Looking for model files in ComfyUI…",
+      "dlError": "error",
+      "files": "Files",
+      "incomplete": "Something missing",
+      "install": "Install",
+      "installSize": "Install ({size})",
+      "lead": "Each engine needs a few model files inside ComfyUI. We check which ones ComfyUI can already see, and you can install what is missing.",
+      "manual": "manual",
+      "manualHint": "Files marked \"manual\" have no download address yet: place them yourself in the folder shown next to each one.",
+      "needComfy": "ComfyUI has to be running to check the engines. Go back to the ComfyUI step, or skip this for now.",
+      "needFolder": "Set the ComfyUI models folder below first.",
+      "noSpace": "Not enough free space ({free} free).",
+      "notInstalled": "Not installed",
+      "present": "installed",
+      "ready": "Ready",
+      "recHint": "Recommended for your {gpu} ({vram}). Lighter variants use less video memory; heavier ones keep more quality.",
+      "recommended": "Recommended",
+      "summary": "{ready} of {total} engines ready to use.",
+      "title": "Your image engines",
+      "variant": "Variant: {v}",
+      "remote": "ComfyUI runs on another computer ({host}). Nomad Studio uses its engines from here; files are installed on that computer.",
+      "remoteInstall": "Install the missing files on the computer where ComfyUI runs, then check again.",
+      "checkAgain": "Check again"
+    },
+    "folder": {
+      "bad": "ComfyUI does not read its models from this folder. Choose the \"models\" folder inside your ComfyUI installation.",
+      "free": "{free} free",
+      "label": "ComfyUI models folder (only needed to download)",
+      "ok": "This is the folder ComfyUI uses ({n} of {m} files found)."
+    },
+    "format": {
+      "changeLater": "You can change this in Settings at any time. Images already saved are not converted.",
+      "loss1": "Very smooth gradients (skies, plain backgrounds) can show slight bands.",
+      "loss2": "Sharp edges and fine detail (text, thin lines, pixel art) can look a little softer.",
+      "loss3": "Film grain and noise can get smoothed out.",
+      "loss4": "Loss cannot be undone, and it adds up if the same image is retouched and saved many times. You can choose the format for a single generation in Advanced.",
+      "lossTitle": "What does \"loss\" mean?",
+      "pngText": "Keeps every pixel exactly, with no loss.",
+      "pngTitle": "PNG",
+      "soonNote": "Your choice is saved now. Images keep being saved as PNG until WebP support is finished.",
+      "title": "How should we save your images?",
+      "webpText": "If you need to save space, use this option.",
+      "webpTitle": "WebP"
+    },
+    "language": {
+      "lead": "You can change it later from the language button in the corner of any screen.",
+      "title": "Choose your language"
+    },
+    "lms": {
+      "checking": "Checking LM Studio…",
+      "fail": "LM Studio is not responding",
+      "failHelp": "It is optional: without it, image generation works, but flows that help write prompts or describe images will not.",
+      "lead": "LM Studio runs local language and vision models. Some flows use it to improve prompts or describe images.",
+      "models": "{n} models available",
+      "ok": "LM Studio is running",
+      "title": "Connect to LM Studio",
+      "urlLabel": "LM Studio address"
+    },
+    "loadError": "Could not load the setup state. Is the Nomad Studio server running?",
+    "nav": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip",
+      "start": "Start"
+    },
+    "output": {
+      "bad": "Nomad Studio cannot write to this folder: {error}",
+      "empty": "choose a folder first",
+      "label": "Image folder",
+      "lead": "Every image you generate is saved here, in a sub-folder per profile.",
+      "ok": "Folder ready: Nomad Studio can write to it.",
+      "title": "Where to save your images",
+      "warnProtected": "This looks like a Documents, Pictures or Desktop folder. Some antivirus protection blocks programs from writing there; if generations fail to save, choose another folder.",
+      "warnSync": "This folder is synced to the cloud. Every image will be uploaded, which uses bandwidth and can lock files while they sync. A local folder is recommended."
+    },
+    "preview": {
+      "banner": "Preview — nothing you change here is saved.",
+      "close": "Close preview",
+      "noDownloads": "Downloads are disabled in preview.",
+      "noProfile": "Profiles are not created in preview."
+    },
+    "profile": {
+      "avatar": "Avatar",
+      "badPin": "The PIN must be 4 digits.",
+      "existing": "You already have {n} profile(s). You can create another one or continue.",
+      "lead": "Each profile has its own images, history and Sessions.",
+      "name": "Name",
+      "needNameAvatar": "Write a name and choose an avatar.",
+      "pin": "Protect with a 4-digit PIN",
+      "title": "Create your profile"
+    },
+    "steps": {
+      "comfy": "ComfyUI",
+      "data": "Data folder",
+      "done": "Ready",
+      "engines": "Engines",
+      "format": "Image format",
+      "language": "Language",
+      "lmstudio": "LM Studio",
+      "output": "Image folder",
+      "profile": "First profile",
+      "models": "Models"
+    },
+    "title": "Let's set up Nomad Studio",
+    "models": {
+      "title": "Language models",
+      "lead": "Some flows use a model in LM Studio to write prompts and describe images. None is required, but we recommend having at least one. These are the four we measured.",
+      "needLms": "LM Studio has to be running to check and install models. Go back to the LM Studio step, or skip this for now.",
+      "detecting": "Looking for models in LM Studio…",
+      "summary": "{n} of {total} recommended models installed.",
+      "none": "None of the recommended models is installed. We recommend installing at least one.",
+      "usePrompt": "Use for writing",
+      "inUsePrompt": "Writing prompts",
+      "useVision": "Use for vision",
+      "inUseVision": "Describing images",
+      "install": "Install ({size} GB)",
+      "downloading": "Downloading… {pct}%",
+      "paused": "Paused in LM Studio",
+      "dlFailed": "LM Studio could not download it.",
+      "meta": "{size} GB on disk · comfortable on {vram} GB of video memory",
+      "bgHint": "Downloads run inside LM Studio and keep going even if you close this page.",
+      "desc": {
+        "qwythos-9b": "Good at everything, writing and vision. Our default on 8 GB cards.",
+        "ornith-1.5-9b": "The same, with the smallest memory footprint we measured.",
+        "gemma-4-12b": "Strict JSON and templates, and the best at describing images at the length you ask for.",
+        "ministral-3-14b": "Always thinks before answering: the most detailed image reads, slower on batches of prompts."
+      }
+    }
+  }
+}

@@ -1,0 +1,419 @@
+/* Nomad Studio — "Who's watching?" viewer picker (pre-shell gate screen)
+   Colors come from the app's own theme variables (parts/variables.css),
+   loaded before this file, so this screen follows whichever of the 8
+   themes (Dawn/Dusk/Twilight/Night/Void/Mars/Jupiter/Saturn) the user
+   last picked in the sidebar theme cycler — same body[data-theme] attr. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Asap', sans-serif;
+}
+
+.ns-screen {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* flex-start (not center): with the agents row now able to appear below
+     the main grid, centering the whole stack would shove the brand/title
+     down and make the page jump vertically depending on whether agents
+     are connected. Fixed top padding keeps it stable either way. */
+  justify-content: flex-start;
+  padding: 4.5rem 1.5rem 3rem;
+  animation: ns-screen-in .5s cubic-bezier(.2,.8,.2,1) both;
+}
+
+/* Same subtle grid used across Nomad Studio (.cs-layout::before/::after,
+   .nsc-page::before/::after) — kept identical so this pre-shell screen
+   doesn't look like a different app. */
+.ns-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--line) 50%, var(--text) 50%) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 50%, var(--text) 50%) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.ns-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 20%, var(--bg) 80%);
+  pointer-events: none;
+}
+
+.ns-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes ns-screen-in {
+  0%   { opacity: 0; transform: scale(.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.ns-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ns-brand-logo { width: 26px; height: 26px; }
+
+.ns-brand-text {
+  font-size: 17px;
+  letter-spacing: .14em;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.ns-title {
+  font-size: 28px;
+  color: var(--text);
+  font-weight: 500;
+  text-align: center;
+  margin: 0 0 2.5rem;
+}
+
+.ns-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.ns-card { flex: 0 0 auto; width: 170px; }
+
+.ns-card {
+  text-align: center;
+  cursor: pointer;
+  animation: ns-card-in .5s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes ns-card-in {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.ns-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: var(--bg-panel);
+  overflow: hidden;
+  margin: 0 auto 14px;
+  transition: transform .18s ease, border-color .18s ease;
+}
+
+.ns-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.ns-card:hover .ns-avatar {
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+
+.ns-avatar-add {
+  border: 3px dashed var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  background: transparent;
+}
+
+.ns-avatar-add svg { width: 32px; height: 32px; }
+
+.ns-name { font-size: 18px; color: var(--text); }
+.ns-name-muted { color: var(--muted); }
+
+.ns-lock {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ns-lock-icon { width: 13px; height: 13px; }
+
+/* ---------- Vanish Session (ghost, ephemeral profile) ---------- */
+.ns-avatar-vanish {
+  border-color: rgba(180, 160, 255, 0.35);
+  box-shadow: 0 0 22px rgba(150, 120, 255, 0.25);
+}
+
+.ns-vanish-card:hover .ns-avatar-vanish {
+  border-color: #b4a0ff;
+  box-shadow: 0 0 28px rgba(150, 120, 255, 0.4);
+}
+
+.ns-vanish-tag { color: #b4a0ff; }
+
+/* ---------- Agentes conectados (MCP) ---------- */
+/* Secondary, smaller row below the main viewer grid — browsing here never
+   touches the app session (no select/PIN flow), it just links straight to
+   the agent's read-only Album (see agent_album.html / who.js). */
+
+.ns-agents-section {
+  margin-top: 2.75rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+  width: 100%;
+  max-width: 1000px;
+  text-align: center;
+}
+
+.ns-agents-label {
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 1.25rem;
+}
+
+.ns-agents-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 26px;
+}
+
+.ns-agent-card {
+  flex: 0 0 auto;
+  width: 96px;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  animation: ns-card-in .5s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.ns-agent-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--bg-panel);
+  overflow: hidden;
+  margin: 0 auto 8px;
+  transition: transform .18s ease, border-color .18s ease;
+}
+
+.ns-agent-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.ns-agent-card:hover .ns-agent-avatar {
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+
+.ns-agent-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Overlays / modales ---------- */
+
+.ns-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 80%, black);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: ns-modal-in .22s ease both;
+}
+
+.ns-overlay.ns-open { display: flex; }
+
+@keyframes ns-modal-in {
+  0%   { opacity: 0; transform: translateY(10px) scale(.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ns-modal { text-align: center; width: 380px; max-width: 90vw; }
+
+.ns-pin-avatar {
+  width: 100px; height: 100px; border-radius: 50%;
+  overflow: hidden; margin: 0 auto 16px;
+}
+
+.ns-pin-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.ns-pin-name { font-size: 18px; color: var(--text); margin-bottom: 22px; }
+
+.ns-pin-dots { display: flex; gap: 16px; justify-content: center; margin-bottom: 12px; }
+
+.ns-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--bg-panel); display: inline-block;
+  transition: background .15s ease, transform .15s ease;
+}
+
+.ns-dot.ns-filled { background: var(--accent); transform: scale(1.1); }
+
+.ns-pin-error {
+  font-size: 13px; color: #e0665a; height: 18px;
+  margin-bottom: 14px; visibility: hidden;
+}
+
+.ns-pin-error.ns-show { visibility: visible; }
+
+.ns-modal.ns-shake { animation: ns-shake .35s ease; }
+
+@keyframes ns-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.ns-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.ns-key {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  font-size: 22px;
+  padding: 18px 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ns-key:hover { background: var(--input-bg-alt); }
+.ns-key svg { width: 20px; height: 20px; }
+
+.ns-key-ghost {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- Anadir perfil ---------- */
+
+.ns-add-modal {
+  width: 780px;
+  max-width: 94vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 8px;
+}
+
+.ns-add-title {
+  color: var(--text); font-size: 24px; font-weight: 500;
+  margin: 0 0 22px; text-align: center;
+}
+
+.ns-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--input-text);
+  padding: 15px 16px;
+  border-radius: 8px;
+  font-size: 17px;
+  margin-bottom: 20px;
+}
+
+.ns-input:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+}
+
+.ns-label { font-size: 17px; color: var(--label-text); margin-bottom: 12px; display: block; font-weight: 500; }
+
+.ns-avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 18px;
+  max-height: 520px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 4px;
+}
+
+.ns-avatar-option {
+  width: 130px; height: 130px; border-radius: 50%;
+  overflow: hidden; cursor: pointer; border: 4px solid transparent;
+  transition: transform .15s ease, border-color .15s ease;
+}
+
+.ns-avatar-option:hover { transform: scale(1.06); }
+.ns-avatar-option img { width: 100%; height: 100%; object-fit: cover; }
+.ns-avatar-option.ns-selected { border-color: var(--accent); }
+
+.ns-pin-toggle {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 16px; color: var(--text-secondary); cursor: pointer; margin-bottom: 14px;
+}
+
+.ns-pin-toggle input { width: 18px; height: 18px; }
+
+.ns-add-actions { display: flex; gap: 14px; margin-top: 22px; }
+
+.ns-add-btn {
+  flex: 1; padding: 15px 0; border-radius: 8px;
+  font-size: 16px; cursor: pointer; border: 1px solid var(--input-border);
+  background: transparent; color: var(--text);
+}
+
+.ns-add-save {
+  background: var(--accent); border: none; color: #fff; font-weight: 500;
+}
+
+.ns-add-save:hover { opacity: .9; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .ns-title { font-size: 32px; margin-bottom: 2.5rem; }
+  .ns-grid { gap: 32px; }
+  .ns-card { width: 150px; }
+  .ns-avatar { width: 150px; height: 150px; }
+}
+
+@media (max-width: 560px) {
+  .ns-screen { padding: 2rem 1rem; }
+  .ns-title { font-size: 24px; margin-bottom: 2rem; }
+  .ns-grid { gap: 22px; }
+  .ns-card { width: 110px; }
+  .ns-avatar { width: 110px; height: 110px; border-width: 3px; margin-bottom: 12px; }
+  .ns-name { font-size: 15px; }
+
+  .ns-modal { width: 100%; padding: 0 4px; }
+  .ns-keypad { gap: 10px; }
+  .ns-key { padding: 16px 0; font-size: 20px; }
+
+  .ns-add-modal { width: 100%; max-width: 100vw; padding: 4px; }
+  .ns-add-title { font-size: 20px; }
+  .ns-avatar-picker { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; max-height: 340px; }
+  .ns-avatar-option { width: 90px; height: 90px; }
+  .ns-add-actions { flex-direction: column; }
+}
+
+@media (max-width: 360px) {
+  .ns-card { width: 42%; }
+}

@@ -1,0 +1,118 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page models-import-page{% endblock %}
+
+{% block content %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="/nomad-studio" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">Imports</span>
+    </p>
+  </div>
+
+<section class="models-import-layout">
+
+  <!-- Left: Imports list -->
+  <div class="import-col import-col-imports">
+    <div class="import-col-header">
+      <h2 class="page-title">Imports</h2>
+      <button type="button" class="btn import-add-btn" id="open-import-modal-btn" title="Add new import">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
+    </div>
+    <div id="saved-imports" class="stack import-col-body"></div>
+  </div>
+
+  <!-- Right: Active Imports -->
+  <div class="import-col import-col-queue">
+    <div class="import-col-header">
+      <h2 class="page-title">Active Imports</h2>
+      <label class="queue-free-memory-toggle" title="When ON, each model's GPU memory is freed automatically after its generation completes, before the next model is loaded.">
+        <input type="checkbox" id="queue-free-memory-toggle" />
+        <span>Deactivate after run</span>
+      </label>
+    </div>
+    <div id="active-imports-queue" class="stack import-col-body"></div>
+  </div>
+
+</section>
+</div>
+
+<!-- Add Import Modal -->
+<div class="import-modal-backdrop" id="import-modal-backdrop" aria-hidden="true">
+  <div class="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+    <div class="import-modal-header">
+      <h2 class="page-title" id="import-modal-title">Add Import</h2>
+      <button type="button" class="btn icon-btn import-modal-close" id="close-import-modal-btn" title="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="import-modal-body">
+
+      <!-- Config row: workflow settings (Models Folder now lives in Settings → ComfyUI) -->
+      <div class="import-config-columns import-config-columns-single">
+
+        <div class="import-config-col import-config-col-workflow">
+          <div class="import-subtitle-row import-subtitle-row-status">
+            <h3 class="import-subtitle">ComfyUI Workflow</h3>
+            <div class="subtitle-status-right">
+              <div class="availability-chip" id="comfy-availability-chip" aria-hidden="true">
+                <span class="availability-led" id="comfy-availability-led" aria-hidden="true"></span>
+              </div>
+              <span class="availability-text" id="comfy-availability-text" aria-live="polite">Checking ComfyUI...</span>
+            </div>
+          </div>
+          <p class="field-hint">ComfyUI Models Folder is configured once for all workflows in <a href="/settings">Settings → ComfyUI</a>.</p>
+          <div class="stack">
+            <label>
+              ComfyUI URI
+              <input type="text" id="comfy-uri" placeholder="http://127.0.0.1:8188" />
+            </label>
+            <div class="btn-row">
+              <button type="button" class="btn" id="test-comfy-connection">Test Connection</button>
+            </div>
+            <label>
+              Workflow Name
+              <input type="text" id="import-name" placeholder="z-image turbo" />
+            </label>
+            <label>
+              Workflow JSON
+              <input type="file" id="workflow-file" class="hidden-file-input" accept=".json,application/json" />
+            </label>
+            <div class="btn-row">
+              <button type="button" class="btn" id="workflow-file-trigger">Choose File</button>
+              <button type="button" class="btn" id="analyze-workflow-btn" disabled>Analyze</button>
+            </div>
+            <div class="preview" id="import-status">No file loaded.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Analysis -->
+      <div class="import-modal-analysis">
+        <h3 class="import-subtitle">Analysis</h3>
+        <div id="analysis-output" class="stack"></div>
+      </div>
+
+    </div>
+    <div class="import-modal-footer">
+      <button type="button" class="btn primary" id="save-workflow-btn" disabled>Save Import</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/models_import.js') }}"></script>
+{% endblock %}

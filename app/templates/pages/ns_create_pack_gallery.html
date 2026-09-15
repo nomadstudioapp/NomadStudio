@@ -1,0 +1,76 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}{{ pack_name }} - NomadStudio{% endblock %}
+
+{% block body_class %}nomad-studio-page rp-page{% endblock %}
+
+{% block content %}
+<div class="rp-page-shell">
+
+  <div class="nsc-topbar">
+    <a href="{{ url_for('main.nomad_studio_create_page') }}" class="cs-back-btn" aria-label="Back to Create">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <a href="{{ url_for('main.nomad_studio_create_page') }}">Create</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">{{ pack_name }}</span>
+    </p>
+  </div>
+
+  <section class="rp-shell">
+
+    <header class="rp-topbar">
+      <h1 class="rp-title">{{ pack_name }}</h1>
+      <p class="rp-subtitle" data-i18n="hub.packs.gallerySubtitle" data-i18n-n="{{ themes|length }}">{{ themes|length }} curated looks. Pick one, tweak the details, generate.</p>
+    </header>
+
+    <div class="rp-grid">
+      {% for theme in themes %}
+      <a href="{{ url_for('main.ns_create_generic_flow_page', slug='from-template', pack=pack_name, theme=theme.name) }}" class="rp-card" aria-label="{{ theme.name }}">
+        <div class="rp-card-media">
+          {% if theme.cover %}
+          <img src="{{ url_for('static', filename='images/' ~ theme.cover) }}" alt="{{ theme.name }} preview" loading="lazy">
+          {% endif %}
+        </div>
+        <div class="rp-card-body">
+          <p class="rp-card-name">{{ theme.name }}</p>
+          {% if theme.description %}
+          <p class="rp-card-desc">{{ theme.description }}</p>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+      {% if not themes %}
+      <p class="rp-empty" data-i18n="hub.packs.empty">No looks in this pack yet.</p>
+      {% endif %}
+    </div>
+
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    'use strict';
+    document.querySelectorAll('.rp-card').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        var rect = card.getBoundingClientRect();
+        var x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1) + '%';
+        var y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1) + '%';
+        card.style.setProperty('--cs-mx', x);
+        card.style.setProperty('--cs-my', y);
+      });
+      card.addEventListener('mouseleave', function () {
+        card.style.setProperty('--cs-mx', '50%');
+        card.style.setProperty('--cs-my', '50%');
+      });
+    });
+  })();
+</script>
+{% endblock %}

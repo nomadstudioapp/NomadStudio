@@ -1,0 +1,768 @@
+:root {
+  --bg: #050810;
+  --bg-soft: #0f131f;
+  --bg-panel: #192338;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #232c41;
+  --text: #e9edf9;
+  --text-secondary: #9fb0d6;
+  --text-tertiary: #cad3ec;
+  --muted: #b4bacb;
+  --accent: #ffffff;
+  --accent-soft: #3a1b14;
+  --good: #6fb87f;
+  --radius: 14px;
+
+  /* Nomad Studio's background grid effect (.nsc-page/.cs-layout ::before
+     the dotted-line pattern, ::after the radial fade toward --bg) — shared
+     by both page-shell containers so tuning it only ever means changing
+     these two values in one place, see nomad_studio.css. */
+  --nsc-grid-opacity: 0.18;
+  --nsc-grid-fade-bg: 45%;
+
+  /* Radius scale */
+  --radius-xs:   4px;   /* tags, badges, tiny chips     */
+  --radius-sm:   6px;   /* inputs, icon buttons          */
+  --radius-md:   9px;   /* buttons, nav items, toolbars  */
+  --radius-lg:  12px;   /* panels, modals, strips        */
+  --radius-xl:  16px;   /* cs-cards, large panels        */
+  --radius-pill: 999px; /* pill toggles, full-round      */
+
+  /* Font-size scale */
+  --fs-xxs:  0.65rem;  /* 10.4px — badges, mono labels  */
+  --fs-xs:   0.7rem;   /* 11.2px — tags, chips          */
+  --fs-sm:   0.78rem;  /* 12.5px — card descs, captions */
+  --fs-base: 0.875rem; /* 14px   — body, inputs         */
+  --fs-md:   1rem;     /* 16px   — card names           */
+  --fs-lg:   1.05rem;  /* 16.8px — section headings     */
+
+  /* Card typography — CARDS_TYPOGRAPHY_SPEC.md. Sizes are the spec's fluid
+     clamps (title ~19.8→22px, desc ~14.5→15.5px, tags 13.4px); the tracking
+     values are the part that does the real work, opening bold text up so it
+     doesn't thicken and close on a saturated dark gradient. */
+  --cs-card-title-size: clamp(1.24rem, 1.35vw, 1.38rem);
+  --cs-card-title-weight: 700;
+  --cs-card-title-tracking: 0.045em;
+  /* Level 1 of the spec's luminance hierarchy is pure #FFF, not the page's
+     off-white --page-title-text: on a saturated card the title has to be the
+     brightest thing on it, and #f3f6ff reads as slightly dulled next to the
+     reference. Theme 1 overrides this — there the brightest title is dark. */
+  --cs-card-title-color: #ffffff;
+  --cs-card-title-leading: 1.25;
+  /* Lifts the title off the vivid top of the card gradient. Overridden to
+     none on the light theme, where a black shadow under dark text is just
+     dirt. */
+  --cs-card-title-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --cs-card-desc-size: clamp(0.91rem, 0.96vw, 0.97rem);
+  --cs-card-desc-leading: 1.5;
+  --cs-card-tag-size: 0.84rem;
+  --cs-card-tag-weight: 500;
+  --cs-card-tag-tracking: 0.02em;
+
+  /* Font families */
+  --font-display: 'Fugaz One', sans-serif; /* display/header font */
+  --sidebar-bg: #000;
+
+  /* Text colour tokens */
+  --nav-text: #e4e8f5;
+  --nav-icon: #aab6d4;
+  --nav-hover-border: #2f3a56;
+  --nav-compact-text: #c2c9db;
+  --text-bright: #e9edf9;
+  --text-dim: #9fb0d6;
+  --text-secondary: #b7c3de;
+  --user-pill-text: #c9d2ea;
+  --queue-bg: #080d17;
+  --queue-border: #2a3349;
+
+  /* Input / form tokens */
+  --input-bg: #0f1626;
+  --input-bg-alt: #191f2e;
+  --input-border: #2e3a57;
+  --input-border-alt: #262f47;
+  --input-focus-border: #6c8dd6;
+  --input-text: #e9edf9;
+
+  /* Tooltip / popover */
+  --tooltip-bg: #0d1422;
+  --tooltip-border: #1e2840;
+
+  /* Toolbar */
+  --toolbar-bg: #11131a;
+  --toolbar-border: rgba(104, 118, 154, 0.28);
+
+  /* Misc text */
+  --page-title-text: #f3f6ff;
+  --section-text: #9fabc8;
+  --label-text: #b7c3de;
+  --resolution-text: #9fabc8;
+  --aspect-ratio-text: #c8d3ee;
+  --aspect-border: #b8c6e8;
+  --inline-status-text: #90a0c5;
+  --session-filter-text: #b8c4df;
+  --scrollbar-thumb: #3a455f;
+  --scrollbar-hover: #556587;
+
+  /* Prompt bar / panel-right */
+  --prompt-bar-bg: #1a1c23;
+  --prompt-bar-border: rgba(104, 118, 154, 0.28);
+  --panel-bg: #1a1c23;
+  --panel-border: rgba(104, 118, 154, 0.28);
+  --panel-text: #c9d2e8;
+  --panel-h3: #e7edf9;
+  --panel-label: #9aa7c2;
+  --panel-input-bg: #0e1421;
+  --panel-input-text: #d9e0ef;
+  --panel-section-bg: #1a1c23;
+
+  /* Chat messages */
+  --chat-msg-bg: #0a111e;
+  --chat-msg-border: #2a334a;
+  --chat-msg-user-bg: #18111a;
+  --chat-msg-user-border: #4b2a23;
+  --chat-msg-assistant-bg: #0c1424;
+  --chat-msg-assistant-border: #27324a;
+  --chat-msg-initial-bg: #111725;
+  --chat-msg-initial-border: #31405d;
+
+  /* Advanced / expander */
+  --advanced-bg: #0f1728;
+  --advanced-border: #2a334a;
+  --advanced-text: #dbe5ff;
+
+  /* Misc counts / secondary labels */
+  --count-text: #98a5bf;
+  --favorite-text: #d7dced;
+
+  /* Client tags */
+  --client-tag-border: #6a4db3;
+  --client-tag-bg: #1b1231;
+  --client-tag-color: #e3d3ff;
+  --client-tag-hover-border: #b692ff;
+  --client-tag-hover-bg: #2b1a4d;
+  --client-tag-hover-color: #f3eaff;
+  --session-badge-border: #2a8a50;
+  --session-badge-bg: #11271a;
+  --session-badge-color: #bdf5d2;
+
+  /* Studio editor tokens — aliased to global design tokens */
+  --oh-bg: var(--bg);
+  --oh-panel: var(--bg-panel);
+  --oh-panel-2: var(--bg-soft);
+  --oh-line: rgba(255, 255, 255, 0.06);
+  --oh-line-2: rgba(255, 255, 255, 0.1);
+  --oh-text: var(--text);
+  --oh-text-2: var(--muted);
+  --oh-text-3: color-mix(in srgb, var(--muted) 70%, var(--bg));
+  --oh-accent: var(--accent);
+  --oh-accent-soft: var(--accent-soft);
+  --oh-accent-line: color-mix(in srgb, var(--accent) 45%, transparent);
+  --oh-blue: #6aa9ff;
+}
+
+/* ── Theme 1: Full moon – Dawn (lightest) ── */
+html[data-theme="1"],
+body[data-theme="1"] {
+  --bg: #f2f6fd;
+  --bg-soft: #d8e0ee;
+  --bg-panel: #cbd5e8;
+  --bg-toggle: hsl(220, 50%, 80%);
+  --line: #b0bcd8;
+  --text: #1a2035;
+  --text-secondary: #3a4860;
+  --text-tertiary: #1a2840;
+  --muted: #4a5878;
+  /* This theme never defined its own --accent, silently falling back to
+     the global :root default (#ffffff — a placeholder meant only to avoid
+     a one-frame flash on load, never a real operating color, see the
+     comment on it in base.html). Every UI element whose active/filled
+     state pairs an --accent background with white text (mode toggle,
+     buttons, badges, ...) rendered as invisible white-on-white as a
+     result. Value matches the purple already chosen for this theme's own
+     --client-tag-* colors below, for consistency. */
+  --accent: #7a5dc0;
+  --accent-soft: #fde8e0;
+  --sidebar-bg: #c8d2e6;
+
+  /* Accent-tinted cards (.cs-card, Create/Refine/Mix/Build) — dark themes
+     default to a deep S78/L25 jewel tone; on this bright theme that read as
+     an always-dark card with dark text on top of it (both correctly
+     dark-per-theme, but neither aware of the other — see issue #59). A
+     lighter, softer pastel tint here keeps the same per-model accent hue
+     recognizable while actually reading as "this theme's card". */
+  --cs-card-tint-s: 55%;
+  --cs-card-tint-l: 88%;
+  /* The card gradient (nomad_studio.css, --cs-card-bg) starts from the tint
+     lifted by --cs-card-grad-lift. On the dark themes that lift is what makes
+     the top edge vivid; at L88 there is nothing left to lift into, so here the
+     top goes slightly *down* in lightness and up in saturation instead — same
+     "vivid at the top, fading into the page at the bottom" read, done the only
+     way a pastel card can do it. */
+  --cs-card-grad-lift: -6%;
+  --cs-card-grad-sat: 16%;
+  /* …and it falls toward --bg-soft rather than --bg: on the dark themes the
+     card bottom landing on the page color is the effect, here it would just
+     make the card dissolve into a bright page. */
+  --cs-card-grad-floor: var(--bg-soft);
+  /* Card titles are near-black here, so the spec's drop shadow would read as
+     dirt under the text rather than as lift off a dark gradient. */
+  --cs-card-title-shadow: none;
+  --cs-card-title-color: var(--page-title-text);
+
+  /* Background grid needs more opacity here than the dark themes' shared
+     default — the same line color mixed toward --text reads much fainter
+     against this theme's bright --bg. */
+  --nsc-grid-opacity: 0.28;
+
+  --nav-text: #1e2640;
+  --nav-icon: #3d507a;
+  --nav-hover-border: #8fa0c0;
+  --nav-compact-text: #2a3a5a;
+  --text-bright: #101828;
+  --text-dim: #304070;
+  --text-secondary: #3a5280;
+  --user-pill-text: #2a3a5c;
+  --queue-bg: #dae2f2;
+  --queue-border: #a8b8d4;
+
+  --input-bg: #d0daea;
+  --input-bg-alt: #c8d2e4;
+  --input-border: #96a8c4;
+  --input-border-alt: #90a0bc;
+  --input-focus-border: #4a6aac;
+  --input-text: #1a2035;
+  --tooltip-bg: #c0ccde;
+  --tooltip-border: #9aaabf;
+  --toolbar-bg: #d8e2f0;
+  --toolbar-border: rgba(80, 100, 140, 0.3);
+  --page-title-text: #101828;
+  --section-text: #304070;
+  --label-text: #3a5280;
+  --resolution-text: #304070;
+  --aspect-ratio-text: #2a3a5c;
+  --aspect-border: #4a6aac;
+  --inline-status-text: #3a5070;
+  --session-filter-text: #3a5280;
+  --scrollbar-thumb: #9aaabf;
+  --scrollbar-hover: #7a90b0;
+
+  --prompt-bar-bg: #d0daec;
+  --prompt-bar-border: rgba(80, 100, 140, 0.3);
+  --panel-bg: #d0daec;
+  --panel-border: rgba(80, 100, 140, 0.3);
+  --panel-text: #1e2a48;
+  --panel-h3: #101828;
+  --panel-label: #3a5070;
+  --panel-input-bg: #c0cede;
+  --panel-input-text: #1a2640;
+  --panel-section-bg: #d0daec;
+  --chat-msg-bg: #c0cede;
+  --chat-msg-border: #a0b0cc;
+  --chat-msg-user-bg: #e8d8e0;
+  --chat-msg-user-border: #c08090;
+  --chat-msg-assistant-bg: #bccade;
+  --chat-msg-assistant-border: #8aaac0;
+  --chat-msg-initial-bg: #c8d4e8;
+  --chat-msg-initial-border: #90aacc;
+  --advanced-bg: #c0cede;
+  --advanced-border: #a0b0cc;
+  --advanced-text: #1a2640;
+  --count-text: #3a5070;
+  --favorite-text: #1e2a48;
+
+  /* Client tags */
+  --client-tag-border: #7a5dc0;
+  --client-tag-bg: #ede8f8;
+  --client-tag-color: #4a2e8a;
+  --client-tag-hover-border: #9070d0;
+  --client-tag-hover-bg: #ddd4f5;
+  --client-tag-hover-color: #3a1e7a;
+  --session-badge-border: #2a8a50;
+  --session-badge-bg: #e0f5ea;
+  --session-badge-color: #1a5a30;
+}
+
+/* ── Theme 2: Waxing gibbous – Dusk ── */
+html[data-theme="2"],
+body[data-theme="2"] {
+  --bg: #080b11;
+  --bg-soft: #11151d;
+  --bg-panel: #2a3350;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #364060;
+  --text: #d8dff5;
+  --text-secondary: #9aa7c2;
+  --text-tertiary: #c0c8dc;
+  --muted: #7d8aaa;
+  --accent: #8364f2;
+  --accent-soft: #0c1d3a;
+  --sidebar-bg: #161c2c;
+
+  --nav-text: #dee8fc;
+  --nav-icon: #8fa0c8;
+  --nav-hover-border: #4a5878;
+  --nav-compact-text: #b8c4e0;
+  --text-bright: #d8dff5;
+  --text-dim: #8fa0c8;
+  --text-secondary: #a0b2d4;
+  --user-pill-text: #b8c4e0;
+  --queue-bg: #161c2c;
+  --queue-border: #364060;
+
+  --input-bg: #161c2c;
+  --input-bg-alt: #1e2535;
+  --input-border: #364060;
+  --input-border-alt: #2e3a57;
+  --input-focus-border: #5a7acc;
+  --input-text: #d8dff5;
+  --tooltip-bg: #131826;
+  --tooltip-border: #2a3450;
+  --toolbar-bg: #181e2e;
+  --toolbar-border: rgba(80, 100, 140, 0.3);
+  --page-title-text: #d8dff5;
+  --section-text: #8fa0c8;
+  --label-text: #a0b2d4;
+  --resolution-text: #8fa0c8;
+  --aspect-ratio-text: #b8c4e0;
+  --aspect-border: #8fa0c8;
+  --inline-status-text: #7d8aaa;
+  --session-filter-text: #a0b2d4;
+  --scrollbar-thumb: #364060;
+  --scrollbar-hover: #4a5878;
+
+  --prompt-bar-bg: #181e2e;
+  --prompt-bar-border: rgba(80, 100, 140, 0.3);
+  --panel-bg: #181e2e;
+  --panel-border: rgba(80, 100, 140, 0.3);
+  --panel-text: #c0cce8;
+  --panel-h3: #d4daf0;
+  --panel-label: #8090b0;
+  --panel-input-bg: #121828;
+  --panel-input-text: #ccd6f0;
+  --panel-section-bg: #181e2e;
+  --chat-msg-bg: #131826;
+  --chat-msg-border: #364060;
+  --chat-msg-user-bg: #1e1226;
+  --chat-msg-user-border: #52283a;
+  --chat-msg-assistant-bg: #101826;
+  --chat-msg-assistant-border: #2a3a58;
+  --chat-msg-initial-bg: #1a2235;
+  --chat-msg-initial-border: #324060;
+  --advanced-bg: #101828;
+  --advanced-border: #364060;
+  --advanced-text: #ccd6f0;
+  --count-text: #8090b0;
+  --favorite-text: #c0cce8;
+}
+
+/* ── Theme 3: First quarter – Twilight ── */
+html[data-theme="3"],
+body[data-theme="3"] {
+  --bg: #080a12;
+  --bg-soft: #0f151f;
+  --bg-panel: #26324b;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #26304a;
+  --text: #e2e8f8;
+  --text-secondary: #a8b4d0;
+  --text-tertiary: #c8d0e4;
+  --muted: #8892ad;
+  --accent: #5c78f5;
+  --accent-soft: #0b1230;
+  --sidebar-bg: #0b0f18;
+
+  --nav-text: #e1e7ff;
+  --nav-icon: #a0aec8;
+  --nav-hover-border: #364050;
+  --nav-compact-text: #c0c8e0;
+  --text-bright: #e2e8f8;
+  --text-dim: #9ab0d0;
+  --text-secondary: #a8b8d4;
+  --user-pill-text: #c0c8e0;
+  --queue-bg: #0b0f18;
+  --queue-border: #26304a;
+
+  --input-bg: #0d1220;
+  --input-bg-alt: #141a28;
+  --input-border: #26304a;
+  --input-border-alt: #222c40;
+  --input-focus-border: #5a78c0;
+  --input-text: #e2e8f8;
+  --tooltip-bg: #0a0e1c;
+  --tooltip-border: #1a2238;
+  --toolbar-bg: #0e121e;
+  --toolbar-border: rgba(90, 110, 150, 0.28);
+  --page-title-text: #e2e8f8;
+  --section-text: #9ab0d0;
+  --label-text: #a8b8d4;
+  --resolution-text: #9ab0d0;
+  --aspect-ratio-text: #b8c8e4;
+  --aspect-border: #9ab0d0;
+  --inline-status-text: #8892ad;
+  --session-filter-text: #a0b0cc;
+  --scrollbar-thumb: #26304a;
+  --scrollbar-hover: #3a4864;
+
+  --prompt-bar-bg: #0e121e;
+  --prompt-bar-border: rgba(90, 110, 150, 0.28);
+  --panel-bg: #0e121e;
+  --panel-border: rgba(90, 110, 150, 0.28);
+  --panel-text: #bcc8e4;
+  --panel-h3: #d0d8f0;
+  --panel-label: #7888a8;
+  --panel-input-bg: #0a0e18;
+  --panel-input-text: #c8d4ec;
+  --panel-section-bg: #0e121e;
+  --chat-msg-bg: #0c1020;
+  --chat-msg-border: #26304a;
+  --chat-msg-user-bg: #160e1c;
+  --chat-msg-user-border: #3e2030;
+  --chat-msg-assistant-bg: #0a1020;
+  --chat-msg-assistant-border: #20304a;
+  --chat-msg-initial-bg: #101828;
+  --chat-msg-initial-border: #283a58;
+  --advanced-bg: #080c18;
+  --advanced-border: #26304a;
+  --advanced-text: #c8d4ec;
+  --count-text: #7888a8;
+  --favorite-text: #bcc8e4;
+}
+
+/* ── Theme 4: Waxing crescent – Night ── */
+html[data-theme="4"],
+body[data-theme="4"] {
+  --bg: #070b12;
+  --bg-soft: #0f131f;
+  --bg-panel: #1e2940;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #232c41;
+  --text: #e9edf9;
+  --muted: #b4bacb;
+  --accent: #6080ff;
+  --accent-soft: #0c1435;
+  --sidebar-bg: #000;
+}
+
+/* ── Theme 5: New moon – Void (darkest) ── */
+html[data-theme="5"],
+body[data-theme="5"] {
+  --bg: #050c15;
+  --bg-soft: #0e1420;
+  --bg-panel: #1d2845;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #181f30;
+  --text: #c8d0e8;
+  --text-secondary: #8a98b0;
+  --text-tertiary: #c0c8e0;
+  --muted: #6a7490;
+  --accent: #4a70ff;
+  --accent-soft: #070c22;
+  --sidebar-bg: #000;
+
+  --nav-text: #dbeaff;
+  --nav-icon: #7888a8;
+  --nav-hover-border: #202840;
+  --nav-compact-text: #a8b4d0;
+  --text-bright: #c8d0e8;
+  --text-dim: #7888a8;
+  --text-secondary: #8898b8;
+  --user-pill-text: #a8b4d0;
+  --queue-bg: #000;
+  --queue-border: #181f30;
+
+  --input-bg: #020408;
+  --input-bg-alt: #060910;
+  --input-border: #181f30;
+  --input-border-alt: #141a28;
+  --input-focus-border: #4a6aaa;
+  --input-text: #c8d0e8;
+  --tooltip-bg: #02040a;
+  --tooltip-border: #101828;
+  --toolbar-bg: #040609;
+  --toolbar-border: rgba(60, 80, 120, 0.28);
+  --page-title-text: #c8d0e8;
+  --section-text: #7888a8;
+  --label-text: #8898b8;
+  --resolution-text: #7888a8;
+  --aspect-ratio-text: #a0b0cc;
+  --aspect-border: #7888a8;
+  --inline-status-text: #6a7490;
+  --session-filter-text: #8898b8;
+  --scrollbar-thumb: #181f30;
+  --scrollbar-hover: #283050;
+
+  --prompt-bar-bg: #040609;
+  --prompt-bar-border: rgba(60, 80, 120, 0.28);
+  --panel-bg: #040609;
+  --panel-border: rgba(60, 80, 120, 0.28);
+  --panel-text: #a8b4d0;
+  --panel-h3: #bcc8e4;
+  --panel-label: #607090;
+  --panel-input-bg: #020408;
+  --panel-input-text: #a8b4d0;
+  --panel-section-bg: #040609;
+  --chat-msg-bg: #050810;
+  --chat-msg-border: #181f30;
+  --chat-msg-user-bg: #0c080e;
+  --chat-msg-user-border: #2a1420;
+  --chat-msg-assistant-bg: #050c18;
+  --chat-msg-assistant-border: #141f34;
+  --chat-msg-initial-bg: #080b18;
+  --chat-msg-initial-border: #18243a;
+  --advanced-bg: #020408;
+  --advanced-border: #181f30;
+  --advanced-text: #a8b4d0;
+  --count-text: #607090;
+  --favorite-text: #a8b4d0;
+}
+
+/* ── Theme 6: Mars – dark orange/rust ── */
+html[data-theme="6"],
+body[data-theme="6"] {
+  --bg: #140a05;
+  --bg-soft: #23160b;
+  --bg-panel: #3f2710;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #3d2010;
+  --text: #f0e6d4;
+  --text-secondary: #b8a280;
+  --text-tertiary: #e0d4b8;
+  --muted: #a07850;
+  --accent: #ff6a1a;
+  --accent-soft: #301408;
+  --sidebar-bg: #080604;
+
+  --nav-text: #f7e6cc;
+  --nav-icon: #c0906a;
+  --nav-hover-border: #4a2a18;
+  --nav-compact-text: #d4c0a0;
+  --text-bright: #f0e6d4;
+  --text-dim: #c08050;
+  --text-secondary: #d09060;
+  --user-pill-text: #d4c0a0;
+  --queue-bg: #080604;
+  --queue-border: #3d2010;
+
+  --input-bg: #100a06;
+  --input-bg-alt: #181008;
+  --input-border: #3d2010;
+  --input-border-alt: #301808;
+  --input-focus-border: #d05020;
+  --input-text: #f0e6d4;
+  --tooltip-bg: #080604;
+  --tooltip-border: #281408;
+  --toolbar-bg: #0c0806;
+  --toolbar-border: rgba(150, 80, 30, 0.28);
+  --page-title-text: #f0e6d4;
+  --section-text: #c08050;
+  --label-text: #d09060;
+  --resolution-text: #c08050;
+  --aspect-ratio-text: #d8b890;
+  --aspect-border: #c08050;
+  --inline-status-text: #a07850;
+  --session-filter-text: #c09060;
+  --scrollbar-thumb: #3d2010;
+  --scrollbar-hover: #5a3018;
+
+  --prompt-bar-bg: #0c0806;
+  --prompt-bar-border: rgba(150, 80, 30, 0.28);
+  --panel-bg: #0c0806;
+  --panel-border: rgba(150, 80, 30, 0.28);
+  --panel-text: #d8c0a0;
+  --panel-h3: #e8d0b0;
+  --panel-label: #806040;
+  --panel-input-bg: #080604;
+  --panel-input-text: #d8c0a0;
+  --panel-section-bg: #0c0806;
+  --chat-msg-bg: #0c0904;
+  --chat-msg-border: #3d2010;
+  --chat-msg-user-bg: #180a06;
+  --chat-msg-user-border: #5a2010;
+  --chat-msg-assistant-bg: #0a0c10;
+  --chat-msg-assistant-border: #3a2010;
+  --chat-msg-initial-bg: #141008;
+  --chat-msg-initial-border: #3a2010;
+  --advanced-bg: #080604;
+  --advanced-border: #3d2010;
+  --advanced-text: #d8c0a0;
+  --count-text: #806040;
+  --favorite-text: #d8c0a0;
+
+  --client-tag-border: #b06030;
+  --client-tag-bg: #281408;
+  --client-tag-color: #f0c090;
+  --client-tag-hover-border: #d08040;
+  --client-tag-hover-bg: #381808;
+  --client-tag-hover-color: #f8d0a0;
+  --session-badge-border: #508060;
+  --session-badge-bg: #102010;
+  --session-badge-color: #b0e890;
+}
+
+/* ── Theme 7: Jupiter – dark purple ── */
+html[data-theme="7"],
+body[data-theme="7"] {
+  --bg: #090415;
+  --bg-soft: #120f1f;
+  --bg-panel: #2d2256;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #251840;
+  --text: #e8e0f8;
+  --text-secondary: #a890c8;
+  --text-tertiary: #d0a8e0;
+  --muted: #8068b0;
+  --accent: #9b5ef5;
+  --accent-soft: #18083a;
+  --sidebar-bg: #050308;
+
+  --nav-text: #ede4ff;
+  --nav-icon: #a088d0;
+  --nav-hover-border: #3a2060;
+  --nav-compact-text: #c8c0e4;
+  --text-bright: #e8e0f8;
+  --text-dim: #9880c8;
+  --text-secondary: #a890d8;
+  --user-pill-text: #c8c0e4;
+  --queue-bg: #050308;
+  --queue-border: #251840;
+
+  --input-bg: #060410;
+  --input-bg-alt: #0e0c1c;
+  --input-border: #251840;
+  --input-border-alt: #1c1430;
+  --input-focus-border: #7040d0;
+  --input-text: #e8e0f8;
+  --tooltip-bg: #040210;
+  --tooltip-border: #180e30;
+  --toolbar-bg: #080614;
+  --toolbar-border: rgba(100, 60, 180, 0.28);
+  --page-title-text: #e8e0f8;
+  --section-text: #9880c8;
+  --label-text: #a890d8;
+  --resolution-text: #9880c8;
+  --aspect-ratio-text: #c0b0e4;
+  --aspect-border: #9880c8;
+  --inline-status-text: #8068b0;
+  --session-filter-text: #a890d8;
+  --scrollbar-thumb: #251840;
+  --scrollbar-hover: #3a2860;
+
+  --prompt-bar-bg: #080614;
+  --prompt-bar-border: rgba(100, 60, 180, 0.28);
+  --panel-bg: #080614;
+  --panel-border: rgba(100, 60, 180, 0.28);
+  --panel-text: #c8b8e8;
+  --panel-h3: #d8c8f0;
+  --panel-label: #6050a0;
+  --panel-input-bg: #040210;
+  --panel-input-text: #c8b8e8;
+  --panel-section-bg: #080614;
+  --chat-msg-bg: #060410;
+  --chat-msg-border: #251840;
+  --chat-msg-user-bg: #100818;
+  --chat-msg-user-border: #3c1858;
+  --chat-msg-assistant-bg: #060818;
+  --chat-msg-assistant-border: #1c1840;
+  --chat-msg-initial-bg: #0c0a20;
+  --chat-msg-initial-border: #201840;
+  --advanced-bg: #040210;
+  --advanced-border: #251840;
+  --advanced-text: #c8b8e8;
+  --count-text: #6050a0;
+  --favorite-text: #c8b8e8;
+
+  --client-tag-border: #7050c0;
+  --client-tag-bg: #180e38;
+  --client-tag-color: #e0d0ff;
+  --client-tag-hover-border: #9070e0;
+  --client-tag-hover-bg: #241448;
+  --client-tag-hover-color: #f0e4ff;
+  --session-badge-border: #308060;
+  --session-badge-bg: #0c2018;
+  --session-badge-color: #a0e8c0;
+}
+
+/* ── Theme 8: Saturn – dark cyan ── */
+html[data-theme="8"],
+body[data-theme="8"] {
+  --bg: #080c11;
+  --bg-soft: #091b25;
+  --bg-panel: #123047;
+  --bg-toggle: hsl(from var(--accent) h 78% 25%);
+  --line: #10303e;
+  --text: #d4eef4;
+  --text-secondary: #68a8b8;
+  --text-tertiary: #90c0d0;
+  --muted: #4888a0;
+  --accent: #00c8d8;
+  --accent-soft: #04202a;
+  --sidebar-bg: #02090d;
+
+  --nav-text: #cceefa;
+  --nav-icon: #80b8d0;
+  --nav-hover-border: #204858;
+  --nav-compact-text: #a8d4e4;
+  --text-bright: #d4eef4;
+  --text-dim: #5898b0;
+  --text-secondary: #68a8c0;
+  --user-pill-text: #a8d4e4;
+  --queue-bg: #02090d;
+  --queue-border: #10303e;
+
+  --input-bg: #040e14;
+  --input-bg-alt: #081820;
+  --input-border: #10303e;
+  --input-border-alt: #0c2838;
+  --input-focus-border: #2090a0;
+  --input-text: #d4eef4;
+  --tooltip-bg: #020c10;
+  --tooltip-border: #0c2030;
+  --toolbar-bg: #040e12;
+  --toolbar-border: rgba(20, 120, 150, 0.28);
+  --page-title-text: #d4eef4;
+  --section-text: #5898b0;
+  --label-text: #68a8c0;
+  --resolution-text: #5898b0;
+  --aspect-ratio-text: #90c8dc;
+  --aspect-border: #5898b0;
+  --inline-status-text: #4888a0;
+  --session-filter-text: #68a8c0;
+  --scrollbar-thumb: #10303e;
+  --scrollbar-hover: #1a4858;
+
+  --prompt-bar-bg: #040e12;
+  --prompt-bar-border: rgba(20, 120, 150, 0.28);
+  --panel-bg: #040e12;
+  --panel-border: rgba(20, 120, 150, 0.28);
+  --panel-text: #a8d4e4;
+  --panel-h3: #c0e0ec;
+  --panel-label: #306880;
+  --panel-input-bg: #020c10;
+  --panel-input-text: #a8d4e4;
+  --panel-section-bg: #040e12;
+  --chat-msg-bg: #040e14;
+  --chat-msg-border: #10303e;
+  --chat-msg-user-bg: #081418;
+  --chat-msg-user-border: #183840;
+  --chat-msg-assistant-bg: #040e18;
+  --chat-msg-assistant-border: #0c2c3c;
+  --chat-msg-initial-bg: #081420;
+  --chat-msg-initial-border: #0e2838;
+  --advanced-bg: #020c10;
+  --advanced-border: #10303e;
+  --advanced-text: #a8d4e4;
+  --count-text: #306880;
+  --favorite-text: #a8d4e4;
+
+  --client-tag-border: #208090;
+  --client-tag-bg: #082028;
+  --client-tag-color: #a0e0f0;
+  --client-tag-hover-border: #30a0b0;
+  --client-tag-hover-bg: #0c2830;
+  --client-tag-hover-color: #c0f0ff;
+  --session-badge-border: #308060;
+  --session-badge-bg: #0a2018;
+  --session-badge-color: #a0e8c0;
+}
+
+

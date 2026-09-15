@@ -1,0 +1,138 @@
+{% extends 'layout/base.html' %}
+
+{% block body_class %}nomad-studio-page models-import-page{% endblock %}
+
+{% block content %}
+{% set is_vision_page = (active_page == 'models-vision') %}
+<div class="nsc-page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <div class="nsc-topbar">
+    <a href="/nomad-studio" class="cs-back-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span data-i18n="common.back">BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">{{ 'Models for vision' if is_vision_page else 'Models for prompts' }}</span>
+    </p>
+  </div>
+
+<section class="models-import-layout models-chat-page {{ 'models-chat-page-vision' if is_vision_page else 'models-chat-page-prompts' }}" id="models-chat-root" data-model-role="{{ 'vision' if is_vision_page else 'prompts' }}">
+  <header class="models-chat-header">
+    <h2 class="page-title">{{ 'Models for vision' if is_vision_page else 'Models for prompts' }}</h2>
+    <p class="muted-note">{{ 'LM Studio endpoint and model selection for Vision tasks.' if is_vision_page else 'LM Studio endpoint and model selection for Prompt tasks.' }}</p>
+  </header>
+
+  <article class="panel import-panel models-chat-card">
+    <h3 class="models-chat-card-title">LM Studio Connection</h3>
+    <div class="models-chat-connection-row">
+      <input type="text" id="lmstudio-uri" placeholder="http://127.0.0.1:1234" />
+      <button type="button" class="btn settings-btn-secondary" id="load-lmstudio-models"><i data-lucide="refresh-cw" class="nav-icon" aria-hidden="true"></i> Load Models</button>
+    </div>
+    <div class="availability-chip" id="lmstudio-availability-chip" aria-live="polite">
+      <span class="availability-led" id="lmstudio-availability-led" aria-hidden="true"></span>
+      <span class="availability-text" id="lmstudio-availability-text">Checking LM Studio...</span>
+    </div>
+  </article>
+
+  <article class="panel import-panel models-chat-card models-chat-model-block models-chat-model-block-prompt" aria-label="Prompt LLM models">
+    <header class="models-chat-model-block-header">
+      <h3>Prompt LLM</h3>
+      <p class="muted-note">Used for prompt writing and text-only tasks.</p>
+    </header>
+
+    <div class="models-chat-model-select-wrap">
+      <select id="lmstudio-prompt-model-select">
+        <option value="">No models loaded</option>
+      </select>
+      <button type="button" class="btn settings-btn-secondary" id="lmstudio-prompt-favorite-toggle">Add to favorites</button>
+    </div>
+
+    {% if not is_vision_page %}
+    <div class="models-chat-tools">
+      <h4 class="models-chat-section-title">Model Tools</h4>
+      <div class="models-chat-tools-grid">
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-browse-models">Browse Models</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-check-think-compat">Check Think Compatibility</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-check-all-pending">Check All Pending</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-benchmark-new-models">Benchmark New Models</button>
+      </div>
+      <span class="models-chat-think-compat-status" id="lmstudio-think-compat-status"></span>
+      <span class="models-chat-think-compat-status" id="lmstudio-benchmark-status"></span>
+    </div>
+    {% endif %}
+
+    <div class="models-chat-favorites">
+      <div class="models-chat-favorites-head">
+        <h4 class="models-chat-section-title">Favorites</h4>
+        <label class="checkbox-row models-chat-favorites-filter">
+          <input type="checkbox" id="lmstudio-prompt-favorites-only" />
+          Filter to favorites
+        </label>
+      </div>
+      <div class="models-chat-favorites-list" id="lmstudio-prompt-favorites-quick"></div>
+    </div>
+  </article>
+
+  <article class="panel import-panel models-chat-card models-chat-model-block models-chat-model-block-vision" aria-label="Vision LLM models">
+    <header class="models-chat-model-block-header">
+      <h3>Vision LLM</h3>
+      <p class="muted-note">Used for image understanding and describe operations.</p>
+    </header>
+
+    <div class="models-chat-model-select-wrap">
+      <select id="lmstudio-vision-model-select">
+        <option value="">No vision models loaded</option>
+      </select>
+      <button type="button" class="btn settings-btn-secondary" id="lmstudio-vision-favorite-toggle">Add to favorites</button>
+    </div>
+
+    <p class="muted-note" id="lmstudio-vision-filter-note">Vision list is filtered using LM Studio model metadata when available.</p>
+
+    <div class="models-chat-favorites">
+      <div class="models-chat-favorites-head">
+        <h4 class="models-chat-section-title">Favorites</h4>
+        <label class="checkbox-row models-chat-favorites-filter">
+          <input type="checkbox" id="lmstudio-vision-favorites-only" />
+          Filter to favorites
+        </label>
+      </div>
+      <div class="models-chat-favorites-list" id="lmstudio-vision-favorites-quick"></div>
+    </div>
+  </article>
+
+  <article class="panel import-panel models-chat-card">
+    <h3 class="models-chat-card-title">Parameters</h3>
+    <div class="models-chat-params-grid">
+      <label class="models-chat-floating-field">
+        <span>Temperature</span>
+        <input type="number" id="lmstudio-temperature" min="0" max="2" step="0.01" value="0.2" />
+      </label>
+    </div>
+
+    <label class="checkbox-row models-chat-auto-disconnect">
+      <input type="checkbox" id="lmstudio-auto-disconnect" />
+      Auto-disconnect after each call
+    </label>
+  </article>
+
+  <details class="chat-log-expander models-chat-log-card">
+    <summary>LM Studio Output Log</summary>
+    <div class="stack" style="margin-top: 10px;">
+      <div class="btn-row">
+        <button type="button" class="btn settings-btn-secondary" id="clear-lmstudio-log">Clear Log</button>
+      </div>
+      <textarea id="lmstudio-output-log" rows="12" readonly placeholder="No output log yet"></textarea>
+    </div>
+  </details>
+
+  <div class="preview" id="lmstudio-chat-status">Waiting for action...</div>
+</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/models_chat.js') }}"></script>
+{% endblock %}

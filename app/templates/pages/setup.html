@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nomad Studio — Setup</title>
+    <meta name="theme-color" content="#101014" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo/raccoon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/variables.css') }}?v={{ asset_v }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/base.css') }}?v={{ asset_v }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/who.css') }}?v={{ asset_v }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/setup.css') }}?v={{ asset_v }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script>
+      (function () {
+        var THEME_KEY = 'oj-theme-v1';
+        var saved = localStorage.getItem(THEME_KEY) || '4';
+        document.documentElement.style.visibility = 'hidden';
+        document.addEventListener('DOMContentLoaded', function () {
+          document.body.setAttribute('data-theme', saved);
+          document.documentElement.style.visibility = 'visible';
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    {# Same full-screen shell as the profile picker (who.css) so first run and
+       the profile screen read as one sequence. The steps themselves are built
+       by setup.js — they depend on live checks (ComfyUI, models) and on the
+       language picked in step 1. #}
+    <div class="ns-screen su-screen" id="su-screen"
+         data-preview="{{ 'true' if preview else 'false' }}"
+         data-next-url="{{ next_url }}"
+         data-settings-url="{{ settings_url }}"
+         data-avatars-base="{{ url_for('static', filename='images/avatars/') }}"
+         data-avatars='{{ available_avatars|tojson }}'>
+
+      {% if preview %}
+      <div class="su-preview-bar" role="status">
+        <span class="su-preview-dot" aria-hidden="true"></span>
+        <span data-i18n="setup.preview.banner">Preview — nothing you change here is saved.</span>
+        <a href="{{ settings_url }}" class="su-preview-close" data-i18n="setup.preview.close">Close preview</a>
+      </div>
+      {% endif %}
+
+      <div class="ns-brand">
+        <img src="{{ url_for('static', filename='images/logo/raccoon.svg') }}" alt="" class="ns-brand-logo">
+        <span class="ns-brand-text">NOMAD STUDIO</span>
+      </div>
+      <h1 class="ns-title su-title" data-i18n="setup.title">Let's set up Nomad Studio</h1>
+
+      <div class="su-layout">
+        <nav class="su-steps" id="su-steps" aria-label="Setup steps"></nav>
+
+        <section class="su-panel" aria-live="polite">
+          <div class="su-panel-body" id="su-body"></div>
+          <footer class="su-footer">
+            <button type="button" class="su-btn su-btn-ghost" id="su-back" data-i18n="setup.nav.back">Back</button>
+            <span class="su-footer-spacer"></span>
+            <button type="button" class="su-btn su-btn-ghost" id="su-skip" data-i18n="setup.nav.skip" hidden>Skip</button>
+            <button type="button" class="su-btn su-btn-primary" id="su-next" data-i18n="setup.nav.next">Next</button>
+          </footer>
+        </section>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/services/i18n.js') }}?v={{ asset_v }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/setup.js') }}?v={{ asset_v }}"></script>
+  </body>
+</html>

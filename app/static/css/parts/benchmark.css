@@ -1,0 +1,64 @@
+.vision-benchmark-dropzone {
+  border: 1px dashed var(--border-color, #6b7280);
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--muted-color, #9ca3af);
+  text-align: center;
+  cursor: pointer;
+}
+
+.vision-benchmark-dropzone.is-dragover {
+  border-color: var(--accent, #22c55e);
+  color: var(--text-color, #f3f4f6);
+}
+
+.vision-benchmark-report {
+  margin-top: 12px;
+}
+
+.vision-benchmark-summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 16px 0 8px;
+}
+
+.vision-benchmark-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.vision-benchmark-card {
+  border: 1px solid var(--border-color, #4b5563);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.vision-benchmark-card.pending {
+  border-color: rgba(107, 114, 128, 0.55);
+}
+
+.vision-benchmark-card.running {
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.vision-benchmark-card.ok {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.vision-benchmark-card.error {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.vision-benchmark-card pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.vision-reasoning-badge {
+  margin-right: 6px;
+}

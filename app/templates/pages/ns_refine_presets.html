@@ -1,0 +1,77 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Photo Packs - NomadStudio{% endblock %}
+
+{% block body_class %}nomad-studio-page rp-page{% endblock %}
+
+{% block content %}
+<div class="rp-page-shell">
+
+  <div class="nsc-topbar">
+    <a href="/nomad-studio#refine" class="cs-back-btn" aria-label="Back to Refine">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span>BACK</span>
+    </a>
+    <p class="cs-breadcrumb">
+      <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <a href="/nomad-studio#refine">Refine</a>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span>Presets</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="cs-breadcrumb-current">Photo Packs</span>
+    </p>
+  </div>
+
+  <section class="rp-shell">
+
+    <header class="rp-topbar">
+      <h1 class="rp-title">Photo Packs</h1>
+      <p class="rp-subtitle">Curated one-click looks. Pick a pack, drop your photo, done.</p>
+    </header>
+
+    <div class="rp-grid">
+      {% for preset in presets %}
+      <a href="{{ preset.route }}" class="rp-card" aria-label="{{ preset.preset_meta.card_title }}">
+        <div class="rp-card-media">
+          <img src="{{ url_for('static', filename=preset.preset_meta.cover_image) }}" alt="{{ preset.preset_meta.card_title }} preview" loading="lazy">
+        </div>
+        <div class="rp-card-body">
+          <p class="rp-card-name">{{ preset.preset_meta.card_title }}</p>
+          <p class="rp-card-desc">{{ preset.preset_meta.card_description }}</p>
+        </div>
+      </a>
+      {% endfor %}
+      {% if not presets %}
+      <p class="rp-empty">No presets installed yet.</p>
+      {% endif %}
+    </div>
+
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Cursor-tracked spotlight on each preset card — same mechanism as the
+  // Create/Refine/Mix hub cards (attachSpotlight in nomad_studio.js),
+  // reimplemented here since this page doesn't load that script.
+  (function () {
+    'use strict';
+    document.querySelectorAll('.rp-card').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        var rect = card.getBoundingClientRect();
+        var x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1) + '%';
+        var y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1) + '%';
+        card.style.setProperty('--cs-mx', x);
+        card.style.setProperty('--cs-my', y);
+      });
+      card.addEventListener('mouseleave', function () {
+        card.style.setProperty('--cs-mx', '50%');
+        card.style.setProperty('--cs-my', '50%');
+      });
+    });
+  })();
+</script>
+{% endblock %}

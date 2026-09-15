@@ -1,0 +1,56 @@
+{
+  "_source": "docs/POSES_PRESETS.md — snippet is what goes into the prompt (always English); label/name are per-language UI text (en/es/zh/ko).",
+  "categories": [
+    {
+      "id": "studio",
+      "name": { "en": "Classic Portrait & Studio", "es": "Retrato clásico y estudio", "zh": "经典人像与影棚", "ko": "클래식 인물 & 스튜디오" },
+      "presets": [
+        { "id": "three_quarter_turn", "label": { "en": "Three-Quarter Turn", "es": "Giro de tres cuartos", "zh": "四分之三侧身", "ko": "3/4 회전" }, "snippet": "standing in a relaxed three-quarter turn, shoulders angled at 45 degrees, face turned naturally toward the camera" },
+        { "id": "over_shoulder", "label": { "en": "Over the Shoulder", "es": "Mirada sobre el hombro", "zh": "回眸", "ko": "어깨 너머 시선" }, "snippet": "body turned away from the camera, glancing back over the shoulder with a gentle natural gaze" },
+        { "id": "subtle_head_tilt", "label": { "en": "Subtle Head Tilt", "es": "Cabeza ligeramente inclinada", "zh": "微微歪头", "ko": "살짝 기울인 고개" }, "snippet": "front-facing portrait with a subtle head tilt, soft relaxed neck line and natural direct eye contact" },
+        { "id": "side_profile", "label": { "en": "Side Profile", "es": "Perfil", "zh": "侧脸", "ko": "측면 프로필" }, "snippet": "clean side profile view, defined jawline, looking straight ahead into the distance" },
+        { "id": "hand_on_chin", "label": { "en": "Hand on Chin", "es": "Mano en la barbilla", "zh": "托腮", "ko": "턱에 손" }, "snippet": "one hand lightly resting under the chin, thoughtful relaxed portrait pose" },
+        { "id": "crossed_arms", "label": { "en": "Confident Crossed Arms", "es": "Brazos cruzados con seguridad", "zh": "自信抱臂", "ko": "자신감 있는 팔짱" }, "snippet": "standing with arms lightly crossed over chest, confident friendly posture, upright shoulders" },
+        { "id": "hands_clasped_front", "label": { "en": "Hands Clasped Front", "es": "Manos juntas delante", "zh": "双手交握于身前", "ko": "앞으로 모은 두 손" }, "snippet": "hands gently clasped in front of body at waist level, poised and professional posture" }
+      ]
+    },
+    {
+      "id": "fashion",
+      "name": { "en": "Fashion & Editorial Lookbook", "es": "Moda y editorial", "zh": "时尚与画册", "ko": "패션 & 에디토리얼 룩북" },
+      "presets": [
+        { "id": "contrapposto", "label": { "en": "Contrapposto (Weight Shift)", "es": "Contrapposto (peso en una pierna)", "zh": "对立式站姿（重心偏移）", "ko": "콘트라포스토 (체중 이동)" }, "snippet": "classic contrapposto stance, weight shifted naturally onto one hip, one leg slightly bent and relaxed" },
+        { "id": "hand_on_hip", "label": { "en": "Hand on Hip", "es": "Mano en la cadera", "zh": "单手叉腰", "ko": "허리에 손" }, "snippet": "one hand resting on the hip, torso slightly angled, editorial fashion posture" },
+        { "id": "hands_in_pockets", "label": { "en": "Hands in Pockets", "es": "Manos en los bolsillos", "zh": "双手插兜", "ko": "양손 주머니에" }, "snippet": "standing tall with both hands casually in front pockets, elbows slightly bent, relaxed tailored stance" },
+        { "id": "one_hand_in_pocket", "label": { "en": "One Hand in Pocket", "es": "Una mano en el bolsillo", "zh": "单手插兜", "ko": "한 손 주머니에" }, "snippet": "one hand casually tucked into pocket, other arm resting naturally at the side" },
+        { "id": "leaning_wall", "label": { "en": "Leaning Against Wall", "es": "Apoyado en la pared", "zh": "倚墙", "ko": "벽에 기대기" }, "snippet": "leaning back casually against a neutral studio wall, one foot slightly raised, relaxed slouch" },
+        { "id": "high_stool_seated", "label": { "en": "Seated on High Stool", "es": "Sentado en taburete alto", "zh": "坐在高脚凳上", "ko": "높은 스툴에 앉기" }, "snippet": "seated on a minimalist studio high stool, one foot resting on the rung, elongated posture" },
+        { "id": "jacket_over_shoulder", "label": { "en": "Jacket Over Shoulder", "es": "Chaqueta al hombro", "zh": "外套搭肩", "ko": "어깨에 걸친 재킷" }, "snippet": "holding a tailored jacket slung over one shoulder with one finger, walking stance" },
+        { "id": "lapel_hold", "label": { "en": "Holding Lapels", "es": "Sujetando las solapas", "zh": "手握衣领", "ko": "라펠 잡기" }, "snippet": "both hands lightly holding the lapels of the jacket or coat, showcasing the garment drape and fit" },
+        { "id": "collar_adjust", "label": { "en": "Adjusting Collar", "es": "Ajustando el cuello", "zh": "整理衣领", "ko": "옷깃 매만지기" }, "snippet": "one hand subtly touching the shirt collar or necklace, high fashion gesture" }
+      ]
+    },
+    {
+      "id": "lifestyle",
+      "name": { "en": "Lifestyle & Candid", "es": "Estilo de vida y naturales", "zh": "生活与抓拍", "ko": "라이프스타일 & 캔디드" },
+      "presets": [
+        { "id": "mid_stride_walk", "label": { "en": "Mid-Stride Street Walk", "es": "Caminando por la calle", "zh": "街头行走中", "ko": "거리를 걷는 중" }, "snippet": "captured mid-stride walking down the street, natural forward motion, relaxed swinging arms" },
+        { "id": "walking_turn_back", "label": { "en": "Walking & Turning Back", "es": "Caminando y girándose", "zh": "边走边回头", "ko": "걷다가 뒤돌아보기" }, "snippet": "walking away from camera and looking back over shoulder with a spontaneous smile" },
+        { "id": "looking_away", "label": { "en": "Looking Away (Candid)", "es": "Mirando a otro lado (natural)", "zh": "望向别处（抓拍）", "ko": "다른 곳 바라보기 (캔디드)" }, "snippet": "candid moment looking away to the side, natural candid expression as if unaware of the camera" },
+        { "id": "seated_on_steps", "label": { "en": "Seated on Steps", "es": "Sentado en escalones", "zh": "坐在台阶上", "ko": "계단에 앉기" }, "snippet": "sitting casually on stone steps, leaning forward with elbows on knees, authentic street snapshot" },
+        { "id": "leaning_railing", "label": { "en": "Leaning on Railing", "es": "Apoyado en la barandilla", "zh": "倚靠栏杆", "ko": "난간에 기대기" }, "snippet": "leaning forward against a balcony railing with both forearms resting, looking out at the scene" },
+        { "id": "adjusting_watch", "label": { "en": "Adjusting Watch / Cuff", "es": "Ajustando reloj / puño", "zh": "调整手表 / 袖口", "ko": "시계 / 소매 매만지기" }, "snippet": "natural candid pose looking down while adjusting a watch or sleeve cuff with both hands" },
+        { "id": "wind_in_hair", "label": { "en": "Wind in Hair Turn", "es": "Giro con viento en el pelo", "zh": "迎风转身", "ko": "바람에 날리는 머리" }, "snippet": "slight turn into the breeze, subtle hair motion, looking back with a spontaneous smile" },
+        { "id": "cafe_table_lean", "label": { "en": "Seated at Café Table", "es": "Sentado en la mesa de un café", "zh": "坐在咖啡桌旁", "ko": "카페 테이블에 앉기" }, "snippet": "seated at an outdoor cafe table with one arm resting near a cup, relaxed observational posture" }
+      ]
+    },
+    {
+      "id": "closeup",
+      "name": { "en": "Close-Up & Details", "es": "Primer plano y detalles", "zh": "特写与细节", "ko": "클로즈업 & 디테일" },
+      "presets": [
+        { "id": "hands_framing_face", "label": { "en": "Hands Framing Face", "es": "Manos enmarcando la cara", "zh": "双手托脸", "ko": "얼굴을 감싼 손" }, "snippet": "intimate close-up portrait with fingertips softly touching temples or jawline, beauty crop" },
+        { "id": "looking_down", "label": { "en": "Looking Down (Reflective)", "es": "Mirando hacia abajo (reflexivo)", "zh": "低头（沉思）", "ko": "아래 보기 (사색)" }, "snippet": "face angled slightly down with eyelashes visible, soft contemplative expression" },
+        { "id": "upward_angle", "label": { "en": "Slight Upward Angle", "es": "Ligero contrapicado", "zh": "轻微仰拍", "ko": "살짝 올려 찍기" }, "snippet": "subtle low-angle perspective, chin raised slightly, commanding yet relaxed editorial look" }
+      ]
+    }
+  ]
+}

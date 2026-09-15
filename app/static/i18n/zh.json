@@ -966,7 +966,9 @@
       "lmsServe": "在那台电脑上，打开 LM Studio › Developer，开启 \"Serve on Local Network\"。",
       "privateFirewall": "在那台电脑的 Windows 中，把网络设为专用网络，并在防火墙询问时允许该程序。",
       "typeAddress": "在这里输入它的地址，例如 http://192.168.1.20:{port}，或再次搜索网络。",
-      "search": "搜索我的网络"
+      "search": "搜索我的网络",
+      "notHereSearching": "{name} 在 {url} 没有响应。正在搜索你的网络……",
+      "notHereFound": "{name} 在 {url} 没有响应，但在你的网络中找到了它：请在下方选择。"
     }
   }
 }

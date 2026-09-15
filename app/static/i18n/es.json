@@ -966,7 +966,9 @@
       "lmsServe": "En ese equipo, abre LM Studio › Developer y activa \"Serve on Local Network\".",
       "privateFirewall": "En Windows, en ese equipo, pon la red como Privada y permite el programa en el firewall cuando lo pregunte.",
       "typeAddress": "Escribe aquí su dirección, por ejemplo http://192.168.1.20:{port}, o vuelve a buscar en tu red.",
-      "search": "Buscar en mi red"
+      "search": "Buscar en mi red",
+      "notHereSearching": "{name} no responde en {url}. Buscando en tu red…",
+      "notHereFound": "{name} no responde en {url}, pero lo hemos encontrado en tu red: elígelo abajo."
     }
   }
 }

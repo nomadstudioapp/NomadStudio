@@ -328,14 +328,28 @@
       }).join('') + '</div>';
   }
 
+  // The typed address failed, but the network search is running or found the
+  // server elsewhere: say so instead of a "not responding" error sitting right
+  // above the list of servers that do respond. null = show the normal error.
+  function searchingOrFound(kind, url) {
+    var found = S.discovery ? (S.discovery[kind] || []) : [];
+    if (!S.discoveryBusy && !found.length) return null;
+    var name = kind === 'comfy' ? 'ComfyUI' : 'LM Studio';
+    return statusBox('warn', esc(S.discoveryBusy
+      ? t('setup.network.notHereSearching', '{name} does not answer at {url}. Searching your network…', { name: name, url: url })
+      : t('setup.network.notHereFound', '{name} does not answer at {url}, but it was found on your network: choose it below.', { name: name, url: url })));
+  }
+
   // Network search results + help for a server on another computer.
   // kind: 'comfy' | 'lmstudio'. connected: the current address already works.
   function networkBlock(kind, connected) {
     var isComfy = kind === 'comfy';
     var html = '';
     var found = S.discovery ? (S.discovery[kind] || []) : null;
+    var check = isComfy ? S.comfy : S.lms;
     if (S.discoveryBusy) {
-      html += statusBox('busy', esc(t('setup.network.searching', 'Searching this computer and your local network… (a few seconds)')));
+      // After a failed check, searchingOrFound() already says it is searching.
+      if (!(check && !check.ok)) html += statusBox('busy', esc(t('setup.network.searching', 'Searching this computer and your local network… (a few seconds)')));
     } else if (found && found.length && !connected) {
       html += '<div class="su-label">' + esc(isComfy ? t('setup.network.foundComfy', 'ComfyUI found') : t('setup.network.foundLms', 'LM Studio found')) + '</div>' +
         '<div class="su-options">' + found.map(function (f) {
@@ -380,7 +394,7 @@
         (gpu ? '<br>' + esc(t('setup.comfy.gpu', 'GPU: {name} · {vram} of video memory', { name: gpu.name, vram: bytes(gpu.vramTotal) })) : '') +
         (S.comfy.isLocal === false ? '<br>' + esc(t('setup.comfy.remote', 'Running on another computer on your network.')) : ''));
     } else if (S.comfy) {
-      box = statusBox('bad', '<strong>' + esc(t('setup.comfy.fail', 'ComfyUI is not responding')) + '</strong><br>' +
+      box = searchingOrFound('comfy', url) || statusBox('bad', '<strong>' + esc(t('setup.comfy.fail', 'ComfyUI is not responding')) + '</strong><br>' +
         esc(t('setup.comfy.failHelp', 'Start ComfyUI and check the address, then retry. You can continue without it, but you will not be able to generate images until it is running.')));
     }
     return '<h2 class="su-h2">' + esc(t('setup.comfy.title', 'Connect to ComfyUI')) + '</h2>' +
@@ -399,7 +413,7 @@
     var box = '';
     if (S.lmsBusy) box = statusBox('busy', esc(t('setup.lms.checking', 'Checking LM Studio…')));
     else if (S.lms && S.lms.ok) box = statusBox('ok', '<strong>' + esc(t('setup.lms.ok', 'LM Studio is running')) + '</strong> · ' + esc(t('setup.lms.models', '{n} models available', { n: S.lms.models })));
-    else if (S.lms) box = statusBox('warn', '<strong>' + esc(t('setup.lms.fail', 'LM Studio is not responding')) + '</strong><br>' + esc(t('setup.lms.failHelp', 'It is optional: without it, image generation works, but flows that help write prompts or describe images will not.')));
+    else if (S.lms) box = searchingOrFound('lmstudio', url) || statusBox('warn', '<strong>' + esc(t('setup.lms.fail', 'LM Studio is not responding')) + '</strong><br>' + esc(t('setup.lms.failHelp', 'It is optional: without it, image generation works, but flows that help write prompts or describe images will not.')));
     return '<h2 class="su-h2">' + esc(t('setup.lms.title', 'Connect to LM Studio')) + ' <span class="su-tag">' + esc(t('setup.common.optional', 'Optional')) + '</span></h2>' +
       '<p class="su-lead">' + esc(t('setup.lms.lead', 'LM Studio runs local language and vision models. Some flows use it to improve prompts or describe images.')) + '</p>' +
       '<label class="su-label" for="su-lms-url">' + esc(t('setup.lms.urlLabel', 'LM Studio address')) + '</label>' +

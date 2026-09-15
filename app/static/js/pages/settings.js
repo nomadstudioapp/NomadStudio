@@ -1432,6 +1432,175 @@ function t(key, fallback, vars) {
 })();
 
 // ---------------------------------------------------------------------------
+// Packages — inspect, install, list, uninstall (app/services/package_service.py)
+// ---------------------------------------------------------------------------
+(function packagesSection() {
+  const section = document.getElementById('packages-section');
+  if (!section) return;
+  const fileInput = document.getElementById('packages-file');
+  const chooseBtn = document.getElementById('packages-choose-btn');
+  const statusEl = document.getElementById('packages-status');
+  const reviewEl = document.getElementById('packages-review');
+  const listEl = document.getElementById('packages-list');
+
+  let packages = [];
+  let local = true;
+  let pending = null;     // { token, package } from /inspect
+  let confirming = null;  // package id being uninstalled
+  let busy = false;
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function lang() {
+    return (window.NomadI18n && window.NomadI18n.getLanguage && window.NomadI18n.getLanguage()) || 'en';
+  }
+  function setStatus(msg, isError = false) {
+    statusEl.textContent = msg || '';
+    statusEl.classList.toggle('status-error', isError);
+  }
+  async function api(method, url, body, isForm) {
+    const opts = { method, cache: 'no-store' };
+    if (isForm) opts.body = body;
+    else if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
+    const res = await fetch(url, opts);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json.ok === false) throw new Error(json.error || ('HTTP ' + res.status));
+    return json;
+  }
+  function stateLabel(p) {
+    if (p.state === 'missing_requirements') return t('settings.packages.stateMissing', 'Needs an image engine');
+    if (p.state === 'broken') return t('settings.packages.stateBroken', 'Broken');
+    return t('settings.packages.stateActive', 'Active');
+  }
+  function contents(pkg) {
+    const parts = [];
+    (pkg.engines || []).forEach((e) => parts.push(t('settings.packages.engine', 'Engine: {name}', { name: e.name || e.id })));
+    (pkg.flows || []).forEach((f) => parts.push(t('settings.packages.flow', 'Flow: {name}', { name: typeof f === 'string' ? f : (f.label || f.id) })));
+    return parts;
+  }
+
+  function renderReview() {
+    if (!pending) { reviewEl.hidden = true; reviewEl.innerHTML = ''; return; }
+    const p = pending.package;
+    const op = p.operation === 'update'
+      ? t('settings.packages.opUpdate', 'Update {from} → {to}', { from: p.installedVersion, to: p.version })
+      : p.operation === 'reinstall' ? t('settings.packages.opReinstall', 'Reinstall {version}', { version: p.version })
+      : t('settings.packages.opInstall', 'Install {version}', { version: p.version });
+    const missing = (p.requiresMissing || []).length
+      ? '<span class="settings-backup-meta">' + esc(t('settings.packages.needsEngine', 'Needs an image engine to work. You can install it now and add an engine package afterwards.')) + '</span>' : '';
+    reviewEl.hidden = false;
+    reviewEl.innerHTML =
+      '<div class="settings-backup-item">' +
+        '<div class="settings-backup-info">' +
+          '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.id) + '</small></span>' +
+          (p.summary ? '<span class="settings-backup-meta">' + esc(p.summary) + '</span>' : '') +
+          '<span class="settings-backup-meta">' + esc(op) + ' · ' + esc(t('settings.packages.author', 'by {name}', { name: p.author || '—' })) + '</span>' +
+          '<span class="settings-backup-meta">' + esc(contents(p).join(' · ')) + '</span>' +
+          '<span class="settings-backup-meta settings-package-unsigned">' + esc(t('settings.packages.unsigned', 'Unofficial package: it is not signed by Nomad Studio. Install it only if you trust where it comes from.')) + '</span>' +
+          missing +
+        '</div>' +
+        '<div class="settings-backup-actions">' +
+          '<button type="button" class="btn settings-btn-ghost" data-pkg-cancel' + (busy ? ' disabled' : '') + '>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
+          '<button type="button" class="btn settings-btn-secondary" data-pkg-install' + (busy ? ' disabled' : '') + '>' + esc(t('settings.packages.confirmInstall', 'Install')) + '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderList() {
+    if (!packages.length) {
+      listEl.innerHTML = '<li class="settings-backup-empty">' + esc(t('settings.packages.empty', 'No packages installed yet.')) + '</li>';
+      return;
+    }
+    listEl.innerHTML = packages.map((p) => {
+      const isConfirm = confirming === p.id;
+      return '<li class="settings-backup-item">' +
+        '<div class="settings-backup-info">' +
+          '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.version) + '</small></span>' +
+          '<span class="settings-backup-meta">' + esc(contents(p).join(' · ')) + '</span>' +
+          '<span class="settings-backup-meta">' + esc(stateLabel(p)) + ' · ' + esc(p.id) + '</span>' +
+        '</div>' +
+        '<div class="settings-backup-actions">' +
+          '<button type="button" class="btn settings-btn-ghost" data-pkg-ask="' + esc(p.id) + '"' + (busy || !local ? ' disabled' : '') + '>' + esc(t('settings.packages.uninstall', 'Uninstall')) + '</button>' +
+        '</div>' +
+        (isConfirm ? '<div class="settings-backup-confirm"><span>' + esc(t('settings.packages.confirmUninstall', 'Its engines and flows are removed. Your images and Sessions are kept.')) + '</span>' +
+          '<button type="button" class="btn settings-btn-ghost" data-pkg-no>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
+          '<button type="button" class="btn settings-btn-danger" data-pkg-uninstall="' + esc(p.id) + '">' + esc(t('settings.packages.uninstall', 'Uninstall')) + '</button></div>' : '') +
+        '</li>';
+    }).join('');
+  }
+
+  async function load() {
+    try {
+      const res = await api('GET', '/api/packages?lang=' + encodeURIComponent(lang()));
+      packages = res.packages || [];
+      local = res.local !== false;
+    } catch (e) {
+      setStatus(e.message, true);
+    }
+    renderList();
+  }
+
+  chooseBtn.addEventListener('click', () => { if (!busy) fileInput.click(); });
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    if (pending) { api('POST', '/api/packages/discard', { token: pending.token }).catch(() => {}); pending = null; }
+    busy = true; setStatus(t('settings.packages.checking', 'Checking the package…')); renderReview();
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('lang', lang());
+      pending = await api('POST', '/api/packages/inspect', form, true);
+      setStatus('');
+    } catch (e) {
+      setStatus(e.message, true);
+    } finally {
+      busy = false; renderReview();
+    }
+  });
+
+  reviewEl.addEventListener('click', async (e) => {
+    if (!pending) return;
+    if (e.target.closest('[data-pkg-cancel]')) {
+      api('POST', '/api/packages/discard', { token: pending.token }).catch(() => {});
+      pending = null; renderReview(); return;
+    }
+    if (!e.target.closest('[data-pkg-install]')) return;
+    busy = true; renderReview(); setStatus(t('settings.packages.installing', 'Installing…'));
+    try {
+      const res = await api('POST', '/api/packages/install', { token: pending.token });
+      setStatus(t('settings.packages.installedOk', 'Installed: {name}', { name: res.package.name }));
+    } catch (err) {
+      setStatus(err.message, true);
+    } finally {
+      pending = null; busy = false; renderReview(); load();
+    }
+  });
+
+  listEl.addEventListener('click', async (e) => {
+    const ask = e.target.closest('[data-pkg-ask]');
+    if (ask) { confirming = ask.dataset.pkgAsk; return renderList(); }
+    if (e.target.closest('[data-pkg-no]')) { confirming = null; return renderList(); }
+    const go = e.target.closest('[data-pkg-uninstall]');
+    if (!go) return;
+    busy = true; confirming = null; renderList();
+    try {
+      await api('DELETE', '/api/packages/' + encodeURIComponent(go.dataset.pkgUninstall));
+      setStatus(t('settings.packages.removed', 'Package uninstalled.'));
+    } catch (err) {
+      setStatus(err.message, true);
+    } finally {
+      busy = false; load();
+    }
+  });
+
+  document.addEventListener('nomad-i18n-applied', () => { renderReview(); renderList(); });
+  load();
+})();
+
+// ---------------------------------------------------------------------------
 // Backups — create / restore / delete (app/services/backup_service.py)
 // ---------------------------------------------------------------------------
 (function backupSection() {

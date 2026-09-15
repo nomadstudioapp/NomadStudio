@@ -1636,6 +1636,13 @@
 }
 .settings-btn-danger:disabled { opacity: .45; cursor: not-allowed; }
 
+/* ── Packages ────────────────────────────────────────────────────────── */
+.settings-package-review { max-width: 640px; margin-top: 10px; }
+.settings-package-review .settings-backup-item { box-shadow: inset 0 0 0 1px var(--accent); }
+.settings-backup-date small { font-weight: 500; color: var(--muted); margin-left: 4px; }
+.settings-package-unsigned { color: #e7b04a; }
+.cs-empty-state-btn { margin-top: 0.75rem; text-decoration: none; }
+
 /* ── Reset (danger zone + modal) ─────────────────────────────────────── */
 .settings-danger-zone {
   margin-top: 8px;

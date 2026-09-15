@@ -322,6 +322,7 @@
         </div>
         <p class="cs-empty-state-title" data-i18n="hub.empty.title">This section is empty</p>
         <p class="cs-empty-state-text" data-i18n="hub.empty.{{ section }}">Install flow packages to start creating.</p>
+        <a class="btn primary cs-empty-state-btn" href="{{ url_for('main.settings_page') }}#packages" data-i18n="hub.empty.install">Install a package</a>
       </div>
     {%- endmacro -%}
 

@@ -77,7 +77,8 @@
       "title": "This section is empty",
       "create": "Install flow packages to start creating images.",
       "refine": "Install flow packages to start refining your images.",
-      "mix": "Install flow packages to start mixing images."
+      "mix": "Install flow packages to start mixing images.",
+      "install": "Install a package"
     }
   },
   "who": {
@@ -411,6 +412,31 @@
         "models": "Models in ComfyUI and LM Studio",
         "backups": "Your backups"
       }
+    },
+    "packages": {
+      "title": "Packages",
+      "desc": "Engines and flows are installed as packages (.zip). Install one to start creating.",
+      "install": "Install package…",
+      "installedList": "Installed",
+      "empty": "No packages installed yet.",
+      "checking": "Checking the package…",
+      "installing": "Installing…",
+      "installedOk": "Installed: {name}",
+      "removed": "Package uninstalled.",
+      "opInstall": "Install {version}",
+      "opUpdate": "Update {from} → {to}",
+      "opReinstall": "Reinstall {version}",
+      "author": "by {name}",
+      "engine": "Engine: {name}",
+      "flow": "Flow: {name}",
+      "unsigned": "Unofficial package: it is not signed by Nomad Studio. Install it only if you trust where it comes from.",
+      "needsEngine": "Needs an image engine to work. You can install it now and add an engine package afterwards.",
+      "confirmInstall": "Install",
+      "uninstall": "Uninstall",
+      "confirmUninstall": "Its engines and flows are removed. Your images and Sessions are kept.",
+      "stateActive": "Active",
+      "stateMissing": "Needs an image engine",
+      "stateBroken": "Broken"
     }
   },
   "album": {

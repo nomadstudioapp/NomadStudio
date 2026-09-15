@@ -77,7 +77,8 @@
       "title": "이 섹션은 비어 있습니다",
       "create": "흐름 패키지를 설치하고 이미지 만들기를 시작하세요.",
       "refine": "흐름 패키지를 설치하고 이미지 보정을 시작하세요.",
-      "mix": "흐름 패키지를 설치하고 이미지 합성을 시작하세요."
+      "mix": "흐름 패키지를 설치하고 이미지 합성을 시작하세요.",
+      "install": "패키지 설치"
     }
   },
   "who": {
@@ -743,6 +744,31 @@
         "models": "ComfyUI 및 LM Studio의 모델",
         "backups": "내 백업"
       }
+    },
+    "packages": {
+      "title": "패키지",
+      "desc": "엔진과 흐름은 패키지(.zip)로 설치됩니다. 하나를 설치하고 만들기를 시작하세요.",
+      "install": "패키지 설치…",
+      "installedList": "설치됨",
+      "empty": "아직 설치된 패키지가 없습니다.",
+      "checking": "패키지를 확인하는 중…",
+      "installing": "설치하는 중…",
+      "installedOk": "설치됨: {name}",
+      "removed": "패키지를 제거했습니다.",
+      "opInstall": "{version} 설치",
+      "opUpdate": "업데이트 {from} → {to}",
+      "opReinstall": "{version} 다시 설치",
+      "author": "제작: {name}",
+      "engine": "엔진: {name}",
+      "flow": "흐름: {name}",
+      "unsigned": "비공식 패키지: Nomad Studio의 서명이 없습니다. 출처를 신뢰할 때만 설치하세요.",
+      "needsEngine": "작동하려면 이미지 엔진이 필요합니다. 지금 설치하고 나중에 엔진 패키지를 추가해도 됩니다.",
+      "confirmInstall": "설치",
+      "uninstall": "제거",
+      "confirmUninstall": "엔진과 흐름이 제거됩니다. 이미지와 Sessions는 유지됩니다.",
+      "stateActive": "활성",
+      "stateMissing": "이미지 엔진 필요",
+      "stateBroken": "손상됨"
     }
   },
   "album": {

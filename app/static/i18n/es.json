@@ -77,7 +77,8 @@
       "title": "Esta sección está vacía",
       "create": "Instala paquetes de flows para empezar a crear imágenes.",
       "refine": "Instala paquetes de flows para empezar a retocar tus imágenes.",
-      "mix": "Instala paquetes de flows para empezar a combinar imágenes."
+      "mix": "Instala paquetes de flows para empezar a combinar imágenes.",
+      "install": "Instalar un paquete"
     }
   },
   "who": {
@@ -743,6 +744,31 @@
         "models": "Modelos de ComfyUI y LM Studio",
         "backups": "Tus copias de seguridad"
       }
+    },
+    "packages": {
+      "title": "Paquetes",
+      "desc": "Los motores y los flows se instalan como paquetes (.zip). Instala uno para empezar a crear.",
+      "install": "Instalar paquete…",
+      "installedList": "Instalados",
+      "empty": "Todavía no hay paquetes instalados.",
+      "checking": "Comprobando el paquete…",
+      "installing": "Instalando…",
+      "installedOk": "Instalado: {name}",
+      "removed": "Paquete desinstalado.",
+      "opInstall": "Instalar {version}",
+      "opUpdate": "Actualizar {from} → {to}",
+      "opReinstall": "Reinstalar {version}",
+      "author": "de {name}",
+      "engine": "Motor: {name}",
+      "flow": "Flow: {name}",
+      "unsigned": "Paquete no oficial: no está firmado por Nomad Studio. Instálalo solo si confías en su origen.",
+      "needsEngine": "Necesita un motor de imagen para funcionar. Puedes instalarlo ahora y añadir después un paquete de motor.",
+      "confirmInstall": "Instalar",
+      "uninstall": "Desinstalar",
+      "confirmUninstall": "Se quitan sus motores y flows. Tus imágenes y Sessions se conservan.",
+      "stateActive": "Activo",
+      "stateMissing": "Necesita un motor de imagen",
+      "stateBroken": "Dañado"
     }
   },
   "album": {

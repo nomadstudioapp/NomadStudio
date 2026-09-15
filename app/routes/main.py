@@ -34,6 +34,48 @@ _INSTRUCTIONS_DIR = Path(__file__).parent.parent / "instructions"
 _WORKFLOWS_DIR = Path(__file__).parent.parent / "workflows"
 
 
+def _load_package_flows(category: str, route_prefix: str) -> list[dict]:
+    """Cards for flows contributed by installed packages (packages/index.json,
+    written by the importer — docs/PACKAGE_FORMAT.md §12). Texts in the
+    package's default language; the hub's data-i18n-literal still translates
+    labels the app already knows."""
+    from ..services import package_service
+    from . import packages_routes
+
+    app_dir = packages_routes.APP_DIR
+    index = package_service.read_index(app_dir)
+    base = package_service.packages_dir(app_dir)
+    flows = []
+    for flow_id, info in index.get("flows", {}).items():
+        if info.get("category") != category:
+            continue
+        pkg = index.get("packages", {}).get(info.get("package"), {})
+        try:
+            definition = json.loads((base / info["file"]).read_text(encoding="utf-8"))
+        except (OSError, KeyError, json.JSONDecodeError):
+            continue
+        card = package_service.card_fields(definition, pkg.get("default_lang") or "en", pkg.get("default_lang") or "en")
+        action = flow_id.split(".", 1)[1]
+        flows.append({
+            "id": flow_id,
+            "action": action,
+            "route": f"{route_prefix}/{action.replace('_', '-')}",
+            "status": info.get("status", "active"),
+            "llm_required": bool(definition.get("llm_required", False)),
+            "label": card["label"],
+            "card_desc": card["desc"],
+            "card_tags": card["tags"],
+            "card_css_modifier": str(definition.get("card_css_modifier", "")),
+            "entry_category": str(definition.get("entry_category", "")),
+            "entry_model": str(definition.get("entry_model", "")),
+            "complexity": definition.get("complexity"),
+            "group": info.get("group") or "core",
+            "preset_meta": definition.get("preset_meta"),
+            "package": info.get("package"),
+        })
+    return flows
+
+
 def _load_category_flows(category: str, route_prefix: str) -> list[dict]:
     index = json.loads((_INSTRUCTIONS_DIR / "index.json").read_text(encoding="utf-8"))
     flows = []
@@ -79,6 +121,8 @@ def _load_category_flows(category: str, route_prefix: str) -> list[dict]:
             card["group"] = flow_data.get("group", card["group"])
             card["preset_meta"] = flow_data.get("preset_meta")
         flows.append(card)
+    seen = {f["id"] for f in flows}
+    flows += [f for f in _load_package_flows(category, route_prefix) if f["id"] not in seen]
     return flows
 
 

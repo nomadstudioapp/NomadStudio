@@ -11,6 +11,7 @@ from .routes.viewers_routes import viewers_bp
 from .routes.setup_routes import setup_bp
 from .routes.backup_routes import backup_bp
 from .routes.reset_routes import reset_bp
+from .routes.packages_routes import packages_bp
 from .services.addon_loader import load_addons, get_registry
 from .services import app_info
 from .services.local_access import request_is_local
@@ -28,6 +29,7 @@ def create_app() -> Flask:
     app.register_blueprint(setup_bp)
     app.register_blueprint(backup_bp)
     app.register_blueprint(reset_bp)
+    app.register_blueprint(packages_bp)
 
     # Discover and register addons from addons/ directory
     load_addons(app)

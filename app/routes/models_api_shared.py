@@ -296,7 +296,7 @@ def _ensure_registry() -> dict[str, Any]:
 
 
 @contextmanager
-def _registry_transaction() -> Iterator[dict[str, Any]]:
+def _registry_transaction(deleted_import_ids: set[str] | None = None) -> Iterator[dict[str, Any]]:
     """Atomic read-modify-write for route handlers that read via
     _ensure_registry(), mutate one or more keys, and save via
     _save_registry() as two separate calls — replace that pattern with
@@ -311,11 +311,15 @@ def _registry_transaction() -> Iterator[dict[str, Any]]:
 
     Uses registry_service._mutation_lock (separate from _registry_lock,
     which guards the low-level file write only, to avoid deadlocking with
-    _save_registry's own internal locking when this block calls it)."""
+    _save_registry's own internal locking when this block calls it).
+
+    deleted_import_ids: imports removed on purpose in this block — without
+    it, _save_registry re-adds any import still on disk (its guard against a
+    concurrent writer), and the deletion would silently not happen."""
     with registry_service._mutation_lock:
         data = _ensure_registry()
         yield data
-        _save_registry(data)
+        _save_registry(data, deleted_import_ids=deleted_import_ids)
 
 
 def _save_registry(data: dict[str, Any], deleted_import_ids: set[str] | None = None) -> None:

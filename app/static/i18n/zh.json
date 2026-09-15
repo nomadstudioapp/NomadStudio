@@ -77,7 +77,8 @@
       "title": "此区域还是空的",
       "create": "安装流程扩展包，开始创作图片。",
       "refine": "安装流程扩展包，开始修饰你的图片。",
-      "mix": "安装流程扩展包，开始混合图片。"
+      "mix": "安装流程扩展包，开始混合图片。",
+      "install": "安装扩展包"
     }
   },
   "who": {
@@ -743,6 +744,31 @@
         "models": "ComfyUI 和 LM Studio 中的模型",
         "backups": "你的备份"
       }
+    },
+    "packages": {
+      "title": "扩展包",
+      "desc": "引擎和流程以扩展包（.zip）形式安装。安装一个即可开始创作。",
+      "install": "安装扩展包…",
+      "installedList": "已安装",
+      "empty": "尚未安装任何扩展包。",
+      "checking": "正在检查扩展包…",
+      "installing": "正在安装…",
+      "installedOk": "已安装：{name}",
+      "removed": "扩展包已卸载。",
+      "opInstall": "安装 {version}",
+      "opUpdate": "更新 {from} → {to}",
+      "opReinstall": "重新安装 {version}",
+      "author": "作者：{name}",
+      "engine": "引擎：{name}",
+      "flow": "流程：{name}",
+      "unsigned": "非官方扩展包：未经 Nomad Studio 签名。仅在信任其来源时安装。",
+      "needsEngine": "需要图像引擎才能使用。可以现在安装，之后再添加引擎扩展包。",
+      "confirmInstall": "安装",
+      "uninstall": "卸载",
+      "confirmUninstall": "会移除它的引擎和流程。你的图片和 Sessions 会保留。",
+      "stateActive": "已启用",
+      "stateMissing": "需要图像引擎",
+      "stateBroken": "已损坏"
     }
   },
   "album": {

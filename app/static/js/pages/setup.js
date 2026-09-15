@@ -147,7 +147,7 @@
   // ── Language models (LM Studio) ───────────────────────────────────────────
   function detectLlm() {
     S.llmBusy = true; S.llmError = ''; render();
-    return api('POST', '/api/setup/llm-models', { lmStudioApiUrl: S.settings.lmStudioApiUrl }).then(function (res) {
+    return api('POST', '/api/setup/llm-models', { lmStudioApiUrl: S.settings.lmStudioApiUrl, save: !PREVIEW }).then(function (res) {
       S.llmBusy = false;
       if (!res.ok) { S.llmError = res.error || 'error'; S.llm = null; return render(); }
       S.llm = res;

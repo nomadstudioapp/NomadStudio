@@ -196,7 +196,21 @@ def llm_models():
         url = _lms_rest_models_url(payload)
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)})
-    return jsonify(setup_service.llm_models_status(url))
+    status = setup_service.llm_models_status(url)
+    # Not in preview: also fill the Prompts and Vision model lists, so those
+    # pages are not "No models loaded" after the wizard already read LM Studio.
+    # The chosen models are left to the wizard (pick_defaults=False).
+    if status.get("ok") and payload.get("save"):
+        from .models_api_modules.chat_routes import refresh_lmstudio_model_lists
+
+        raw = str(payload.get("lmStudioApiUrl") or _ensure_registry().get("settings", {}).get("lmStudioApiUrl", "")).strip()
+        try:
+            with _registry_transaction() as data:
+                refresh_lmstudio_model_lists(data.setdefault("settings", {}), _safe_http_url(raw, "LM Studio"), pick_defaults=False)
+            status["listsSaved"] = True
+        except Exception as exc:  # noqa: BLE001 — the step still works without the lists
+            status["listsError"] = str(exc)
+    return jsonify(status)
 
 
 @setup_bp.post("/api/setup/llm-models/download")

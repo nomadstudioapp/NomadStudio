@@ -1148,10 +1148,31 @@ def load_models_chat_models():
         return jsonify({"error": str(exc)}), 400
 
     try:
-        models = lmstudio_service.list_models(lmstudio_url)
+        model_ids, vision_model_ids = refresh_lmstudio_model_lists(settings, lmstudio_url)
     except Exception as exc:
         logger.exception("Failed loading models from LM Studio URL '%s'", lmstudio_url)
         return jsonify({"error": f"Failed loading models from LM Studio: {exc}"}), 502
+
+    _save_registry(data)
+    return jsonify(
+        {
+            "models": model_ids,
+            "visionModels": vision_model_ids,
+            "settings": _chat_settings_response(settings),
+        }
+    )
+
+
+def refresh_lmstudio_model_lists(
+    settings: dict[str, Any], lmstudio_url: str, pick_defaults: bool = True
+) -> tuple[list[str], list[str]]:
+    """Fill the Prompts and Vision model lists (lmStudioModels /
+    lmStudioVisionModels) from LM Studio, in place on *settings*. Raises if
+    LM Studio can't be listed. Also used by the setup wizard so those pages
+    are not empty after setup (pick_defaults=False there: the wizard sets the
+    chosen models itself, and must not have them replaced by the first model
+    in alphabetical order)."""
+    models = lmstudio_service.list_models(lmstudio_url)
 
     model_ids = sorted(
         {
@@ -1181,27 +1202,20 @@ def load_models_chat_models():
         settings.get("lmStudioVisionFavoriteModels", []),
         model_ids,
     )
-    current_prompt_model = _resolve_prompt_model(settings)
-    if model_ids and current_prompt_model not in model_ids:
-        settings["lmStudioPromptModel"] = model_ids[0]
+    if pick_defaults:
+        current_prompt_model = _resolve_prompt_model(settings)
+        if model_ids and current_prompt_model not in model_ids:
+            settings["lmStudioPromptModel"] = model_ids[0]
 
-    current_prompt_model = _resolve_prompt_model(settings)
-    current_vision_model = str(settings.get("lmStudioVisionModel", "")).strip()
-    if model_ids and current_vision_model not in model_ids:
-        if vision_model_ids:
-            settings["lmStudioVisionModel"] = vision_model_ids[0]
-        else:
-            settings["lmStudioVisionModel"] = current_prompt_model
+        current_prompt_model = _resolve_prompt_model(settings)
+        current_vision_model = str(settings.get("lmStudioVisionModel", "")).strip()
+        if model_ids and current_vision_model not in model_ids:
+            if vision_model_ids:
+                settings["lmStudioVisionModel"] = vision_model_ids[0]
+            else:
+                settings["lmStudioVisionModel"] = current_prompt_model
 
     settings["lmStudioModel"] = _resolve_prompt_model(settings)
-
-    _save_registry(data)
-    return jsonify(
-        {
-            "models": model_ids,
-            "visionModels": vision_model_ids,
-            "settings": _chat_settings_response(settings),
-        }
-    )
+    return model_ids, vision_model_ids
 
 

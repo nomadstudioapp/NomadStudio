@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
@@ -13,6 +14,21 @@ viewers_bp = Blueprint("viewers", __name__)
 _AVATARS_DIR = Path(__file__).resolve().parents[1] / "static" / "images" / "avatars"
 
 SESSION_KEY = "active_viewer_id"
+VANISH_TOKEN_KEY = "vanish_storage_token"
+
+
+def storage_scope() -> dict:
+    """What the browser needs to keep its storage per profile
+    (static/js/services/storage_scope.js): the active viewer id, whether it is
+    the Vanish Session, and Vanish's per-entry token. Never the pin or name."""
+    viewer_id = session.get(SESSION_KEY)
+    viewer = viewer_service.get_viewer(viewer_id) if viewer_id else None
+    if not viewer:
+        return {"id": None, "vanish": False, "token": None}
+    is_vanish = bool(viewer.get("is_vanish"))
+    if is_vanish and not session.get(VANISH_TOKEN_KEY):
+        session[VANISH_TOKEN_KEY] = secrets.token_hex(8)
+    return {"id": viewer["id"], "vanish": is_vanish, "token": session.get(VANISH_TOKEN_KEY) if is_vanish else None}
 
 
 @viewers_bp.get("/who")
@@ -88,6 +104,10 @@ def select_vanish_viewer():
     generations are never written to disk (see _active_viewer_is_vanish())."""
     viewer = viewer_service.get_or_create_vanish_viewer()
     session[SESSION_KEY] = viewer["id"]
+    # New every time Vanish is entered: browser storage is keyed on it
+    # (static/js/services/storage_scope.js), so a Vanish Session never sees
+    # what an earlier one left in the tab.
+    session[VANISH_TOKEN_KEY] = secrets.token_hex(8)
     return jsonify({"ok": True, "viewer": {"id": viewer["id"], "name": viewer["name"], "avatar": viewer["avatar"]}})
 
 

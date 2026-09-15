@@ -58,6 +58,13 @@ def create_app() -> Flask:
         return {"asset_v": str(int(time.time()))}
 
     @app.context_processor
+    def inject_storage_scope():
+        # Browser storage per profile (layout/base.html → storage_scope.js).
+        from .routes.viewers_routes import storage_scope
+
+        return {"nomad_storage_scope": storage_scope}
+
+    @app.context_processor
     def inject_local_request():
         # Pages disable machine-only actions (reset, restore, folder pickers)
         # for browsers on other computers — see services/local_access.py.

@@ -7,6 +7,9 @@
     <meta name="theme-color" id="theme-color-meta" content="#0c121f" />
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo/raccoon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ asset_v }}" />
+    {# Browser storage per profile — must run before any other script touches it. #}
+    <script>window.NOMAD_VIEWER = {{ nomad_storage_scope()|tojson }};</script>
+    <script src="{{ url_for('static', filename='js/services/storage_scope.js') }}?v={{ asset_v }}"></script>
     <script>
       /* Sets data-theme on <html> synchronously, before the stylesheet's
          default :root values (--accent: #ffffff, an achromatic white) ever

@@ -104,6 +104,116 @@ def check_comfy(comfy_url: str) -> dict[str, Any]:
     }
 
 
+# ── Find ComfyUI / LM Studio on the local network ───────────────────────────
+
+COMFY_PORTS = (8188, 8000)  # ComfyUI portable/manual · ComfyUI Desktop
+LMSTUDIO_PORTS = (1234,)
+_SCAN_CONNECT_TIMEOUT_S = 0.35
+_SCAN_MAX_HOSTS_PER_SUBNET = 254
+_SCAN_MAX_SUBNETS = 4
+
+
+def _local_subnets() -> list[str]:
+    """Private IPv4 /24 prefixes this machine is on ("192.168.1.")."""
+    import ipaddress
+
+    from .local_access import _own_addresses
+
+    prefixes: list[str] = []
+    for addr in sorted(_own_addresses()):
+        try:
+            ip = ipaddress.ip_address(addr)
+        except ValueError:
+            continue
+        if ip.version != 4 or not ip.is_private or ip.is_loopback or ip.is_link_local:
+            continue
+        prefix = ".".join(addr.split(".")[:3]) + "."
+        if prefix not in prefixes:
+            prefixes.append(prefix)
+    return prefixes[:_SCAN_MAX_SUBNETS]
+
+
+def _port_open(host: str, port: int) -> bool:
+    import socket
+
+    try:
+        with socket.create_connection((host, port), timeout=_SCAN_CONNECT_TIMEOUT_S):
+            return True
+    except OSError:
+        return False
+
+
+def discover_services(
+    comfy_ports: tuple[int, ...] = COMFY_PORTS,
+    lmstudio_ports: tuple[int, ...] = LMSTUDIO_PORTS,
+    hosts: list[str] | None = None,
+) -> dict[str, Any]:
+    """Look for ComfyUI and LM Studio on this machine and its local /24
+    networks: a quick TCP check on their usual ports, then a real API call to
+    confirm what answers (ComfyUI ``/system_stats``, LM Studio
+    ``/api/v1/models``). Only private networks are scanned. Run on request
+    from the setup wizard; nothing is saved."""
+    import time
+
+    started = time.time()
+    if hosts is None:
+        hosts = ["127.0.0.1"]
+        for prefix in _local_subnets():
+            hosts += [f"{prefix}{i}" for i in range(1, _SCAN_MAX_HOSTS_PER_SUBNET + 1)]
+    targets = [(h, p, "comfy") for h in hosts for p in comfy_ports] + [(h, p, "lmstudio") for h in hosts for p in lmstudio_ports]
+
+    with ThreadPoolExecutor(max_workers=128) as pool:
+        open_targets = [t for t, ok in zip(targets, pool.map(lambda t: _port_open(t[0], t[1]), targets)) if ok]
+
+    def confirm(target):
+        host, port, kind = target
+        url = f"http://{host}:{port}"
+        if kind == "comfy":
+            res = check_comfy(url)
+            if not res.get("ok") or "gpus" not in res:
+                return None
+            gpu = (res.get("gpus") or [{}])[0]
+            return {"kind": kind, "url": url, "host": host, "version": res.get("version"), "gpu": gpu.get("name"),
+                    "vramTotal": gpu.get("vramTotal")}
+        try:
+            data = http_json(f"{url}/api/v1/models", timeout=3)
+        except Exception:  # noqa: BLE001
+            return None
+        models = data.get("models") if isinstance(data, dict) else None
+        if not isinstance(models, list):
+            return None
+        return {"kind": kind, "url": url, "host": host, "models": len(models)}
+
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        found = [f for f in pool.map(confirm, open_targets) if f]
+
+    # The same server can show up as 127.0.0.1 and as this machine's LAN
+    # address: keep the loopback one.
+    own = {"127.0.0.1"}
+    try:
+        from .local_access import _own_addresses
+
+        own |= _own_addresses()
+    except Exception:  # noqa: BLE001
+        pass
+    result: dict[str, list[dict[str, Any]]] = {"comfy": [], "lmstudio": []}
+    for kind in result:
+        items = [f for f in found if f["kind"] == kind]
+        local_ports = {urlparse_port(f["url"]) for f in items if f["host"] == "127.0.0.1"}
+        for f in items:
+            if f["host"] != "127.0.0.1" and f["host"] in own and urlparse_port(f["url"]) in local_ports:
+                continue
+            f["isLocal"] = f["host"] in own
+            result[kind].append(f)
+    return {**result, "scanned": len(hosts), "seconds": round(time.time() - started, 1)}
+
+
+def urlparse_port(url: str) -> int | None:
+    from urllib.parse import urlparse
+
+    return urlparse(url).port
+
+
 def check_lmstudio(models_url: str) -> dict[str, Any]:
     try:
         data = http_json(models_url, timeout=5)

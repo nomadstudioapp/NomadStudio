@@ -942,6 +942,23 @@
         "gemma-4-12b": "JSON estricto y plantillas, y el mejor describiendo imágenes con la longitud que le pides.",
         "ministral-3-14b": "Siempre piensa antes de responder: las lecturas de imagen más detalladas, más lento en lotes de prompts."
       }
+    },
+    "network": {
+      "searching": "Buscando en este equipo y en tu red local… (unos segundos)",
+      "foundComfy": "ComfyUI encontrado",
+      "foundLms": "LM Studio encontrado",
+      "thisComputer": "este equipo",
+      "otherComputer": "otro equipo",
+      "noneComfy": "No se ha encontrado ComfyUI en este equipo ni en tu red local.",
+      "noneLms": "No se ha encontrado LM Studio en este equipo ni en tu red local.",
+      "remoteComfy": "¿ComfyUI está en otro equipo?",
+      "remoteLms": "¿LM Studio está en otro equipo?",
+      "sameNetwork": "Los dos equipos tienen que estar en la misma red.",
+      "comfyListen": "En ese equipo, arranca ComfyUI con --listen 0.0.0.0 (en ComfyUI Desktop, pon 0.0.0.0 como dirección de escucha del servidor).",
+      "lmsServe": "En ese equipo, abre LM Studio › Developer y activa \"Serve on Local Network\".",
+      "privateFirewall": "En Windows, en ese equipo, pon la red como Privada y permite el programa en el firewall cuando lo pregunte.",
+      "typeAddress": "Escribe aquí su dirección, por ejemplo http://192.168.1.20:{port}, o vuelve a buscar en tu red.",
+      "search": "Buscar en mi red"
     }
   }
 }

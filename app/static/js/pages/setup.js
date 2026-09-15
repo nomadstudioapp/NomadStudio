@@ -48,6 +48,9 @@
     comfyBusy: false,
     lms: null,
     lmsBusy: false,
+    discovery: null,      // result of /api/setup/discover (ComfyUI + LM Studio on the network)
+    discoveryBusy: false,
+    discoveryAuto: false, // searched automatically once after a failed check
     engines: null,        // result of /api/setup/engines
     enginesBusy: false,
     enginesError: '',
@@ -111,8 +114,25 @@
     return api('POST', '/api/setup/check/comfy', { comfyApiUrl: url }).then(function (res) {
       S.comfyBusy = false; S.comfy = res;
       if (res.ok && res.comfyApiUrl) return save({ comfyApiUrl: res.comfyApiUrl }).then(render);
+      autoDiscover();
       render();
     });
+  }
+  // Look for ComfyUI and LM Studio on this computer and the local network.
+  // Runs by itself once, the first time a check fails; then on request.
+  function runDiscovery() {
+    if (S.discoveryBusy) return;
+    S.discoveryBusy = true; render();
+    return api('POST', '/api/setup/discover', {}).then(function (res) {
+      S.discoveryBusy = false;
+      S.discovery = res.ok ? res : { comfy: [], lmstudio: [], error: res.error || 'error' };
+      render();
+    });
+  }
+  function autoDiscover() {
+    if (S.discoveryAuto || S.discovery) return;
+    S.discoveryAuto = true;
+    runDiscovery();
   }
   function checkLms() {
     var url = (document.getElementById('su-lms-url') || {}).value || S.settings.lmStudioApiUrl || 'http://127.0.0.1:1234';
@@ -120,6 +140,7 @@
     return api('POST', '/api/setup/check/lmstudio', { lmStudioApiUrl: url }).then(function (res) {
       S.lmsBusy = false; S.lms = res;
       if (res.ok && res.lmStudioApiUrl) return save({ lmStudioApiUrl: res.lmStudioApiUrl }).then(render);
+      autoDiscover();
       render();
     });
   }
@@ -307,6 +328,46 @@
       }).join('') + '</div>';
   }
 
+  // Network search results + help for a server on another computer.
+  // kind: 'comfy' | 'lmstudio'. connected: the current address already works.
+  function networkBlock(kind, connected) {
+    var isComfy = kind === 'comfy';
+    var html = '';
+    var found = S.discovery ? (S.discovery[kind] || []) : null;
+    if (S.discoveryBusy) {
+      html += statusBox('busy', esc(t('setup.network.searching', 'Searching this computer and your local network… (a few seconds)')));
+    } else if (found && found.length && !connected) {
+      html += '<div class="su-label">' + esc(isComfy ? t('setup.network.foundComfy', 'ComfyUI found') : t('setup.network.foundLms', 'LM Studio found')) + '</div>' +
+        '<div class="su-options">' + found.map(function (f) {
+          var detail = isComfy
+            ? [f.gpu, f.vramTotal ? bytes(f.vramTotal) : '', f.version ? 'v' + f.version : ''].filter(Boolean).join(' · ')
+            : t('setup.lms.models', '{n} models available', { n: f.models });
+          var where = f.isLocal ? t('setup.network.thisComputer', 'this computer') : t('setup.network.otherComputer', 'another computer');
+          return '<button type="button" class="su-option" data-use-found="' + kind + '" data-url="' + esc(f.url) + '">' +
+            '<strong>' + esc(f.url) + '</strong> <small>' + esc(where + (detail ? ' · ' + detail : '')) + '</small></button>';
+        }).join('') + '</div>';
+    } else if (found && !found.length && !connected) {
+      html += statusBox('warn', esc(isComfy
+        ? t('setup.network.noneComfy', 'No ComfyUI was found on this computer or your local network.')
+        : t('setup.network.noneLms', 'No LM Studio was found on this computer or your local network.')));
+    }
+    var steps = isComfy
+      ? [t('setup.network.sameNetwork', 'Both computers must be on the same network.'),
+         t('setup.network.comfyListen', 'On that computer, start ComfyUI with --listen 0.0.0.0 (in ComfyUI Desktop, set the server listen address to 0.0.0.0).'),
+         t('setup.network.privateFirewall', 'In Windows on that computer, set the network as Private and allow the program in the firewall when asked.'),
+         t('setup.network.typeAddress', 'Type its address here, e.g. http://192.168.1.20:{port}, or search your network again.', { port: 8188 })]
+      : [t('setup.network.sameNetwork', 'Both computers must be on the same network.'),
+         t('setup.network.lmsServe', 'On that computer, open LM Studio › Developer and turn on "Serve on Local Network".'),
+         t('setup.network.privateFirewall', 'In Windows on that computer, set the network as Private and allow the program in the firewall when asked.'),
+         t('setup.network.typeAddress', 'Type its address here, e.g. http://192.168.1.20:{port}, or search your network again.', { port: 1234 })];
+    html += '<details class="su-details"' + (found && !found.length && !connected ? ' open' : '') + '><summary>' +
+      esc(isComfy ? t('setup.network.remoteComfy', 'Is ComfyUI on another computer?') : t('setup.network.remoteLms', 'Is LM Studio on another computer?')) +
+      '</summary><ol>' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></details>' +
+      '<div class="su-engine-actions"><button type="button" class="su-btn su-btn-ghost su-btn-small" id="su-discover"' + (S.discoveryBusy ? ' disabled' : '') + '>' +
+      esc(t('setup.network.search', 'Search my network')) + '</button></div>';
+    return html;
+  }
+
   function viewComfy() {
     var url = S.settings.comfyApiUrl || 'http://127.0.0.1:8188';
     var box = '';
@@ -327,7 +388,7 @@
       '<label class="su-label" for="su-comfy-url">' + esc(t('setup.comfy.urlLabel', 'ComfyUI address')) + '</label>' +
       '<div class="su-row"><input class="su-input" id="su-comfy-url" value="' + esc(url) + '" spellcheck="false">' +
       '<button type="button" class="su-btn su-btn-ghost" id="su-comfy-check"' + (S.comfyBusy ? ' disabled' : '') + '>' + esc(t('setup.common.check', 'Check')) + '</button></div>' +
-      box +
+      box + networkBlock('comfy', !!(S.comfy && S.comfy.ok)) +
       '<label class="su-check"><input type="checkbox" id="su-skip-copy"' + (S.settings.skipComfyOutputCopy === true ? ' checked' : '') + '>' +
       '<span><strong>' + esc(t('setup.comfy.saveSpace', 'Save space: do not keep a copy in the ComfyUI folder')) + '</strong>' +
       '<br><span class="su-hint">' + esc(t('setup.comfy.saveSpaceHint', 'Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder.')) + '</span></span></label>';
@@ -344,7 +405,7 @@
       '<label class="su-label" for="su-lms-url">' + esc(t('setup.lms.urlLabel', 'LM Studio address')) + '</label>' +
       '<div class="su-row"><input class="su-input" id="su-lms-url" value="' + esc(url) + '" spellcheck="false">' +
       '<button type="button" class="su-btn su-btn-ghost" id="su-lms-check"' + (S.lmsBusy ? ' disabled' : '') + '>' + esc(t('setup.common.check', 'Check')) + '</button></div>' +
-      box;
+      box + networkBlock('lmstudio', !!(S.lms && S.lms.ok));
   }
 
   function viewModels() {
@@ -716,6 +777,11 @@
     if ((el = e.target.closest('[data-lang]'))) {
       if (window.NomadI18n) window.NomadI18n.setLanguage(el.dataset.lang);
       return render();
+    }
+    if (e.target.closest('#su-discover')) return runDiscovery();
+    if ((el = e.target.closest('[data-use-found]'))) {
+      if (el.dataset.useFound === 'comfy') { S.settings.comfyApiUrl = el.dataset.url; render(); return checkComfy(); }
+      S.settings.lmStudioApiUrl = el.dataset.url; render(); return checkLms();
     }
     if (e.target.closest('#su-comfy-check')) return checkComfy();
     if (e.target.closest('#su-lms-check')) return checkLms();

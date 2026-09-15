@@ -610,6 +610,23 @@
         "gemma-4-12b": "Strict JSON and templates, and the best at describing images at the length you ask for.",
         "ministral-3-14b": "Always thinks before answering: the most detailed image reads, slower on batches of prompts."
       }
+    },
+    "network": {
+      "searching": "Searching this computer and your local network… (a few seconds)",
+      "foundComfy": "ComfyUI found",
+      "foundLms": "LM Studio found",
+      "thisComputer": "this computer",
+      "otherComputer": "another computer",
+      "noneComfy": "No ComfyUI was found on this computer or your local network.",
+      "noneLms": "No LM Studio was found on this computer or your local network.",
+      "remoteComfy": "Is ComfyUI on another computer?",
+      "remoteLms": "Is LM Studio on another computer?",
+      "sameNetwork": "Both computers must be on the same network.",
+      "comfyListen": "On that computer, start ComfyUI with --listen 0.0.0.0 (in ComfyUI Desktop, set the server listen address to 0.0.0.0).",
+      "lmsServe": "On that computer, open LM Studio › Developer and turn on \"Serve on Local Network\".",
+      "privateFirewall": "In Windows on that computer, set the network as Private and allow the program in the firewall when asked.",
+      "typeAddress": "Type its address here, e.g. http://192.168.1.20:{port}, or search your network again.",
+      "search": "Search my network"
     }
   }
 }

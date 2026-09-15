@@ -14,6 +14,7 @@ Settings to review it on an already configured install.
 from __future__ import annotations
 
 import os
+import threading
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -151,6 +152,21 @@ def check_comfy():
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)})
     return jsonify({**setup_service.check_comfy(url), "comfyApiUrl": url, "isLocal": setup_service.is_local_url(url)})
+
+
+_discover_lock = threading.Lock()
+
+
+@setup_bp.post("/api/setup/discover")
+def discover_services():
+    """Find ComfyUI and LM Studio on this machine and the local network
+    (setup_service.discover_services). One scan at a time."""
+    if not _discover_lock.acquire(blocking=False):
+        return jsonify({"ok": False, "error": "A network search is already running"}), 409
+    try:
+        return jsonify({"ok": True, **setup_service.discover_services()})
+    finally:
+        _discover_lock.release()
 
 
 @setup_bp.post("/api/setup/check/lmstudio")

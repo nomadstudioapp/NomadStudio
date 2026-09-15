@@ -942,6 +942,23 @@
         "gemma-4-12b": "严格 JSON 和模板，也最擅长按你要求的长度描述图片。",
         "ministral-3-14b": "回答前总会先思考：图片描述最细致，批量写提示词时较慢。"
       }
+    },
+    "network": {
+      "searching": "正在搜索这台电脑和你的局域网……（几秒钟）",
+      "foundComfy": "找到 ComfyUI",
+      "foundLms": "找到 LM Studio",
+      "thisComputer": "这台电脑",
+      "otherComputer": "另一台电脑",
+      "noneComfy": "在这台电脑和局域网中都没有找到 ComfyUI。",
+      "noneLms": "在这台电脑和局域网中都没有找到 LM Studio。",
+      "remoteComfy": "ComfyUI 在另一台电脑上？",
+      "remoteLms": "LM Studio 在另一台电脑上？",
+      "sameNetwork": "两台电脑必须在同一个网络中。",
+      "comfyListen": "在那台电脑上，用 --listen 0.0.0.0 启动 ComfyUI（在 ComfyUI Desktop 中，把服务器监听地址设为 0.0.0.0）。",
+      "lmsServe": "在那台电脑上，打开 LM Studio › Developer，开启 \"Serve on Local Network\"。",
+      "privateFirewall": "在那台电脑的 Windows 中，把网络设为专用网络，并在防火墙询问时允许该程序。",
+      "typeAddress": "在这里输入它的地址，例如 http://192.168.1.20:{port}，或再次搜索网络。",
+      "search": "搜索我的网络"
     }
   }
 }

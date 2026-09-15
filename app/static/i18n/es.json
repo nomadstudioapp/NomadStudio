@@ -837,7 +837,9 @@
       "variant": "Variante: {v}",
       "remote": "ComfyUI está en otro equipo ({host}). Nomad Studio usa sus motores desde aquí; los ficheros se instalan en ese equipo.",
       "remoteInstall": "Instala los ficheros que faltan en el equipo donde está ComfyUI y vuelve a comprobar.",
-      "checkAgain": "Volver a comprobar"
+      "checkAgain": "Volver a comprobar",
+      "noneTitle": "Todavía no hay motores instalados",
+      "noneText": "Los motores se instalan como paquetes. Cuando instales uno, este paso comprobará si ComfyUI ya tiene sus ficheros de modelo e instalará lo que falte."
     },
     "folder": {
       "bad": "ComfyUI no lee sus modelos de esta carpeta. Elige la carpeta \"models\" de tu instalación de ComfyUI.",

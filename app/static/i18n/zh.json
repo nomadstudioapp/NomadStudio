@@ -837,7 +837,9 @@
       "variant": "版本：{v}",
       "remote": "ComfyUI 运行在另一台电脑上（{host}）。Nomad Studio 可以在这里使用它的引擎；文件需要安装在那台电脑上。",
       "remoteInstall": "请在运行 ComfyUI 的电脑上安装缺少的文件，然后再次检查。",
-      "checkAgain": "再次检查"
+      "checkAgain": "再次检查",
+      "noneTitle": "尚未安装任何引擎",
+      "noneText": "引擎以扩展包形式安装。安装引擎后，此步骤会检查 ComfyUI 是否已有它的模型文件，并安装缺少的文件。"
     },
     "folder": {
       "bad": "ComfyUI 不是从这个文件夹读取模型的。请选择 ComfyUI 安装目录中的 \"models\" 文件夹。",

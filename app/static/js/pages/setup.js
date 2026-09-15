@@ -487,6 +487,11 @@
     if (!S.engines) return head;
 
     var engines = S.engines.engines || [];
+    // Empty install: engines come as packages, none installed yet.
+    if (!engines.length) {
+      return head + statusBox('ok', '<strong>' + esc(t('setup.engines.noneTitle', 'No engines installed yet')) + '</strong><br>' +
+        esc(t('setup.engines.noneText', 'Engines are installed as packages. When you install one, this step checks whether ComfyUI already has its model files and installs what is missing.')));
+    }
     var ready = engines.filter(function (e) { return e.status === 'ready'; }).length;
     // ComfyUI on another machine: its engines are detected and used through
     // the API, but model files can only be installed on that machine.
@@ -634,7 +639,9 @@
       '<p class="su-lead">' + esc(PREVIEW ? t('setup.done.previewLead', 'This is the end of the preview. Nothing was saved.') : t('setup.done.lead', 'Here is a summary. You can change any of it later in Settings.')) + '</p>' +
       '<ul class="su-summary">' +
       row(t('setup.steps.comfy', 'ComfyUI'), S.comfy && S.comfy.ok ? esc(t('setup.done.connected', 'Connected')) + ' · ' + esc(S.settings.comfyApiUrl || '') : esc(t('setup.done.notConnected', 'Not connected'))) +
-      row(t('setup.steps.engines', 'Engines'), ready == null ? esc(t('setup.done.notChecked', 'Not checked')) : esc(t('setup.engines.summary', '{ready} of {total} engines ready to use.', { ready: ready, total: engines.length }))) +
+      row(t('setup.steps.engines', 'Engines'), ready == null ? esc(t('setup.done.notChecked', 'Not checked'))
+        : !engines.length ? esc(t('setup.engines.noneTitle', 'No engines installed yet'))
+        : esc(t('setup.engines.summary', '{ready} of {total} engines ready to use.', { ready: ready, total: engines.length }))) +
       row(t('setup.steps.lmstudio', 'LM Studio'), S.lms && S.lms.ok ? esc(t('setup.done.connected', 'Connected')) : esc(t('setup.done.notConnected', 'Not connected'))) +
       row(t('setup.steps.models', 'Models'), !S.llm ? esc(t('setup.done.notChecked', 'Not checked'))
         : esc(t('setup.models.summary', '{n} of {total} recommended models installed.', { n: S.llm.models.filter(function (m) { return m.installedKey; }).length, total: S.llm.models.length }))) +

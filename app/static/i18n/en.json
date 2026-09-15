@@ -505,7 +505,9 @@
       "variant": "Variant: {v}",
       "remote": "ComfyUI runs on another computer ({host}). Nomad Studio uses its engines from here; files are installed on that computer.",
       "remoteInstall": "Install the missing files on the computer where ComfyUI runs, then check again.",
-      "checkAgain": "Check again"
+      "checkAgain": "Check again",
+      "noneTitle": "No engines installed yet",
+      "noneText": "Engines are installed as packages. When you install one, this step checks whether ComfyUI already has its model files and installs what is missing."
     },
     "folder": {
       "bad": "ComfyUI does not read its models from this folder. Choose the \"models\" folder inside your ComfyUI installation.",

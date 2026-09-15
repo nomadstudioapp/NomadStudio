@@ -837,7 +837,9 @@
       "variant": "버전: {v}",
       "remote": "ComfyUI가 다른 컴퓨터({host})에서 실행 중입니다. Nomad Studio는 여기서 그 엔진을 사용하며, 파일은 그 컴퓨터에 설치합니다.",
       "remoteInstall": "ComfyUI가 실행 중인 컴퓨터에 부족한 파일을 설치한 뒤 다시 확인하세요.",
-      "checkAgain": "다시 확인"
+      "checkAgain": "다시 확인",
+      "noneTitle": "아직 설치된 엔진이 없습니다",
+      "noneText": "엔진은 패키지로 설치됩니다. 엔진을 설치하면 이 단계에서 ComfyUI에 모델 파일이 이미 있는지 확인하고 부족한 파일을 설치합니다."
     },
     "folder": {
       "bad": "ComfyUI는 이 폴더에서 모델을 읽지 않습니다. ComfyUI 설치 폴더 안의 \"models\" 폴더를 선택하세요.",

@@ -47,14 +47,19 @@ def _count(path: Path, key: str | None = None) -> int:
     return len(data) if isinstance(data, (list, dict)) else 0
 
 
-def _size(path: Path) -> tuple[int, int, bool]:
-    """(bytes, files, truncated) for a file or a folder."""
+def _size(path: Path, skip: Path | None = None) -> tuple[int, int, bool]:
+    """(bytes, files, truncated) for a file or a folder, never counting (or,
+    when the reset runs for real, touching) *skip* — the image folder holds
+    the data folder inside it by default (~/Nomad Studio and .../data)."""
     if path.is_file():
         return path.stat().st_size, 1, False
     total = files = 0
     if not path.is_dir():
         return 0, 0, False
-    for root, _dirs, names in os.walk(path):
+    skip_resolved = str(skip.resolve()).lower() if skip else None
+    for root, dirs, names in os.walk(path):
+        if skip_resolved:
+            dirs[:] = [d for d in dirs if os.path.join(root, d).lower() != skip_resolved]
         for name in names:
             try:
                 total += os.path.getsize(os.path.join(root, name))
@@ -66,12 +71,12 @@ def _size(path: Path) -> tuple[int, int, bool]:
     return total, files, False
 
 
-def _item(item_id: str, group: str, paths: list[Path], data_dir: Path, **detail: Any) -> dict[str, Any]:
+def _item(item_id: str, group: str, paths: list[Path], data_dir: Path, skip: Path | None = None, **detail: Any) -> dict[str, Any]:
     size = files = 0
     truncated = False
     shown = []
     for p in paths:
-        b, f, t = _size(p)
+        b, f, t = _size(p, skip)
         size += b
         files += f
         truncated = truncated or t
@@ -118,8 +123,12 @@ def build_plan(
     # ── Optional: generated images ──
     output_dir = str(settings.get("outputDir", "") or "").strip()
     gen = _item("generated", "delete" if include_generated else "optional",
-                [Path(output_dir)] if output_dir and os.path.isabs(output_dir) else [], data_dir, optional="generated")
+                [Path(output_dir)] if output_dir and os.path.isabs(output_dir) else [], data_dir,
+                skip=data_dir, optional="generated")
     gen["folder"] = output_dir
+    # The default image folder contains the data folder: say so, and never
+    # count it here (the real reset must skip it too).
+    gen["excludes"] = [str(data_dir)] if output_dir and Path(output_dir).resolve() in data_dir.resolve().parents else []
     items.append(gen)
 
     # ── Never touched ──

@@ -617,7 +617,9 @@
         "ornith-1.5-9b": "The same, with the smallest memory footprint we measured.",
         "gemma-4-12b": "Strict JSON and templates, and the best at describing images at the length you ask for.",
         "ministral-3-14b": "Always thinks before answering: the most detailed image reads, slower on batches of prompts."
-      }
+      },
+      "pickPrompt": "Model that writes the prompts",
+      "pickVision": "Model that describes images"
     },
     "network": {
       "searching": "Searching this computer and your local network… (a few seconds)",

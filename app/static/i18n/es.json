@@ -949,7 +949,9 @@
         "ornith-1.5-9b": "Lo mismo, con la menor huella de memoria que medimos.",
         "gemma-4-12b": "JSON estricto y plantillas, y el mejor describiendo imágenes con la longitud que le pides.",
         "ministral-3-14b": "Siempre piensa antes de responder: las lecturas de imagen más detalladas, más lento en lotes de prompts."
-      }
+      },
+      "pickPrompt": "Modelo que escribe los prompts",
+      "pickVision": "Modelo que describe las imágenes"
     },
     "network": {
       "searching": "Buscando en este equipo y en tu red local… (unos segundos)",

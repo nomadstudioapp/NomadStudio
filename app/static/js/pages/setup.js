@@ -448,10 +448,10 @@
         : (m.id === recId ? '<span class="su-rec">' + esc(t('setup.engines.recommended', 'Recommended')) + '</span>' : '');
       var actions = '';
       if (m.installedKey) {
-        actions = '<button type="button" class="su-btn su-btn-ghost su-btn-small" data-llm-use="prompt" data-llm-key="' + esc(m.installedKey) + '"' + (isPrompt ? ' disabled' : '') + '>' +
-            esc(isPrompt ? t('setup.models.inUsePrompt', 'Writing prompts') : t('setup.models.usePrompt', 'Use for writing')) + '</button>' +
-          (m.vision !== false ? '<button type="button" class="su-btn su-btn-ghost su-btn-small" data-llm-use="vision" data-llm-key="' + esc(m.installedKey) + '"' + (isVision ? ' disabled' : '') + '>' +
-            esc(isVision ? t('setup.models.inUseVision', 'Describing images') : t('setup.models.useVision', 'Use for vision')) + '</button>' : '');
+        // Which model does what is chosen in the pill toggles above; the card
+        // only shows it.
+        actions = (isPrompt ? '<span class="su-tag su-tag-use">' + esc(t('setup.models.inUsePrompt', 'Writing prompts')) + '</span>' : '') +
+          (isVision ? '<span class="su-tag su-tag-use">' + esc(t('setup.models.inUseVision', 'Describing images')) + '</span>' : '');
       } else if (job && (job.status === 'downloading' || job.status === 'starting' || job.status === 'paused')) {
         actions = '<span class="su-engine-note">' + esc(job.status === 'paused' ? t('setup.models.paused', 'Paused in LM Studio') : t('setup.models.downloading', 'Downloading… {pct}%', { pct: job.pct || 0 })) + '</span>' +
           '<span class="su-progress"><span style="width:' + (job.pct || 0) + '%"></span></span>';
@@ -467,10 +467,34 @@
         '<br><span class="su-engine-sub">' + esc(t('setup.models.desc.' + m.id, '')) + '</span>' +
         '<br><span class="su-engine-sub">' + esc(t('setup.models.meta', '{size} GB on disk · comfortable on {vram} GB of video memory', { size: m.sizeGb, vram: m.vramGb })) + '</span></span>' +
         badge + '</div>' +
-        '<div class="su-engine-body"><div class="su-engine-actions">' + actions + '</div></div></div>';
+        (actions ? '<div class="su-engine-body"><div class="su-engine-actions">' + actions + '</div></div>' : '') + '</div>';
     }).join('');
 
-    return head + summary + '<div class="su-engines">' + cards + '</div>' +
+    // Pill toggles (same look as Simple / Guided / Custom in the app) to pick
+    // the writing and the vision model among the installed ones. A model set
+    // earlier that is not one of the four recommended still shows up.
+    function picker(role, label, eligible) {
+      var key = role === 'vision' ? 'lmStudioVisionModel' : 'lmStudioPromptModel';
+      var current = S.settings[key] || '';
+      var options = eligible.map(function (m) { return { key: m.installedKey, label: m.name }; });
+      if (current && !options.some(function (o) { return o.key === current; })) options.push({ key: current, label: current });
+      if (!options.length) return '';
+      return '<div class="su-picker"><div class="su-label">' + esc(label) + '</div>' +
+        '<div class="su-mode-toggle" role="radiogroup" aria-label="' + esc(label) + '">' + options.map(function (o) {
+          var on = o.key === current;
+          return '<button type="button" class="su-mode-btn' + (on ? ' is-active' : '') + '" role="radio" aria-checked="' + on + '"' +
+            ' data-llm-use="' + role + '" data-llm-key="' + esc(o.key) + '" title="' + esc(o.key) + '">' + esc(o.label) + '</button>';
+        }).join('') + '</div></div>';
+    }
+    var installedModels = models.filter(function (m) { return m.installedKey; });
+    var pickers = installedModels.length
+      ? '<div class="su-pickers">' +
+          picker('prompt', t('setup.models.pickPrompt', 'Model that writes the prompts'), installedModels) +
+          picker('vision', t('setup.models.pickVision', 'Model that describes images'), installedModels.filter(function (m) { return m.vision !== false; })) +
+        '</div>'
+      : '';
+
+    return head + summary + pickers + '<div class="su-engines">' + cards + '</div>' +
       '<p class="su-hint">' + esc(t('setup.models.bgHint', 'Downloads run inside LM Studio and keep going even if you close this page.')) + '</p>';
   }
 

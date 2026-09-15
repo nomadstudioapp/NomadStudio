@@ -439,7 +439,10 @@
       "stateBroken": "Broken",
       "confirmInstallN": "Install {n} packages",
       "kindEngine": "Engine",
-      "kindFlow": "Flow"
+      "kindFlow": "Flow",
+      "sectionEngines": "Engines",
+      "sectionFlows": "Flows",
+      "sectionOther": "Other"
     }
   },
   "album": {

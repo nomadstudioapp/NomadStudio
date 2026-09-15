@@ -576,7 +576,8 @@ def list_packages(app_dir: Path, lang: str = "en") -> list[dict[str, Any]]:
             "state": "broken" if info.get("state") == "broken" else ("missing_requirements" if missing else "active"),
             "requiresMissing": missing,
             "signature": (info.get("signature") or {}).get("status", "unsigned"),
-            "flows": [{"id": f, "label": (index.get("flows", {}).get(f) or {}).get("label") or f} for f in info.get("flows", [])],
+            "flows": [{"id": f, "label": (index.get("flows", {}).get(f) or {}).get("label") or f,
+                       "category": (index.get("flows", {}).get(f) or {}).get("category")} for f in info.get("flows", [])],
             "engines": [{"id": e, "name": engines.get(e, {}).get("name") or e, "category": engines.get(e, {}).get("category")}
                         for e in info.get("engines", [])],
             "installedAt": info.get("installed_at"),

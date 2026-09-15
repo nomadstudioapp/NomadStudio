@@ -771,7 +771,10 @@
       "stateBroken": "已损坏",
       "confirmInstallN": "安装 {n} 个扩展包",
       "kindEngine": "引擎",
-      "kindFlow": "流程"
+      "kindFlow": "流程",
+      "sectionEngines": "引擎",
+      "sectionFlows": "流程",
+      "sectionOther": "其他"
     }
   },
   "album": {

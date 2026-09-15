@@ -771,7 +771,10 @@
       "stateBroken": "Dañado",
       "confirmInstallN": "Instalar {n} paquetes",
       "kindEngine": "Motor",
-      "kindFlow": "Flow"
+      "kindFlow": "Flow",
+      "sectionEngines": "Motores",
+      "sectionFlows": "Flows",
+      "sectionOther": "Otros"
     }
   },
   "album": {

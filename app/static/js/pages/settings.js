@@ -1479,7 +1479,9 @@ function t(key, fallback, vars) {
       '<span class="settings-package-chip settings-package-chip--' + kind + '"><b>' + esc(label) + '</b>' + esc(name) + '</span>';
     const chips = [];
     (pkg.engines || []).forEach((e) => chips.push(chip('engine', t('settings.packages.kindEngine', 'Engine'), e.name || e.id)));
-    (pkg.flows || []).forEach((f) => chips.push(chip('flow', t('settings.packages.kindFlow', 'Flow'), typeof f === 'string' ? f : (f.label || f.id))));
+    const catLabel = { create: 'Create', refine: 'Refine', mix: 'Mix' };
+    (pkg.flows || []).forEach((f) => chips.push(chip('flow', t('settings.packages.kindFlow', 'Flow'),
+      typeof f === 'string' ? f : (f.label || f.id) + (catLabel[f.category] ? ' · ' + catLabel[f.category] : ''))));
     return chips.length ? '<span class="settings-package-chips">' + chips.join('') + '</span>' : '';
   }
 
@@ -1535,7 +1537,25 @@ function t(key, fallback, vars) {
       listEl.innerHTML = '<li class="settings-backup-empty">' + esc(t('settings.packages.empty', 'No packages installed yet.')) + '</li>';
       return;
     }
-    listEl.innerHTML = packages.map((p) => {
+    // Two sections: engine packages, and flow packages (a package with both
+    // goes under Flows, where its ENGINE chip still shows). Flows ordered by
+    // where they appear: Create, Refine, Mix.
+    const catOrder = { create: 0, refine: 1, mix: 2 };
+    const firstCat = (p) => Math.min(...(p.flows || []).map((f) => catOrder[f.category] ?? 3), 3);
+    const enginePkgs = packages.filter((p) => (p.engines || []).length && !(p.flows || []).length);
+    const flowPkgs = packages.filter((p) => (p.flows || []).length).sort((a, b) => firstCat(a) - firstCat(b) || a.name.localeCompare(b.name));
+    const otherPkgs = packages.filter((p) => !(p.engines || []).length && !(p.flows || []).length);
+    const section = (title, items) => items.length
+      ? '<li class="settings-package-section">' + esc(title) + ' <span>' + items.length + '</span></li>' + items.map(item).join('')
+      : '';
+    listEl.innerHTML =
+      section(t('settings.packages.sectionEngines', 'Engines'), enginePkgs) +
+      section(t('settings.packages.sectionFlows', 'Flows'), flowPkgs) +
+      section(t('settings.packages.sectionOther', 'Other'), otherPkgs);
+  }
+
+  function item(p) {
+    {
       const isConfirm = confirming === p.id;
       return '<li class="settings-backup-item">' +
         '<div class="settings-backup-info">' +
@@ -1550,7 +1570,7 @@ function t(key, fallback, vars) {
           '<button type="button" class="btn settings-btn-ghost" data-pkg-no>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
           '<button type="button" class="btn settings-btn-danger" data-pkg-uninstall="' + esc(p.id) + '">' + esc(t('settings.packages.uninstall', 'Uninstall')) + '</button></div>' : '') +
         '</li>';
-    }).join('');
+    }
   }
 
   async function load() {

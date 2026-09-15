@@ -1637,8 +1637,10 @@
 .settings-btn-danger:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ── Packages ────────────────────────────────────────────────────────── */
-.settings-package-review { max-width: 640px; margin-top: 10px; }
+.settings-package-review { max-width: 640px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.settings-package-review[hidden] { display: none; }
 .settings-package-review .settings-backup-item { box-shadow: inset 0 0 0 1px var(--accent); }
+.settings-package-actions { justify-content: flex-end; }
 .settings-backup-date small { font-weight: 500; color: var(--muted); margin-left: 4px; }
 .settings-package-unsigned { color: #e7b04a; }
 .cs-empty-state-btn { margin-top: 0.75rem; text-decoration: none; }

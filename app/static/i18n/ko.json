@@ -768,7 +768,8 @@
       "confirmUninstall": "엔진과 흐름이 제거됩니다. 이미지와 Sessions는 유지됩니다.",
       "stateActive": "활성",
       "stateMissing": "이미지 엔진 필요",
-      "stateBroken": "손상됨"
+      "stateBroken": "손상됨",
+      "confirmInstallN": "패키지 {n}개 설치"
     }
   },
   "album": {

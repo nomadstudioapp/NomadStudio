@@ -232,7 +232,7 @@
     <div class="settings-section-body" id="packages-section">
 
       <div class="settings-field-block">
-        <input type="file" id="packages-file" accept=".zip,application/zip" hidden />
+        <input type="file" id="packages-file" accept=".zip,application/zip" multiple hidden />
         <div>
           <button type="button" class="btn settings-btn-secondary" id="packages-choose-btn"{% if not is_local_request() %} disabled{% endif %}>
             <i data-lucide="package-plus" aria-hidden="true"></i>

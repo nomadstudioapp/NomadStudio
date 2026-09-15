@@ -1445,7 +1445,7 @@ function t(key, fallback, vars) {
 
   let packages = [];
   let local = true;
-  let pending = null;     // { token, package } from /inspect
+  let pending = [];       // [{ file, token, package } | { file, error }] from /inspect — several ZIPs at once
   let confirming = null;  // package id being uninstalled
   let busy = false;
 
@@ -1480,31 +1480,51 @@ function t(key, fallback, vars) {
     return parts;
   }
 
+  // Engines first, so a flow that needs an image engine finds the one
+  // arriving in the same batch.
+  function installOrder(items) {
+    return items.slice().sort((a, b) => ((b.package.engines || []).length ? 1 : 0) - ((a.package.engines || []).length ? 1 : 0));
+  }
+
   function renderReview() {
-    if (!pending) { reviewEl.hidden = true; reviewEl.innerHTML = ''; return; }
-    const p = pending.package;
-    const op = p.operation === 'update'
-      ? t('settings.packages.opUpdate', 'Update {from} → {to}', { from: p.installedVersion, to: p.version })
-      : p.operation === 'reinstall' ? t('settings.packages.opReinstall', 'Reinstall {version}', { version: p.version })
-      : t('settings.packages.opInstall', 'Install {version}', { version: p.version });
-    const missing = (p.requiresMissing || []).length
-      ? '<span class="settings-backup-meta">' + esc(t('settings.packages.needsEngine', 'Needs an image engine to work. You can install it now and add an engine package afterwards.')) + '</span>' : '';
+    if (!pending.length) { reviewEl.hidden = true; reviewEl.innerHTML = ''; return; }
+    const ok = pending.filter((x) => x.package);
+    const batchEngineCats = new Set();
+    ok.forEach((x) => (x.package.engines || []).forEach((e) => batchEngineCats.add(e.category)));
+    const items = pending.map((x) => {
+      if (!x.package) {
+        return '<div class="settings-backup-item"><div class="settings-backup-info">' +
+          '<span class="settings-backup-date">' + esc(x.file) + '</span>' +
+          '<span class="settings-backup-meta status-error">' + esc(x.error) + '</span></div></div>';
+      }
+      const p = x.package;
+      const op = p.operation === 'update'
+        ? t('settings.packages.opUpdate', 'Update {from} → {to}', { from: p.installedVersion, to: p.version })
+        : p.operation === 'reinstall' ? t('settings.packages.opReinstall', 'Reinstall {version}', { version: p.version })
+        : t('settings.packages.opInstall', 'Install {version}', { version: p.version });
+      // A missing image engine that another selected package provides is not missing.
+      const stillMissing = (p.requiresMissing || []).filter((m) => !(m.engineCategory && batchEngineCats.has(m.engineCategory)));
+      return '<div class="settings-backup-item"><div class="settings-backup-info">' +
+        '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.id) + '</small></span>' +
+        (p.summary ? '<span class="settings-backup-meta">' + esc(p.summary) + '</span>' : '') +
+        '<span class="settings-backup-meta">' + esc(op) + ' · ' + esc(t('settings.packages.author', 'by {name}', { name: p.author || '—' })) + '</span>' +
+        '<span class="settings-backup-meta">' + esc(contents(p).join(' · ')) + '</span>' +
+        (stillMissing.length ? '<span class="settings-backup-meta">' + esc(t('settings.packages.needsEngine', 'Needs an image engine to work. You can install it now and add an engine package afterwards.')) + '</span>' : '') +
+        '</div></div>';
+    }).join('');
     reviewEl.hidden = false;
-    reviewEl.innerHTML =
-      '<div class="settings-backup-item">' +
-        '<div class="settings-backup-info">' +
-          '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.id) + '</small></span>' +
-          (p.summary ? '<span class="settings-backup-meta">' + esc(p.summary) + '</span>' : '') +
-          '<span class="settings-backup-meta">' + esc(op) + ' · ' + esc(t('settings.packages.author', 'by {name}', { name: p.author || '—' })) + '</span>' +
-          '<span class="settings-backup-meta">' + esc(contents(p).join(' · ')) + '</span>' +
-          '<span class="settings-backup-meta settings-package-unsigned">' + esc(t('settings.packages.unsigned', 'Unofficial package: it is not signed by Nomad Studio. Install it only if you trust where it comes from.')) + '</span>' +
-          missing +
-        '</div>' +
-        '<div class="settings-backup-actions">' +
-          '<button type="button" class="btn settings-btn-ghost" data-pkg-cancel' + (busy ? ' disabled' : '') + '>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
-          '<button type="button" class="btn settings-btn-secondary" data-pkg-install' + (busy ? ' disabled' : '') + '>' + esc(t('settings.packages.confirmInstall', 'Install')) + '</button>' +
-        '</div>' +
+    reviewEl.innerHTML = items +
+      '<p class="settings-field-hint settings-package-unsigned">' + esc(t('settings.packages.unsigned', 'Unofficial package: it is not signed by Nomad Studio. Install it only if you trust where it comes from.')) + '</p>' +
+      '<div class="settings-backup-actions settings-package-actions">' +
+        '<button type="button" class="btn settings-btn-ghost" data-pkg-cancel' + (busy ? ' disabled' : '') + '>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
+        (ok.length ? '<button type="button" class="btn settings-btn-secondary" data-pkg-install' + (busy ? ' disabled' : '') + '>' +
+          esc(ok.length > 1 ? t('settings.packages.confirmInstallN', 'Install {n} packages', { n: ok.length }) : t('settings.packages.confirmInstall', 'Install')) + '</button>' : '') +
       '</div>';
+  }
+
+  function discardPending() {
+    pending.forEach((x) => { if (x.token) api('POST', '/api/packages/discard', { token: x.token }).catch(() => {}); });
+    pending = [];
   }
 
   function renderList() {
@@ -1543,40 +1563,46 @@ function t(key, fallback, vars) {
 
   chooseBtn.addEventListener('click', () => { if (!busy) fileInput.click(); });
   fileInput.addEventListener('change', async () => {
-    const file = fileInput.files && fileInput.files[0];
+    const files = Array.from(fileInput.files || []);
     fileInput.value = '';
-    if (!file) return;
-    if (pending) { api('POST', '/api/packages/discard', { token: pending.token }).catch(() => {}); pending = null; }
+    if (!files.length) return;
+    discardPending();
     busy = true; setStatus(t('settings.packages.checking', 'Checking the package…')); renderReview();
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      form.append('lang', lang());
-      pending = await api('POST', '/api/packages/inspect', form, true);
-      setStatus('');
-    } catch (e) {
-      setStatus(e.message, true);
-    } finally {
-      busy = false; renderReview();
+    for (const file of files) {
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('lang', lang());
+        const res = await api('POST', '/api/packages/inspect', form, true);
+        pending.push({ file: file.name, token: res.token, package: res.package });
+      } catch (e) {
+        pending.push({ file: file.name, error: e.message });
+      }
     }
+    setStatus('');
+    busy = false; renderReview();
   });
 
   reviewEl.addEventListener('click', async (e) => {
-    if (!pending) return;
-    if (e.target.closest('[data-pkg-cancel]')) {
-      api('POST', '/api/packages/discard', { token: pending.token }).catch(() => {});
-      pending = null; renderReview(); return;
-    }
+    if (!pending.length) return;
+    if (e.target.closest('[data-pkg-cancel]')) { discardPending(); renderReview(); return; }
     if (!e.target.closest('[data-pkg-install]')) return;
     busy = true; renderReview(); setStatus(t('settings.packages.installing', 'Installing…'));
-    try {
-      const res = await api('POST', '/api/packages/install', { token: pending.token });
-      setStatus(t('settings.packages.installedOk', 'Installed: {name}', { name: res.package.name }));
-    } catch (err) {
-      setStatus(err.message, true);
-    } finally {
-      pending = null; busy = false; renderReview(); load();
+    const done = [];
+    const failed = [];
+    for (const item of installOrder(pending.filter((x) => x.package))) {
+      try {
+        const res = await api('POST', '/api/packages/install', { token: item.token });
+        done.push(res.package.name);
+      } catch (err) {
+        failed.push(item.package.name + ': ' + err.message);
+      }
     }
+    pending = [];
+    busy = false; renderReview();
+    if (failed.length) setStatus(failed.join(' · '), true);
+    else setStatus(t('settings.packages.installedOk', 'Installed: {name}', { name: done.join(', ') }));
+    load();
   });
 
   listEl.addEventListener('click', async (e) => {

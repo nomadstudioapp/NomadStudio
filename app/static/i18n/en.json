@@ -436,7 +436,8 @@
       "confirmUninstall": "Its engines and flows are removed. Your images and Sessions are kept.",
       "stateActive": "Active",
       "stateMissing": "Needs an image engine",
-      "stateBroken": "Broken"
+      "stateBroken": "Broken",
+      "confirmInstallN": "Install {n} packages"
     }
   },
   "album": {

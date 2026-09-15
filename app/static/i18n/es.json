@@ -768,7 +768,8 @@
       "confirmUninstall": "Se quitan sus motores y flows. Tus imágenes y Sessions se conservan.",
       "stateActive": "Activo",
       "stateMissing": "Necesita un motor de imagen",
-      "stateBroken": "Dañado"
+      "stateBroken": "Dañado",
+      "confirmInstallN": "Instalar {n} paquetes"
     }
   },
   "album": {

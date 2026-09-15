@@ -768,7 +768,8 @@
       "confirmUninstall": "会移除它的引擎和流程。你的图片和 Sessions 会保留。",
       "stateActive": "已启用",
       "stateMissing": "需要图像引擎",
-      "stateBroken": "已损坏"
+      "stateBroken": "已损坏",
+      "confirmInstallN": "安装 {n} 个扩展包"
     }
   },
   "album": {

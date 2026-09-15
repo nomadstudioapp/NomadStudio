@@ -769,7 +769,9 @@
       "stateActive": "활성",
       "stateMissing": "이미지 엔진 필요",
       "stateBroken": "손상됨",
-      "confirmInstallN": "패키지 {n}개 설치"
+      "confirmInstallN": "패키지 {n}개 설치",
+      "kindEngine": "엔진",
+      "kindFlow": "흐름"
     }
   },
   "album": {

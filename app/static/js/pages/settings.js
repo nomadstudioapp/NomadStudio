@@ -1473,11 +1473,14 @@ function t(key, fallback, vars) {
     if (p.state === 'broken') return t('settings.packages.stateBroken', 'Broken');
     return t('settings.packages.stateActive', 'Active');
   }
-  function contents(pkg) {
-    const parts = [];
-    (pkg.engines || []).forEach((e) => parts.push(t('settings.packages.engine', 'Engine: {name}', { name: e.name || e.id })));
-    (pkg.flows || []).forEach((f) => parts.push(t('settings.packages.flow', 'Flow: {name}', { name: typeof f === 'string' ? f : (f.label || f.id) })));
-    return parts;
+  // What a package brings, as visible chips: [ENGINE] Z-Image Turbo [FLOW] Simple.
+  function contentsHtml(pkg) {
+    const chip = (kind, label, name) =>
+      '<span class="settings-package-chip settings-package-chip--' + kind + '"><b>' + esc(label) + '</b>' + esc(name) + '</span>';
+    const chips = [];
+    (pkg.engines || []).forEach((e) => chips.push(chip('engine', t('settings.packages.kindEngine', 'Engine'), e.name || e.id)));
+    (pkg.flows || []).forEach((f) => chips.push(chip('flow', t('settings.packages.kindFlow', 'Flow'), typeof f === 'string' ? f : (f.label || f.id))));
+    return chips.length ? '<span class="settings-package-chips">' + chips.join('') + '</span>' : '';
   }
 
   // Engines first, so a flow that needs an image engine finds the one
@@ -1508,7 +1511,7 @@ function t(key, fallback, vars) {
         '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.id) + '</small></span>' +
         (p.summary ? '<span class="settings-backup-meta">' + esc(p.summary) + '</span>' : '') +
         '<span class="settings-backup-meta">' + esc(op) + ' · ' + esc(t('settings.packages.author', 'by {name}', { name: p.author || '—' })) + '</span>' +
-        '<span class="settings-backup-meta">' + esc(contents(p).join(' · ')) + '</span>' +
+        contentsHtml(p) +
         (stillMissing.length ? '<span class="settings-backup-meta">' + esc(t('settings.packages.needsEngine', 'Needs an image engine to work. You can install it now and add an engine package afterwards.')) + '</span>' : '') +
         '</div></div>';
     }).join('');
@@ -1537,7 +1540,7 @@ function t(key, fallback, vars) {
       return '<li class="settings-backup-item">' +
         '<div class="settings-backup-info">' +
           '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.version) + '</small></span>' +
-          '<span class="settings-backup-meta">' + esc(contents(p).join(' · ')) + '</span>' +
+          contentsHtml(p) +
           '<span class="settings-backup-meta">' + esc(stateLabel(p)) + ' · ' + esc(p.id) + '</span>' +
         '</div>' +
         '<div class="settings-backup-actions">' +

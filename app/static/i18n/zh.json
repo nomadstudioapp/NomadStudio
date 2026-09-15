@@ -769,7 +769,9 @@
       "stateActive": "已启用",
       "stateMissing": "需要图像引擎",
       "stateBroken": "已损坏",
-      "confirmInstallN": "安装 {n} 个扩展包"
+      "confirmInstallN": "安装 {n} 个扩展包",
+      "kindEngine": "引擎",
+      "kindFlow": "流程"
     }
   },
   "album": {

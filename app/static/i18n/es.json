@@ -769,7 +769,9 @@
       "stateActive": "Activo",
       "stateMissing": "Necesita un motor de imagen",
       "stateBroken": "Dañado",
-      "confirmInstallN": "Instalar {n} paquetes"
+      "confirmInstallN": "Instalar {n} paquetes",
+      "kindEngine": "Motor",
+      "kindFlow": "Flow"
     }
   },
   "album": {

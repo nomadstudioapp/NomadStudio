@@ -1641,6 +1641,29 @@
 .settings-package-review[hidden] { display: none; }
 .settings-package-review .settings-backup-item { box-shadow: inset 0 0 0 1px var(--accent); }
 .settings-package-actions { justify-content: flex-end; }
+.settings-package-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
+.settings-package-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-panel);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.settings-package-chip b {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.settings-package-chip--engine b { color: #fff; background: var(--accent); }
+.settings-package-chip--flow b { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .settings-backup-date small { font-weight: 500; color: var(--muted); margin-left: 4px; }
 .settings-package-unsigned { color: #e7b04a; }
 .cs-empty-state-btn { margin-top: 0.75rem; text-decoration: none; }

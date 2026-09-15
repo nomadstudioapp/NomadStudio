@@ -437,7 +437,9 @@
       "stateActive": "Active",
       "stateMissing": "Needs an image engine",
       "stateBroken": "Broken",
-      "confirmInstallN": "Install {n} packages"
+      "confirmInstallN": "Install {n} packages",
+      "kindEngine": "Engine",
+      "kindFlow": "Flow"
     }
   },
   "album": {

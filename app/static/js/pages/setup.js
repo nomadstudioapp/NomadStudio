@@ -584,7 +584,7 @@
     return '<h2 class="su-h2">' + esc(t('setup.output.title', 'Where to save your images')) + '</h2>' +
       '<p class="su-lead">' + esc(t('setup.output.lead', 'Every image you generate is saved here, in a sub-folder per profile.')) + '</p>' +
       '<label class="su-label" for="su-output">' + esc(t('setup.output.label', 'Image folder')) + '</label>' +
-      '<div class="su-row"><input class="su-input" id="su-output" value="' + esc(S.settings.outputDir || '') + '" placeholder="D:\\NomadStudioImages" spellcheck="false">' +
+      '<div class="su-row"><input class="su-input" id="su-output" value="' + esc(S.settings.outputDir || '') + '" placeholder="' + esc(S.suggestedOutputDir || '') + '" spellcheck="false">' +
       '<button type="button" class="su-btn su-btn-ghost" id="su-output-browse">' + esc(t('setup.common.browse', 'Browse')) + '</button>' +
       '<button type="button" class="su-btn su-btn-ghost" id="su-output-check">' + esc(t('setup.common.check', 'Check')) + '</button></div>' +
       box + warn;
@@ -712,6 +712,8 @@
     if (id === 'comfy' && !S.comfy && !S.comfyBusy) checkComfy();
     if (id === 'lmstudio' && !S.lms && !S.lmsBusy) checkLms();
     if (id === 'engines' && S.comfy && S.comfy.ok && !S.engines && !S.enginesBusy) detectEngines();
+    // Pre-fill the proposed image folder (checked and saved on Next, as usual).
+    if (id === 'output' && !S.settings.outputDir && S.suggestedOutputDir) S.settings.outputDir = S.suggestedOutputDir;
     if (id === 'models' && !S.llm && !S.llmBusy) {
       if (S.lms && S.lms.ok) detectLlm();
       else if (!S.lms && !S.lmsBusy) checkLms().then(function () { if (S.lms && S.lms.ok) detectLlm(); });
@@ -875,6 +877,7 @@
     S.settings = st.settings || {};
     S.viewers = st.viewers || 0;
     S.dataDir = st.dataDir || {};
+    S.suggestedOutputDir = st.suggestedOutputDir || '';
     var startAt = (!PREVIEW && !st.setupCompleted && S.settings.wizardStep) ? S.settings.wizardStep : 1;
     S.maxReached = startAt;
     enter(startAt);

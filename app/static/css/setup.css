@@ -206,12 +206,14 @@
 .su-choice:hover { box-shadow: inset 0 0 0 1.5px var(--text-secondary); }
 .su-choice.is-selected { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .su-choice input { margin-top: 4px; accent-color: var(--accent); }
-.su-choice-title { font-size: 16px; color: var(--text); font-weight: 500; }
-.su-choice-text { margin-top: 4px; font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
+/* Spans inside the label: block, or the margin is ignored and the title runs into the text. */
+.su-choice-title { display: block; font-size: 16px; color: var(--text); font-weight: 500; }
+.su-choice-text { display: block; margin-top: 6px; font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
 
 .su-details { margin-top: 16px; font-size: 14px; color: var(--text-secondary); }
 .su-details summary { cursor: pointer; color: var(--accent); }
-.su-details ul { margin: 10px 0 0; padding-left: 18px; line-height: 1.6; }
+.su-details ul,
+.su-details ol { margin: 10px 0 0; padding-left: 18px; line-height: 1.6; }
 
 /* ── Engines ────────────────────────────────────────────────────────────── */
 .su-engines { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }

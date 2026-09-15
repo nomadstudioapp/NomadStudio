@@ -84,6 +84,10 @@ def get_state():
         "settings": _settings_payload(),
         "viewers": len(viewer_service.list_viewers()),
         "dataDir": {"path": str(_DATA_DIR), "writable": data_writable, "portable": False},
+        # Proposed image folder: short, always writable, not a synced or
+        # antivirus-protected folder (Documents/Pictures), and no second drive
+        # needed (laptops often have only C:).
+        "suggestedOutputDir": str(Path.home() / "Nomad Studio"),
         "steps": _WIZARD_STEPS,
     })
 

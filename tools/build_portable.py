@@ -6,10 +6,12 @@ Result in dist/:
     NomadStudio-<version>-windows-x64.zip
     SHA256SUMS.txt
 
-ZIP layout (first install: unzip anywhere and run NomadStudio.bat):
-    NomadStudio/
-    ├── NomadStudio.bat          launcher (also kept in app/launcher/)
-    └── app/
+ZIP layout (first install: unzip anywhere and run NomadStudio.bat). No
+top-level folder inside the ZIP: Windows "Extract all" already creates one
+named after the ZIP, and a second NomadStudio/ inside it only made the paths
+longer (found testing on a laptop).
+    NomadStudio.bat              launcher (also kept in app/launcher/)
+    app/
         ├── portable.json        version, platform, commit (read by app_info.py)
         ├── app.py, app/, docs/  code, exported from git HEAD (committed files only)
         ├── python/              bundled CPython (same version as requirements.lock)
@@ -192,7 +194,7 @@ def make_zip(root: Path, zip_path: Path) -> None:
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         for path in sorted(root.rglob("*")):
             if path.is_file():
-                zf.write(path, Path("NomadStudio") / path.relative_to(root))
+                zf.write(path, path.relative_to(root))
 
 
 def sha256(path: Path) -> str:

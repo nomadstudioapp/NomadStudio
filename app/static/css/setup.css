@@ -215,6 +215,53 @@
 .su-details ul,
 .su-details ol { margin: 10px 0 0; padding-left: 18px; line-height: 1.6; }
 
+/* ── ComfyUI / LM Studio found on the network ───────────────────────────── */
+.su-servers { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.su-server {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 35%, var(--bg-panel));
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow .15s ease;
+}
+.su-server:hover { box-shadow: inset 0 0 0 1.5px var(--text-secondary); }
+.su-server.is-selected { box-shadow: inset 0 0 0 2px var(--accent); }
+.su-server-main { flex: 1 1 auto; min-width: 0; }
+.su-server-url { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.su-server-meta { display: block; margin-top: 2px; font-size: 12px; color: var(--text-secondary); }
+.su-server-badge {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.su-actions-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 14px; }
+.su-linkbtn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.su-linkbtn:hover { text-decoration: underline; }
+.su-linkbtn[disabled] { color: var(--text-secondary); cursor: default; text-decoration: none; }
+.su-details-inline { margin-top: 0; font-size: 13px; }
+.su-details-inline[open] { flex: 1 1 100%; }
+
 /* ── Engines ────────────────────────────────────────────────────────────── */
 .su-engines { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .su-engine {

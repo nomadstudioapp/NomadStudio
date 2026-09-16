@@ -43,15 +43,21 @@ Orden: primero el idioma (para leer el resto), **después ComfyUI y sus motores,
 | # | Paso | Obligatorio | Qué hace |
 |---|---|---|---|
 | 1 | **Idioma** | Sí | Elige EN/ES/ZH/KO. Primero, para que el resto del asistente salga ya en ese idioma. Propone el del sistema si es uno de los 4. |
-| 2 | **ComfyUI** | No* | URL (por defecto `http://127.0.0.1:8188`) y comprobación **automática** al entrar en el paso (`system_stats`: responde, versión de ComfyUI, GPU y memoria de vídeo). Si no responde: explica cómo instalarlo/arrancarlo, botón **Reintentar**, y deja continuar. Incluye la **opción de ahorro de espacio** "no guardar copia en la carpeta de ComfyUI", desactivada por defecto (§3.3). *Sin ComfyUI no se puede generar: se avisa claramente, pero no bloquea. |
+| 2 | **ComfyUI** | No* | Comprobación **automática** al entrar (`system_stats`: responde, versión, GPU y memoria de vídeo) de la dirección guardada (por defecto `http://127.0.0.1:8188`). Si no responde, **busca sola** en este equipo y en la red local (§1.4) y presenta lo encontrado como una lista donde elegir; si solo aparece un servidor, lo usa directamente. Escribir la dirección a mano es una opción ("Escribir otra dirección"), y la ayuda de "¿está en otro equipo?" va plegada. *Sin ComfyUI no se puede generar: se avisa claramente, pero no bloquea. |
 | 3 | **Motores** | No | **Detecta qué ficheros de modelo tiene ComfyUI** y muestra el estado de cada uno de los 7 motores (listo / le falta algo / no instalado). Ofrece instalar lo que falte (§4). Solo si ComfyUI respondió en el paso 2. |
-| 4 | **LM Studio** | No | URL (por defecto `http://127.0.0.1:1234`) y comprobación automática. Indica que solo lo necesitan algunos flows (asistencia de prompts, visión). |
+| 4 | **LM Studio** | No | La misma vista que el paso 2 (`serverStep` en `setup.js`), con el puerto 1234. Indica que solo lo necesitan algunos flows (asistencia de prompts, visión). |
 | 5 | **Modelos** | No | Los **4 modelos de lenguaje recomendados** (la misma lista medida de la web, página Engines): Qwythos 9B, Ornith 1.5 9B, Gemma 4 12B QAT y Ministral 3 14B Reasoning. Ninguno es obligatorio; se recomienda tener al menos uno (Gemma 4 12B QAT, o Qwythos 9B en tarjetas de menos de 12 GB). Detecta cuáles tiene LM Studio (`GET /api/v1/models`), instala los que falten con la API de descargas de LM Studio (`POST /api/v1/models/download` + estado), y deja elegir cuál escribe prompts y cuál describe imágenes. Si no hay ninguno elegido, usa el primero instalado. Lista en `app/static/data/recommended_llm_models.json`. |
-| 6 | **Carpeta de datos** | Sí | Muestra la carpeta propuesta (`NomadStudio/data/`, o `~/NomadStudio` si el programa no es escribible) con botón **Cambiar**. Explica qué se guarda ahí. Ver `PACKAGE_FORMAT.md` §12.1. |
+| 6 | **Carpeta de datos** | Sí | Muestra dónde viven los datos: `~/Nomad Studio/data` en la versión portable y `<repo>/data` en una copia de desarrollo (`app/paths.py`). Explica que, al estar fuera del programa, se puede borrar o sustituir Nomad Studio sin perder nada. |
 | 7 | **Carpeta de imágenes** | Sí | Dónde se guardan las imágenes generadas. Comprueba que existe y se puede escribir (misma prueba que hoy en Ajustes). Avisa si está dentro de una carpeta sincronizada (OneDrive, Dropbox, iCloud) o protegida contra ransomware en Windows. |
-| 8 | **Formato de imagen** | Sí | WebP o PNG (§2). |
+| 8 | **Formato de imagen** | Sí | WebP o PNG (§2), más la **opción de ahorro de espacio** "no guardar copia en la carpeta de ComfyUI", desactivada por defecto (§3.3): estaba en el paso 2 y se movió aquí, el paso que trata de cómo se guardan las imágenes. |
 | 9 | **Primer perfil** | Sí | Nombre, avatar y PIN opcional (mismo formulario que "Añadir perfil"). |
 | 10 | **Listo** | — | Resumen: servicios, motores, modelos, carpetas, formato. Botón **Empezar**. Si hay descargas en curso (§4.5), siguen en segundo plano y se ve su progreso. |
+
+### 1.4 Buscar servidores en la red
+
+`POST /api/setup/discover` (`setup_service.discover_services`) prueba los puertos de ComfyUI (8188, 8000) y LM Studio (1234) en `127.0.0.1` y en las /24 privadas de este equipo, y confirma con su propia API lo que responde. Solo redes privadas; no guarda nada.
+
+Va en **dos rondas**: la primera espera 0,4 s por dirección y la segunda reintenta solo lo que no contestó, con 1,2 s. La segunda ronda existe porque por wifi la primera conexión a una IP que todavía no está en la caché ARP tarda más que el tiempo de espera corto: sin ella la primera búsqueda no encontraba nada y la segunda sí (visto en el portátil, 2026-09-16).
 
 ### 1.3 Comportamiento
 

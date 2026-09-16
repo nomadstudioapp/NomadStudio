@@ -107,7 +107,9 @@ def check_comfy(comfy_url: str) -> dict[str, Any]:
 
 COMFY_PORTS = (8188, 8000)  # ComfyUI portable/manual · ComfyUI Desktop
 LMSTUDIO_PORTS = (1234,)
-_SCAN_CONNECT_TIMEOUT_S = 0.35
+_SCAN_CONNECT_TIMEOUT_S = 0.4
+_SCAN_RETRY_TIMEOUT_S = 1.2  # second round, for addresses that were not in the ARP cache
+_SCAN_WORKERS = 160
 _SCAN_MAX_HOSTS_PER_SUBNET = 254
 _SCAN_MAX_SUBNETS = 4
 
@@ -132,11 +134,11 @@ def _local_subnets() -> list[str]:
     return prefixes[:_SCAN_MAX_SUBNETS]
 
 
-def _port_open(host: str, port: int) -> bool:
+def _port_open(host: str, port: int, timeout: float = _SCAN_CONNECT_TIMEOUT_S) -> bool:
     import socket
 
     try:
-        with socket.create_connection((host, port), timeout=_SCAN_CONNECT_TIMEOUT_S):
+        with socket.create_connection((host, port), timeout=timeout):
             return True
     except OSError:
         return False
@@ -161,8 +163,22 @@ def discover_services(
             hosts += [f"{prefix}{i}" for i in range(1, _SCAN_MAX_HOSTS_PER_SUBNET + 1)]
     targets = [(h, p, "comfy") for h in hosts for p in comfy_ports] + [(h, p, "lmstudio") for h in hosts for p in lmstudio_ports]
 
-    with ThreadPoolExecutor(max_workers=128) as pool:
-        open_targets = [t for t, ok in zip(targets, pool.map(lambda t: _port_open(t[0], t[1]), targets)) if ok]
+    # Two rounds. The first is quick; over Wi-Fi it misses servers whose
+    # address the laptop has not talked to yet, because resolving the MAC
+    # address alone can take longer than the timeout (this is why the wizard
+    # found nothing on the first search and found it on the second). The
+    # second round retries only what did not answer, with room to spare — by
+    # then the address is in the ARP cache and the reply is immediate.
+    def scan(items: list[tuple], timeout: float) -> tuple[list[tuple], list[tuple]]:
+        with ThreadPoolExecutor(max_workers=_SCAN_WORKERS) as pool:
+            results = list(pool.map(lambda t: _port_open(t[0], t[1], timeout), items))
+        return ([t for t, ok in zip(items, results) if ok],
+                [t for t, ok in zip(items, results) if not ok])
+
+    open_targets, missed = scan(targets, _SCAN_CONNECT_TIMEOUT_S)
+    if missed:
+        retried, _ = scan(missed, _SCAN_RETRY_TIMEOUT_S)
+        open_targets += retried
 
     def confirm(target):
         host, port, kind = target

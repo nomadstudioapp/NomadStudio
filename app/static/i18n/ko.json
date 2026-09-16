@@ -848,18 +848,12 @@
   },
   "setup": {
     "comfy": {
-      "checking": "ComfyUI 확인 중…",
-      "fail": "ComfyUI가 응답하지 않습니다",
-      "failHelp": "ComfyUI를 실행하고 주소를 확인한 뒤 다시 시도하세요. 없이도 계속할 수 있지만, 실행되기 전까지는 이미지를 생성할 수 없습니다.",
       "gpu": "GPU: {name} · 비디오 메모리 {vram}",
-      "lead": "ComfyUI는 이미지를 생성하는 엔진입니다. Nomad Studio는 로컬 주소를 통해 ComfyUI와 통신합니다.",
-      "ok": "ComfyUI가 실행 중입니다",
-      "saveSpace": "공간 절약: ComfyUI 폴더에 사본을 남기지 않기",
-      "saveSpaceHint": "Nomad Studio가 이미 모든 이미지를 내 사용자 폴더에 저장하므로 ComfyUI가 출력 폴더에 사본을 하나 더 보관할 필요가 없습니다.",
+      "lead": "ComfyUI는 이미지를 생성하는 엔진입니다.",
       "title": "ComfyUI 연결",
       "urlLabel": "ComfyUI 주소",
       "version": "버전 {v}",
-      "remote": "네트워크의 다른 컴퓨터에서 실행 중입니다."
+      "noneHelp": "ComfyUI를 실행하고 다시 검색하거나 주소를 입력하세요. 없이도 계속할 수 있습니다. 엔진은 그대로 설치되며 나중에 설정에서 연결할 수 있습니다."
     },
     "common": {
       "browse": "찾아보기",
@@ -870,10 +864,10 @@
       "soon": "곧 제공"
     },
     "data": {
-      "devNote": "이 개발 버전에서는 데이터 폴더가 앱 내부에 고정되어 있습니다. 포터블 버전에서는 프로그램 옆의 \"data\" 폴더가 되며, 여기에서 다른 폴더를 선택할 수 있습니다.",
       "label": "데이터 폴더",
-      "lead": "프로필, Session, 설정, 설치된 패키지는 프로그램 옆의 보이는 폴더 하나에 저장되므로 쉽게 백업하거나 옮길 수 있습니다.",
-      "title": "데이터가 저장되는 곳"
+      "lead": "프로필, Sessions, 설정, 설치한 패키지는 프로그램 밖에 있는 사용자 폴더 한 곳에 보관됩니다.",
+      "title": "데이터가 저장되는 곳",
+      "outsideNote": "프로그램 폴더 밖에 있으므로 업데이트 등으로 Nomad Studio를 지우거나 교체해도 아무것도 잃지 않습니다. 이 폴더를 복사해 백업할 수도 있습니다."
     },
     "done": {
       "connected": "연결됨",
@@ -930,21 +924,20 @@
       "soonNote": "선택은 지금 저장됩니다. WebP 지원이 완성될 때까지 이미지는 계속 PNG로 저장됩니다.",
       "title": "이미지를 어떤 형식으로 저장할까요?",
       "webpText": "공간을 절약해야 한다면 이 옵션을 사용하세요.",
-      "webpTitle": "WebP"
+      "webpTitle": "WebP",
+      "saveSpace": "공간 절약: ComfyUI 폴더에 사본을 남기지 않기",
+      "saveSpaceHint": "Nomad Studio가 이미 모든 이미지를 사용자 폴더에 저장하므로 ComfyUI가 출력 폴더에 사본을 또 둘 필요가 없습니다."
     },
     "language": {
       "lead": "나중에 어느 화면에서든 모서리의 언어 버튼으로 바꿀 수 있습니다.",
       "title": "언어를 선택하세요"
     },
     "lms": {
-      "checking": "LM Studio 확인 중…",
-      "fail": "LM Studio가 응답하지 않습니다",
-      "failHelp": "선택 사항입니다. 없어도 이미지 생성은 되지만, 프롬프트 작성을 돕거나 이미지를 설명하는 flow는 작동하지 않습니다.",
       "lead": "LM Studio는 언어 모델과 비전 모델을 로컬에서 실행합니다. 일부 flow는 프롬프트를 개선하거나 이미지를 설명하는 데 사용합니다.",
       "models": "사용 가능한 모델 {n}개",
-      "ok": "LM Studio가 실행 중입니다",
       "title": "LM Studio 연결",
-      "urlLabel": "LM Studio 주소"
+      "urlLabel": "LM Studio 주소",
+      "noneHelp": "선택 사항입니다. 없어도 이미지 생성은 되지만 프롬프트를 쓰거나 이미지를 설명하는 플로우는 작동하지 않습니다."
     },
     "loadError": "설정 상태를 불러오지 못했습니다. Nomad Studio 서버가 실행 중인가요?",
     "nav": {
@@ -1019,13 +1012,8 @@
       "pickVision": "이미지를 설명하는 모델"
     },
     "network": {
-      "searching": "이 컴퓨터와 로컬 네트워크를 검색하는 중… (몇 초)",
-      "foundComfy": "ComfyUI를 찾았습니다",
-      "foundLms": "LM Studio를 찾았습니다",
       "thisComputer": "이 컴퓨터",
       "otherComputer": "다른 컴퓨터",
-      "noneComfy": "이 컴퓨터와 로컬 네트워크에서 ComfyUI를 찾지 못했습니다.",
-      "noneLms": "이 컴퓨터와 로컬 네트워크에서 LM Studio를 찾지 못했습니다.",
       "remoteComfy": "ComfyUI가 다른 컴퓨터에 있나요?",
       "remoteLms": "LM Studio가 다른 컴퓨터에 있나요?",
       "sameNetwork": "두 컴퓨터가 같은 네트워크에 있어야 합니다.",
@@ -1033,9 +1021,16 @@
       "lmsServe": "그 컴퓨터에서 LM Studio › Developer를 열고 \"Serve on Local Network\"를 켜세요.",
       "privateFirewall": "그 컴퓨터의 Windows에서 네트워크를 개인 네트워크로 설정하고, 방화벽이 물어보면 프로그램을 허용하세요.",
       "typeAddress": "여기에 주소를 입력하세요. 예: http://192.168.1.20:{port}. 또는 네트워크를 다시 검색하세요.",
-      "search": "내 네트워크 검색",
-      "notHereSearching": "{name}이(가) {url}에서 응답하지 않습니다. 네트워크를 검색하는 중…",
-      "notHereFound": "{name}이(가) {url}에서 응답하지 않지만 네트워크에서 찾았습니다. 아래에서 선택하세요."
+      "checking": "{url}의 {name} 확인 중…",
+      "searchingFor": "이 컴퓨터와 네트워크에서 {name} 찾는 중…",
+      "choose": "사용할 {name} 선택",
+      "alsoFound": "그 밖에 찾은 서버",
+      "connected": "연결됨",
+      "connectedTo": "{name}에 연결됨",
+      "notFound": "{name}을(를) 찾지 못했습니다",
+      "otherComputerNote": "네트워크의 다른 컴퓨터에서 실행 중입니다.",
+      "searchAgain": "다시 검색",
+      "manual": "다른 주소 입력"
     }
   }
 }

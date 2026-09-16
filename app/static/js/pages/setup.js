@@ -51,6 +51,7 @@
     discovery: null,      // result of /api/setup/discover (ComfyUI + LM Studio on the network)
     discoveryBusy: false,
     discoveryAuto: false, // searched automatically once after a failed check
+    manual: {},           // kind -> the user asked to type the address
     engines: null,        // result of /api/setup/engines
     enginesBusy: false,
     enginesError: '',
@@ -127,7 +128,18 @@
       S.discoveryBusy = false;
       S.discovery = res.ok ? res : { comfy: [], lmstudio: [], error: res.error || 'error' };
       render();
+      // Only one server of the kind this step is about, and nothing connected:
+      // use it. Otherwise the user has to pick the single option on the list.
+      var kind = current().id === 'comfy' ? 'comfy' : current().id === 'lmstudio' ? 'lmstudio' : null;
+      var found = kind ? (S.discovery[kind] || []) : [];
+      var check = kind === 'comfy' ? S.comfy : S.lms;
+      if (kind && found.length === 1 && !(check && check.ok)) useFound(kind, found[0].url);
     });
+  }
+  function useFound(kind, url) {
+    S.manual[kind] = false;
+    if (kind === 'comfy') { S.settings.comfyApiUrl = url; render(); return checkComfy(); }
+    S.settings.lmStudioApiUrl = url; render(); return checkLms();
   }
   function autoDiscover() {
     if (S.discoveryAuto || S.discovery) return;
@@ -328,43 +340,47 @@
       }).join('') + '</div>';
   }
 
-  // The typed address failed, but the network search is running or found the
-  // server elsewhere: say so instead of a "not responding" error sitting right
-  // above the list of servers that do respond. null = show the normal error.
-  function searchingOrFound(kind, url) {
-    var found = S.discovery ? (S.discovery[kind] || []) : [];
-    if (!S.discoveryBusy && !found.length) return null;
-    var name = kind === 'comfy' ? 'ComfyUI' : 'LM Studio';
-    return statusBox('warn', esc(S.discoveryBusy
-      ? t('setup.network.notHereSearching', '{name} does not answer at {url}. Searching your network…', { name: name, url: url })
-      : t('setup.network.notHereFound', '{name} does not answer at {url}, but it was found on your network: choose it below.', { name: name, url: url })));
+  // ── ComfyUI / LM Studio: one list, one message ────────────────────────────
+  // What we found leads the step; the address box is an option, not the first
+  // thing on screen, and the "on another computer?" help stays folded. Never
+  // an error, a warning and an open help block stacked on top of each other.
+
+  function serverName(kind) { return kind === 'comfy' ? 'ComfyUI' : 'LM Studio'; }
+
+  function serverDetail(kind, f) {
+    if (kind !== 'comfy') return f.models != null ? t('setup.lms.models', '{n} models available', { n: f.models }) : '';
+    return [f.gpu || f.gpuName, f.vramTotal ? bytes(f.vramTotal) : '', f.version ? 'v' + f.version : ''].filter(Boolean).join(' · ');
   }
 
-  // Network search results + help for a server on another computer.
-  // kind: 'comfy' | 'lmstudio'. connected: the current address already works.
-  function networkBlock(kind, connected) {
-    var isComfy = kind === 'comfy';
-    var html = '';
-    var found = S.discovery ? (S.discovery[kind] || []) : null;
-    var check = isComfy ? S.comfy : S.lms;
-    if (S.discoveryBusy) {
-      // After a failed check, searchingOrFound() already says it is searching.
-      if (!(check && !check.ok)) html += statusBox('busy', esc(t('setup.network.searching', 'Searching this computer and your local network… (a few seconds)')));
-    } else if (found && found.length && !connected) {
-      html += '<div class="su-label">' + esc(isComfy ? t('setup.network.foundComfy', 'ComfyUI found') : t('setup.network.foundLms', 'LM Studio found')) + '</div>' +
-        '<div class="su-options">' + found.map(function (f) {
-          var detail = isComfy
-            ? [f.gpu, f.vramTotal ? bytes(f.vramTotal) : '', f.version ? 'v' + f.version : ''].filter(Boolean).join(' · ')
-            : t('setup.lms.models', '{n} models available', { n: f.models });
-          var where = f.isLocal ? t('setup.network.thisComputer', 'this computer') : t('setup.network.otherComputer', 'another computer');
-          return '<button type="button" class="su-option" data-use-found="' + kind + '" data-url="' + esc(f.url) + '">' +
-            '<strong>' + esc(f.url) + '</strong> <small>' + esc(where + (detail ? ' · ' + detail : '')) + '</small></button>';
-        }).join('') + '</div>';
-    } else if (found && !found.length && !connected) {
-      html += statusBox('warn', esc(isComfy
-        ? t('setup.network.noneComfy', 'No ComfyUI was found on this computer or your local network.')
-        : t('setup.network.noneLms', 'No LM Studio was found on this computer or your local network.')));
+  // Servers to offer: what the search found, plus the address in use when it
+  // works and the search did not list it (e.g. typed by hand).
+  function serverList(kind) {
+    var found = (S.discovery && S.discovery[kind]) || [];
+    var check = kind === 'comfy' ? S.comfy : S.lms;
+    var url = kind === 'comfy' ? S.settings.comfyApiUrl : S.settings.lmStudioApiUrl;
+    var list = found.map(function (f) { return f; });
+    if (check && check.ok && url && !list.some(function (f) { return f.url === url; })) {
+      list.unshift({ url: url, isLocal: check.isLocal !== false, gpu: (check.gpus || [])[0] && check.gpus[0].name,
+                     vramTotal: (check.gpus || [])[0] && check.gpus[0].vramTotal, version: check.version, models: check.models });
     }
+    return list;
+  }
+
+  function serverRows(kind, list, currentUrl) {
+    return '<div class="su-servers">' + list.map(function (f) {
+      var selected = f.url === currentUrl;
+      var where = f.isLocal ? t('setup.network.thisComputer', 'this computer') : t('setup.network.otherComputer', 'another computer');
+      var detail = serverDetail(kind, f);
+      return '<button type="button" class="su-server' + (selected ? ' is-selected' : '') + '" data-use-found="' + kind + '" data-url="' + esc(f.url) + '">' +
+        '<span class="su-server-main"><span class="su-server-url">' + esc(f.url) + '</span>' +
+        '<span class="su-server-meta">' + esc(where + (detail ? ' · ' + detail : '')) + '</span></span>' +
+        (selected ? '<span class="su-server-badge">' + esc(t('setup.network.connected', 'connected')) + '</span>' : '') +
+        '</button>';
+    }).join('') + '</div>';
+  }
+
+  function serverHelp(kind) {
+    var isComfy = kind === 'comfy';
     var steps = isComfy
       ? [t('setup.network.sameNetwork', 'Both computers must be on the same network.'),
          t('setup.network.comfyListen', 'On that computer, start ComfyUI with --listen 0.0.0.0 (in ComfyUI Desktop, set the server listen address to 0.0.0.0).'),
@@ -374,52 +390,76 @@
          t('setup.network.lmsServe', 'On that computer, open LM Studio › Developer and turn on "Serve on Local Network".'),
          t('setup.network.privateFirewall', 'In Windows on that computer, set the network as Private and allow the program in the firewall when asked.'),
          t('setup.network.typeAddress', 'Type its address here, e.g. http://192.168.1.20:{port}, or search your network again.', { port: 1234 })];
-    html += '<details class="su-details"' + (found && !found.length && !connected ? ' open' : '') + '><summary>' +
+    return '<details class="su-details su-details-inline"><summary>' +
       esc(isComfy ? t('setup.network.remoteComfy', 'Is ComfyUI on another computer?') : t('setup.network.remoteLms', 'Is LM Studio on another computer?')) +
-      '</summary><ol>' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></details>' +
-      '<div class="su-engine-actions"><button type="button" class="su-btn su-btn-ghost su-btn-small" id="su-discover"' + (S.discoveryBusy ? ' disabled' : '') + '>' +
-      esc(t('setup.network.search', 'Search my network')) + '</button></div>';
+      '</summary><ol>' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></details>';
+  }
+
+  function serverStep(kind) {
+    var isComfy = kind === 'comfy';
+    var idk = isComfy ? 'comfy' : 'lms';  // element ids: su-comfy-url, su-lms-url
+    var check = isComfy ? S.comfy : S.lms;
+    var checking = isComfy ? S.comfyBusy : S.lmsBusy;
+    var url = (isComfy ? S.settings.comfyApiUrl : S.settings.lmStudioApiUrl) || (isComfy ? 'http://127.0.0.1:8188' : 'http://127.0.0.1:1234');
+    var connected = !!(check && check.ok);
+    var name = serverName(kind);
+    var list = serverList(kind);
+    var html = '';
+
+    if (checking || (S.discoveryBusy && !connected)) {
+      html += statusBox('busy', esc(checking
+        ? t('setup.network.checking', 'Checking {name} at {url}…', { name: name, url: url })
+        : t('setup.network.searchingFor', 'Looking for {name} on this computer and on your network…', { name: name })));
+    } else if (connected) {
+      var gpu = isComfy ? (check.gpus || [])[0] : null;
+      html += statusBox('ok', '<strong>' + esc(t('setup.network.connectedTo', 'Connected to {name}', { name: name })) + '</strong> · ' + esc(url) +
+        (isComfy && check.version ? '<br>' + esc(t('setup.comfy.version', 'version {v}', { v: check.version })) : '') +
+        (gpu ? '<br>' + esc(t('setup.comfy.gpu', 'GPU: {name} · {vram} of video memory', { name: gpu.name, vram: bytes(gpu.vramTotal) })) : '') +
+        (!isComfy && check.models != null ? ' · ' + esc(t('setup.lms.models', '{n} models available', { n: check.models })) : '') +
+        (check.isLocal === false ? '<br>' + esc(t('setup.network.otherComputerNote', 'It runs on another computer on your network.')) : ''));
+    } else if (check && !list.length) {
+      html += statusBox('warn', '<strong>' + esc(t('setup.network.notFound', '{name} was not found', { name: name })) + '</strong><br>' +
+        esc(isComfy
+          ? t('setup.comfy.noneHelp', 'Start ComfyUI and search again, or type its address. You can continue without it: the engines are installed anyway, and you can connect later in Settings.')
+          : t('setup.lms.noneHelp', 'It is optional: without it you can still generate images, but the flows that write prompts or describe images will not work.')));
+    }
+
+    if (list.length && !checking) {
+      var others = connected ? list.filter(function (f) { return f.url !== url; }) : list;
+      if (others.length) {
+        html += '<div class="su-label">' + esc(connected
+          ? t('setup.network.alsoFound', 'Also found')
+          : t('setup.network.choose', 'Choose your {name}', { name: name })) + '</div>' + serverRows(kind, connected ? others : list, url);
+      }
+    }
+
+    // Address box: only when asked for, or when there is nothing to choose.
+    var manual = S.manual[kind] || (!!check && !connected && !list.length && !checking);
+    if (manual) {
+      html += '<label class="su-label" for="su-' + idk + '-url">' + esc(isComfy ? t('setup.comfy.urlLabel', 'ComfyUI address') : t('setup.lms.urlLabel', 'LM Studio address')) + '</label>' +
+        '<div class="su-row"><input class="su-input" id="su-' + idk + '-url" value="' + esc(url) + '" spellcheck="false">' +
+        '<button type="button" class="su-btn su-btn-ghost" id="su-' + idk + '-check"' + (checking ? ' disabled' : '') + '>' +
+        esc(t('setup.common.check', 'Check')) + '</button></div>';
+    }
+
+    html += '<div class="su-actions-row">' +
+      '<button type="button" class="su-linkbtn" id="su-discover"' + (S.discoveryBusy ? ' disabled' : '') + '>' +
+      esc(t('setup.network.searchAgain', 'Search again')) + '</button>' +
+      (manual ? '' : '<button type="button" class="su-linkbtn" data-manual="' + kind + '">' + esc(t('setup.network.manual', 'Enter another address')) + '</button>') +
+      serverHelp(kind) + '</div>';
     return html;
   }
 
   function viewComfy() {
-    var url = S.settings.comfyApiUrl || 'http://127.0.0.1:8188';
-    var box = '';
-    if (S.comfyBusy) {
-      box = statusBox('busy', esc(t('setup.comfy.checking', 'Checking ComfyUI…')));
-    } else if (S.comfy && S.comfy.ok) {
-      var gpu = (S.comfy.gpus || [])[0];
-      box = statusBox('ok', '<strong>' + esc(t('setup.comfy.ok', 'ComfyUI is running')) + '</strong>' +
-        (S.comfy.version ? ' · ' + esc(t('setup.comfy.version', 'version {v}', { v: S.comfy.version })) : '') +
-        (gpu ? '<br>' + esc(t('setup.comfy.gpu', 'GPU: {name} · {vram} of video memory', { name: gpu.name, vram: bytes(gpu.vramTotal) })) : '') +
-        (S.comfy.isLocal === false ? '<br>' + esc(t('setup.comfy.remote', 'Running on another computer on your network.')) : ''));
-    } else if (S.comfy) {
-      box = searchingOrFound('comfy', url) || statusBox('bad', '<strong>' + esc(t('setup.comfy.fail', 'ComfyUI is not responding')) + '</strong><br>' +
-        esc(t('setup.comfy.failHelp', 'Start ComfyUI and check the address, then retry. You can continue without it, but you will not be able to generate images until it is running.')));
-    }
     return '<h2 class="su-h2">' + esc(t('setup.comfy.title', 'Connect to ComfyUI')) + '</h2>' +
-      '<p class="su-lead">' + esc(t('setup.comfy.lead', 'ComfyUI is the engine that generates the images. Nomad Studio talks to it through its local address.')) + '</p>' +
-      '<label class="su-label" for="su-comfy-url">' + esc(t('setup.comfy.urlLabel', 'ComfyUI address')) + '</label>' +
-      '<div class="su-row"><input class="su-input" id="su-comfy-url" value="' + esc(url) + '" spellcheck="false">' +
-      '<button type="button" class="su-btn su-btn-ghost" id="su-comfy-check"' + (S.comfyBusy ? ' disabled' : '') + '>' + esc(t('setup.common.check', 'Check')) + '</button></div>' +
-      box + networkBlock('comfy', !!(S.comfy && S.comfy.ok)) +
-      '<label class="su-check"><input type="checkbox" id="su-skip-copy"' + (S.settings.skipComfyOutputCopy === true ? ' checked' : '') + '>' +
-      '<span><strong>' + esc(t('setup.comfy.saveSpace', 'Save space: do not keep a copy in the ComfyUI folder')) + '</strong>' +
-      '<br><span class="su-hint">' + esc(t('setup.comfy.saveSpaceHint', 'Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder.')) + '</span></span></label>';
+      '<p class="su-lead">' + esc(t('setup.comfy.lead', 'ComfyUI is the engine that generates the images.')) + '</p>' +
+      serverStep('comfy');
   }
 
   function viewLms() {
-    var url = S.settings.lmStudioApiUrl || 'http://127.0.0.1:1234';
-    var box = '';
-    if (S.lmsBusy) box = statusBox('busy', esc(t('setup.lms.checking', 'Checking LM Studio…')));
-    else if (S.lms && S.lms.ok) box = statusBox('ok', '<strong>' + esc(t('setup.lms.ok', 'LM Studio is running')) + '</strong> · ' + esc(t('setup.lms.models', '{n} models available', { n: S.lms.models })));
-    else if (S.lms) box = searchingOrFound('lmstudio', url) || statusBox('warn', '<strong>' + esc(t('setup.lms.fail', 'LM Studio is not responding')) + '</strong><br>' + esc(t('setup.lms.failHelp', 'It is optional: without it, image generation works, but flows that help write prompts or describe images will not.')));
     return '<h2 class="su-h2">' + esc(t('setup.lms.title', 'Connect to LM Studio')) + ' <span class="su-tag">' + esc(t('setup.common.optional', 'Optional')) + '</span></h2>' +
       '<p class="su-lead">' + esc(t('setup.lms.lead', 'LM Studio runs local language and vision models. Some flows use it to improve prompts or describe images.')) + '</p>' +
-      '<label class="su-label" for="su-lms-url">' + esc(t('setup.lms.urlLabel', 'LM Studio address')) + '</label>' +
-      '<div class="su-row"><input class="su-input" id="su-lms-url" value="' + esc(url) + '" spellcheck="false">' +
-      '<button type="button" class="su-btn su-btn-ghost" id="su-lms-check"' + (S.lmsBusy ? ' disabled' : '') + '>' + esc(t('setup.common.check', 'Check')) + '</button></div>' +
-      box + networkBlock('lmstudio', !!(S.lms && S.lms.ok));
+      serverStep('lmstudio');
   }
 
   function viewModels() {
@@ -600,10 +640,10 @@
 
   function viewData() {
     return '<h2 class="su-h2">' + esc(t('setup.data.title', 'Where your data lives')) + '</h2>' +
-      '<p class="su-lead">' + esc(t('setup.data.lead', 'Profiles, Sessions, settings and installed packages are kept in one visible folder next to the program, so you can back it up or move it easily.')) + '</p>' +
+      '<p class="su-lead">' + esc(t('setup.data.lead', 'Profiles, Sessions, settings and installed packages are kept in one folder of your own, outside the program.')) + '</p>' +
       '<label class="su-label">' + esc(t('setup.data.label', 'Data folder')) + '</label>' +
       '<div class="su-status"><span class="su-status-icon" aria-hidden="true"></span><div><span class="su-code">' + esc(S.dataDir.path || '') + '</span></div></div>' +
-      '<p class="su-hint">' + esc(t('setup.data.devNote', 'In this development version the data folder is fixed inside the app. In the portable version it will be the "data" folder next to the program, and you will be able to choose another one here.')) + '</p>';
+      '<p class="su-hint">' + esc(t('setup.data.outsideNote', 'Because it is outside the program folder, you can delete or replace Nomad Studio — when you update it, for instance — without losing anything. You can also copy this folder to back it up.')) + '</p>';
   }
 
   function viewOutput() {
@@ -646,7 +686,10 @@
       '<li>' + esc(t('setup.format.loss3', 'Film grain and noise can get smoothed out.')) + '</li>' +
       '<li>' + esc(t('setup.format.loss4', 'Loss cannot be undone, and it adds up if the same image is retouched and saved many times. You can choose PNG for a single generation in Advanced.')) + '</li>' +
       '</ul></details>' +
-      '<p class="su-hint">' + esc(t('setup.format.changeLater', 'You can change this in Settings at any time. Images already saved are not converted.')) + '</p>';
+      '<p class="su-hint">' + esc(t('setup.format.changeLater', 'You can change this in Settings at any time. Images already saved are not converted.')) + '</p>' +
+      '<label class="su-check"><input type="checkbox" id="su-skip-copy"' + (S.settings.skipComfyOutputCopy === true ? ' checked' : '') + '>' +
+      '<span><strong>' + esc(t('setup.format.saveSpace', 'Save space: do not keep a copy in the ComfyUI folder')) + '</strong>' +
+      '<br><span class="su-hint">' + esc(t('setup.format.saveSpaceHint', 'Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder.')) + '</span></span></label>';
   }
 
   function viewProfile() {
@@ -747,6 +790,8 @@
     S.maxReached = Math.max(S.maxReached, S.step);
     if (!PREVIEW && current().id !== 'done') save({ wizardStep: S.step });
     var id = current().id;
+    // The saved address is checked and, if it does not answer, the network is
+    // searched right away (checkComfy/checkLms call autoDiscover on failure).
     if (id === 'comfy' && !S.comfy && !S.comfyBusy) checkComfy();
     if (id === 'lmstudio' && !S.lms && !S.lmsBusy) checkLms();
     if (id === 'engines' && S.comfy && S.comfy.ok && !S.engines && !S.enginesBusy) detectEngines();
@@ -826,9 +871,13 @@
       return render();
     }
     if (e.target.closest('#su-discover')) return runDiscovery();
-    if ((el = e.target.closest('[data-use-found]'))) {
-      if (el.dataset.useFound === 'comfy') { S.settings.comfyApiUrl = el.dataset.url; render(); return checkComfy(); }
-      S.settings.lmStudioApiUrl = el.dataset.url; render(); return checkLms();
+    if ((el = e.target.closest('[data-use-found]'))) return useFound(el.dataset.useFound, el.dataset.url);
+    if ((el = e.target.closest('[data-manual]'))) {
+      S.manual[el.dataset.manual] = true;
+      render();
+      var input = document.getElementById(el.dataset.manual === 'comfy' ? 'su-comfy-url' : 'su-lms-url');
+      if (input) input.focus();
+      return;
     }
     if (e.target.closest('#su-comfy-check')) return checkComfy();
     if (e.target.closest('#su-lms-check')) return checkLms();

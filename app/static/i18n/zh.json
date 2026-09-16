@@ -848,18 +848,12 @@
   },
   "setup": {
     "comfy": {
-      "checking": "正在检查 ComfyUI…",
-      "fail": "ComfyUI 没有响应",
-      "failHelp": "请启动 ComfyUI 并检查地址，然后重试。你可以先继续，但在它运行之前无法生成图片。",
       "gpu": "GPU：{name} · {vram} 显存",
-      "lead": "ComfyUI 是生成图片的引擎。Nomad Studio 通过它的本地地址与它通信。",
-      "ok": "ComfyUI 正在运行",
-      "saveSpace": "节省空间：不在 ComfyUI 文件夹中保留副本",
-      "saveSpaceHint": "Nomad Studio 已经把每张图片保存到你自己的用户文件夹，因此 ComfyUI 不需要在它的输出文件夹里再保留一份。",
+      "lead": "ComfyUI 是生成图像的引擎。",
       "title": "连接 ComfyUI",
       "urlLabel": "ComfyUI 地址",
       "version": "版本 {v}",
-      "remote": "运行在你网络中的另一台电脑上。"
+      "noneHelp": "启动 ComfyUI 后再搜索一次，或直接输入地址。你也可以先继续：引擎照样会安装，之后可以在设置中连接。"
     },
     "common": {
       "browse": "浏览",
@@ -870,10 +864,10 @@
       "soon": "即将推出"
     },
     "data": {
-      "devNote": "在这个开发版本中，数据文件夹固定在应用内部。在便携版中，它将是程序旁边的 \"data\" 文件夹，并且可以在这里选择其他位置。",
       "label": "数据文件夹",
-      "lead": "个人资料、Session、设置和已安装的包都保存在程序旁边一个可见的文件夹中，方便你备份或移动。",
-      "title": "你的数据保存在哪里"
+      "lead": "配置文件、Sessions、设置和已安装的包都保存在你自己的文件夹中，位于程序之外。",
+      "title": "你的数据保存在哪里",
+      "outsideNote": "因为它在程序文件夹之外，你可以删除或替换 Nomad Studio（例如更新时）而不会丢失任何内容。你也可以复制这个文件夹作为备份。"
     },
     "done": {
       "connected": "已连接",
@@ -930,21 +924,20 @@
       "soonNote": "你的选择现在就会保存。在 WebP 支持完成之前，图片仍会以 PNG 保存。",
       "title": "图片要以什么格式保存？",
       "webpText": "如果你需要节省空间，请使用此选项。",
-      "webpTitle": "WebP"
+      "webpTitle": "WebP",
+      "saveSpace": "节省空间：不在 ComfyUI 文件夹中保留副本",
+      "saveSpaceHint": "Nomad Studio 已经把每张图片保存到你自己的用户文件夹，因此 ComfyUI 不需要在输出文件夹里再留一份。"
     },
     "language": {
       "lead": "之后可以通过任意界面角落的语言按钮更改。",
       "title": "选择你的语言"
     },
     "lms": {
-      "checking": "正在检查 LM Studio…",
-      "fail": "LM Studio 没有响应",
-      "failHelp": "它是可选的：没有它也能生成图片，但帮助撰写提示词或描述图片的 flow 将无法使用。",
       "lead": "LM Studio 在本地运行语言和视觉模型。部分 flow 用它来改进提示词或描述图片。",
       "models": "有 {n} 个可用模型",
-      "ok": "LM Studio 正在运行",
       "title": "连接 LM Studio",
-      "urlLabel": "LM Studio 地址"
+      "urlLabel": "LM Studio 地址",
+      "noneHelp": "它是可选的：没有它依然可以生成图像，但撰写提示词或描述图像的流程将无法使用。"
     },
     "loadError": "无法加载配置状态。Nomad Studio 服务器是否正在运行？",
     "nav": {
@@ -1019,13 +1012,8 @@
       "pickVision": "负责描述图片的模型"
     },
     "network": {
-      "searching": "正在搜索这台电脑和你的局域网……（几秒钟）",
-      "foundComfy": "找到 ComfyUI",
-      "foundLms": "找到 LM Studio",
       "thisComputer": "这台电脑",
       "otherComputer": "另一台电脑",
-      "noneComfy": "在这台电脑和局域网中都没有找到 ComfyUI。",
-      "noneLms": "在这台电脑和局域网中都没有找到 LM Studio。",
       "remoteComfy": "ComfyUI 在另一台电脑上？",
       "remoteLms": "LM Studio 在另一台电脑上？",
       "sameNetwork": "两台电脑必须在同一个网络中。",
@@ -1033,9 +1021,16 @@
       "lmsServe": "在那台电脑上，打开 LM Studio › Developer，开启 \"Serve on Local Network\"。",
       "privateFirewall": "在那台电脑的 Windows 中，把网络设为专用网络，并在防火墙询问时允许该程序。",
       "typeAddress": "在这里输入它的地址，例如 http://192.168.1.20:{port}，或再次搜索网络。",
-      "search": "搜索我的网络",
-      "notHereSearching": "{name} 在 {url} 没有响应。正在搜索你的网络……",
-      "notHereFound": "{name} 在 {url} 没有响应，但在你的网络中找到了它：请在下方选择。"
+      "checking": "正在检查 {url} 上的 {name}…",
+      "searchingFor": "正在本机和局域网中查找 {name}…",
+      "choose": "选择你的 {name}",
+      "alsoFound": "还找到了",
+      "connected": "已连接",
+      "connectedTo": "已连接到 {name}",
+      "notFound": "未找到 {name}",
+      "otherComputerNote": "它运行在你网络中的另一台电脑上。",
+      "searchAgain": "再搜索一次",
+      "manual": "输入其他地址"
     }
   }
 }

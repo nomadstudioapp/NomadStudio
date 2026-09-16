@@ -848,18 +848,12 @@
   },
   "setup": {
     "comfy": {
-      "checking": "Comprobando ComfyUI…",
-      "fail": "ComfyUI no responde",
-      "failHelp": "Arranca ComfyUI, revisa la dirección y vuelve a comprobar. Puedes seguir sin él, pero no podrás generar imágenes hasta que esté en marcha.",
       "gpu": "GPU: {name} · {vram} de memoria de vídeo",
-      "lead": "ComfyUI es el motor que genera las imágenes. Nomad Studio se comunica con él a través de su dirección local.",
-      "ok": "ComfyUI está en marcha",
-      "saveSpace": "Ahorrar espacio: no guardar copia en la carpeta de ComfyUI",
-      "saveSpaceHint": "Nomad Studio ya guarda cada imagen en tu propia carpeta de usuario, así que ComfyUI no necesita guardar otra copia en su carpeta de salida.",
+      "lead": "ComfyUI es el motor que genera las imágenes.",
       "title": "Conectar con ComfyUI",
       "urlLabel": "Dirección de ComfyUI",
       "version": "versión {v}",
-      "remote": "Está en otro equipo de tu red."
+      "noneHelp": "Arranca ComfyUI y busca otra vez, o escribe su dirección. Puedes seguir sin él: los motores se instalan igual y puedes conectarlo después en Ajustes."
     },
     "common": {
       "browse": "Examinar",
@@ -870,10 +864,10 @@
       "soon": "Próximamente"
     },
     "data": {
-      "devNote": "En esta versión de desarrollo la carpeta de datos está fija dentro de la app. En la versión portable será la carpeta \"data\" junto al programa, y podrás elegir otra aquí.",
       "label": "Carpeta de datos",
-      "lead": "Los perfiles, Sessions, ajustes y paquetes instalados se guardan en una carpeta visible junto al programa, para que puedas hacer copia de seguridad o moverla fácilmente.",
-      "title": "Dónde se guardan tus datos"
+      "lead": "Los perfiles, las Sessions, los ajustes y los paquetes instalados se guardan en una carpeta tuya, fuera del programa.",
+      "title": "Dónde se guardan tus datos",
+      "outsideNote": "Como está fuera de la carpeta del programa, puedes borrar o sustituir Nomad Studio (al actualizarlo, por ejemplo) sin perder nada. También puedes copiar esta carpeta para tener una copia de seguridad."
     },
     "done": {
       "connected": "Conectado",
@@ -930,21 +924,20 @@
       "soonNote": "Tu elección se guarda ahora. Las imágenes se seguirán guardando en PNG hasta que el soporte de WebP esté terminado.",
       "title": "¿Cómo guardamos tus imágenes?",
       "webpText": "Si necesitas ahorrar espacio, usa esta opción.",
-      "webpTitle": "WebP"
+      "webpTitle": "WebP",
+      "saveSpace": "Ahorrar espacio: no guardar una copia en la carpeta de ComfyUI",
+      "saveSpaceHint": "Nomad Studio ya guarda cada imagen en tu propia carpeta de usuario, así que ComfyUI no necesita guardar una segunda copia en su carpeta de salida."
     },
     "language": {
       "lead": "Puedes cambiarlo después desde el botón de idioma en la esquina de cualquier pantalla.",
       "title": "Elige tu idioma"
     },
     "lms": {
-      "checking": "Comprobando LM Studio…",
-      "fail": "LM Studio no responde",
-      "failHelp": "Es opcional: sin él la generación de imágenes funciona, pero no los flows que ayudan a escribir prompts o describen imágenes.",
       "lead": "LM Studio ejecuta modelos de lenguaje y visión en local. Algunos flows lo usan para mejorar prompts o describir imágenes.",
       "models": "{n} modelos disponibles",
-      "ok": "LM Studio está en marcha",
       "title": "Conectar con LM Studio",
-      "urlLabel": "Dirección de LM Studio"
+      "urlLabel": "Dirección de LM Studio",
+      "noneHelp": "Es opcional: sin él puedes generar imágenes igual, pero los flows que escriben prompts o describen imágenes no funcionarán."
     },
     "loadError": "No se pudo cargar el estado de la configuración. ¿Está en marcha el servidor de Nomad Studio?",
     "nav": {
@@ -1019,13 +1012,8 @@
       "pickVision": "Modelo que describe las imágenes"
     },
     "network": {
-      "searching": "Buscando en este equipo y en tu red local… (unos segundos)",
-      "foundComfy": "ComfyUI encontrado",
-      "foundLms": "LM Studio encontrado",
       "thisComputer": "este equipo",
       "otherComputer": "otro equipo",
-      "noneComfy": "No se ha encontrado ComfyUI en este equipo ni en tu red local.",
-      "noneLms": "No se ha encontrado LM Studio en este equipo ni en tu red local.",
       "remoteComfy": "¿ComfyUI está en otro equipo?",
       "remoteLms": "¿LM Studio está en otro equipo?",
       "sameNetwork": "Los dos equipos tienen que estar en la misma red.",
@@ -1033,9 +1021,16 @@
       "lmsServe": "En ese equipo, abre LM Studio › Developer y activa \"Serve on Local Network\".",
       "privateFirewall": "En Windows, en ese equipo, pon la red como Privada y permite el programa en el firewall cuando lo pregunte.",
       "typeAddress": "Escribe aquí su dirección, por ejemplo http://192.168.1.20:{port}, o vuelve a buscar en tu red.",
-      "search": "Buscar en mi red",
-      "notHereSearching": "{name} no responde en {url}. Buscando en tu red…",
-      "notHereFound": "{name} no responde en {url}, pero lo hemos encontrado en tu red: elígelo abajo."
+      "checking": "Comprobando {name} en {url}…",
+      "searchingFor": "Buscando {name} en este equipo y en tu red…",
+      "choose": "Elige tu {name}",
+      "alsoFound": "También encontrados",
+      "connected": "conectado",
+      "connectedTo": "Conectado a {name}",
+      "notFound": "No hemos encontrado {name}",
+      "otherComputerNote": "Está en otro equipo de tu red.",
+      "searchAgain": "Buscar otra vez",
+      "manual": "Escribir otra dirección"
     }
   }
 }

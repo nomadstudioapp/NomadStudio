@@ -1,0 +1,15 @@
+/* Tooltips lifted out of their card while they are visible
+   (app/static/js/services/tooltips.js). The script moves the tooltip to
+   <body> and sets left/top itself, so a card with overflow:hidden or the
+   edge of the window can no longer cut it. Without the script nothing
+   changes: this class is only added while one is on screen. */
+.nt-tip-floating {
+  position: fixed !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  z-index: 10000;
+  pointer-events: none;
+}

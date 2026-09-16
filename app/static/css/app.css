@@ -30,3 +30,6 @@
 /* Video caption overlay (tutorial recording dev tool) */
 @import url('./parts/video_caption.css');
 @import url('./parts/lang_panel.css');
+
+/* Hover tooltips (see js/services/tooltips.js) */
+@import url('./parts/tooltips.css');

@@ -231,6 +231,10 @@
       "balanced.hint": "Real variation between runs, keeping your idea intact.",
       "inventive.hint": "Looser interpretation. Expect to be surprised.",
       "bold.hint": "Furthest from the prompt. Can drift off your subject."
+    },
+    "queue": {
+      "waitingComfy": "Waiting for ComfyUI to finish…",
+      "waitingLms": "Waiting for LM Studio to finish…"
     }
   },
   "settings": {

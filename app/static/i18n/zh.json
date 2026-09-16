@@ -563,6 +563,10 @@
       "balanced.hint": "每次生成都有真正的变化，同时保留你的想法。",
       "inventive.hint": "更自由的诠释。会给你惊喜。",
       "bold.hint": "离提示词最远。可能偏离你的主题。"
+    },
+    "queue": {
+      "waitingComfy": "正在等待 ComfyUI 完成…",
+      "waitingLms": "正在等待 LM Studio 完成…"
     }
   },
   "settings": {

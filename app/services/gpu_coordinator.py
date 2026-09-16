@@ -220,6 +220,20 @@ def _invalidate(category: str) -> None:
         _cache.pop(category, None)
 
 
+# Requests currently waiting for the other server, so the page can say
+# "waiting for ComfyUI" instead of a spinner that looks stuck.
+_waits: dict[str, dict[str, Any]] = {}
+_waits_lock = threading.Lock()
+
+
+def current_waits() -> list[dict[str, Any]]:
+    """What this installation is waiting for right now (superqueue)."""
+    now = time.time()
+    with _waits_lock:
+        return [{"category": w["category"], "waitingFor": w["waitingFor"], "seconds": round(now - w["since"], 1)}
+                for w in _waits.values()]
+
+
 def wait_external(category: str) -> float:
     """Wait while the other GPU server is busy. Returns seconds waited.
 
@@ -233,18 +247,25 @@ def wait_external(category: str) -> float:
     if not _external_busy(category):
         return 0.0
     logger.info("superqueue: %s waiting for %s used by another client", category, _other(category))
-    free_in_a_row = 0
-    while time.time() - start < EXTERNAL_MAX_WAIT_S:
-        time.sleep(_POLL_S)
-        _invalidate(_other(category))
-        if _external_busy(category):
-            free_in_a_row = 0
+    wait_id = f"{category}-{threading.get_ident()}-{start}"
+    with _waits_lock:
+        _waits[wait_id] = {"category": category, "waitingFor": _other(category), "since": start}
+    try:
+        free_in_a_row = 0
+        while time.time() - start < EXTERNAL_MAX_WAIT_S:
+            time.sleep(_POLL_S)
+            _invalidate(_other(category))
+            if _external_busy(category):
+                free_in_a_row = 0
+            else:
+                free_in_a_row += 1
+                if free_in_a_row >= 2:
+                    break
         else:
-            free_in_a_row += 1
-            if free_in_a_row >= 2:
-                break
-    else:
-        logger.warning("superqueue: %s gave up waiting for %s after %.0fs", category, _other(category), EXTERNAL_MAX_WAIT_S)
+            logger.warning("superqueue: %s gave up waiting for %s after %.0fs", category, _other(category), EXTERNAL_MAX_WAIT_S)
+    finally:
+        with _waits_lock:
+            _waits.pop(wait_id, None)
     waited = time.time() - start
     logger.info("superqueue: %s waited %.1fs", category, waited)
     return waited

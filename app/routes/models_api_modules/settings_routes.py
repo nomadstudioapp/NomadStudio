@@ -51,6 +51,19 @@ def _sanitize_workflow_annotate_fields(value: Any) -> dict[str, list[str]]:
     return result
 
 
+@models_api_bp.get("/models/gpu/waiting")
+def gpu_waiting():
+    """Is this installation waiting for the other GPU server right now?
+    (superqueue — app/services/gpu_coordinator.py). Lets a spinner say
+    "waiting for ComfyUI" instead of looking stuck."""
+    from app.services import gpu_coordinator
+
+    waits = gpu_coordinator.current_waits()
+    response = jsonify({"waiting": bool(waits), "items": waits})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def _public_settings(settings: dict) -> dict:
     """Settings as the page may see them. The CivitAI API key never travels
     back: only whether one is stored."""

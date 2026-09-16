@@ -411,6 +411,44 @@ function _setBusyStatus(el, text) {
   el.innerHTML = _NCF_SPIN_ICON + '<span>' + text + '</span>';
 }
 
+// Superqueue: when ComfyUI (or LM Studio) is busy on another computer, the
+// server holds the request until the GPU is free. Without this the button just
+// says "Composing…" for minutes and looks stuck. Polls while the request is in
+// flight and shows what it is waiting for; returns a stop function.
+function _watchGpuQueue(label, statusEl) {
+  var t = function (key, fallback) {
+    return (window.NomadI18n && window.NomadI18n.t) ? window.NomadI18n.t(key, fallback) : fallback;
+  };
+  var busyText = label ? label.textContent : '';
+  var shown = false;
+  var stopped = false;
+  function tick() {
+    if (stopped) return;
+    fetch('/api/models/gpu/waiting', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (res) {
+        if (stopped || !res) return;
+        var item = (res.items || [])[0];
+        if (item) {
+          var msg = item.waitingFor === 'comfy'
+            ? t('flow.queue.waitingComfy', 'Waiting for ComfyUI to finish…')
+            : t('flow.queue.waitingLms', 'Waiting for LM Studio to finish…');
+          if (!shown) busyText = label ? label.textContent : busyText;
+          shown = true;
+          if (label) label.textContent = msg;
+          if (statusEl) statusEl.textContent = msg;
+        } else if (shown) {
+          shown = false;
+          if (label) label.textContent = busyText;
+        }
+      })
+      .catch(function () {})
+      .then(function () { if (!stopped) setTimeout(tick, 1500); });
+  }
+  setTimeout(tick, 800);
+  return function () { stopped = true; };
+}
+
 async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
   isWritingScene = true;
   writeBtn.disabled = true;
@@ -434,6 +472,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
     statusEl.classList.add('is-busy');
     statusEl.innerHTML = _NCF_SPIN_ICON + '<span>Calling LM Studio…</span>';
   }
+  var _stopQueueWatch = _watchGpuQueue(writeLbl, statusEl);
 
   // Progress goes to the button as well as to statusEl, and that is the whole
   // point: statusEl is deliberately never added to the DOM (see
@@ -935,6 +974,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
     showErrorToast(tF(stepDef.label || 'AI step') + ': ' + (err.message || 'something went wrong'));
     console.error('[FlowEngine] runLLM:', err);
   } finally {
+    _stopQueueWatch();
     isWritingScene = false;
     writeBtn.disabled = false;
     writeBtn.classList.remove('is-composing');

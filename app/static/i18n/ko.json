@@ -563,6 +563,10 @@
       "balanced.hint": "아이디어를 유지하면서 실행할 때마다 실질적으로 달라집니다.",
       "inventive.hint": "더 자유로운 해석. 예상 밖의 결과가 나옵니다.",
       "bold.hint": "프롬프트에서 가장 멉니다. 주제에서 벗어날 수 있습니다."
+    },
+    "queue": {
+      "waitingComfy": "ComfyUI 작업이 끝나길 기다리는 중…",
+      "waitingLms": "LM Studio 작업이 끝나길 기다리는 중…"
     }
   },
   "settings": {

@@ -563,6 +563,10 @@
       "balanced.hint": "Variación real entre ejecuciones, conservando tu idea.",
       "inventive.hint": "Interpretación más libre. Cuenta con que te sorprenda.",
       "bold.hint": "Lo más lejos del prompt. Puede irse de tu sujeto."
+    },
+    "queue": {
+      "waitingComfy": "Esperando a que ComfyUI termine…",
+      "waitingLms": "Esperando a que LM Studio termine…"
     }
   },
   "settings": {

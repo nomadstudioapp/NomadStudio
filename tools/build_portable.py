@@ -18,10 +18,18 @@ longer (found testing on a laptop).
         ├── lib/                 dependencies from requirements.lock (--require-hashes)
         └── launcher/
 
-Windows only for now. The bundled Python is copied from --python-home, which
-must be the exact CPython version the lock was made for, with tkinter (the
-Settings folder pickers need it). Linux/macOS will use python-build-standalone
-(APP_UPDATES.md §4.1) and are added later.
+Windows: the bundled Python is copied from --python-home, which must be the
+exact CPython version the lock was made for, with tkinter (the Settings folder
+pickers need it).
+
+Linux x64 (--platform linux-x64), built from this Windows machine: Python comes
+from python-build-standalone (APP_UPDATES.md §4.1), downloaded once into
+dist/python-cache and checked against the release's SHA256SUMS; dependencies
+are resolved for manylinux by uv, which evaluates the lock's markers for the
+target (pywin32 and colorama stay out). The result is a .tar.gz, which keeps
+the executable bits a ZIP would lose. There is no smoke test — Linux binaries
+do not run here — so the build checks the tree instead; the real test is
+running ./NomadStudio.sh on a Linux machine.
 
 Nothing is signed yet (SHA256SUMS.sig needs the official key, §3).
 """
@@ -40,6 +48,7 @@ import sys
 import tarfile
 import tempfile
 import time
+import urllib.parse
 import urllib.request
 import zipfile
 from datetime import datetime, timezone
@@ -219,18 +228,117 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+PBS_TAG = "20250409"
+PBS_ASSET = "cpython-3.13.3+20250409-x86_64-unknown-linux-gnu-install_only.tar.gz"
+PBS_BASE = f"https://github.com/astral-sh/python-build-standalone/releases/download/{PBS_TAG}/"
+
+
+def fetch_linux_python(dest: Path) -> str:
+    """python-build-standalone for Linux x64, verified against its release's
+    SHA256SUMS, unpacked into dest. Returns the Python version."""
+    cache = DIST / "python-cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    archive = cache / PBS_ASSET
+    quoted = urllib.parse.quote(PBS_ASSET)
+    if not archive.is_file():
+        print(f"  downloading {PBS_ASSET} from github.com/astral-sh/python-build-standalone")
+        with urllib.request.urlopen(PBS_BASE + quoted, timeout=120) as response, archive.open("wb") as out:
+            shutil.copyfileobj(response, out, 1 << 20)
+    sums = urllib.request.urlopen(PBS_BASE + "SHA256SUMS", timeout=60).read().decode("utf-8")
+    expected = next((line.split()[0] for line in sums.splitlines() if line.strip().endswith(PBS_ASSET)), None)
+    actual = sha256(archive)
+    if not expected or expected.lower() != actual.lower():
+        archive.unlink(missing_ok=True)
+        raise SystemExit(f"python-build-standalone checksum mismatch: expected {expected}, got {actual}")
+    print(f"  sha256 verified: {actual[:16]}…")
+    unpack = dest.parent / ".python-unpack"
+    shutil.rmtree(unpack, ignore_errors=True)
+    with tarfile.open(archive) as tar:
+        tar.extractall(unpack, filter="data")
+    shutil.move(str(unpack / "python"), str(dest))
+    shutil.rmtree(unpack, ignore_errors=True)
+    # The install_only build carries the test suite and IDLE; the app needs neither.
+    lib = dest / "lib" / "python3.13"
+    for name in ("test", "idlelib", "turtledemo", "ensurepip", "lib2to3"):
+        shutil.rmtree(lib / name, ignore_errors=True)
+    site_packages = lib / "site-packages"
+    site_packages.mkdir(parents=True, exist_ok=True)
+    for item in site_packages.iterdir():  # pip/setuptools of the build machine are not needed
+        shutil.rmtree(item, ignore_errors=True) if item.is_dir() else item.unlink()
+    (site_packages / "nomad-lib.pth").write_text(
+        "import os, site, sys; site.addsitedir(os.path.normpath(os.path.join(sys.prefix, os.pardir, 'lib')))\n",
+        encoding="ascii",
+    )
+    return PBS_ASSET.split("+", 1)[0].split("-", 1)[1]
+
+
+def install_linux_deps(lib_dir: Path) -> None:
+    run(["uv", "pip", "install", "--quiet", "--require-hashes", "--only-binary", ":all:", "--no-deps",
+         "--python-platform", "x86_64-manylinux_2_28", "--python-version", "3.13",
+         "--target", str(lib_dir), "-r", str(REPO / "requirements.lock")])
+
+
+def check_linux_tree(app_dir: Path) -> None:
+    """What a smoke test would catch, without running Linux binaries."""
+    problems = []
+    for rel in ("python/bin/python3", "app.py", "app/__init__.py", "portable.json", "launcher/NomadStudio.sh",
+                "python/lib/python3.13/site-packages/nomad-lib.pth"):
+        if not (app_dir / rel).exists():
+            problems.append("missing " + rel)
+    lib = app_dir / "lib"
+    for package in ("flask", "numpy", "PIL", "scipy", "sklearn", "mcp"):
+        if not (lib / package).is_dir():
+            problems.append("missing library " + package)
+    if any(lib.glob("pywin32*")) or (lib / "win32").is_dir():
+        problems.append("Windows-only packages leaked into lib/")
+    windows_binaries = [p.name for p in lib.rglob("*.pyd")][:3]
+    if windows_binaries:
+        problems.append(f"Windows extension modules in lib/: {windows_binaries}")
+    if not any(lib.rglob("*.so")):
+        problems.append("no Linux extension modules (.so) in lib/")
+    if not (app_dir / "python" / "lib" / "python3.13" / "lib-dynload").is_dir():
+        problems.append("python lib-dynload missing")
+    if problems:
+        raise SystemExit("linux tree check failed:\n  " + "\n  ".join(problems))
+    so_count = sum(1 for _ in lib.rglob("*.so"))
+    print(f"  tree ok: python3, app, launcher, {so_count} Linux extension modules, no Windows binaries")
+
+
+def make_tarball(root: Path, tar_path: Path) -> None:
+    """tar.gz with the executable bits Linux needs (a ZIP made on Windows has none)."""
+    executable = {"NomadStudio.sh", "app/launcher/NomadStudio.sh"}
+
+    def fix(info: tarfile.TarInfo) -> tarfile.TarInfo:
+        rel = info.name.replace("\\", "/")
+        info.uid = info.gid = 0
+        info.uname = info.gname = ""
+        if info.isdir():
+            info.mode = 0o755
+        elif info.isfile():
+            info.mode = 0o755 if (rel in executable or "/python/bin/" in "/" + rel) else 0o644
+        return info
+
+    with tarfile.open(tar_path, "w:gz", compresslevel=9) as tar:
+        for path in sorted(root.rglob("*")):
+            tar.add(path, arcname=path.relative_to(root).as_posix(), recursive=False, filter=fix)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", required=True, help="SemVer, e.g. 0.1.0-internal.1")
-    ap.add_argument("--python-home", required=True, type=Path, help="CPython install to bundle")
+    ap.add_argument("--platform", choices=("windows-x64", "linux-x64"), default="windows-x64")
+    ap.add_argument("--python-home", type=Path, help="CPython install to bundle (Windows builds)")
     ap.add_argument("--update-repo", default="juanpaexpedite/NomadStudio")
     ap.add_argument("--packages-dir", type=Path, default=REPO / "dist" / "packages",
                     help="package ZIPs to ship in bundled-packages/ (tools/packages/build_packages.py writes them)")
     args = ap.parse_args()
 
     if platform.system() != "Windows":
-        raise SystemExit("this script builds the Windows package only (for now)")
-    plat = "windows-x64"
+        raise SystemExit("this script runs on Windows (it cross-builds the Linux package)")
+    plat = args.platform
+    linux = plat == "linux-x64"
+    if not linux and not args.python_home:
+        raise SystemExit("--python-home is required for the Windows build")
     name = f"NomadStudio-{args.version}-{plat}"
     staging = DIST / name
     shutil.rmtree(staging, ignore_errors=True)
@@ -242,16 +350,19 @@ def main() -> None:
     commit = export_code(app_dir)
 
     print("2/6 bundled Python")
-    py_version = copy_python(args.python_home, app_dir / "python")
+    py_version = fetch_linux_python(app_dir / "python") if linux else copy_python(args.python_home, app_dir / "python")
     lock_py = lock_python_version()
     print(f"  CPython {py_version} (lock made for {lock_py})")
     if lock_py and not py_version.startswith(lock_py):
         raise SystemExit(f"Python {py_version} does not match the lock ({lock_py})")
 
     print("3/6 dependencies from requirements.lock")
-    run([str(args.python_home / "python.exe"), "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
-         "--require-hashes", "--only-binary=:all:", "--no-deps",
-         "--target", str(app_dir / "lib"), "-r", str(REPO / "requirements.lock")])
+    if linux:
+        install_linux_deps(app_dir / "lib")
+    else:
+        run([str(args.python_home / "python.exe"), "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
+             "--require-hashes", "--only-binary=:all:", "--no-deps",
+             "--target", str(app_dir / "lib"), "-r", str(REPO / "requirements.lock")])
     freed = strip_library_tests(app_dir / "lib")
     print(f"  removed library test suites: {freed / 2**20:.0f} MB")
 
@@ -276,17 +387,30 @@ def main() -> None:
         "update_repo": args.update_repo,
         "data_schema": 1,
     }, indent=2) + "\n", encoding="utf-8")
-    write_launchers(app_dir, root)
+    if linux:
+        (app_dir / "launcher").mkdir(parents=True, exist_ok=True)
+        script = (REPO / "tools" / "launcher" / "NomadStudio.sh").read_text(encoding="utf-8").replace("\r\n", "\n")
+        for target in (app_dir / "launcher" / "NomadStudio.sh", root / "NomadStudio.sh"):
+            target.write_bytes(script.encode("utf-8"))
+    else:
+        write_launchers(app_dir, root)
 
-    print("5/6 smoke test")
-    smoke_test(app_dir, args.version)
-    clean_runtime_files(app_dir)
+    if linux:
+        print("5/6 tree check (Linux binaries do not run here: test ./NomadStudio.sh on Linux)")
+        check_linux_tree(app_dir)
+    else:
+        print("5/6 smoke test")
+        smoke_test(app_dir, args.version)
+        clean_runtime_files(app_dir)
 
-    print("6/6 zip + SHA256SUMS")
+    print("6/6 archive + SHA256SUMS")
     DIST.mkdir(exist_ok=True)
-    zip_path = DIST / f"{name}.zip"
+    zip_path = DIST / (f"{name}.tar.gz" if linux else f"{name}.zip")
     zip_path.unlink(missing_ok=True)
-    make_zip(root, zip_path)
+    if linux:
+        make_tarball(root, zip_path)
+    else:
+        make_zip(root, zip_path)
     sums = DIST / "SHA256SUMS.txt"
     lines = [ln for ln in (sums.read_text(encoding="utf-8").splitlines() if sums.exists() else []) if not ln.endswith(zip_path.name)]
     lines.append(f"{sha256(zip_path)}  {zip_path.name}")

@@ -170,22 +170,28 @@ def local_apps_start():
     return jsonify({"ok": False, "error": "Unknown app"}), 400
 
 
-@setup_bp.post("/api/setup/install/comfyui")
+@setup_bp.post("/api/setup/install/<app_id>")
 @local_only
-def install_comfyui():
+def install_local_app(app_id: str):
+    """Get ComfyUI or LM Studio for a user who has neither: ComfyUI is
+    unpacked into the chosen folder, LM Studio's own installer is downloaded
+    and opened (app/services/local_apps.py)."""
     payload = request.get_json(silent=True) or {}
     raw = str(payload.get("dir", "") or "").strip()
     if not raw or not os.path.isabs(raw):
         return jsonify({"ok": False, "error": "Choose a folder to install it in"}), 400
+    starters = {"comfyui": local_apps.start_install_comfyui, "lmstudio": local_apps.start_install_lmstudio}
+    if app_id not in starters:
+        return jsonify({"ok": False, "error": "Unknown app"}), 400
     try:
-        job = local_apps.start_install_comfyui(Path(raw))
+        job = starters[app_id](Path(raw))
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     return jsonify({"ok": True, "job": job})
 
 
-@setup_bp.get("/api/setup/install/comfyui/job")
-def install_comfyui_job():
+@setup_bp.get("/api/setup/install/job")
+def install_local_app_job():
     return jsonify({"ok": True, "job": local_apps.get_job()})
 
 

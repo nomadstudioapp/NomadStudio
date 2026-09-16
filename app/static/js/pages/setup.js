@@ -414,25 +414,37 @@
     });
   }
 
-  function installComfy() {
-    var input = document.getElementById('su-comfy-dir');
+  function installApp(app) {
+    var input = document.getElementById(app === 'comfyui' ? 'su-comfy-dir' : 'su-lms-dir');
     var dir = (input && input.value.trim()) || (S.apps && S.apps.suggestedDir) || '';
-    api('POST', '/api/setup/install/comfyui', { dir: dir }).then(function (res) {
+    api('POST', '/api/setup/install/' + app, { dir: dir }).then(function (res) {
       if (!res.ok) { S.error = res.error || ''; return render(); }
       S.installJob = res.job;
       render();
       (function poll() {
-        api('GET', '/api/setup/install/comfyui/job').then(function (r) {
+        api('GET', '/api/setup/install/job').then(function (r) {
           S.installJob = (r && r.job) || null;
           render();
           if (S.installJob && S.installJob.state === 'running') return setTimeout(poll, 1000);
           if (S.installJob && S.installJob.state === 'done') {
             S.apps = null;
             loadApps();
-            startApp('comfy');
+            // ComfyUI is unpacked and ready to start; LM Studio opened its own
+            // installer, so we wait for the user to finish it.
+            if (app === 'comfyui') startApp('comfy');
+            else waitForLmStudio(0);
           }
         });
       })();
+    });
+  }
+
+  function waitForLmStudio(tries) {
+    api('GET', '/api/setup/local-apps').then(function (res) {
+      S.apps = res && res.ok ? res : S.apps;
+      render();
+      if (S.apps && S.apps.lmstudio) return startApp('lmstudio');
+      if (tries < 60) setTimeout(function () { waitForLmStudio(tries + 1); }, 5000);
     });
   }
 
@@ -445,12 +457,17 @@
     if (S.appsStarting === kind) {
       return statusBox('busy', esc(t('setup.apps.starting', 'Starting {name}… this can take a minute.', { name: name })));
     }
-    var job = isComfy ? S.installJob : null;
+    var job = S.installJob && S.installJob.app === (isComfy ? 'comfy' : 'lmstudio') ? S.installJob : null;
+    if (!isComfy && S.apps && !S.apps.lmstudio && S.installJob && S.installJob.state === 'done'
+        && S.installJob.app === 'lmstudio') {
+      return statusBox('busy', esc(t('setup.apps.installerOpen', 'Finish the installation in the window that just opened.')));
+    }
     if (job && job.state === 'running') {
       var pct = job.total ? Math.round(job.done * 100 / job.total) : 0;
       return statusBox('busy', esc(job.phase === 'extract'
         ? t('setup.apps.extracting', 'Unpacking ComfyUI…')
-        : t('setup.apps.downloading', 'Downloading ComfyUI… {pct}%', { pct: pct })));
+        : job.phase === 'installer' ? t('setup.apps.installerOpen', 'Finish the installation in the window that just opened.')
+        : t('setup.apps.downloadingApp', 'Downloading {name}… {pct}%', { name: name, pct: pct })));
     }
     if (job && job.state === 'error') return statusBox('bad', esc(job.error || ''));
     if (!apps || !apps.local) return '';
@@ -474,8 +491,10 @@
       return startRow;
     }
     if (!isComfy) {
-      return '<div class="su-actions-row"><a class="su-linkbtn" href="' + esc(apps.lmstudioUrl || 'https://lmstudio.ai/download') +
-        '" target="_blank" rel="noreferrer">' + esc(t('setup.apps.getLms', 'Download LM Studio')) + '</a></div>';
+      return '<label class="su-label" for="su-lms-dir">' + esc(t('setup.apps.downloadTo', 'Download LM Studio to')) + '</label>' +
+        '<div class="su-row"><input class="su-input" id="su-lms-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +
+        '<button type="button" class="su-btn su-btn-ghost" id="su-install-lms">' + esc(t('setup.apps.install', 'Install')) + '</button></div>' +
+        '<p class="su-hint">' + esc(t('setup.apps.lmsNote', 'Its installer opens by itself; we wait for you here.')) + '</p>';
     }
     if (!apps.canInstallComfy) return '';
     return comfyInstallForm(apps, false);
@@ -995,7 +1014,8 @@
       return;
     }
     if ((el = e.target.closest('[data-start-app]'))) return startApp(el.dataset.startApp);
-    if (e.target.closest('#su-install-comfy')) return installComfy();
+    if (e.target.closest('#su-install-comfy')) return installApp('comfyui');
+    if (e.target.closest('#su-install-lms')) return installApp('lmstudio');
     if (e.target.closest('#su-comfy-check')) return checkComfy();
     if (e.target.closest('#su-lms-check')) return checkLms();
     if (e.target.closest('#su-engines-retry')) return detectEngines();

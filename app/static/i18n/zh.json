@@ -1041,11 +1041,14 @@
       "downloading": "正在下载 ComfyUI…{pct}%",
       "extracting": "正在解压 ComfyUI…",
       "noGpu": "本机未发现 NVIDIA 或 AMD 显卡：在这台电脑上生成会很慢。",
-      "getLms": "下载 LM Studio",
       "portable": "便携版",
       "desktop": "桌面版",
       "preferPortable": "Nomad Studio 与便携版配合得最好。",
-      "listen": "允许我网络中的其他电脑使用它"
+      "listen": "允许我网络中的其他电脑使用它",
+      "downloadingApp": "正在下载 {name}…{pct}%",
+      "installerOpen": "请在刚打开的窗口中完成安装。",
+      "downloadTo": "将 LM Studio 下载到",
+      "lmsNote": "安装程序会自动打开，我们在这里等你。"
     }
   }
 }

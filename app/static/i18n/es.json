@@ -1041,11 +1041,14 @@
       "downloading": "Descargando ComfyUI… {pct}%",
       "extracting": "Descomprimiendo ComfyUI…",
       "noGpu": "No hay tarjeta NVIDIA ni AMD en este equipo: generar aquí sería lento.",
-      "getLms": "Descargar LM Studio",
       "portable": "versión portable",
       "desktop": "app de escritorio",
       "preferPortable": "La versión portable es con la que mejor funciona Nomad Studio.",
-      "listen": "Que otros equipos de mi red puedan usarlo"
+      "listen": "Que otros equipos de mi red puedan usarlo",
+      "downloadingApp": "Descargando {name}… {pct}%",
+      "installerOpen": "Termina la instalación en la ventana que se acaba de abrir.",
+      "downloadTo": "Descargar LM Studio en",
+      "lmsNote": "Su instalador se abre solo; te esperamos aquí."
     }
   }
 }

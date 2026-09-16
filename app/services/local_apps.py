@@ -34,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 COMFY_RELEASES_API = "https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest"
 LMSTUDIO_DOWNLOAD_PAGE = "https://lmstudio.ai/download"
+# Stable redirect to the current Windows installer.
+LMSTUDIO_INSTALLER_URL = "https://lmstudio.ai/download/latest/win32/x64"
 # Windows ships bsdtar, which reads (and writes) 7z — no extra dependency for
 # the 7z the ComfyUI portable build is published as.
 WINDOWS_TAR = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "tar.exe"
@@ -280,6 +282,53 @@ def _set(**fields: Any) -> None:
             _job.update(fields)
 
 
+def start_install_lmstudio(target_dir: Path) -> dict[str, Any]:
+    """Download LM Studio's own installer and open it. It installs itself with
+    its own window, so this gets the file and hands over — unlike ComfyUI,
+    which is a portable folder we can unpack."""
+    global _job
+    if not sys.platform.startswith("win"):
+        raise ValueError("Installing LM Studio from here is only available on Windows for now")
+    with _job_lock:
+        if _job and _job.get("state") == "running":
+            raise ValueError("Something else is already being installed")
+        _job = {"id": uuid.uuid4().hex[:12], "app": "lmstudio", "state": "running", "phase": "download",
+                "done": 0, "total": 0, "error": "", "result": None}
+
+    def work() -> None:
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            request = urllib.request.Request(LMSTUDIO_INSTALLER_URL, headers={"User-Agent": "NomadStudio"})
+            with urllib.request.urlopen(request, timeout=60) as response:
+                name = os.path.basename(response.url.split("?", 1)[0]) or "LM-Studio-Setup.exe"
+                if not name.lower().endswith(".exe"):
+                    raise ValueError("That download is not a Windows installer")
+                total = int(response.headers.get("Content-Length") or 0)
+                _set(total=total, asset=name)
+                installer = target_dir / name
+                partial = installer.with_suffix(".part")
+                with partial.open("wb") as out:
+                    done = 0
+                    while True:
+                        chunk = response.read(1 << 20)
+                        if not chunk:
+                            break
+                        out.write(chunk)
+                        done += len(chunk)
+                        _set(done=done)
+                os.replace(partial, installer)
+            _set(phase="installer")
+            _spawn([str(installer)])
+            _set(state="done", phase="ready", result={"installer": str(installer), "needsUserToFinish": True})
+            logger.info("LM Studio installer downloaded to %s and started", installer)
+        except Exception as exc:  # noqa: BLE001 — shown in the wizard
+            logger.exception("downloading LM Studio failed")
+            _set(state="error", error=str(exc))
+
+    threading.Thread(target=work, daemon=True, name="install-lmstudio").start()
+    return get_job() or {}
+
+
 def start_install_comfyui(target_dir: Path) -> dict[str, Any]:
     """Download the official portable build and unpack it into *target_dir*.
     Runs in the background; follow it with get_job()."""
@@ -291,9 +340,9 @@ def start_install_comfyui(target_dir: Path) -> dict[str, Any]:
         raise ValueError("No program to unpack the download was found")
     with _job_lock:
         if _job and _job.get("state") == "running":
-            raise ValueError("ComfyUI is already being installed")
-        _job = {"id": uuid.uuid4().hex[:12], "state": "running", "phase": "asset", "done": 0, "total": 0,
-                "error": "", "result": None}
+            raise ValueError("Something else is already being installed")
+        _job = {"id": uuid.uuid4().hex[:12], "app": "comfy", "state": "running", "phase": "asset", "done": 0,
+                "total": 0, "error": "", "result": None}
 
     def work() -> None:
         try:

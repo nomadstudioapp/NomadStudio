@@ -1715,7 +1715,7 @@ def _prefix_lora_trigger_words(
     if not active:
         return text
 
-    existing = text.lower()
+    existing = _prompt_words_present(text)
     words: list[str] = []
     seen: set[str] = set()
     for entry in stored:
@@ -1730,16 +1730,104 @@ def _prefix_lora_trigger_words(
                 continue
             key = word.lower()
             # Don't repeat a trigger the user already typed: some models are
-            # sensitive to duplicated tokens.
-            if key in seen or key in existing:
+            # sensitive to duplicated tokens. Whole words only — "photo" is
+            # not already there because the prompt says "photography".
+            if key in seen or _word_present(key, existing):
                 continue
             seen.add(key)
             words.append(word)
 
     if not words:
         return text
+    inside = _lora_words_inside_json(text, words)
+    if inside is not None:
+        return inside
     prefix = ", ".join(words)
     return f"{prefix}, {text}" if text.strip() else prefix
+
+
+# Where trigger words belong inside a JSON prompt, best fit first. The Layout
+# flows compose an Ideogram document whose `style_description.aesthetics` is
+# "art style, movement, visual treatment" — which is what trigger words are.
+_JSON_WORD_FIELDS = ("style", "aesthetics", "prompt", "positive", "description",
+                     "high_level_description", "subject", "text")
+
+
+def _word_present(word: str, haystack: str) -> bool:
+    """Is this trigger word already in the prompt, as a whole word?"""
+    return re.search(r"(?<!\w)" + re.escape(word) + r"(?!\w)", haystack) is not None
+
+
+def _prompt_words_present(text: str) -> str:
+    """The text to check a trigger word against before adding it. In a JSON
+    prompt only the values count: `style_description` has a field named
+    `photo`, and a field name must not suppress a real trigger word."""
+    stripped = text.strip()
+    if stripped.startswith("{") and stripped.endswith("}"):
+        try:
+            document = json.loads(stripped)
+        except ValueError:
+            return text.lower()
+
+        def strings(node):
+            if isinstance(node, str):
+                yield node
+            elif isinstance(node, dict):
+                for value in node.values():
+                    yield from strings(value)
+            elif isinstance(node, list):
+                for value in node:
+                    yield from strings(value)
+
+        return " ".join(strings(document)).lower()
+    return text.lower()
+
+
+def _lora_words_inside_json(text: str, words: list[str]) -> str | None:
+    """Put the words *inside* a JSON prompt instead of in front of it.
+
+    Simple JSON and the Layout flows send a JSON document as the prompt.
+    Prepending "word1, word2, {…}" leaves loose tokens hanging outside the
+    structure the flow just built, so they go into the field that describes
+    the style instead.
+
+    Returns the new JSON, the text unchanged when the document has nowhere
+    sensible to put them, or None when the prompt is not JSON at all (the
+    caller then prepends, as before)."""
+    stripped = text.strip()
+    if not stripped.startswith("{") or not stripped.endswith("}"):
+        return None
+    try:
+        document = json.loads(stripped)
+    except ValueError:
+        return None
+    if not isinstance(document, dict):
+        return None
+
+    def add(value: str) -> str:
+        value = value.strip()
+        return f"{value}, {', '.join(words)}" if value else ", ".join(words)
+
+    style = document.get("style_description")
+    if isinstance(style, dict):
+        for key in ("aesthetics", "medium", "photo"):
+            if isinstance(style.get(key), str):
+                style[key] = add(style[key])
+                break
+        else:
+            return text
+    elif isinstance(style, str):
+        document["style_description"] = add(style)
+    else:
+        for key in _JSON_WORD_FIELDS:
+            if isinstance(document.get(key), str):
+                document[key] = add(document[key])
+                break
+        else:
+            # A JSON prompt with no text field: leave it alone rather than
+            # hang tokens off the outside of the document.
+            return text
+    return json.dumps(document, ensure_ascii=False, indent=2 if "\n" in stripped else None)
 
 
 def _apply_basic_values_to_workflow(

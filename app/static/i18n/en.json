@@ -699,6 +699,17 @@
       "otherComputerNote": "It runs on another computer on your network.",
       "searchAgain": "Search again",
       "manual": "Enter another address"
+    },
+    "apps": {
+      "start": "Start {name}",
+      "starting": "Starting {name}… this can take a minute.",
+      "install": "Install",
+      "installIn": "Install ComfyUI in",
+      "installNote": "About 2 GB from the official ComfyUI release.",
+      "downloading": "Downloading ComfyUI… {pct}%",
+      "extracting": "Unpacking ComfyUI…",
+      "noGpu": "No NVIDIA or AMD card found here: generating on this computer would be slow.",
+      "getLms": "Download LM Studio"
     }
   }
 }

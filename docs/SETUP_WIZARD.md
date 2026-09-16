@@ -53,6 +53,16 @@ Orden: primero el idioma (para leer el resto), **después ComfyUI y sus motores,
 | 9 | **Primer perfil** | Sí | Nombre, avatar y PIN opcional (mismo formulario que "Añadir perfil"). |
 | 10 | **Listo** | — | Resumen: servicios, motores, modelos, carpetas, formato. Botón **Empezar**. Si hay descargas en curso (§4.5), siguen en segundo plano y se ve su progreso. |
 
+### 1.5 Si el usuario no tiene ComfyUI ni LM Studio
+
+El asistente daba por hecho que existían en algún sitio y solo estaban apagados. Para alguien que empieza de cero (`app/services/local_apps.py`, `GET /api/setup/local-apps`):
+
+1. **Instalado pero sin arrancar**: se busca en las rutas habituales (portable, app de escritorio de ComfyUI, LM Studio en programas del usuario) y se ofrece **arrancarlo**. Con LM Studio se usa su propio `lms server start` si está, que levanta el servidor sin abrir la ventana. Después se reintenta la comprobación sola, hasta 20 veces cada 4 s, porque ComfyUI tarda en arrancar.
+2. **No instalado**: se ofrece **instalar ComfyUI** descargando el portable oficial de su repo (unos 2 GB, se elige el build según la tarjeta detectada) y descomprimiéndolo con el `tar.exe` que trae Windows (bsdtar lee 7z; sin dependencias nuevas). Antes se comprueba el espacio libre. LM Studio es un instalador con ventana propia: solo se enlaza su página de descarga.
+3. **Sin tarjeta adecuada**: se lee la GPU del equipo sin ayuda de ComfyUI y, si no hay NVIDIA ni AMD, se avisa antes de que alguien descargue 2 GB para nada.
+
+Arrancar e instalar solo desde el propio equipo (`local_only`): desde el navegador de otro PC no aparecen esos botones.
+
 ### 1.4 Buscar servidores en la red
 
 `POST /api/setup/discover` (`setup_service.discover_services`) prueba los puertos de ComfyUI (8188, 8000) y LM Studio (1234) en `127.0.0.1` y en las /24 privadas de este equipo, y confirma con su propia API lo que responde. Solo redes privadas; no guarda nada.

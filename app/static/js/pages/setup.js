@@ -52,6 +52,10 @@
     discoveryBusy: false,
     discoveryAuto: false, // searched automatically once after a failed check
     manual: {},           // kind -> the user asked to type the address
+    apps: null,           // /api/setup/local-apps: what this computer already has
+    appsBusy: false,
+    appsStarting: null,   // 'comfy' | 'lmstudio' while it boots
+    installJob: null,     // ComfyUI portable download
     engines: null,        // result of /api/setup/engines
     enginesBusy: false,
     enginesError: '',
@@ -379,6 +383,95 @@
     }).join('') + '</div>';
   }
 
+  // Nothing found: the user may simply not have it. What this computer
+  // already has (and whether we can install it) comes from /local-apps.
+  function loadApps() {
+    if (S.apps || S.appsBusy) return;
+    S.appsBusy = true;
+    api('GET', '/api/setup/local-apps').then(function (res) {
+      S.appsBusy = false;
+      S.apps = res && res.ok ? res : { comfy: null, lmstudio: null };
+      render();
+    });
+  }
+
+  function startApp(kind) {
+    S.appsStarting = kind;
+    render();
+    api('POST', '/api/setup/local-apps/start', { app: kind === 'comfy' ? 'comfy' : 'lmstudio' }).then(function (res) {
+      if (!res.ok) { S.appsStarting = null; S.error = res.error || ''; return render(); }
+      // ComfyUI takes a while to come up: keep checking instead of asking again.
+      var tries = 0;
+      (function poll() {
+        var check = kind === 'comfy' ? checkComfy : checkLms;
+        check().then(function () {
+          var ok = kind === 'comfy' ? (S.comfy && S.comfy.ok) : (S.lms && S.lms.ok);
+          if (ok || ++tries > 20) { S.appsStarting = null; return render(); }
+          setTimeout(poll, 4000);
+        });
+      })();
+    });
+  }
+
+  function installComfy() {
+    var input = document.getElementById('su-comfy-dir');
+    var dir = (input && input.value.trim()) || (S.apps && S.apps.suggestedDir) || '';
+    api('POST', '/api/setup/install/comfyui', { dir: dir }).then(function (res) {
+      if (!res.ok) { S.error = res.error || ''; return render(); }
+      S.installJob = res.job;
+      render();
+      (function poll() {
+        api('GET', '/api/setup/install/comfyui/job').then(function (r) {
+          S.installJob = (r && r.job) || null;
+          render();
+          if (S.installJob && S.installJob.state === 'running') return setTimeout(poll, 1000);
+          if (S.installJob && S.installJob.state === 'done') {
+            S.apps = null;
+            loadApps();
+            startApp('comfy');
+          }
+        });
+      })();
+    });
+  }
+
+  // One short block, only when there is nothing to connect to.
+  function installBlock(kind) {
+    var apps = S.apps;
+    var isComfy = kind === 'comfy';
+    var found = apps && (isComfy ? apps.comfy : apps.lmstudio);
+    var name = serverName(kind);
+    if (S.appsStarting === kind) {
+      return statusBox('busy', esc(t('setup.apps.starting', 'Starting {name}… this can take a minute.', { name: name })));
+    }
+    var job = isComfy ? S.installJob : null;
+    if (job && job.state === 'running') {
+      var pct = job.total ? Math.round(job.done * 100 / job.total) : 0;
+      return statusBox('busy', esc(job.phase === 'extract'
+        ? t('setup.apps.extracting', 'Unpacking ComfyUI…')
+        : t('setup.apps.downloading', 'Downloading ComfyUI… {pct}%', { pct: pct })));
+    }
+    if (job && job.state === 'error') return statusBox('bad', esc(job.error || ''));
+    if (!apps || !apps.local) return '';
+    if (found && found.launcher) {
+      return '<div class="su-servers"><button type="button" class="su-server" data-start-app="' + kind + '">' +
+        '<span class="su-server-main"><span class="su-server-url">' +
+        esc(t('setup.apps.start', 'Start {name}', { name: name })) + '</span>' +
+        '<span class="su-server-meta">' + esc(found.path) + '</span></span></button></div>';
+    }
+    if (!isComfy) {
+      return '<div class="su-actions-row"><a class="su-linkbtn" href="' + esc(apps.lmstudioUrl || 'https://lmstudio.ai/download') +
+        '" target="_blank" rel="noreferrer">' + esc(t('setup.apps.getLms', 'Download LM Studio')) + '</a></div>';
+    }
+    if (!apps.canInstallComfy) return '';
+    var noGpu = apps.gpuVendor !== 'nvidia' && apps.gpuVendor !== 'amd';
+    return (noGpu ? '<p class="su-hint">' + esc(t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.')) + '</p>' : '') +
+      '<label class="su-label" for="su-comfy-dir">' + esc(t('setup.apps.installIn', 'Install ComfyUI in')) + '</label>' +
+      '<div class="su-row"><input class="su-input" id="su-comfy-dir" value="' + esc((apps.suggestedDir || '')) + '" spellcheck="false">' +
+      '<button type="button" class="su-btn su-btn-ghost" id="su-install-comfy">' + esc(t('setup.apps.install', 'Install')) + '</button></div>' +
+      '<p class="su-hint">' + esc(t('setup.apps.installNote', 'About 2 GB from the official ComfyUI release.')) + '</p>';
+  }
+
   function serverHelp(kind) {
     var isComfy = kind === 'comfy';
     var steps = isComfy
@@ -405,6 +498,7 @@
     var name = serverName(kind);
     var list = serverList(kind);
     var html = '';
+    var showInstall = false;
 
     if (checking || (S.discoveryBusy && !connected)) {
       html += statusBox('busy', esc(checking
@@ -418,6 +512,7 @@
         (!isComfy && check.models != null ? ' · ' + esc(t('setup.lms.models', '{n} models available', { n: check.models })) : '') +
         (check.isLocal === false ? '<br>' + esc(t('setup.network.otherComputerNote', 'It runs on another computer on your network.')) : ''));
     } else if (check && !list.length) {
+      showInstall = true;
       html += statusBox('warn', '<strong>' + esc(t('setup.network.notFound', '{name} was not found', { name: name })) + '</strong><br>' +
         esc(isComfy
           ? t('setup.comfy.noneHelp', 'Start ComfyUI and search again, or type its address. You can continue without it: the engines are installed anyway, and you can connect later in Settings.')
@@ -442,6 +537,7 @@
         esc(t('setup.common.check', 'Check')) + '</button></div>';
     }
 
+    if (showInstall) html += installBlock(kind);
     html += '<div class="su-actions-row">' +
       '<button type="button" class="su-linkbtn" id="su-discover"' + (S.discoveryBusy ? ' disabled' : '') + '>' +
       esc(t('setup.network.searchAgain', 'Search again')) + '</button>' +
@@ -792,6 +888,7 @@
     var id = current().id;
     // The saved address is checked and, if it does not answer, the network is
     // searched right away (checkComfy/checkLms call autoDiscover on failure).
+    if (id === 'comfy' || id === 'lmstudio') loadApps();
     if (id === 'comfy' && !S.comfy && !S.comfyBusy) checkComfy();
     if (id === 'lmstudio' && !S.lms && !S.lmsBusy) checkLms();
     if (id === 'engines' && S.comfy && S.comfy.ok && !S.engines && !S.enginesBusy) detectEngines();
@@ -879,6 +976,8 @@
       if (input) input.focus();
       return;
     }
+    if ((el = e.target.closest('[data-start-app]'))) return startApp(el.dataset.startApp);
+    if (e.target.closest('#su-install-comfy')) return installComfy();
     if (e.target.closest('#su-comfy-check')) return checkComfy();
     if (e.target.closest('#su-lms-check')) return checkLms();
     if (e.target.closest('#su-engines-retry')) return detectEngines();

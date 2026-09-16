@@ -21,7 +21,8 @@ from urllib.parse import urlparse
 from flask import Blueprint, jsonify, render_template, request, url_for
 
 from .. import paths
-from ..services import lmstudio_service, setup_service, viewer_service
+from ..services import lmstudio_service, local_apps, setup_service, viewer_service
+from ..services.local_access import local_only, request_is_local
 from ..services.workflow_service import _safe_http_url
 from .models_api_shared import _ensure_registry, _registry_transaction, _safe_comfy_url
 
@@ -147,6 +148,44 @@ def patch_state():
 def _comfy_url_from(payload: dict) -> str:
     raw = str(payload.get("comfyApiUrl") or _ensure_registry().get("settings", {}).get("comfyApiUrl", "")).strip()
     return _safe_comfy_url(raw)
+
+
+@setup_bp.get("/api/setup/local-apps")
+def local_apps_state():
+    """What this computer already has: graphics card, and ComfyUI or LM Studio
+    installed but not running. Lets the wizard help a user who has neither
+    (app/services/local_apps.py)."""
+    return jsonify({"ok": True, "local": request_is_local(), **local_apps.state()})
+
+
+@setup_bp.post("/api/setup/local-apps/start")
+@local_only
+def local_apps_start():
+    app_id = str((request.get_json(silent=True) or {}).get("app", ""))
+    if app_id == "comfy":
+        return jsonify(local_apps.start_comfyui())
+    if app_id == "lmstudio":
+        return jsonify(local_apps.start_lmstudio())
+    return jsonify({"ok": False, "error": "Unknown app"}), 400
+
+
+@setup_bp.post("/api/setup/install/comfyui")
+@local_only
+def install_comfyui():
+    payload = request.get_json(silent=True) or {}
+    raw = str(payload.get("dir", "") or "").strip()
+    if not raw or not os.path.isabs(raw):
+        return jsonify({"ok": False, "error": "Choose a folder to install it in"}), 400
+    try:
+        job = local_apps.start_install_comfyui(Path(raw))
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    return jsonify({"ok": True, "job": job})
+
+
+@setup_bp.get("/api/setup/install/comfyui/job")
+def install_comfyui_job():
+    return jsonify({"ok": True, "job": local_apps.get_job()})
 
 
 @setup_bp.post("/api/setup/check/comfy")

@@ -1031,6 +1031,17 @@
       "otherComputerNote": "Está en otro equipo de tu red.",
       "searchAgain": "Buscar otra vez",
       "manual": "Escribir otra dirección"
+    },
+    "apps": {
+      "start": "Arrancar {name}",
+      "starting": "Arrancando {name}… puede tardar un minuto.",
+      "install": "Instalar",
+      "installIn": "Instalar ComfyUI en",
+      "installNote": "Unos 2 GB desde la versión oficial de ComfyUI.",
+      "downloading": "Descargando ComfyUI… {pct}%",
+      "extracting": "Descomprimiendo ComfyUI…",
+      "noGpu": "No hay tarjeta NVIDIA ni AMD en este equipo: generar aquí sería lento.",
+      "getLms": "Descargar LM Studio"
     }
   }
 }

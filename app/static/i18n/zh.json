@@ -1031,6 +1031,17 @@
       "otherComputerNote": "它运行在你网络中的另一台电脑上。",
       "searchAgain": "再搜索一次",
       "manual": "输入其他地址"
+    },
+    "apps": {
+      "start": "启动 {name}",
+      "starting": "正在启动 {name}…可能需要一分钟。",
+      "install": "安装",
+      "installIn": "将 ComfyUI 安装到",
+      "installNote": "约 2 GB，来自 ComfyUI 官方发布版。",
+      "downloading": "正在下载 ComfyUI…{pct}%",
+      "extracting": "正在解压 ComfyUI…",
+      "noGpu": "本机未发现 NVIDIA 或 AMD 显卡：在这台电脑上生成会很慢。",
+      "getLms": "下载 LM Studio"
     }
   }
 }

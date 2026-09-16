@@ -1031,6 +1031,17 @@
       "otherComputerNote": "네트워크의 다른 컴퓨터에서 실행 중입니다.",
       "searchAgain": "다시 검색",
       "manual": "다른 주소 입력"
+    },
+    "apps": {
+      "start": "{name} 실행",
+      "starting": "{name} 시작 중… 1분 정도 걸릴 수 있습니다.",
+      "install": "설치",
+      "installIn": "ComfyUI 설치 위치",
+      "installNote": "ComfyUI 공식 릴리스에서 약 2 GB를 받습니다.",
+      "downloading": "ComfyUI 내려받는 중… {pct}%",
+      "extracting": "ComfyUI 압축 푸는 중…",
+      "noGpu": "이 컴퓨터에는 NVIDIA나 AMD 그래픽 카드가 없습니다. 여기서 생성하면 느립니다.",
+      "getLms": "LM Studio 내려받기"
     }
   }
 }

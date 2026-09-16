@@ -454,20 +454,33 @@
     if (job && job.state === 'error') return statusBox('bad', esc(job.error || ''));
     if (!apps || !apps.local) return '';
     if (found && found.launcher) {
-      return '<div class="su-servers"><button type="button" class="su-server" data-start-app="' + kind + '">' +
+      var kindLabel = found.kind === 'desktop' ? t('setup.apps.desktop', 'desktop app')
+        : found.kind === 'portable' ? t('setup.apps.portable', 'portable build') : '';
+      var startRow = '<div class="su-servers"><button type="button" class="su-server" data-start-app="' + kind + '">' +
         '<span class="su-server-main"><span class="su-server-url">' +
         esc(t('setup.apps.start', 'Start {name}', { name: name })) + '</span>' +
-        '<span class="su-server-meta">' + esc(found.path) + '</span></span></button></div>';
+        '<span class="su-server-meta">' + esc((kindLabel ? kindLabel + ' · ' : '') + found.path) + '</span></span></button></div>';
+      // Only the desktop app: the portable build is the one this works best
+      // with, so offer it too instead of leaving it as the only option.
+      if (isComfy && found.kind === 'desktop' && apps.canInstallComfy) {
+        return startRow + '<p class="su-hint">' + esc(t('setup.apps.preferPortable',
+          'The portable build is the one Nomad Studio works best with.')) + '</p>' + comfyInstallForm(apps, true);
+      }
+      return startRow;
     }
     if (!isComfy) {
       return '<div class="su-actions-row"><a class="su-linkbtn" href="' + esc(apps.lmstudioUrl || 'https://lmstudio.ai/download') +
         '" target="_blank" rel="noreferrer">' + esc(t('setup.apps.getLms', 'Download LM Studio')) + '</a></div>';
     }
     if (!apps.canInstallComfy) return '';
+    return comfyInstallForm(apps, false);
+  }
+
+  function comfyInstallForm(apps, compact) {
     var noGpu = apps.gpuVendor !== 'nvidia' && apps.gpuVendor !== 'amd';
-    return (noGpu ? '<p class="su-hint">' + esc(t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.')) + '</p>' : '') +
+    return (noGpu && !compact ? '<p class="su-hint">' + esc(t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.')) + '</p>' : '') +
       '<label class="su-label" for="su-comfy-dir">' + esc(t('setup.apps.installIn', 'Install ComfyUI in')) + '</label>' +
-      '<div class="su-row"><input class="su-input" id="su-comfy-dir" value="' + esc((apps.suggestedDir || '')) + '" spellcheck="false">' +
+      '<div class="su-row"><input class="su-input" id="su-comfy-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +
       '<button type="button" class="su-btn su-btn-ghost" id="su-install-comfy">' + esc(t('setup.apps.install', 'Install')) + '</button></div>' +
       '<p class="su-hint">' + esc(t('setup.apps.installNote', 'About 2 GB from the official ComfyUI release.')) + '</p>';
   }

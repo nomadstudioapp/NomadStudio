@@ -1041,7 +1041,10 @@
       "downloading": "ComfyUI 내려받는 중… {pct}%",
       "extracting": "ComfyUI 압축 푸는 중…",
       "noGpu": "이 컴퓨터에는 NVIDIA나 AMD 그래픽 카드가 없습니다. 여기서 생성하면 느립니다.",
-      "getLms": "LM Studio 내려받기"
+      "getLms": "LM Studio 내려받기",
+      "portable": "포터블 버전",
+      "desktop": "데스크톱 앱",
+      "preferPortable": "Nomad Studio는 포터블 버전과 가장 잘 맞습니다."
     }
   }
 }

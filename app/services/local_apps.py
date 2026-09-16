@@ -96,29 +96,51 @@ def _comfy_in(root: Path) -> dict[str, Any] | None:
     return None
 
 
-def find_comfyui() -> dict[str, Any] | None:
-    """A ComfyUI installation on this machine: the portable build (a folder
-    with run_nvidia_gpu.bat) or the desktop app."""
+# Preference order when more than one is installed. The portable build is the
+# one Nomad Studio works best with: it is the one ComfyUI publishes for this,
+# its models folder is a plain directory we can point at, and it takes
+# --listen for a server on the network. The desktop app manages its own
+# install and is harder to steer, and a git clone we can find but not start.
+_COMFY_PREFERENCE = ("portable", "desktop", "source")
+_COMFY_LAUNCHERS = ("run_nvidia_gpu.bat", "run_cpu.bat", "run_amd_gpu.bat", "run_intel_gpu.bat")
+
+
+def find_comfyui_all() -> list[dict[str, Any]]:
+    """Every ComfyUI installation on this machine, best first."""
+    found: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def add(item: dict[str, Any]) -> None:
+        if item["path"].lower() not in seen:
+            seen.add(item["path"].lower())
+            found.append(item)
+
     for path in _comfy_candidates():
         try:
             if not path.is_dir():
                 continue
         except OSError:
             continue
-        for bat in ("run_nvidia_gpu.bat", "run_cpu.bat", "run_amd_gpu.bat", "run_intel_gpu.bat"):
-            if (path / bat).is_file():
-                return {"kind": "portable", "path": str(path), "launcher": str(path / bat)}
-        if (path / "main.py").is_file():  # a git clone: we can point at it, not start it
-            return {"kind": "source", "path": str(path), "launcher": ""}
+        launcher = next((path / bat for bat in _COMFY_LAUNCHERS if (path / bat).is_file()), None)
+        if launcher is not None:
+            add({"kind": "portable", "path": str(path), "launcher": str(launcher)})
+        elif (path / "main.py").is_file():  # a git clone: we can point at it, not start it
+            add({"kind": "source", "path": str(path), "launcher": ""})
     programs = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "Programs"
     try:
         for folder in programs.glob("*comfy*"):
             exe = next((p for p in folder.glob("*.exe") if "comfy" in p.name.lower()), None)
             if exe:
-                return {"kind": "desktop", "path": str(folder), "launcher": str(exe)}
+                add({"kind": "desktop", "path": str(folder), "launcher": str(exe)})
     except OSError:
         pass
-    return None
+    found.sort(key=lambda item: _COMFY_PREFERENCE.index(item["kind"]))
+    return found
+
+
+def find_comfyui() -> dict[str, Any] | None:
+    """The ComfyUI this machine should use: portable before desktop."""
+    return (find_comfyui_all() or [None])[0]
 
 
 def find_lmstudio() -> dict[str, Any] | None:
@@ -155,6 +177,7 @@ def state() -> dict[str, Any]:
         "gpuVendor": vendor,
         "canInstallComfy": sys.platform.startswith("win") and _extractor() is not None,
         "comfy": find_comfyui(),
+        "comfyAll": find_comfyui_all(),
         "lmstudio": find_lmstudio(),
         "lmstudioUrl": LMSTUDIO_DOWNLOAD_PAGE,
         "suggestedDir": str(Path.home()),

@@ -709,7 +709,10 @@
       "downloading": "Downloading ComfyUI… {pct}%",
       "extracting": "Unpacking ComfyUI…",
       "noGpu": "No NVIDIA or AMD card found here: generating on this computer would be slow.",
-      "getLms": "Download LM Studio"
+      "getLms": "Download LM Studio",
+      "portable": "portable build",
+      "desktop": "desktop app",
+      "preferPortable": "The portable build is the one Nomad Studio works best with."
     }
   }
 }

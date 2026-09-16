@@ -1560,6 +1560,13 @@ def check_files_exist():
     return jsonify({"exists": exists})
 
 
+def _is_civitai(url: str) -> bool:
+    from urllib.parse import urlparse
+
+    host = (urlparse(url).hostname or "").lower()
+    return host == "civitai.com" or host.endswith(".civitai.com")
+
+
 @models_api_bp.post("/models/imports/download-file")
 def download_import_file():
     """Existence check (non-force) or streaming download (force) of a single model file
@@ -1585,6 +1592,8 @@ def download_import_file():
     if not force:
         return jsonify({"exists": target.is_file(), "path": str(target)})
 
+    settings = _ensure_registry().get("settings", {})
+
     def generate():
         import json as _json
         from urllib.error import HTTPError, URLError
@@ -1596,8 +1605,26 @@ def download_import_file():
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             }
+            # CivitAI answers 401 to anyone without a key, and several LoRAs
+            # are published nowhere else. The key is the user's own (Settings).
+            if _is_civitai(url):
+                key = str(settings.get("civitaiApiKey", "") or "").strip()
+                if not key:
+                    yield _json.dumps({"error": "CivitAI needs an API key to download this file. "
+                                                "Add yours in Settings (CivitAI account)."}) + "\n"
+                    return
+                headers["Authorization"] = f"Bearer {key}"
             req = Request(url=url, headers=headers, method="GET")
             with urlopen(req, timeout=60) as resp:
+                kind = str(resp.headers.get("Content-Type") or "").lower()
+                # A login page or an error document instead of the model: say
+                # so, rather than writing HTML into a .safetensors.
+                if kind.startswith("text/") or "json" in kind:
+                    detail = resp.read(400).decode("utf-8", "replace").strip()
+                    yield _json.dumps({"error": ("The server sent a page instead of the file"
+                                                 + (" — check your CivitAI API key." if _is_civitai(url) else ".")
+                                                 + " " + detail[:200])}) + "\n"
+                    return
                 total_header = resp.headers.get("Content-Length")
                 total = int(total_header) if total_header and total_header.isdigit() else 0
                 downloaded = 0

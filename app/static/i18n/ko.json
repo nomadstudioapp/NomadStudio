@@ -606,7 +606,12 @@
       "noConfigHint": "설정된 ComfyUI 모델 폴더가 없습니다. 폴더를 추가하면 파일 상태를 보고 자동 다운로드를 켤 수 있습니다.",
       "saveFailed": "모델 폴더를 저장하지 못했습니다: {reason}",
       "verified": "폴더를 찾았고 읽을 수 있습니다.",
-      "testFailed": "폴더 테스트 실패: {reason}"
+      "testFailed": "폴더 테스트 실패: {reason}",
+      "civitaiLabel": "CivitAI API 키",
+      "civitaiHint": "CivitAI에 올라온 LoRA와 모델을 내려받을 때 필요합니다. CivitAI는 익명 다운로드를 거부합니다. 계정의 API keys에서 만들 수 있습니다.",
+      "civitaiSaved": "키가 저장되어 있습니다. 바꾸려면 새로 입력하세요",
+      "civitaiEmpty": "여기에 키를 붙여 넣으세요",
+      "civitaiCleared": "키를 삭제했습니다."
     },
     "folderStatus": {
       "selectedAndSaved": "폴더를 선택하고 저장했습니다.",

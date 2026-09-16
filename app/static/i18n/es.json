@@ -606,7 +606,12 @@
       "noConfigHint": "No hay ninguna carpeta de modelos de ComfyUI configurada. Añade una para ver el estado de los ficheros y activar la descarga automática.",
       "saveFailed": "No se pudo guardar la carpeta de modelos: {reason}",
       "verified": "Carpeta encontrada y legible.",
-      "testFailed": "Fallo al probar la carpeta: {reason}"
+      "testFailed": "Fallo al probar la carpeta: {reason}",
+      "civitaiLabel": "Clave de API de CivitAI",
+      "civitaiHint": "Hace falta para descargar LoRAs y modelos alojados en CivitAI: rechazan las descargas anónimas. Se crea en tu cuenta de CivitAI, en API keys.",
+      "civitaiSaved": "Hay una clave guardada; escribe otra para cambiarla",
+      "civitaiEmpty": "Pega aquí tu clave",
+      "civitaiCleared": "Clave borrada."
     },
     "folderStatus": {
       "selectedAndSaved": "Carpeta seleccionada y guardada.",

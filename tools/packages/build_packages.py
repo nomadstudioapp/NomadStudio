@@ -99,11 +99,35 @@ EXTRA_DOWNLOADS = {
         {"subfolder": "loras/qwen_2511", "filename": "Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors",
          "url": "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors?download=true"},
     ],
+    # Krea2 Roma needs three files published only on CivitAI, which refuses
+    # anonymous downloads: the app asks for the user's own API key (Settings).
+    # Each was identified by the sha256 of the local file against CivitAI's
+    # by-hash endpoint, which is also where these permissions come from
+    # (OPENHIKER#91). They all derive from Krea 2, whose own licence is still
+    # unread — OPENHIKER#16.
     "Krea2 Roma": [
         {"subfolder": "text_encoders", "filename": "qwen3vl_4b_fp8_scaled.safetensors",
          "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors?download=true"},
         {"subfolder": "vae", "filename": "wan_2.1_vae.safetensors",
          "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors?download=true"},
+        {"subfolder": "diffusion_models/krea2", "filename": "gonzalomoKrea2_v40.safetensors",
+         "url": "https://civitai.com/api/download/models/3245099?fileId=3128457",
+         "needsCivitaiKey": True,
+         "source": {"name": "GonzaLomo Krea 2 v4.0", "author": "GBRX",
+                    "page": "https://civitai.com/models/2761943",
+                    "credit": False, "commercial": ["Image", "RentCivit"], "derivatives": True}},
+        {"subfolder": "loras/krea2", "filename": "midjourney_8_2_k2_epoch_20.safetensors",
+         "url": "https://civitai.com/api/download/models/3252404?fileId=3135445",
+         "needsCivitaiKey": True,
+         "source": {"name": "Midjourney Style v1.0 K2", "author": "zwaetschge",
+                    "page": "https://civitai.com/models/601666",
+                    "credit": True, "commercial": ["RentCivit"], "derivatives": True}},
+        {"subfolder": "loras/krea2", "filename": "ultra_real_krea2_v2.safetensors",
+         "url": "https://civitai.com/api/download/models/3182356",
+         "needsCivitaiKey": True,
+         "source": {"name": "UltraReal - Krea2, Klein9b (KR2_V2)", "author": "vizsumit",
+                    "page": "https://civitai.com/models/2462105",
+                    "credit": False, "commercial": ["Image", "Rent", "Sell"], "derivatives": True}},
     ],
 }
 

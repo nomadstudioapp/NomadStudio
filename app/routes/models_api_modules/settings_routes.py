@@ -51,11 +51,19 @@ def _sanitize_workflow_annotate_fields(value: Any) -> dict[str, list[str]]:
     return result
 
 
+def _public_settings(settings: dict) -> dict:
+    """Settings as the page may see them. The CivitAI API key never travels
+    back: only whether one is stored."""
+    public = {k: v for k, v in (settings or {}).items() if k != "civitaiApiKey"}
+    public["civitaiApiKeySet"] = bool(str((settings or {}).get("civitaiApiKey", "") or "").strip())
+    return public
+
+
 @models_api_bp.get("/models/settings")
 def get_models_settings():
     data = _ensure_registry()
     return jsonify(
-        {"settings": data.get("settings", {"comfyApiUrl": DEFAULT_COMFY_URL})}
+        {"settings": _public_settings(data.get("settings", {"comfyApiUrl": DEFAULT_COMFY_URL}))}
     )
 
 
@@ -91,6 +99,12 @@ def update_models_settings():
                     return jsonify({"error": f"Cannot create output directory: {exc}"}), 400
             settings["outputDir"] = raw_dir
 
+        # CivitAI refuses downloads without an API key (401), and the LoRAs
+        # some engines need are only published there. The key is the user's
+        # own, from their CivitAI account; it is never sent back to the page.
+        if "civitaiApiKey" in payload:
+            settings["civitaiApiKey"] = str(payload.get("civitaiApiKey", "")).strip()
+
         if "allowConcurrentComfyLmstudio" in payload:
             settings["allowConcurrentComfyLmstudio"] = bool(payload.get("allowConcurrentComfyLmstudio"))
 
@@ -105,7 +119,7 @@ def update_models_settings():
             except ValueError as exc:
                 return jsonify({"error": str(exc)}), 400
 
-    return jsonify({"settings": settings})
+    return jsonify({"settings": _public_settings(settings)})
 
 
 @models_api_bp.patch("/models/settings/models-folder")

@@ -274,7 +274,12 @@
       "noConfigHint": "No ComfyUI models folder configured. Add one to see file status and enable auto-download.",
       "saveFailed": "Failed to save models folder: {reason}",
       "verified": "Folder found and readable.",
-      "testFailed": "Folder test failed: {reason}"
+      "testFailed": "Folder test failed: {reason}",
+      "civitaiLabel": "CivitAI API key",
+      "civitaiHint": "Needed to download LoRAs and models hosted on CivitAI: they refuse anonymous downloads. Create one in your CivitAI account, under API keys.",
+      "civitaiSaved": "A key is saved — type a new one to replace it",
+      "civitaiEmpty": "Paste your key here",
+      "civitaiCleared": "Key removed."
     },
     "folderStatus": {
       "selectedAndSaved": "Folder selected and saved.",

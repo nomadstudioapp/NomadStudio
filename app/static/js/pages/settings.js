@@ -1868,6 +1868,57 @@ function t(key, fallback, vars) {
   load();
 })();
 
+
+// ---------------------------------------------------------------------------
+// CivitAI API key — CivitAI answers 401 to anonymous downloads, and some
+// engines need LoRAs published nowhere else. The key never comes back from
+// the server: the field shows whether one is stored.
+// ---------------------------------------------------------------------------
+(function civitaiKeySection() {
+  const input = document.getElementById('civitai-key-input');
+  const saveBtn = document.getElementById('save-civitai-key-btn');
+  const statusEl = document.getElementById('civitai-key-status');
+  if (!input || !saveBtn) return;
+
+  function show(saved, msg, isError) {
+    input.placeholder = saved
+      ? t('settings.comfy.civitaiSaved', 'A key is saved — type a new one to replace it')
+      : t('settings.comfy.civitaiEmpty', 'Paste your key here');
+    statusEl.textContent = msg || '';
+    statusEl.classList.toggle('status-error', !!isError);
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/api/models/settings', { cache: 'no-store' });
+      const json = await res.json();
+      show(!!(json.settings && json.settings.civitaiApiKeySet));
+    } catch (_) { show(false); }
+  }
+
+  saveBtn.addEventListener('click', async () => {
+    const value = input.value.trim();
+    statusEl.textContent = t('settings.common.saving', 'Saving...');
+    try {
+      const res = await fetch('/api/models/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ civitaiApiKey: value }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || ('HTTP ' + res.status));
+      input.value = '';
+      show(!!(json.settings && json.settings.civitaiApiKeySet),
+        value ? t('settings.common.saved', 'Saved.') : t('settings.comfy.civitaiCleared', 'Key removed.'));
+    } catch (error) {
+      show(false, error.message, true);
+    }
+  });
+
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } });
+  load();
+})();
+
 // ---------------------------------------------------------------------------
 // Updates — from a release ZIP (app/services/update_service.py)
 // Choose ZIP → check → prepare (extract + data backup) → restart. The page

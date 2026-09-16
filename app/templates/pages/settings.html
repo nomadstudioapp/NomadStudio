@@ -106,6 +106,16 @@
       </div>
 
       <div class="settings-field-block">
+        <label class="settings-field-label" for="civitai-key-input" data-i18n="settings.comfy.civitaiLabel">CivitAI API key</label>
+        <p class="settings-field-hint" data-i18n="settings.comfy.civitaiHint">Needed to download LoRAs and models hosted on CivitAI: they refuse anonymous downloads. Create one in your CivitAI account, under API keys.</p>
+        <div class="settings-folder-row">
+          <input type="password" id="civitai-key-input" class="settings-input" autocomplete="off" spellcheck="false" />
+          <button type="button" class="btn settings-btn-secondary" id="save-civitai-key-btn" data-i18n="settings.common.save">Save</button>
+        </div>
+        <div class="settings-inline-status" id="civitai-key-status"></div>
+      </div>
+
+      <div class="settings-field-block">
         <p class="settings-field-label" data-i18n="settings.common.status">Status</p>
         <div class="settings-status-row" id="comfy-models-folder-status-row">
           <span class="settings-status-dot" id="comfy-models-folder-status-dot" aria-hidden="true"></span>

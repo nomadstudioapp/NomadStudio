@@ -606,7 +606,12 @@
       "noConfigHint": "尚未配置 ComfyUI 模型文件夹。添加一个即可查看文件状态并启用自动下载。",
       "saveFailed": "模型文件夹保存失败：{reason}",
       "verified": "已找到文件夹，可读取。",
-      "testFailed": "文件夹测试失败：{reason}"
+      "testFailed": "文件夹测试失败：{reason}",
+      "civitaiLabel": "CivitAI API 密钥",
+      "civitaiHint": "下载托管在 CivitAI 上的 LoRA 和模型时需要：CivitAI 拒绝匿名下载。可在你的 CivitAI 账户的 API keys 中创建。",
+      "civitaiSaved": "已保存密钥，输入新的可替换",
+      "civitaiEmpty": "在此粘贴你的密钥",
+      "civitaiCleared": "密钥已删除。"
     },
     "folderStatus": {
       "selectedAndSaved": "已选择并保存文件夹。",

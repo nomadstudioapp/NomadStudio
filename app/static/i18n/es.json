@@ -1044,7 +1044,8 @@
       "getLms": "Descargar LM Studio",
       "portable": "versión portable",
       "desktop": "app de escritorio",
-      "preferPortable": "La versión portable es con la que mejor funciona Nomad Studio."
+      "preferPortable": "La versión portable es con la que mejor funciona Nomad Studio.",
+      "listen": "Que otros equipos de mi red puedan usarlo"
     }
   }
 }

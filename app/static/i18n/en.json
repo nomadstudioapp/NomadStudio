@@ -712,7 +712,8 @@
       "getLms": "Download LM Studio",
       "portable": "portable build",
       "desktop": "desktop app",
-      "preferPortable": "The portable build is the one Nomad Studio works best with."
+      "preferPortable": "The portable build is the one Nomad Studio works best with.",
+      "listen": "Let other computers on my network use it"
     }
   }
 }

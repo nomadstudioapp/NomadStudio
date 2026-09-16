@@ -161,9 +161,10 @@ def local_apps_state():
 @setup_bp.post("/api/setup/local-apps/start")
 @local_only
 def local_apps_start():
-    app_id = str((request.get_json(silent=True) or {}).get("app", ""))
+    payload = request.get_json(silent=True) or {}
+    app_id = str(payload.get("app", ""))
     if app_id == "comfy":
-        return jsonify(local_apps.start_comfyui())
+        return jsonify(local_apps.start_comfyui(listen=bool(payload.get("listen"))))
     if app_id == "lmstudio":
         return jsonify(local_apps.start_lmstudio())
     return jsonify({"ok": False, "error": "Unknown app"}), 400

@@ -1044,7 +1044,8 @@
       "getLms": "LM Studio 내려받기",
       "portable": "포터블 버전",
       "desktop": "데스크톱 앱",
-      "preferPortable": "Nomad Studio는 포터블 버전과 가장 잘 맞습니다."
+      "preferPortable": "Nomad Studio는 포터블 버전과 가장 잘 맞습니다.",
+      "listen": "네트워크의 다른 컴퓨터도 사용하도록 허용"
     }
   }
 }

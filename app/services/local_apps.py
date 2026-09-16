@@ -178,6 +178,7 @@ def state() -> dict[str, Any]:
         "canInstallComfy": sys.platform.startswith("win") and _extractor() is not None,
         "comfy": find_comfyui(),
         "comfyAll": find_comfyui_all(),
+        "comfyCanListen": can_listen(),
         "lmstudio": find_lmstudio(),
         "lmstudioUrl": LMSTUDIO_DOWNLOAD_PAGE,
         "suggestedDir": str(Path.home()),
@@ -194,16 +195,37 @@ def _spawn(args: list[str], cwd: str | None = None) -> None:
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def start_comfyui() -> dict[str, Any]:
+def can_listen(info: dict[str, Any] | None = None) -> bool:
+    """Whether we can start this install ourselves with --listen. The portable
+    build ships its own Python, so we can; the desktop app has that as a
+    setting of its own and its .bat does not forward arguments."""
+    info = info or find_comfyui()
+    if not info or info.get("kind") != "portable":
+        return False
+    root = Path(info["path"])
+    return (root / "python_embeded" / "python.exe").is_file() and (root / "ComfyUI" / "main.py").is_file()
+
+
+def start_comfyui(listen: bool = False) -> dict[str, Any]:
+    """Start ComfyUI. With *listen*, start it so other computers on the
+    network can reach it (--listen 0.0.0.0) — Windows asks about the firewall
+    the first time."""
     info = find_comfyui()
     if not info or not info.get("launcher"):
         return {"ok": False, "error": "No ComfyUI installation was found on this computer"}
+    if listen and can_listen(info):
+        root = Path(info["path"])
+        _spawn(["cmd.exe", "/c", "start", "", str(root / "python_embeded" / "python.exe"),
+                "-s", str(root / "ComfyUI" / "main.py"), "--windows-standalone-build",
+                "--listen", "0.0.0.0"], cwd=info["path"])
+        return {"ok": True, "started": info["path"], "listening": True}
     launcher = info["launcher"]
     if launcher.lower().endswith(".bat"):
         _spawn(["cmd.exe", "/c", "start", "", launcher], cwd=info["path"])
     else:
         _spawn([launcher], cwd=info["path"])
-    return {"ok": True, "started": launcher}
+    # Asked for the network but this install cannot be told from here.
+    return {"ok": True, "started": launcher, "listening": False, "listenUnavailable": bool(listen)}
 
 
 def start_lmstudio() -> dict[str, Any]:

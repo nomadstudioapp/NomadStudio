@@ -1044,7 +1044,8 @@
       "getLms": "下载 LM Studio",
       "portable": "便携版",
       "desktop": "桌面版",
-      "preferPortable": "Nomad Studio 与便携版配合得最好。"
+      "preferPortable": "Nomad Studio 与便携版配合得最好。",
+      "listen": "允许我网络中的其他电脑使用它"
     }
   }
 }

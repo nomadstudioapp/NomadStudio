@@ -56,6 +56,7 @@
     appsBusy: false,
     appsStarting: null,   // 'comfy' | 'lmstudio' while it boots
     installJob: null,     // ComfyUI portable download
+    comfyListen: false,   // start ComfyUI so other computers can reach it
     engines: null,        // result of /api/setup/engines
     enginesBusy: false,
     enginesError: '',
@@ -398,7 +399,7 @@
   function startApp(kind) {
     S.appsStarting = kind;
     render();
-    api('POST', '/api/setup/local-apps/start', { app: kind === 'comfy' ? 'comfy' : 'lmstudio' }).then(function (res) {
+    api('POST', '/api/setup/local-apps/start', { app: kind === 'comfy' ? 'comfy' : 'lmstudio', listen: kind === 'comfy' && S.comfyListen }).then(function (res) {
       if (!res.ok) { S.appsStarting = null; S.error = res.error || ''; return render(); }
       // ComfyUI takes a while to come up: keep checking instead of asking again.
       var tries = 0;
@@ -462,6 +463,10 @@
         '<span class="su-server-meta">' + esc((kindLabel ? kindLabel + ' · ' : '') + found.path) + '</span></span></button></div>';
       // Only the desktop app: the portable build is the one this works best
       // with, so offer it too instead of leaving it as the only option.
+      if (isComfy && apps.comfyCanListen) {
+        startRow += '<label class="su-check"><input type="checkbox" id="su-comfy-listen"' + (S.comfyListen ? ' checked' : '') + '>' +
+          '<span>' + esc(t('setup.apps.listen', 'Let other computers on my network use it')) + '</span></label>';
+      }
       if (isComfy && found.kind === 'desktop' && apps.canInstallComfy) {
         return startRow + '<p class="su-hint">' + esc(t('setup.apps.preferPortable',
           'The portable build is the one Nomad Studio works best with.')) + '</p>' + comfyInstallForm(apps, true);
@@ -1038,6 +1043,7 @@
   });
 
   bodyEl.addEventListener('change', function (e) {
+    if (e.target.id === 'su-comfy-listen') { S.comfyListen = e.target.checked; return; }
     if (e.target.id === 'su-skip-copy') return save({ skipComfyOutputCopy: e.target.checked });
     if (e.target.name === 'su-format') return save({ imageFormat: e.target.value }).then(render);
     if (e.target.id === 'su-pin-on') { readInputs(); S.profile.pinOn = e.target.checked; return render(); }

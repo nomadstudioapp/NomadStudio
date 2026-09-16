@@ -491,6 +491,11 @@ def ns_create_story_page():
 
 @main_bp.get("/nomad-studio/create/<slug>")
 def ns_create_generic_flow_page(slug: str):
+    # One canonical URL per flow. Flow ids use underscores (create.simple_json)
+    # and URLs use dashes; both used to answer 200, so the same page had two
+    # addresses and history and shared links disagreed (OPENHIKER#100).
+    if "_" in slug:
+        return redirect(url_for("main.ns_create_generic_flow_page", slug=slug.replace("_", "-")))
     flow_id = "create." + slug.replace("-", "_")
     return _render_flow_page(
         flow_id=flow_id,
@@ -663,6 +668,8 @@ def ns_refine_pack_composer_page(pack_slug: str, theme_slug: str):
 
 @main_bp.get("/nomad-studio/refine/<slug>")
 def ns_refine_flow_page(slug: str):
+    if "_" in slug:  # one canonical URL per flow, see the Create route above
+        return redirect(url_for("main.ns_refine_flow_page", slug=slug.replace("_", "-")))
     flow_id = "refine." + slug.replace("-", "_")
     return _render_flow_page(
         flow_id=flow_id,
@@ -681,6 +688,8 @@ def ns_canvas_composer_page():
 
 @main_bp.get("/nomad-studio/mix/<slug>")
 def ns_mix_flow_page(slug: str):
+    if "_" in slug:  # one canonical URL per flow, see the Create route above
+        return redirect(url_for("main.ns_mix_flow_page", slug=slug.replace("_", "-")))
     flow_id = "mix." + slug.replace("-", "_")
     return _render_flow_page(
         flow_id=flow_id,

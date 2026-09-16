@@ -138,6 +138,89 @@ def engine_from_registry(source: Path, name: str) -> dict:
     }
 
 
+# ── Languages (PACKAGE_FORMAT.md §7) ────────────────────────────────────────
+# A package carries its own text: card label and description per language
+# (§7.1) and the step texts in i18n/<lang>.json (§7.2). The translations
+# already exist in the app dictionary (flow.flowLabels, keyed by the English
+# text) — they belong to the flows, so the build moves them into the package.
+LANGS = ("es", "zh", "ko")
+TEXT_FIELDS = ("label", "placeholder", "hint", "note", "description")
+
+
+def load_translations(source: Path) -> dict[str, dict[str, str]]:
+    """English text → {lang: translation}, from the app dictionary plus the
+    extra table next to this script (texts the dictionary never had)."""
+    table: dict[str, dict[str, str]] = {}
+    for lang in LANGS:
+        data = json.loads((source / "app" / "static" / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
+        for english, translated in (data.get("flow", {}).get("flowLabels") or {}).items():
+            if isinstance(translated, str) and translated.strip():
+                table.setdefault(english, {})[lang] = translated
+    extra_path = Path(__file__).with_name("flow_translations.json")
+    if extra_path.is_file():
+        for english, langs in json.loads(extra_path.read_text(encoding="utf-8")).items():
+            table.setdefault(english, {}).update(langs)
+    return table
+
+
+def _texts_by_path(flow: dict) -> dict[str, str]:
+    """Every translatable text of a flow, keyed by its §7.2 path."""
+    out: dict[str, str] = {}
+    if isinstance(flow.get("description"), str):
+        out["description"] = flow["description"]
+    for step in flow.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        sid = step.get("id")
+        for field in TEXT_FIELDS:
+            if isinstance(step.get(field), str) and step[field].strip():
+                out[f"steps.{sid}.{field}"] = step[field]
+        for item in step.get("fields") or []:
+            if not isinstance(item, dict):
+                continue
+            key = item.get("key") or item.get("id")
+            for field in TEXT_FIELDS:
+                if isinstance(item.get(field), str) and item[field].strip():
+                    out[f"steps.{sid}.fields.{key}.{field}"] = item[field]
+            for option in item.get("options") or []:
+                if isinstance(option, dict) and isinstance(option.get("label"), str):
+                    out[f"steps.{sid}.fields.{key}.options.{option.get('value')}"] = option["label"]
+    return out
+
+
+def add_card_texts(flow: dict, table: dict[str, dict[str, str]]) -> dict:
+    """Card label and description in every language we have (§7.1). The flat
+    English fields stay for older installs."""
+    def texts(english: str) -> dict[str, str]:
+        return {"en": english, **{k: v for k, v in (table.get(english) or {}).items()}}
+
+    card = {"tags": list(flow.get("card_tags") or [])}
+    if isinstance(flow.get("label"), str):
+        card["label"] = texts(flow["label"])
+    if isinstance(flow.get("card_desc"), str):
+        card["desc"] = texts(flow["card_desc"])
+    flow["card"] = card
+    return flow
+
+
+def flow_i18n(flows: list[dict], table: dict[str, dict[str, str]]) -> tuple[dict[str, dict], dict[str, int]]:
+    """{lang: {flow id: {path: text}}} plus how many texts each language covers."""
+    files: dict[str, dict] = {lang: {} for lang in LANGS}
+    counts = {lang: 0 for lang in LANGS}
+    total = 0
+    for flow in flows:
+        paths = _texts_by_path(flow)
+        total += len(paths)
+        for lang in LANGS:
+            translated = {path: table[text][lang] for path, text in paths.items()
+                          if text in table and lang in table[text]}
+            if translated:
+                files[lang][flow["id"]] = translated
+                counts[lang] += len(translated)
+    counts["total"] = total
+    return files, counts
+
+
 def flow_from_source(source: Path, flow_id: str) -> dict:
     index = json.loads((source / "app" / "instructions" / "index.json").read_text(encoding="utf-8"))
     entry = next((e for e in index["flows"] if e["id"] == flow_id), None)
@@ -196,9 +279,14 @@ CORE_CREATE_VERSION = "0.2.0"
 
 
 def build_core_create(source: Path, version: str) -> Path:
+    table = load_translations(source)
     files: dict[str, object] = {}
+    flows = []
     for flow_id in CORE_CREATE_FLOWS:
-        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow_from_source(source, flow_id)
+        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        flows.append(flow)
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+    i18n, counts = flow_i18n(flows, table)
     manifest = {
         "schema_version": 1,
         "id": "nomad.core-create",
@@ -216,9 +304,12 @@ def build_core_create(source: Path, version: str) -> Path:
         "license": "proprietary",
         "group": {"id": "core", "label": {"en": "Core"}},
         "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
         "contributes": {"flows": list(files)},
     }
-    return write_zip("nomad.core-create", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT})
+    print(f"  core-create texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.core-create", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                           **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}})
 
 
 # Create › Layout: composition flows (Ideogram JSON layouts). Source id → the
@@ -237,7 +328,9 @@ LAYOUT_FLOWS = {
 
 
 def build_create_layout(source: Path, version: str) -> Path:
+    table = load_translations(source)
     files: dict[str, object] = {}
+    flows = []
     for source_id, flow_id in LAYOUT_FLOWS.items():
         flow = flow_from_source(source, source_id)
         if flow.get("id") != source_id:
@@ -246,7 +339,9 @@ def build_create_layout(source: Path, version: str) -> Path:
         text = json.dumps(flow)
         if source_id != flow_id and source_id in text:
             raise SystemExit(f"{source_id}: old id still referenced inside the flow")
+        flows.append(add_card_texts(flow, table))
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+    i18n, counts = flow_i18n(flows, table)
     manifest = {
         "schema_version": 1,
         "id": "nomad.create-layout",
@@ -263,9 +358,12 @@ def build_create_layout(source: Path, version: str) -> Path:
         "license": "proprietary",
         "group": {"id": "layout", "label": {"en": "Layout"}},
         "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
         "contributes": {"flows": list(files)},
     }
-    return write_zip("nomad.create-layout", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT})
+    print(f"  layout texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.create-layout", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                             **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}})
 
 
 def main() -> None:

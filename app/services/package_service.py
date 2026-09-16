@@ -278,6 +278,79 @@ def card_fields(flow: dict[str, Any], lang: str, default_lang: str = "en") -> di
     }
 
 
+def _flow_texts_by_path(flow: dict[str, Any]) -> dict[str, str]:
+    """Every translatable text of a flow, keyed by its path (§7.2) — the same
+    keys the package's i18n/<lang>.json uses."""
+    out: dict[str, str] = {}
+    if isinstance(flow.get("description"), str):
+        out["description"] = flow["description"]
+    for step in flow.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        sid = step.get("id")
+        for field in ("label", "placeholder", "hint", "note", "description"):
+            if isinstance(step.get(field), str):
+                out[f"steps.{sid}.{field}"] = step[field]
+        for item in step.get("fields") or []:
+            if not isinstance(item, dict):
+                continue
+            key = item.get("key") or item.get("id")
+            for field in ("label", "placeholder", "hint", "note"):
+                if isinstance(item.get(field), str):
+                    out[f"steps.{sid}.fields.{key}.{field}"] = item[field]
+            for option in item.get("options") or []:
+                if isinstance(option, dict) and isinstance(option.get("label"), str):
+                    out[f"steps.{sid}.fields.{key}.options.{option.get('value')}"] = option["label"]
+    return out
+
+
+def texts_for(data_dir: Path, lang: str) -> dict[str, str]:
+    """Translations the installed packages carry for *lang*, as
+    {text in the package's default language: translation}.
+
+    Packages are self-contained (§7): the card texts are language objects
+    inside the flow and the step texts live in i18n/<lang>.json. The app's own
+    dictionary translates by English text (data-i18n-literal / tField), so this
+    is keyed the same way and merges into it."""
+    out: dict[str, str] = {}
+    if not lang or lang == "en":
+        return out
+    index = read_index(data_dir)
+    base = packages_dir(data_dir)
+    for pkg_id, pkg in (index.get("packages") or {}).items():
+        default_lang = pkg.get("default_lang") or "en"
+        flows: dict[str, dict[str, Any]] = {}
+        for flow_id, info in (index.get("flows") or {}).items():
+            if info.get("package") != pkg_id:
+                continue
+            try:
+                flows[flow_id] = json.loads((base / info["file"]).read_text(encoding="utf-8"))
+            except (OSError, KeyError, ValueError):
+                continue
+        for flow in flows.values():
+            card = flow.get("card") if isinstance(flow.get("card"), dict) else {}
+            for field in ("label", "desc"):
+                value = card.get(field)
+                if isinstance(value, dict) and value.get(lang) and value.get(default_lang):
+                    out[str(value[default_lang])] = str(value[lang])
+        try:
+            translations = json.loads((base / pkg_id / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(translations, dict):
+            continue
+        for flow_id, by_path in translations.items():
+            flow = flows.get(flow_id)
+            if not isinstance(by_path, dict) or flow is None:
+                continue
+            source = _flow_texts_by_path(flow)
+            for path, translated in by_path.items():
+                original = source.get(path)
+                if original and isinstance(translated, str) and translated.strip():
+                    out[original] = translated
+    return out
+
+
 # ── Inspect (upload → summary) ──────────────────────────────────────────────
 
 

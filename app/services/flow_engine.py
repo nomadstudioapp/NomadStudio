@@ -653,9 +653,66 @@ def _enrich_entry(
     }
 
 
+def _set_by_path(definition: dict[str, Any], path: str, value: str) -> None:
+    """Write one translated text into the flow, by its i18n path
+    (PACKAGE_FORMAT.md §7.2): "description",
+    "steps.<id>[.fields.<key>].<prop>", "steps.<id>.fields.<key>.options.<value>"."""
+    parts = path.split(".")
+    if parts == ["description"]:
+        definition["description"] = value
+        return
+    if len(parts) < 3 or parts[0] != "steps":
+        return
+    step = next((s for s in definition.get("steps") or [] if isinstance(s, dict) and str(s.get("id")) == parts[1]), None)
+    if step is None:
+        return
+    if len(parts) == 3:
+        step[parts[2]] = value
+        return
+    if parts[2] != "fields":
+        return
+    field = next((f for f in step.get("fields") or []
+                  if isinstance(f, dict) and str(f.get("key") or f.get("id")) == parts[3]), None)
+    if field is None:
+        return
+    if len(parts) == 5 and parts[4] != "options":
+        field[parts[4]] = value
+    elif len(parts) == 6 and parts[4] == "options":
+        option = next((o for o in field.get("options") or []
+                       if isinstance(o, dict) and str(o.get("value")) == parts[5]), None)
+        if option is not None:
+            option["label"] = value
+
+
+def translate_flow(definition: dict[str, Any], pack_dir: Path, lang: str) -> dict[str, Any]:
+    """A package carries its own text (PACKAGE_FORMAT.md §7). The flow is
+    translated here, as it is served, so the flow page shows it in the user's
+    language without every step renderer having to translate on its own.
+
+    Anything the package does not translate stays in its own language."""
+    flow_id = str(definition.get("id", ""))
+    card = definition.get("card") if isinstance(definition.get("card"), dict) else {}
+    for key, target in (("label", "label"), ("desc", "card_desc")):
+        texts = card.get(key)
+        if isinstance(texts, dict) and texts.get(lang):
+            definition[target] = str(texts[lang])
+    try:
+        table = json.loads((pack_dir / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return definition
+    by_path = table.get(flow_id) if isinstance(table, dict) else None
+    if not isinstance(by_path, dict):
+        return definition
+    for key, value in by_path.items():
+        if isinstance(value, str) and value.strip():
+            _set_by_path(definition, key, value)
+    return definition
+
+
 def load_all_flows(
     settings: dict[str, Any],
     installed_packs: list[dict[str, Any]] | None = None,
+    lang: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     Carga todos los flujos disponibles:
@@ -697,6 +754,8 @@ def load_all_flows(
             continue
         for flow_file in sorted(pack_path.glob("flows/**/*.json")):
             definition = _read_json(flow_file)
+            if isinstance(definition, dict) and lang and lang != "en":
+                definition = translate_flow(definition, pack_path, lang)
             if not isinstance(definition, dict):
                 continue
             flow_id = str(definition.get("id", "")).strip()
@@ -746,12 +805,13 @@ def get_flow_by_id(
     flow_id: str,
     settings: dict[str, Any],
     installed_packs: list[dict[str, Any]] | None = None,
+    lang: str | None = None,
 ) -> dict[str, Any] | None:
     """Devuelve un flujo concreto por su id, o None si no existe."""
     target = str(flow_id or "").strip()
     if not target:
         return None
-    for flow in load_all_flows(settings, installed_packs=installed_packs):
+    for flow in load_all_flows(settings, installed_packs=installed_packs, lang=lang):
         if flow["id"] == target:
             return flow
     return None

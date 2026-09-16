@@ -11,7 +11,9 @@
 function flowBootLoad(id) {
   if (!id) return;
 
-  return fetch('/api/flows/' + id)
+  // The server translates the flow with the text its package carries.
+  var lang = (window.NomadI18n && window.NomadI18n.getLanguage && window.NomadI18n.getLanguage()) || 'en';
+  return fetch('/api/flows/' + id + '?lang=' + encodeURIComponent(lang))
     .then(function (r) { return r.json(); })
     .then(function (data) {
       var flow = data && data.flow;

@@ -1,0 +1,52 @@
+{
+  "Write your prompt as structured JSON and generate straight away. The block is sent as the prompt, as it is. No AI needed.": {
+    "es": "Escribe tu prompt como JSON estructurado y genera directamente. El bloque se envía tal cual como prompt. Sin IA.",
+    "zh": "把提示词写成结构化 JSON，直接生成。整段会原样作为提示词发送，无需 AI。",
+    "ko": "프롬프트를 구조화된 JSON으로 작성해 바로 생성합니다. 블록은 그대로 프롬프트로 전달되며 AI가 필요 없습니다."
+  },
+  "The AI improves your idea before generating. Choose how far it goes.": {
+    "es": "La IA mejora tu idea antes de generar. Elige el nivel de profundidad.",
+    "zh": "AI 在生成前先润色你的想法，深度由你选择。",
+    "ko": "생성 전에 AI가 아이디어를 다듬습니다. 어느 정도까지 다듬을지 선택하세요."
+  },
+  "Write or paste a starting prompt, generate, and then shape the scene with chat instructions. The AI rewrites the prompt with every change you ask for.": {
+    "es": "Escribe o pega tu prompt inicial, genera la imagen y ve evolucionando la escena con instrucciones en chat. La IA adapta el prompt con cada cambio que pidas.",
+    "zh": "写下或粘贴初始提示词，生成之后再用对话指令调整画面。每提出一个改动，AI 都会重写提示词。",
+    "ko": "시작 프롬프트를 쓰거나 붙여넣어 생성한 뒤, 대화로 장면을 다듬습니다. 요청할 때마다 AI가 프롬프트를 새로 씁니다."
+  },
+  "Write a template with [placeholders] and the AI writes N complete prompts, ready to generate.": {
+    "es": "Usa una plantilla con [marcadores] y la IA genera N variaciones completas listas para generar.",
+    "zh": "用带 [占位符] 的模板，AI 会写出 N 条完整提示词，直接可用于生成。",
+    "ko": "[자리표시자]가 있는 템플릿을 쓰면 AI가 바로 생성할 수 있는 완성된 프롬프트 N개를 써 줍니다."
+  },
+  "Define the workflow variables as JSON and generate N prompt variations. The AI fills the variables in — no [brackets] to look for.": {
+    "es": "Define las variables del workflow como JSON y genera N variaciones de prompts. La IA rellena las variables, sin buscar [corchetes].",
+    "zh": "把工作流变量定义为 JSON，生成 N 种提示词变体。AI 直接填充变量，不必再找 [方括号]。",
+    "ko": "워크플로 변수를 JSON으로 정의하고 프롬프트 변형 N개를 생성합니다. AI가 변수를 채우므로 [대괄호]를 찾을 필요가 없습니다."
+  },
+  "Build a visual narrative scene by scene. The AI keeps the context of the world and moves the story on from your directions.": {
+    "es": "Construye una narrativa visual escena a escena. La IA mantiene el contexto del mundo y avanza la historia a partir de tus instrucciones.",
+    "zh": "一幕一幕地构建视觉叙事。AI 记住世界设定，并按你的指示推进故事。",
+    "ko": "장면을 하나씩 쌓아 이야기를 만듭니다. AI가 세계관을 기억하고 당신의 지시에 따라 이야기를 이어갑니다."
+  },
+  "Turn one idea into several sequential scenes and send them all to the queue.": {
+    "es": "Genera múltiples escenas secuenciales a partir de una idea y las envía a la cola.",
+    "zh": "把一个想法变成多个连续场景，并一次性加入队列。",
+    "ko": "하나의 아이디어를 연속된 여러 장면으로 만들고 한 번에 대기열로 보냅니다."
+  },
+  "Upload an image, let Vision describe it, and adjust that description with an idea of your own before generating.": {
+    "es": "Sube una imagen, deja que Vision la describa y ajusta esa descripción con una idea propia antes de generar.",
+    "zh": "上传图片，让视觉模型描述它，再按你的想法调整描述后生成。",
+    "ko": "이미지를 올려 비전 모델이 설명하게 하고, 생성 전에 그 설명을 원하는 대로 다듬습니다."
+  },
+  "Upload several reference images and one example prompt, and the vision model writes a prompt for each one in that same style. Generate them all at once with the engine you choose.": {
+    "es": "Sube varias imágenes de referencia y un prompt de ejemplo, y el modelo de visión escribe un prompt por imagen en ese mismo estilo. Genera todas de golpe con el motor que elijas.",
+    "zh": "上传多张参考图和一条示例提示词，视觉模型会按同样的风格为每张图写一条提示词，再用你选的引擎一次性生成。",
+    "ko": "참고 이미지 여러 장과 예시 프롬프트 하나를 올리면 비전 모델이 같은 스타일로 이미지마다 프롬프트를 씁니다. 원하는 엔진으로 한 번에 생성하세요."
+  },
+  "Describe your composition as fragments separated by ';' and the AI builds a structured layout with bounding boxes.": {
+    "es": "Describe tu composición con fragmentos separados por ';' y la IA genera un layout estructurado con recuadros.",
+    "zh": "用 ';' 分隔的片段描述你的构图，AI 会生成带边界框的结构化版式。",
+    "ko": "';'로 구분한 조각으로 구도를 설명하면 AI가 경계 상자가 있는 구조화된 레이아웃을 만듭니다."
+  }
+}

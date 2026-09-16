@@ -34,6 +34,7 @@
     { id: 'ko', label: '한국어', ready: true }
   ];
   var cache = {};
+  var packTexts = {};  // lang → text the installed packages carry (see mergePackageTexts)
 
   function getLanguage() {
     try { return localStorage.getItem(LANG_KEY) || 'en'; } catch (_) { return 'en'; }
@@ -100,11 +101,37 @@
     });
   }
 
+  // Packages carry their own text (PACKAGE_FORMAT.md §7): the flows they
+  // bring are not in the app dictionary. Their translations are keyed by the
+  // original text, like flowLabels, so they merge straight into it. Merged
+  // once per language; a failure just leaves the flow in its own language.
+  function mergePackageTexts(dict, id) {
+    if (packTexts[id]) { applyPackTexts(dict, packTexts[id]); return Promise.resolve(dict); }
+    return fetch('/api/packages/texts?lang=' + encodeURIComponent(id), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (res) {
+        var labels = res && res.labels ? res.labels : {};
+        packTexts[id] = labels;
+        applyPackTexts(dict, labels);
+        return dict;
+      })
+      .catch(function () { return dict; });
+  }
+  function applyPackTexts(dict, labels) {
+    if (!dict.flow) dict.flow = {};
+    if (!dict.flow.flowLabels) dict.flow.flowLabels = {};
+    Object.keys(labels).forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(dict.flow.flowLabels, key)) dict.flow.flowLabels[key] = labels[key];
+    });
+  }
+
   function applyLanguage(id) {
     var lang = LANGUAGES.filter(function (l) { return l.id === id; })[0];
     var effectiveId = (lang && lang.ready) ? id : 'en';
     document.documentElement.setAttribute('lang', effectiveId);
     loadDict(effectiveId).then(function (dict) {
+      return mergePackageTexts(dict, effectiveId);
+    }).then(function (dict) {
       applyStrings(dict);
       syncPanelState(effectiveId);
       // Lets scripts that build their own DOM (the hub's tag filter chips)

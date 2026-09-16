@@ -77,6 +77,16 @@ def list_packages():
     })
 
 
+@packages_bp.get("/api/packages/texts")
+def package_texts():
+    """The text installed packages carry for one language, keyed by the
+    original (services/i18n.js merges it into flow.flowLabels)."""
+    lang = str(request.args.get("lang") or "en")[:10]
+    response = jsonify({"ok": True, "lang": lang, "labels": package_service.texts_for(DATA_DIR, lang)})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 @packages_bp.post("/api/packages/inspect")
 @local_only
 def inspect_package():

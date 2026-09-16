@@ -157,7 +157,11 @@ def get_flow(flow_id: str):
     # Normaliza el flow_id: "create/simple" → "create.simple"
     flow_id = flow_id.replace("/", ".").strip(".")
     settings, packs = _get_settings_and_packs()
-    flow = flow_engine.get_flow_by_id(flow_id, settings, installed_packs=packs)
+    # Packages carry their own text: serving the flow already translated keeps
+    # the translation out of the 36 step renderers (PACKAGE_FORMAT.md §7.2).
+    lang = str(request.args.get("lang") or "en")[:5]
+    flow = flow_engine.get_flow_by_id(flow_id, settings, installed_packs=packs,
+                                      lang=lang if lang in ("es", "zh", "ko") else None)
 
     if not flow:
         return jsonify({"error": f"Flow '{flow_id}' not found"}), 404

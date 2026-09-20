@@ -313,6 +313,13 @@ def flow_from_source(source: Path, flow_id: str) -> dict:
     return json.loads((source / "app" / "instructions" / entry["file"]).read_text(encoding="utf-8"))
 
 
+def flow_from_path(source: Path, rel_file: str) -> dict:
+    """Same as flow_from_source, but for a flow whose file exists and is
+    complete but isn't (yet) registered in index.json — e.g.
+    refine.pe_remove_glare, confirmed working, just missing its index entry."""
+    return json.loads((source / "app" / "instructions" / rel_file).read_text(encoding="utf-8"))
+
+
 def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{name}.zip"
@@ -604,20 +611,32 @@ def _strip_foreign_flow_data(graph: dict, own_ids: set[str]) -> None:
 def build_refine_static_group(
     source: Path, version: str, pkg_id: str, group_id: str,
     name: dict[str, str], summary: dict[str, str], flow_ids: list[str],
+    unregistered: dict[str, str] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
     for that path) — same shape as Create/Layout/CivitAI. group_id is set on
     the manifest for clarity/consistency with the docs, though these flows
     already declare their own group correctly (unlike the pilot's
-    Edit/Outpaint, which had to be moved out of "core")."""
+    Edit/Outpaint, which had to be moved out of "core").
+
+    `unregistered` is for a flow confirmed complete and working but missing
+    its own index.json entry on the OPENHIKER side (e.g. pe_remove_glare) —
+    {flow_id: path relative to app/instructions/}, loaded directly instead
+    of through the index."""
     table = load_translations(source)
     files: dict[str, object] = {}
     flows = []
     workflow_refs: set[str] = set()
+    unregistered = unregistered or {}
 
     for flow_id in flow_ids:
-        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        raw = (
+            flow_from_path(source, unregistered[flow_id])
+            if flow_id in unregistered
+            else flow_from_source(source, flow_id)
+        )
+        flow = add_card_texts(raw, table)
         flows.append(flow)
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)
@@ -663,11 +682,15 @@ PHOTO_EDITING_FLOWS = [
     "refine.pe_open_eyes", "refine.pe_portrait_enhance", "refine.pe_portrait_retouch",
     "refine.qwen_2511_angles", "refine.pe_remove_hair_face",
     "refine.pe_remove_watermark", "refine.pe_restore",
-    # refine.pe_remove_glare exists on disk (flows/refine/photo-editing/
-    # pe_remove_glare.json) but isn't registered in OPENHIKER's index.json —
-    # same orphan situation as refine/layer_composer.json and
-    # remove_checker.json — left out until that gets sorted on that side.
+    # Present and confirmed working, just missing its own index.json entry
+    # (unlike refine/layer_composer.json and remove_checker.json, which are
+    # genuinely broken/orphaned) — loaded via `unregistered` below instead
+    # of the index.
+    "refine.pe_remove_glare",
 ]
+PHOTO_EDITING_UNREGISTERED = {
+    "refine.pe_remove_glare": "flows/refine/photo-editing/pe_remove_glare.json",
+}
 PORTRAIT_FIX_FLOWS = [
     "refine.pf_change_hair_color", "refine.pf_dark_circles", "refine.pf_expression_changer",
     "refine.pf_hairstyle_changer", "refine.pf_hand_wrinkles", "refine.pf_red_eye_removal",
@@ -693,6 +716,7 @@ def build_photo_editing(source: Path, version: str) -> Path:
             "ko": "컬러 그레이딩, 시네마틱 룩, 복원, 워터마크/글레어 제거, 카메라 앵글 변경.",
         },
         flow_ids=PHOTO_EDITING_FLOWS,
+        unregistered=PHOTO_EDITING_UNREGISTERED,
     )
 
 

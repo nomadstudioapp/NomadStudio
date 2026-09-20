@@ -2325,6 +2325,12 @@
         window.location.href = href;
         return;
       }
+      // The href can carry a fragment (e.g. "…/settings#packages") to jump
+      // straight to one section of the embedded page instead of dropping
+      // the user at its top — fetch() itself never sends the fragment to
+      // the server, so it's parsed here and applied after the markup lands.
+      var targetHash = '';
+      try { targetHash = new URL(href, window.location.href).hash.replace(/^#/, ''); } catch (_) {}
       if (detailTitle) detailTitle.textContent = label || 'Settings';
       setDetailOpen(true);
 
@@ -2368,6 +2374,11 @@
 
         collapseImportRowActions(embedEl);
         ensureRowMenuObserver();
+
+        if (targetHash) {
+          var targetEl = embedEl.querySelector('#' + CSS.escape(targetHash));
+          if (targetEl) targetEl.scrollIntoView({ block: 'start' });
+        }
       } catch (err) {
         if (token !== embedToken) return;
         embedEl.innerHTML =

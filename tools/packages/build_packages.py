@@ -750,6 +750,23 @@ REFINE_PILOT_GROUP_OVERRIDES = {
 # already action-first, left alone. Hand-translated (not run through
 # load_translations: that table is keyed by the OLD English text, which
 # these labels no longer are).
+# card_desc/description/card_tags for the same flow — the source still says
+# "Qwen 2511 Vision" and carries a literal "2511" tag; label alone wasn't
+# the whole story (caught by the card subtitle still reading old in the UI).
+# Hand-translated like REFINE_PILOT_LABEL_OVERRIDES, for the same reason:
+# load_translations' table is keyed by the OLD English text.
+REFINE_PILOT_DESC_OVERRIDES = {
+    "refine.edit_qwen_2511_basic": {
+        "description": "Image-to-image editing with Qwen Image 2.1. Prompt-driven scene editing at original resolution.",
+        "card_tags": ["Qwen", "2.1", "Edit", "Prompt"],
+        "desc": {
+            "en": "Edit images with Qwen Image 2.1 — fast prompt-driven scene editing.",
+            "es": "Edita imágenes con Qwen Image 2.1 — edición de escena rápida guiada por prompt.",
+            "zh": "使用 Qwen Image 2.1 编辑图像——由提示词驱动的快速场景编辑。",
+            "ko": "Qwen Image 2.1로 이미지 편집 — 프롬프트 기반의 빠른 장면 편집.",
+        },
+    },
+}
 REFINE_PILOT_LABEL_OVERRIDES = {
     "refine.edit_qwen_2511_basic": {"en": "Edit Qwen 2.1", "es": "Editar Qwen 2.1", "zh": "编辑 Qwen 2.1", "ko": "편집 Qwen 2.1"},
     "refine.edit_fluxklein_9b_basic": {"en": "Edit Flux Klein 9B", "es": "Editar Flux Klein 9B", "zh": "编辑 Flux Klein 9B", "ko": "편집 Flux Klein 9B"},
@@ -1017,6 +1034,13 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             names = REFINE_PILOT_LABEL_OVERRIDES[flow_id]
             flow["label"] = names["en"]
             flow["card"]["label"] = names
+        if flow_id in REFINE_PILOT_DESC_OVERRIDES:
+            desc_override = REFINE_PILOT_DESC_OVERRIDES[flow_id]
+            flow["description"] = desc_override["description"]
+            flow["card_desc"] = desc_override["desc"]["en"]
+            flow["card_tags"] = desc_override["card_tags"]
+            flow["card"]["tags"] = desc_override["card_tags"]
+            flow["card"]["desc"] = desc_override["desc"]
         if flow_id in REFINE_PILOT_GROUP_OVERRIDES:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
         final_id = REFINE_PILOT_ID_OVERRIDES.get(flow_id, flow_id)

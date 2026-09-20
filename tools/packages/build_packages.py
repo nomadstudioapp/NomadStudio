@@ -93,6 +93,23 @@ ENGINES = {
     }),
 }
 
+# Engines that are never shipped by Nomad Studio's own bundled set (see
+# DIST_OPTIONAL below) — built only on request, for the person who owns the
+# CivitAI page to upload themselves. Krea2 Roma's Midjourney-style LoRA
+# requires credit and restricts commercial use to CivitAI's own rental
+# program (OPENHIKER#91, NomadStudio memory nomad-studio-krea2-roma-license):
+# Nomad Studio doesn't redistribute that file under its own name, so this
+# package exists only as an asset for the person publishing it on CivitAI —
+# never added to ENGINES above, never built by the default `main()` run.
+ENGINES_OPTIONAL = {
+    "Krea2 Roma": ("krea2-roma", {
+        "en": "Krea 2 with a Midjourney-style LoRA for a stronger stylized look. Ships third-party files under their own published licenses — one of them (the Midjourney-style LoRA) requires credit and restricts commercial use to CivitAI's rental program.",
+        "es": "Krea 2 con una LoRA de estilo Midjourney para un look más marcado. Incluye ficheros de terceros bajo sus propias licencias — una de ellas (la LoRA de estilo Midjourney) exige crédito y restringe el uso comercial al programa de alquiler de CivitAI.",
+        "zh": "搭配 Midjourney 风格 LoRA 的 Krea 2，风格更强烈。包含第三方文件，遵循各自发布的许可条款——其中一个（Midjourney 风格 LoRA）要求署名，且商业用途仅限 CivitAI 的租赁计划。",
+        "ko": "더 강한 스타일을 위한 Midjourney 스타일 LoRA가 포함된 Krea 2. 각자의 라이선스를 따르는 서드파티 파일을 포함합니다 — 그중 하나(Midjourney 스타일 LoRA)는 크레딧 표기가 필요하며 상업적 이용은 CivitAI 대여 프로그램으로 제한됩니다.",
+    }),
+}
+
 # Downloads the source workflows do not declare (vault: "Modelos - Descargas").
 EXTRA_DOWNLOADS = {
     "Z Anime": [
@@ -135,6 +152,35 @@ EXTRA_DOWNLOADS = {
          "source": {"name": "KREA_2_MIDJOURNEY (KREA_v1.0)", "author": "SPOON_IA",
                     "page": "https://civitai.com/models/2751419",
                     "credit": False, "commercial": ["Image", "RentCivit", "Rent", "Sell"], "derivatives": True}},
+        {"subfolder": "loras/krea2", "filename": "ultra_real_krea2_v2.safetensors",
+         "url": "https://civitai.com/api/download/models/3182356?fileId=3062944",
+         "sha256": "233A8B1DF4B3387F9F2BEDAA2099D0E14CC946D1105F732DE2A8600310B86F07",
+         "sizeBytes": 228588904, "needsCivitaiKey": True,
+         "source": {"name": "UltraReal - Krea2, Klein9b (KR2_V2)", "author": "vizsumit",
+                    "page": "https://civitai.com/models/2462105",
+                    "credit": False, "commercial": ["Image", "Rent", "Sell"], "derivatives": True}},
+    ],
+    # Same checkpoint and UltraReal LoRA as Monaco, plus the restrictive
+    # Midjourney-style LoRA Monaco deliberately swapped out.
+    "Krea2 Roma": [
+        {"subfolder": "text_encoders", "filename": "qwen3vl_4b_fp8_scaled.safetensors",
+         "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors?download=true"},
+        {"subfolder": "vae", "filename": "wan_2.1_vae.safetensors",
+         "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors?download=true"},
+        {"subfolder": "diffusion_models/krea2", "filename": "gonzalomoKrea2_v40.safetensors",
+         "url": "https://civitai.com/api/download/models/3245099?fileId=3128557",
+         "sha256": "FE60E264437D93CAC026025738157D763D1F311B90A22AFD56D1FE7497C36F9F",
+         "sizeBytes": 13491950981, "needsCivitaiKey": True,
+         "source": {"name": "GonzaLomo Krea 2 v4.0 (int8)", "author": "GBRX",
+                    "page": "https://civitai.com/models/2761943",
+                    "credit": False, "commercial": ["Image", "RentCivit"], "derivatives": True}},
+        {"subfolder": "loras/krea2", "filename": "midjourney_8_2_k2_epoch_20.safetensors",
+         "url": "https://civitai.com/api/download/models/3252404?fileId=3135445",
+         "sha256": "849F53831D235BD4DE58E43AE05C78F9F338867F5803747726D47B638F9EA41C",
+         "sizeBytes": 228581243, "needsCivitaiKey": True,
+         "source": {"name": "Midjourney Style v1.0 K2", "author": "zwaetschge",
+                    "page": "https://civitai.com/models/601666",
+                    "credit": True, "commercial": ["RentCivit"], "derivatives": False}},
         {"subfolder": "loras/krea2", "filename": "ultra_real_krea2_v2.safetensors",
          "url": "https://civitai.com/api/download/models/3182356?fileId=3062944",
          "sha256": "233A8B1DF4B3387F9F2BEDAA2099D0E14CC946D1105F732DE2A8600310B86F07",
@@ -282,8 +328,8 @@ def validate(path: Path) -> dict:
     return package_service.inspect_zip(path, package_service._empty_index(), builtin_flow_ids=set())
 
 
-def build_engine(source: Path, version: str, name: str) -> Path:
-    slug, summary = ENGINES[name]
+def build_engine(source: Path, version: str, name: str, catalog: dict = ENGINES, dest: Path = DIST) -> Path:
+    slug, summary = catalog[name]
     engine = engine_from_registry(source, name)
     pkg_id = f"nomad.engine.{slug}"
     file_rel = f"engines/{slug.replace('-', '_')}.json"
@@ -301,7 +347,7 @@ def build_engine(source: Path, version: str, name: str) -> Path:
         "order": 10 if slug == "z-image-turbo" else 50,
         "contributes": {"engines": [file_rel]},
     }
-    return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT})
+    return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT}, dest=dest)
 
 
 # Create › core flows shipped with the app. They only need an image engine,
@@ -460,10 +506,17 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path(r"D:\OPENHIKER"))
     ap.add_argument("--version", default="0.1.0")
+    # Off by default — ENGINES_OPTIONAL packages are never part of a normal
+    # build, only produced when explicitly asked for (see ENGINES_OPTIONAL's
+    # own comment for why Krea2 Roma lives there instead of in ENGINES).
+    ap.add_argument("--optional", action="store_true")
     args = ap.parse_args()
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
         build_core_civitai(args.source, args.version)]
+    if args.optional:
+        paths += [build_engine(args.source, args.version, name, catalog=ENGINES_OPTIONAL, dest=DIST_OPTIONAL)
+                  for name in ENGINES_OPTIONAL]
     for path in paths:
         summary = validate(path)
         engine_note = ""

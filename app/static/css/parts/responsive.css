@@ -1641,7 +1641,7 @@
 .settings-package-review[hidden] { display: none; }
 .settings-package-review .settings-backup-item { box-shadow: inset 0 0 0 1px var(--accent); }
 .settings-package-actions { justify-content: flex-end; }
-.settings-package-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
+.settings-package-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 4px 0 2px; }
 .settings-package-section {
   margin: 10px 0 2px;
   font-size: 11px;

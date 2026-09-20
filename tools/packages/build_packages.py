@@ -644,6 +644,19 @@ REFINE_PILOT_STATIC_FLOWS = [
     "refine.edit_boogu_turbo_basic", "refine.edit_fluxklein_9b_restore", "refine.outpaint",
     "refine.upscale_model",
 ]
+# Both still run the 2511 engine internally (refine_qwen_2511_edit.json and
+# the Qwen upscale LoRA haven't been migrated to Qwen Image 2.1 yet — that's
+# its own follow-up) — renamed anyway, on request, ahead of that migration.
+REFINE_PILOT_ID_OVERRIDES = {
+    "refine.edit_qwen_2511_basic": "refine.edit_qwen2_basic",
+    "refine.upscale_qwen_2511": "refine.upscale_qwen2",
+}
+# Same rename, for the flow whose id/label live inside its workflow's
+# embedded flow_data (not a top-level dict field build_packages.py loaded
+# directly) — applied by _rename_embedded_flow_data.
+REFINE_PILOT_FLOW_DATA_LABEL_OVERRIDES = {
+    "refine.upscale_qwen_2511": "Upscale (Qwen 2.1)",
+}
 # The source flow.json files (OPENHIKER) all say group "core" — Edit/Outpaint
 # and the classic Upscale model belong under their own groups instead. The 4
 # flow_data-only Upscale engines already declare "group": "upscale" in their
@@ -660,7 +673,7 @@ REFINE_PILOT_GROUP_OVERRIDES = {
 # load_translations: that table is keyed by the OLD English text, which
 # these labels no longer are).
 REFINE_PILOT_LABEL_OVERRIDES = {
-    "refine.edit_qwen_2511_basic": {"en": "Edit Qwen 2511", "es": "Editar Qwen 2511", "zh": "编辑 Qwen 2511", "ko": "편집 Qwen 2511"},
+    "refine.edit_qwen_2511_basic": {"en": "Edit Qwen 2.1", "es": "Editar Qwen 2.1", "zh": "编辑 Qwen 2.1", "ko": "편집 Qwen 2.1"},
     "refine.edit_fluxklein_9b_basic": {"en": "Edit Flux Klein 9B", "es": "Editar Flux Klein 9B", "zh": "编辑 Flux Klein 9B", "ko": "편집 Flux Klein 9B"},
     "refine.edit_fluxklein_4b_basic": {"en": "Edit Flux Klein 4B", "es": "Editar Flux Klein 4B", "zh": "编辑 Flux Klein 4B", "ko": "편집 Flux Klein 4B"},
     "refine.edit_boogu_turbo_basic": {"en": "Edit Boogu Turbo", "es": "Editar Boogu Turbo", "zh": "编辑 Boogu Turbo", "ko": "편집 Boogu Turbo"},
@@ -700,25 +713,45 @@ def _collect_workflow_file_refs(node: object) -> set[str]:
     return refs
 
 
-def _strip_foreign_flow_data(graph: dict, own_ids: set[str]) -> None:
+def _rename_embedded_flow_data(graph: dict, id_overrides: dict[str, str], label_overrides: dict[str, str]) -> None:
+    """For a flow_data-only flow (no top-level dict to edit — its id/label
+    live inside the workflow's own flow_data node, as a JSON *string*), apply
+    the same id_overrides/label rename build_refine_pilot uses for the
+    authored ones, so both kinds get consistent treatment."""
+    from app.services.flow_engine import _extract_flow_data_node
+
+    for node in graph.values():
+        if not isinstance(node, dict) or str(node.get("_meta", {}).get("title", "")) != "flow_data":
+            continue
+        meta = _extract_flow_data_node(graph)
+        if meta is None or str(meta.get("id", "")) not in id_overrides:
+            return
+        old_id = str(meta["id"])
+        meta["id"] = id_overrides[old_id]
+        if old_id in label_overrides:
+            meta["label"] = label_overrides[old_id]
+        node["inputs"]["value"] = json.dumps(meta)
+        return
+
+
+def _strip_foreign_flow_data(graph: dict) -> None:
     """A shared base workflow (e.g. refine_qwen_2511_edit.json, reused by
     several flows via `workflow_file`) can itself carry a `flow_data` node
-    that's the authoritative source of a DIFFERENT flow — Edit Qwen 2511, in
+    that's the authoritative source of a DIFFERENT flow — Edit Qwen 2.1, in
     the pilot package. Bundling that file unmodified into another package
     would let package_service's install-time flow_data conversion (§5.3)
-    silently redeclare that other package's flow here too, and the second
-    install to try it would be rejected as "Flow id already in use". The
-    node is metadata only (nothing in the graph consumes its output), so
-    dropping it is safe — this package's own flows never needed it; they
-    only needed the ComfyUI graph around it."""
+    redeclare that flow here too — under its OLD id even when the owning
+    package renamed it (build_refine_pilot/build_refine_static_group's
+    id_overrides), since this embedded copy is untouched by that rename.
+    Always stripped, unconditionally: every flow these two builders package
+    already comes fully authored via contributes.flows, so this embedded
+    copy is 100% redundant even on an id match — nothing in the graph
+    consumes its output, dropping it is safe."""
     from app.services.flow_engine import _extract_flow_data_node
 
     meta = _extract_flow_data_node(graph)
     if meta is None:
         return
-    flow_id = str(meta.get("id", "")).strip()
-    if flow_id and flow_id in own_ids:
-        return  # this package does mean to (re)declare it — leave it
     for node_id, node in list(graph.items()):
         if isinstance(node, dict) and str(node.get("_meta", {}).get("title", "")) == "flow_data":
             del graph[node_id]
@@ -729,6 +762,8 @@ def build_refine_static_group(
     source: Path, version: str, pkg_id: str, group_id: str,
     name: dict[str, str], summary: dict[str, str], flow_ids: list[str],
     unregistered: dict[str, str] | None = None,
+    id_overrides: dict[str, str] | None = None,
+    label_overrides: dict[str, dict[str, str]] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -740,13 +775,17 @@ def build_refine_static_group(
     `unregistered` is for a flow confirmed complete and working but missing
     its own index.json entry on the OPENHIKER side (e.g. pe_remove_glare) —
     {flow_id: path relative to app/instructions/}, loaded directly instead
-    of through the index."""
+    of through the index. `id_overrides`/`label_overrides` are keyed by the
+    OLD id, same pattern as REFINE_PILOT_ID_OVERRIDES/LABEL_OVERRIDES."""
     table = load_translations(source)
     files: dict[str, object] = {}
     flows = []
     workflow_refs: set[str] = set()
     unregistered = unregistered or {}
+    id_overrides = id_overrides or {}
+    label_overrides = label_overrides or {}
 
+    final_flow_ids: list[str] = []
     for flow_id in flow_ids:
         raw = (
             flow_from_path(source, unregistered[flow_id])
@@ -754,17 +793,23 @@ def build_refine_static_group(
             else flow_from_source(source, flow_id)
         )
         flow = add_card_texts(raw, table)
+        if flow_id in label_overrides:
+            names = label_overrides[flow_id]
+            flow["label"] = names["en"]
+            flow["card"]["label"] = names
+        final_id = id_overrides.get(flow_id, flow_id)
+        flow["id"] = final_id
+        final_flow_ids.append(final_id)
         flows.append(flow)
-        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+        files[f"flows/{final_id.split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)
 
-    own_ids = set(flow_ids)
     for ref in sorted(workflow_refs):
         src_path = source / "app" / ref
         if not src_path.is_file():
             raise SystemExit(f"referenced workflow_file not found: {src_path}")
         graph = json.loads(src_path.read_text(encoding="utf-8"))
-        _strip_foreign_flow_data(graph, own_ids)
+        _strip_foreign_flow_data(graph)
         files[ref] = graph
 
     i18n, counts = flow_i18n(flows, table)
@@ -781,7 +826,7 @@ def build_refine_static_group(
         "requires": {"engines": [{"category": "image"}]},
         "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
         "contributes": {
-            "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in flow_ids],
+            "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in final_flow_ids],
             "workflows": sorted(workflow_refs),
         },
     }
@@ -834,6 +879,13 @@ def build_photo_editing(source: Path, version: str) -> Path:
         },
         flow_ids=PHOTO_EDITING_FLOWS,
         unregistered=PHOTO_EDITING_UNREGISTERED,
+        # Still runs the 2511 engine internally (refine_qwen_2511_angles.json
+        # hasn't been migrated to Qwen Image 2.1 yet) — renamed anyway, on
+        # request, ahead of that migration.
+        id_overrides={"refine.qwen_2511_angles": "refine.qwen2_angles"},
+        label_overrides={"refine.qwen_2511_angles": {
+            "en": "Qwen 2.1 Angles", "es": "Ángulos Qwen 2.1", "zh": "Qwen 2.1 视角", "ko": "Qwen 2.1 앵글",
+        }},
     )
 
 
@@ -871,6 +923,7 @@ def build_refine_pilot(source: Path, version: str) -> Path:
     flows = []
     workflow_refs: set[str] = set()
 
+    final_flow_ids: list[str] = []
     for flow_id in REFINE_PILOT_STATIC_FLOWS:
         flow = add_card_texts(flow_from_source(source, flow_id), table)
         if flow_id in REFINE_PILOT_LABEL_OVERRIDES:
@@ -879,8 +932,11 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             flow["card"]["label"] = names
         if flow_id in REFINE_PILOT_GROUP_OVERRIDES:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
+        final_id = REFINE_PILOT_ID_OVERRIDES.get(flow_id, flow_id)
+        flow["id"] = final_id
+        final_flow_ids.append(final_id)
         flows.append(flow)
-        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+        files[f"flows/{final_id.split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)
 
     for ref in sorted(workflow_refs):
@@ -889,7 +945,9 @@ def build_refine_pilot(source: Path, version: str) -> Path:
         src_path = source / "app" / ref
         if not src_path.is_file():
             raise SystemExit(f"referenced workflow_file not found: {src_path}")
-        files[ref] = json.loads(src_path.read_text(encoding="utf-8"))
+        graph = json.loads(src_path.read_text(encoding="utf-8"))
+        _strip_foreign_flow_data(graph)
+        files[ref] = graph
 
     workflow_only_rels = []
     for rel_from_source in REFINE_PILOT_WORKFLOW_ONLY_FILES:
@@ -897,7 +955,9 @@ def build_refine_pilot(source: Path, version: str) -> Path:
         if not src_path.is_file():
             raise SystemExit(f"flow_data workflow not found: {src_path}")
         pkg_rel = f"workflows/{src_path.name}"
-        files[pkg_rel] = json.loads(src_path.read_text(encoding="utf-8"))
+        graph = json.loads(src_path.read_text(encoding="utf-8"))
+        _rename_embedded_flow_data(graph, REFINE_PILOT_ID_OVERRIDES, REFINE_PILOT_FLOW_DATA_LABEL_OVERRIDES)
+        files[pkg_rel] = graph
         workflow_only_rels.append(pkg_rel)
 
     i18n, counts = flow_i18n(flows, table)
@@ -919,7 +979,7 @@ def build_refine_pilot(source: Path, version: str) -> Path:
         "requires": {"engines": [{"category": "image"}]},
         "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
         "contributes": {
-            "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in REFINE_PILOT_STATIC_FLOWS],
+            "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in final_flow_ids],
             "workflows": [ref for ref in sorted(workflow_refs)] + workflow_only_rels,
         },
     }

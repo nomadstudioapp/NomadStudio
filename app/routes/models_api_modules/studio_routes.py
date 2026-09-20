@@ -51,6 +51,7 @@ from app.routes.models_api_shared import (
 )
 
 from app.routes.models_api_modules.chat_routes import (
+    IDEOGRAM_COMPOSE_SCHEMA,
     _extract_json_payload_from_text,
     _extract_lmstudio_message_text,
     _extract_lmstudio_v1_message_text,
@@ -58,6 +59,7 @@ from app.routes.models_api_modules.chat_routes import (
     _build_chat_payload,
     _call_lmstudio_v1_chat,
     _call_studio_llm,
+    _call_studio_llm_json,
     _reasoning_level_from_request,
     _resolve_prompt_model,
     _resolve_vision_model,
@@ -362,6 +364,66 @@ def studio_scenes_prompt():
     covered_summaries: list[str] = []
     raw_outputs: list[str] = []
 
+    # Schema-first attempt for one chunk, short timeout, falling back to the
+    # native endpoint's own call unchanged on any failure (NomadStudio#3) —
+    # same "try fast, fall back to what already worked" shape as
+    # _call_studio_llm_json, just wired to this loop's own chunked/anchored
+    # shape instead of a single call. Only used with the DEFAULT prompts: a
+    # caller-supplied systemPrompt/userPrompt (a flow JSON's own template)
+    # may ask for a different shape entirely (a bare array — see the
+    # isinstance(parsed, list) handling below), and forcing this schema on
+    # it would silently break those flows instead of the ones this fixes.
+    def _scenes_chunk_raw_output(count: int, msgs: list[dict[str, str]]) -> str:
+        if not (payload_system_prompt_scenes or payload_user_prompt_scenes):
+            chunk_schema = {
+                "type": "object",
+                "properties": {
+                    "anchor": {"type": "string"},
+                    "scenes": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": count,
+                        "maxItems": count,
+                    },
+                },
+                "required": ["anchor", "scenes"],
+            }
+            try:
+                schema_payload = _build_chat_payload(
+                    lmstudio_model, msgs, lmstudio_temperature, max_output_tokens
+                )
+                schema_payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {"name": "studio_scenes_chunk", "strict": True, "schema": chunk_schema},
+                }
+                response = http_json(
+                    url=_lmstudio_chat_endpoint(lmstudio_url), gpu_category="lmstudio",
+                    method="POST", payload=schema_payload, timeout=90,
+                )
+                answer, _source = _extract_lmstudio_message_text(response)
+                if answer.strip():
+                    return answer
+                logger.warning(
+                    "studio-scenes: schema-constrained chunk call returned nothing; "
+                    "falling back to the native endpoint."
+                )
+            except Exception as exc:
+                logger.warning(
+                    "studio-scenes: schema-constrained chunk call failed (%s); "
+                    "falling back to the native endpoint.", exc,
+                )
+        v1_response, _used_reasoning_level = _call_lmstudio_v1_chat(
+            lmstudio_url,
+            lmstudio_model,
+            msgs[0]["content"],
+            msgs[1]["content"],
+            lmstudio_temperature,
+            max_output_tokens,
+            reasoning=reasoning_level,
+            timeout=600,
+        )
+        return _extract_lmstudio_v1_message_text(v1_response)
+
     try:
         if auto_disconnect:
             auto_disconnect_loaded, unload_instance_id = _lmstudio_load_model(
@@ -371,17 +433,7 @@ def studio_scenes_prompt():
         reasoning_level = _reasoning_level_from_request(payload)
         for chunk_count in chunk_sizes:
             messages = _build_messages(chunk_count, anchor_pin, covered_summaries)
-            v1_response, _used_reasoning_level = _call_lmstudio_v1_chat(
-                lmstudio_url,
-                lmstudio_model,
-                messages[0]["content"],
-                messages[1]["content"],
-                lmstudio_temperature,
-                max_output_tokens,
-                reasoning=reasoning_level,
-                timeout=600,
-            )
-            raw_output = _extract_lmstudio_v1_message_text(v1_response)
+            raw_output = _scenes_chunk_raw_output(chunk_count, messages)
             if not raw_output:
                 break
             raw_outputs.append(raw_output)
@@ -1884,12 +1936,14 @@ def studio_ideogram_compose():
             auto_disconnect_loaded, unload_instance_id = _lmstudio_load_model(
                 lmstudio_url, lmstudio_model, context_size
             )
-        raw_output, raw_source = _call_studio_llm(
+        ideogram_json, raw_source, used_schema = _call_studio_llm_json(
             lmstudio_url,
             lmstudio_model,
             messages,
             lmstudio_temperature,
             max_output_tokens,
+            IDEOGRAM_COMPOSE_SCHEMA,
+            "ideogram_compose",
             reasoning=_reasoning_level_from_request(payload),
             timeout=300,
             label="studio-ideogram",
@@ -1903,7 +1957,6 @@ def studio_ideogram_compose():
     if auto_disconnect and auto_disconnect_loaded and unload_instance_id:
         auto_disconnect_applied = _lmstudio_unload_model(lmstudio_url, unload_instance_id)
 
-    ideogram_json = _extract_json_payload_from_text(raw_output)
     if not isinstance(ideogram_json, dict):
         return jsonify(
             _reasoning_only_error(raw_source, max_output_tokens, "LM Studio returned invalid or empty Ideogram JSON")
@@ -1916,6 +1969,7 @@ def studio_ideogram_compose():
         "autoDisconnectApplied": auto_disconnect_applied,
         "referenceDescription": reference_description,
         "referenceAnalyzed": bool(reference_description),
+        "usedSchema": used_schema,
     })
 
 
@@ -1977,12 +2031,14 @@ def studio_ideogram_refine():
             auto_disconnect_loaded, unload_instance_id = _lmstudio_load_model(
                 lmstudio_url, lmstudio_model, context_size
             )
-        raw_output, raw_source = _call_studio_llm(
+        ideogram_json, raw_source, used_schema = _call_studio_llm_json(
             lmstudio_url,
             lmstudio_model,
             messages,
             lmstudio_temperature,
             max_output_tokens,
+            IDEOGRAM_COMPOSE_SCHEMA,
+            "ideogram_compose",
             reasoning=_reasoning_level_from_request(payload),
             timeout=300,
             label="studio-ideogram-refine",
@@ -1996,7 +2052,6 @@ def studio_ideogram_refine():
     if auto_disconnect and auto_disconnect_loaded and unload_instance_id:
         auto_disconnect_applied = _lmstudio_unload_model(lmstudio_url, unload_instance_id)
 
-    ideogram_json = _extract_json_payload_from_text(raw_output)
     if not isinstance(ideogram_json, dict):
         return jsonify(
             _reasoning_only_error(
@@ -2007,6 +2062,7 @@ def studio_ideogram_refine():
     return jsonify({
         "ideogramJson": ideogram_json,
         "autoDisconnectApplied": auto_disconnect_applied,
+        "usedSchema": used_schema,
     })
 
 
@@ -2085,12 +2141,14 @@ def studio_ideogram_storyboard():
             auto_disconnect_loaded, unload_instance_id = _lmstudio_load_model(
                 lmstudio_url, lmstudio_model, context_size
             )
-        raw_output, raw_source = _call_studio_llm(
+        ideogram_json, raw_source, used_schema = _call_studio_llm_json(
             lmstudio_url,
             lmstudio_model,
             messages,
             lmstudio_temperature,
             max_output_tokens,
+            IDEOGRAM_COMPOSE_SCHEMA,
+            "ideogram_compose",
             reasoning=_reasoning_level_from_request(payload),
             timeout=300,
             label="studio-ideogram-storyboard",
@@ -2106,7 +2164,6 @@ def studio_ideogram_storyboard():
     if auto_disconnect and auto_disconnect_loaded and unload_instance_id:
         auto_disconnect_applied = _lmstudio_unload_model(lmstudio_url, unload_instance_id)
 
-    ideogram_json = _extract_json_payload_from_text(raw_output)
     if not isinstance(ideogram_json, dict):
         return jsonify(
             _reasoning_only_error(
@@ -2122,6 +2179,7 @@ def studio_ideogram_storyboard():
         "rows": _rows,
         "panels": _n_panels,
         "autoDisconnectApplied": auto_disconnect_applied,
+        "usedSchema": used_schema,
     })
 
 

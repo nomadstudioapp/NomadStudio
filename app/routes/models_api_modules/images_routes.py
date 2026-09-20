@@ -7,6 +7,7 @@ from flask import jsonify, make_response, request, Response, stream_with_context
 
 from app.routes.models_api_shared import (
     _ensure_registry,
+    _registry_transaction,
     _resolve_output_dir,
     _resolve_viewer_output_dir,
     _active_viewer_id,
@@ -333,32 +334,31 @@ def update_image_meta(filename: str):
     image — the active viewer's own output folder for plain generations, or
     the shared session/bundle/vault/input subfolders for anything saved
     there (see _resolve_image_path_for_filename)."""
-    data = _ensure_registry()
     viewer_id = _active_viewer_id()
     if not viewer_id:
         return jsonify({"error": "No active viewer session"}), 401
 
-    image_path = _resolve_image_path_for_filename(data, filename)
-    if image_path is None:
-        return jsonify({"error": "Image not found"}), 404
+    with _registry_transaction() as data:
+        image_path = _resolve_image_path_for_filename(data, filename)
+        if image_path is None:
+            return jsonify({"error": "Image not found"}), 404
 
-    payload = request.get_json(silent=True) or {}
-    allowed_keys = {"tags", "favorite", "diamond", "tray"}
-    current = image_service.read_sidecar(image_path)
-    for k in allowed_keys:
-        if k in payload:
-            current[k] = payload[k]
-    image_service.write_sidecar(image_path, current)
+        payload = request.get_json(silent=True) or {}
+        allowed_keys = {"tags", "favorite", "diamond", "tray"}
+        current = image_service.read_sidecar(image_path)
+        for k in allowed_keys:
+            if k in payload:
+                current[k] = payload[k]
+        image_service.write_sidecar(image_path, current)
 
-    # Keep registry tray index in sync so GET /api/images/tray is O(1)
-    if "tray" in payload:
-        index = _tray_index(data, viewer_id)
-        if payload["tray"]:
-            if filename not in index:
-                index.append(filename)
-        else:
-            data["imageTrayFilenames"][viewer_id] = [f for f in index if f != filename]
-        _save_registry(data)
+        # Keep registry tray index in sync so GET /api/images/tray is O(1)
+        if "tray" in payload:
+            index = _tray_index(data, viewer_id)
+            if payload["tray"]:
+                if filename not in index:
+                    index.append(filename)
+            else:
+                data["imageTrayFilenames"][viewer_id] = [f for f in index if f != filename]
 
     return jsonify({"ok": True, "sidecar": current})
 
@@ -431,55 +431,128 @@ def list_tray_images():
             "createdAt": created_at,
         })
 
-    # Prune deleted files from this viewer's index
+    # Prune deleted files from this viewer's index. Lock only taken on the
+    # rare call that actually has something to prune — see get_active_import
+    # (imports_routes.py) for the same pattern on this endpoint's hot-GET
+    # sibling: forcing every read through _registry_transaction() would add
+    # a disk write to every tray fetch, not just the ones that need pruning.
     if missing:
-        data["imageTrayFilenames"][viewer_id] = [f for f in index if f not in missing]
-        _save_registry(data)
+        with _registry_transaction() as tx_data:
+            tx_index = _tray_index(tx_data, viewer_id)
+            tx_data["imageTrayFilenames"][viewer_id] = [f for f in tx_index if f not in missing]
 
     return jsonify({"images": result, "total": len(result)})
 
 
 @models_api_bp.delete("/images")
 def delete_images():
-    """Delete a list of image files (and their sidecars) from the active
-    viewer's own output folder."""
-    from pathlib import Path
-
-    data = _ensure_registry()
-    output_dir = _resolve_viewer_output_dir(data)
-    if not output_dir:
-        return jsonify({"error": "No active viewer session"}), 401
+    """Delete image files using the same viewer/session path resolution as
+    image serving and metadata updates."""
 
     payload = request.get_json(silent=True) or {}
     filenames = payload.get("filenames", [])
     if not isinstance(filenames, list):
         return jsonify({"error": "filenames must be a list"}), 400
 
-    deleted = []
-    errors = []
-    out = Path(output_dir)
+    with _registry_transaction() as data:
+        output_dir = _resolve_viewer_output_dir(data)
+        if not output_dir:
+            return jsonify({"error": "No active viewer session"}), 401
 
-    for filename in filenames:
-        fname = str(filename).strip()
-        # path-traversal guard
-        if not fname or "/" in fname or "\\" in fname or ".." in fname:
-            errors.append({"filename": fname, "error": "Invalid filename"})
-            continue
-        image_path = out / fname
-        if not image_path.is_file():
-            errors.append({"filename": fname, "error": "Not found"})
-            continue
+        deleted = []
+        errors = []
+        viewer_id = _active_viewer_id()
+        tray_index = _tray_index(data, viewer_id) if viewer_id else []
+
+        for filename in filenames:
+            fname = str(filename).strip()
+            if not fname:
+                errors.append({"filename": fname, "error": "Invalid filename"})
+                continue
+            image_path = _resolve_image_path_for_filename(data, fname)
+            # Images created before per-viewer folders existed may still be in the
+            # shared output root. Keep the same safe legacy fallback as serving.
+            if image_path is None and "/" not in fname and "\\" not in fname and ".." not in fname:
+                from pathlib import Path
+                legacy_path = Path(_resolve_output_dir(data)) / fname
+                image_path = legacy_path if legacy_path.is_file() else None
+            # Last-resort lookup mirrors the Album paginator exactly. This also
+            # handles older output layouts where the served filename was flattened
+            # from a nested path before being returned to the client.
+            if image_path is None and "/" not in fname and "\\" not in fname and ".." not in fname:
+                candidates = image_service.list_image_files_sorted(output_dir)
+                shared_dir = _resolve_output_dir(data)
+                if shared_dir != output_dir:
+                    candidates += image_service.list_image_files_sorted(shared_dir)
+                image_path = next((candidate for candidate in candidates if candidate.name == fname), None)
+            if image_path is None or not image_path.is_file():
+                errors.append({"filename": fname, "error": "Not found"})
+                continue
+            try:
+                image_path.unlink()
+                # Also remove sidecar if it exists
+                sidecar = image_service._sidecar_path(image_path)
+                if sidecar.is_file():
+                    sidecar.unlink()
+                if viewer_id and fname in tray_index:
+                    data["imageTrayFilenames"][viewer_id] = [f for f in tray_index if f != fname]
+                deleted.append(fname)
+            except Exception as exc:
+                errors.append({"filename": fname, "error": str(exc)})
+
+    return jsonify({"ok": not errors, "deleted": deleted, "errors": errors})
+
+
+@models_api_bp.delete("/images/<path:filename>")
+def delete_image(filename: str):
+    """Delete one image by the exact filename used by Album."""
+    try:
+        data = _ensure_registry()
+        output_dir = _resolve_viewer_output_dir(data)
+    except Exception as exc:
+        return jsonify({"error": f"Delete setup failed: {type(exc).__name__}: {exc}"}), 500
+    if not output_dir:
+        return jsonify({"error": "No active viewer session"}), 401
+
+    fname = str(filename or '').strip()
+    try:
+        image_path = _resolve_image_path_for_filename(data, fname)
+        if image_path is None and "/" not in fname and "\\" not in fname and ".." not in fname:
+            from pathlib import Path
+            candidates = image_service.list_image_files_sorted(output_dir)
+            shared_dir = _resolve_output_dir(data)
+            if shared_dir != output_dir:
+                candidates += image_service.list_image_files_sorted(shared_dir)
+            image_path = next((candidate for candidate in candidates if candidate.name == fname), None)
+    except Exception as exc:
+        return jsonify({"error": f"Delete path resolution failed: {type(exc).__name__}: {exc}", "filename": fname}), 500
+    if image_path is None or not image_path.is_file():
+        return jsonify({"error": "Image not found", "filename": fname}), 404
+
+    try:
+        image_path.unlink()
+        sidecar = image_service._sidecar_path(image_path)
         try:
-            image_path.unlink()
-            # Also remove sidecar if it exists
-            sidecar = image_service._sidecar_path(image_path)
             if sidecar.is_file():
                 sidecar.unlink()
-            deleted.append(fname)
-        except Exception as exc:
-            errors.append({"filename": fname, "error": str(exc)})
-
-    return jsonify({"ok": True, "deleted": deleted, "errors": errors})
+        except Exception:
+            # The image itself is already deleted; a stale legacy sidecar is
+            # harmless and must not turn a successful delete into HTTP 500.
+            pass
+        viewer_id = _active_viewer_id()
+        if viewer_id:
+            try:
+                with _registry_transaction() as tx_data:
+                    index = _tray_index(tx_data, viewer_id)
+                    if fname in index:
+                        tx_data["imageTrayFilenames"][viewer_id] = [f for f in index if f != fname]
+            except Exception:
+                # Tray cleanup is secondary; list_tray_images prunes a
+                # missing file on its next read.
+                pass
+        return jsonify({"ok": True, "deleted": [fname]})
+    except Exception as exc:
+        return jsonify({"error": str(exc), "filename": fname}), 500
 
 
 @models_api_bp.post("/images/free-memory")

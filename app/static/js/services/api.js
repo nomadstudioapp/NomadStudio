@@ -1051,14 +1051,18 @@ window.openJourneyApi = {
   },
 
   async deleteImages(filenames) {
-    const res = await fetch('/api/images', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filenames: Array.isArray(filenames) ? filenames : [] }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to delete images');
-    return data;
+    const items = Array.isArray(filenames) ? filenames : [];
+    const deleted = [];
+    for (const filename of items) {
+      const encoded = String(filename).split('/').map(encodeURIComponent).join('/');
+      const res = await fetch(`/api/images/${encoded}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok || data.ok !== true) {
+        throw new Error(data.error || 'Failed to delete image');
+      }
+      deleted.push(filename);
+    }
+    return { ok: true, deleted };
   },
 
   async freeComfyMemory(payload = {}) {

@@ -44,6 +44,7 @@ from app.routes.models_api_shared import (
     _append_lmstudio_output_log,
     _describe_cache_set,
     _ensure_registry,
+    _registry_transaction,
     _resolve_output_dir,
     _safe_session_subdir,
     _save_registry,
@@ -199,9 +200,19 @@ def generate_from_import(import_id: str):
     except Exception as exc:
         return jsonify({"error": f"ComfyUI request failed: {exc}"}), 502
 
-    record["basicValues"] = merged_basic
-    record["advancedValues"] = merged_advanced
-    _save_registry(data)
+    # Re-fetch a fresh copy under the lock for this last small write instead
+    # of reusing `data`/`record` from the top of the function — the actual
+    # generation above can run for minutes (ComfyUI submit + poll loop),
+    # during which another request may have already changed this same
+    # import; holding the registry's mutation lock for that whole stretch
+    # would also freeze every other read/write in the app for minutes.
+    with _registry_transaction() as tx_data:
+        tx_record = next(
+            (item for item in tx_data.get("imports", []) if item.get("id") == import_id), None
+        )
+        if tx_record is not None:
+            tx_record["basicValues"] = merged_basic
+            tx_record["advancedValues"] = merged_advanced
 
     return jsonify(
         {

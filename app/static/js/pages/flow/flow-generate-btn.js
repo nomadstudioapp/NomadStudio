@@ -103,7 +103,7 @@ async function loadWorkflows(selectEl, hintEl, recommendedIds) {
     var listData = await listRes.json();
     var allImports = Array.isArray(listData.imports) ? listData.imports : [];
     // Some flows name the engines they were built around (Character Sheet:
-    // Ideogram 4 and Krea2 Roma). They used to be a filter and everything else
+    // Ideogram 4 and Krea2 Monaco). They used to be a filter and everything else
     // was hidden — which assumes we know what the user has. We don't: engines
     // are imported, so someone's own import may well be the right one, and
     // hiding it makes the product wrong rather than helpful. Recommend, sort

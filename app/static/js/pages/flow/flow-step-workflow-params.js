@@ -276,15 +276,21 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         // field is split into its own step (see _build_mix_flow_definition /
         // _build_refine_flow_definition), the step's own heading already
         // says "Choose engine", so no extra label here in that case.
+        //
+        // The label is its own block title (nsc-param-title — uppercase,
+        // same as every other section heading in this panel, e.g. "DOWNSCALE
+        // SOURCE"), not an inline nsc-field-label beside the select — it used
+        // to be the latter, which read as a smaller, non-uppercase row label
+        // instead of matching the rest of the panel (#72).
+        if (f.label) {
+          var esTitle = document.createElement('p');
+          esTitle.className = 'nsc-param-title';
+          esTitle.textContent = f.label;
+          fieldsWrap.appendChild(esTitle);
+        }
+
         var esRow = document.createElement('div');
         esRow.className = 'nsc-field-row nsc-field-row--prompt';
-
-        if (f.label) {
-          var esLbl = document.createElement('label');
-          esLbl.className = 'nsc-field-label';
-          esLbl.textContent = f.label;
-          esRow.appendChild(esLbl);
-        }
 
         var esWrap = document.createElement('div');
         esWrap.className = 'nsc-select-wrapper';
@@ -1362,7 +1368,11 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var blkTip = document.createElement('span');
         blkTip.textContent = 'ⓘ';
         blkTip.title = f.tooltip;
-        blkTip.style.cssText = 'cursor:help;opacity:0.65;font-size:0.85em;text-transform:none;letter-spacing:normal;flex-shrink:0;';
+        // Explicit margin, not just the row's flex gap (#72) — a bare text
+        // node ("Edit Prompt") followed by this span doesn't reliably pick up
+        // gap the way two real elements do, so the icon read as glued to the
+        // label text.
+        blkTip.style.cssText = 'cursor:help;opacity:0.65;font-size:0.85em;text-transform:none;letter-spacing:normal;flex-shrink:0;margin-left:0.35rem;';
         lbl.appendChild(blkTip);
       }
 
@@ -1533,8 +1543,11 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         input.rows = f.rows || 2;
         input.value = initVal;
 
-        // Preset prompts: a button next to the label that opens a menu of
-        // default prompts (defined in the flow JSON under the field's "presets").
+        // Preset prompts: a circular icon-only button next to the label that
+        // opens the shared side panel (openOptionsPanel) with the default
+        // prompts (defined in the flow JSON under the field's "presets") —
+        // was a text button ("Presets") + its own inline flyout menu, the
+        // only field on this panel not using the shared panel pattern (#72).
         if (Array.isArray(f.presets) && f.presets.length) {
           row.classList.add('nsc-field-row--prompt');
           var header = document.createElement('div');
@@ -1546,47 +1559,48 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           presetWrap.className = 'nsc-preset-wrap';
           var presetBtn = document.createElement('button');
           presetBtn.type = 'button';
-          presetBtn.className = 'nsc-preset-btn';
+          presetBtn.className = 'nsc-icon-btn nsc-options-trigger';
+          presetBtn.setAttribute('aria-label', 'Presets');
+          presetBtn.title = 'Presets';
           presetBtn.innerHTML =
-            '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" ' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
             'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
             '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>' +
             '<line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>' +
-            '<line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' +
-            '<span>Presets</span>';
-          var presetMenu = document.createElement('div');
-          presetMenu.className = 'nsc-preset-menu';
-          presetMenu.style.display = 'none';
+            '<line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
 
-          (function (field, inp, menu) {
-            field.presets.forEach(function (p) {
-              var label = typeof p === 'object' ? (p.label || p.text || p.value || '') : String(p);
-              var text  = typeof p === 'object' ? (p.text || p.value || p.label || '') : String(p);
-              var item = document.createElement('button');
-              item.type = 'button';
-              item.className = 'nsc-preset-item';
-              item.textContent = label;
-              item.title = text;
-              item.addEventListener('click', function (e) {
-                e.stopPropagation();
-                inp.value = text;
-                setVal(stepDef.id, 'field_' + field.id, text);
-                buildAdv();
-                triggerPreviewUpdate();
-                menu.style.display = 'none';
+          (function (field, inp) {
+            presetBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              openOptionsPanel('Presets', function (panelBody) {
+                var listEl = document.createElement('div');
+                listEl.className = 'nse-model-list';
+                field.presets.forEach(function (p) {
+                  var label = typeof p === 'object' ? (p.label || p.text || p.value || '') : String(p);
+                  var text  = typeof p === 'object' ? (p.text || p.value || p.label || '') : String(p);
+                  var item = document.createElement('button');
+                  item.type = 'button';
+                  item.className = 'nse-model-item';
+                  item.title = text;
+                  var nameEl = document.createElement('span');
+                  nameEl.className = 'nse-model-name';
+                  nameEl.textContent = label;
+                  item.appendChild(nameEl);
+                  item.addEventListener('click', function () {
+                    inp.value = text;
+                    setVal(stepDef.id, 'field_' + field.id, text);
+                    buildAdv();
+                    triggerPreviewUpdate();
+                    closeOptionsPanel();
+                  });
+                  listEl.appendChild(item);
+                });
+                panelBody.appendChild(listEl);
               });
-              menu.appendChild(item);
             });
-          }(f, input, presetMenu));
-
-          presetBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            presetMenu.style.display = (presetMenu.style.display === 'none') ? 'flex' : 'none';
-          });
-          document.addEventListener('click', function () { presetMenu.style.display = 'none'; });
+          }(f, input));
 
           presetWrap.appendChild(presetBtn);
-          presetWrap.appendChild(presetMenu);
           header.appendChild(presetWrap);
         }
       }
@@ -2115,26 +2129,14 @@ function renderParamGroup(stepDef, el, stepNum) {
   guidedEl.className = 'nsc-params-guided';
   el.appendChild(guidedEl);
 
-  // Resolution — same "icon button → panel" pattern as Aspect ratio below it
-  // (and now sits above it, per design: pick the quality tier first, then
-  // fine-tune the exact ratio). Picking a tier here only changes which of
-  // the current ratio's sd/md/hd/uhd pair getDims() returns — the actual
-  // width/height always come from ASPECT_PRESETS[selectedAspectIdx][tier].
-  var resTierWrap = document.createElement('div');
-  resTierWrap.className = 'nsc-param-block';
-  resTierWrap.innerHTML =
-    '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="ncf-res-tier-label">MD</span>' +
-      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-res-tier-picker-btn" aria-label="Choose resolution">' +
-        '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
-      '</button>' +
-    '</p>';
-  guidedEl.appendChild(resTierWrap);
-  var resTierLabelEl  = resTierWrap.querySelector('#ncf-res-tier-label');
-  var resTierPickerBtn = resTierWrap.querySelector('#ncf-res-tier-picker-btn');
-
   // Aspect ratio — same "icon button → modal" pattern as the Prompt step's
   // history button: the full 15-ratio list would be too much to show inline,
   // so only the current value shows here and picking a new one opens a list.
+  //
+  // Sits above Resolution now (reversed from the original order, which put
+  // Resolution first on the theory of "pick the quality tier, then fine-tune
+  // the ratio") — creatively you decide the *shape* first and the pixel
+  // count second, not the other way round.
   var aspectWrap = document.createElement('div');
   aspectWrap.className = 'nsc-param-block nss-aspect-guided';
   aspectWrap.innerHTML =
@@ -2147,6 +2149,22 @@ function renderParamGroup(stepDef, el, stepNum) {
 
   var aspectLabelEl  = aspectWrap.querySelector('#ncf-aspect-label');
   var aspectPickerBtn = aspectWrap.querySelector('#ncf-aspect-picker-btn');
+
+  // Resolution — same "icon button → panel" pattern as Aspect ratio above it.
+  // Picking a tier here only changes which of the current ratio's
+  // sd/md/hd/uhd pair getDims() returns — the actual width/height always
+  // come from ASPECT_PRESETS[selectedAspectIdx][tier].
+  var resTierWrap = document.createElement('div');
+  resTierWrap.className = 'nsc-param-block';
+  resTierWrap.innerHTML =
+    '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="ncf-res-tier-label">MD</span>' +
+      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-res-tier-picker-btn" aria-label="Choose resolution">' +
+        '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
+      '</button>' +
+    '</p>';
+  guidedEl.appendChild(resTierWrap);
+  var resTierLabelEl  = resTierWrap.querySelector('#ncf-res-tier-label');
+  var resTierPickerBtn = resTierWrap.querySelector('#ncf-res-tier-picker-btn');
   function updateResLabels() {
     var a = ASPECT_PRESETS[selectedAspectIdx];
     var dRes = a && a[selectedResolution];

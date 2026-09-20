@@ -12,6 +12,7 @@ bundled-packages/
 # User data and generated content — never in git
 # (source checkouts keep their data in data/, app/paths.py)
 /data/
+/data-release-*/
 # Portable update files (app/services/update_service.py)
 /app.new/
 /app.old/

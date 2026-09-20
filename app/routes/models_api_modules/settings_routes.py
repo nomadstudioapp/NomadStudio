@@ -346,9 +346,8 @@ def browse_models_folder():
         return jsonify({"ok": False, "cancelled": True})
 
     # Also save to registry
-    data = _ensure_registry()
-    data.setdefault("settings", {})["comfyModelsFolder"] = chosen[0]
-    _save_registry(data)
+    with _registry_transaction() as data:
+        data.setdefault("settings", {})["comfyModelsFolder"] = chosen[0]
     return jsonify({"ok": True, "comfyModelsFolder": chosen[0]})
 
 
@@ -843,9 +842,8 @@ def update_queue_free_memory_setting():
     if "queueFreeMemoryBetweenModels" not in payload:
         return jsonify({"error": "queueFreeMemoryBetweenModels is required"}), 400
     value = bool(payload["queueFreeMemoryBetweenModels"])
-    data = _ensure_registry()
-    data.setdefault("settings", {})["queueFreeMemoryBetweenModels"] = value
-    _save_registry(data)
+    with _registry_transaction() as data:
+        data.setdefault("settings", {})["queueFreeMemoryBetweenModels"] = value
     return jsonify({"queueFreeMemoryBetweenModels": value})
 
 
@@ -879,38 +877,37 @@ def export_config():
 def update_custom_prompts():
     payload = request.get_json(silent=True) or {}
 
-    data = _ensure_registry()
-    existing_custom: dict = dict(data.get("settings", {}).get("customPrompts", {}))
-    cleaned: dict = dict(existing_custom)
+    with _registry_transaction() as data:
+        existing_custom: dict = dict(data.get("settings", {}).get("customPrompts", {}))
+        cleaned: dict = dict(existing_custom)
 
-    # Update prompt texts when provided.
-    if "prompts" in payload:
-        incoming = payload["prompts"]
-        if not isinstance(incoming, dict):
-            return jsonify({"error": "prompts must be an object"}), 400
-        for k in DEFAULT_CUSTOM_PROMPTS:
-            v = str(incoming.get(k, "")).strip()
-            cleaned[k] = v  # empty string = use default at runtime
+        # Update prompt texts when provided.
+        if "prompts" in payload:
+            incoming = payload["prompts"]
+            if not isinstance(incoming, dict):
+                return jsonify({"error": "prompts must be an object"}), 400
+            for k in DEFAULT_CUSTOM_PROMPTS:
+                v = str(incoming.get(k, "")).strip()
+                cleaned[k] = v  # empty string = use default at runtime
 
-    # Update variants when provided.
-    if "promptVariants" in payload:
-        try:
-            cleaned["promptVariants"] = _sanitize_prompt_variants_map(
-                payload["promptVariants"]
-            )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        # Update variants when provided.
+        if "promptVariants" in payload:
+            try:
+                cleaned["promptVariants"] = _sanitize_prompt_variants_map(
+                    payload["promptVariants"]
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    if "promptActiveVariants" in payload:
-        try:
-            cleaned["promptActiveVariants"] = _sanitize_prompt_active_variants_map(
-                payload["promptActiveVariants"]
-            )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "promptActiveVariants" in payload:
+            try:
+                cleaned["promptActiveVariants"] = _sanitize_prompt_active_variants_map(
+                    payload["promptActiveVariants"]
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    data["settings"]["customPrompts"] = cleaned
-    _save_registry(data)
+        data["settings"]["customPrompts"] = cleaned
     return jsonify({"ok": True})
 
 
@@ -964,33 +961,32 @@ def get_studio_prompts():
 def update_studio_prompts():
     payload = request.get_json(silent=True) or {}
 
-    data = _ensure_registry()
-    existing: dict = dict(data.get("settings", {}).get("studioPrompts", {}))
-    cleaned: dict = dict(existing)
+    with _registry_transaction() as data:
+        existing: dict = dict(data.get("settings", {}).get("studioPrompts", {}))
+        cleaned: dict = dict(existing)
 
-    if "prompts" in payload:
-        incoming = payload["prompts"]
-        if not isinstance(incoming, dict):
-            return jsonify({"error": "prompts must be an object"}), 400
-        for k in DEFAULT_STUDIO_PROMPTS:
-            cleaned[k] = str(incoming.get(k, "")).strip()
+        if "prompts" in payload:
+            incoming = payload["prompts"]
+            if not isinstance(incoming, dict):
+                return jsonify({"error": "prompts must be an object"}), 400
+            for k in DEFAULT_STUDIO_PROMPTS:
+                cleaned[k] = str(incoming.get(k, "")).strip()
 
-    if "promptVariants" in payload:
-        try:
-            cleaned["promptVariants"] = _sanitize_prompt_variants_map(payload["promptVariants"])
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "promptVariants" in payload:
+            try:
+                cleaned["promptVariants"] = _sanitize_prompt_variants_map(payload["promptVariants"])
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    if "promptActiveVariants" in payload:
-        try:
-            cleaned["promptActiveVariants"] = _sanitize_prompt_active_variants_map(
-                payload["promptActiveVariants"]
-            )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "promptActiveVariants" in payload:
+            try:
+                cleaned["promptActiveVariants"] = _sanitize_prompt_active_variants_map(
+                    payload["promptActiveVariants"]
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    data["settings"]["studioPrompts"] = cleaned
-    _save_registry(data)
+        data["settings"]["studioPrompts"] = cleaned
     return jsonify({"ok": True})
 
 
@@ -1044,31 +1040,30 @@ def get_compose_prompts():
 def update_compose_prompts():
     payload = request.get_json(silent=True) or {}
 
-    data = _ensure_registry()
-    existing: dict = dict(data.get("settings", {}).get("composePrompts", {}))
-    cleaned: dict = dict(existing)
+    with _registry_transaction() as data:
+        existing: dict = dict(data.get("settings", {}).get("composePrompts", {}))
+        cleaned: dict = dict(existing)
 
-    if "prompts" in payload:
-        incoming = payload["prompts"]
-        if not isinstance(incoming, dict):
-            return jsonify({"error": "prompts must be an object"}), 400
-        for k in DEFAULT_COMPOSE_PROMPTS:
-            cleaned[k] = str(incoming.get(k, "")).strip()
+        if "prompts" in payload:
+            incoming = payload["prompts"]
+            if not isinstance(incoming, dict):
+                return jsonify({"error": "prompts must be an object"}), 400
+            for k in DEFAULT_COMPOSE_PROMPTS:
+                cleaned[k] = str(incoming.get(k, "")).strip()
 
-    if "promptVariants" in payload:
-        try:
-            cleaned["promptVariants"] = _sanitize_compose_variants_map(payload["promptVariants"])
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "promptVariants" in payload:
+            try:
+                cleaned["promptVariants"] = _sanitize_compose_variants_map(payload["promptVariants"])
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    if "promptActiveVariants" in payload:
-        try:
-            cleaned["promptActiveVariants"] = _sanitize_compose_active_variants_map(
-                payload["promptActiveVariants"]
-            )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "promptActiveVariants" in payload:
+            try:
+                cleaned["promptActiveVariants"] = _sanitize_compose_active_variants_map(
+                    payload["promptActiveVariants"]
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    data["settings"]["composePrompts"] = cleaned
-    _save_registry(data)
+        data["settings"]["composePrompts"] = cleaned
     return jsonify({"ok": True})

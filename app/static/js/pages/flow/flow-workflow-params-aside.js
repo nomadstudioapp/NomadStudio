@@ -18,6 +18,10 @@ var _wfActiveTabId = null;
 // params") mutate those objects directly and have the UI catch up, the same
 // way clicking a preset pill in this tab already does.
 var _wfTabRefreshFns = {};
+// workflowId -> snapshot of _wfAdvOverrides[id] as of the last preset click,
+// Reset, or successful "Save as new engine" — what current overrides are
+// diffed against to decide whether the Save button should light up.
+var _wfSaveBaseline = {};
 
 // ── LoRA treeview (shared by every "Choose a LoRA" button) ─────────────────
 // Fetches ComfyUI's own LoRA catalog (GET /api/models/comfy/loras — already
@@ -144,6 +148,7 @@ function _createWfTab(id) {
   var sp = loadSavedParams() || {};
   _wfAdvOverrides[id] = Object.assign({}, (sp.wfAdvOverrides && sp.wfAdvOverrides[id]) || {});
   _wfActivePreset[id] = (sp.wfActivePreset && sp.wfActivePreset[id]) || null;
+  _wfSaveBaseline[id] = Object.assign({}, _wfAdvOverrides[id]);
 
   body.innerHTML = '<p class="nse-model-empty">Loading…</p>';
   fetchFullRecord(id).then(function (record) {
@@ -168,6 +173,16 @@ function _createWfTab(id) {
     headerEl.className = 'nsc-param-title nsc-param-title--flex ncf-wf-adv-header';
     var headerLabel = document.createElement('span');
     headerLabel.textContent = 'Custom params';
+    // Lights up once a manual edit makes the values below diverge from
+    // whatever was last applied (a preset, Reset, or a previous save) —
+    // see _syncSaveBtn(). Clicking it reveals the name field below.
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'ncf-wf-save-btn';
+    saveBtn.title = 'Save as new engine';
+    saveBtn.setAttribute('aria-label', 'Save as new engine');
+    saveBtn.hidden = true;
+    saveBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>';
     var stateLabel = document.createElement('span');
     stateLabel.className = 'ncf-wf-preset-state';
     var resetBtn = document.createElement('button');
@@ -175,9 +190,78 @@ function _createWfTab(id) {
     resetBtn.className = 'nse-modal-secondary ncf-wf-preset-reset';
     resetBtn.textContent = 'Reset';
     headerEl.appendChild(headerLabel);
+    headerEl.appendChild(saveBtn);
     headerEl.appendChild(stateLabel);
     headerEl.appendChild(resetBtn);
     body.appendChild(headerEl);
+
+    // Name field for cloning this engine (Custom Params baked in) as a new
+    // one — e.g. Krea2 Monaco → "Krea2 Pisa". Hidden until saveBtn is clicked.
+    var saveFormEl = document.createElement('div');
+    saveFormEl.className = 'ncf-wf-save-form';
+    saveFormEl.hidden = true;
+    var saveNameInput = document.createElement('input');
+    saveNameInput.type = 'text';
+    saveNameInput.className = 'nsc-input';
+    saveNameInput.placeholder = 'Name this engine…';
+    var saveConfirmBtn = document.createElement('button');
+    saveConfirmBtn.type = 'button';
+    saveConfirmBtn.className = 'nse-modal-apply ncf-wf-save-confirm';
+    saveConfirmBtn.textContent = 'Save';
+    var saveCancelBtn = document.createElement('button');
+    saveCancelBtn.type = 'button';
+    saveCancelBtn.className = 'nsc-icon-btn';
+    saveCancelBtn.setAttribute('aria-label', 'Cancel');
+    saveCancelBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
+    saveFormEl.appendChild(saveNameInput);
+    saveFormEl.appendChild(saveConfirmBtn);
+    saveFormEl.appendChild(saveCancelBtn);
+    body.appendChild(saveFormEl);
+
+    function _syncSaveBtn() {
+      var dirty = JSON.stringify(_wfAdvOverrides[id] || {}) !== JSON.stringify(_wfSaveBaseline[id] || {});
+      saveBtn.hidden = !dirty;
+      if (!dirty) saveFormEl.hidden = true;
+    }
+
+    saveBtn.addEventListener('click', function () {
+      saveFormEl.hidden = !saveFormEl.hidden;
+      if (!saveFormEl.hidden) saveNameInput.focus();
+    });
+    saveCancelBtn.addEventListener('click', function () {
+      saveFormEl.hidden = true;
+      saveNameInput.value = '';
+    });
+    function _submitSaveAs() {
+      var name = saveNameInput.value.trim();
+      if (!name) { saveNameInput.focus(); return; }
+      saveConfirmBtn.disabled = true;
+      fetch('/api/models/imports/' + encodeURIComponent(id) + '/save-as', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, advancedValues: _wfAdvOverrides[id] }),
+      })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (data) { return { ok: r.ok, data: data }; });
+        })
+        .then(function (res) {
+          saveConfirmBtn.disabled = false;
+          if (!res.ok) { showToast((res.data && res.data.error) || 'Could not save engine.', 'error'); return; }
+          _wfSaveBaseline[id] = Object.assign({}, _wfAdvOverrides[id]);
+          saveFormEl.hidden = true;
+          saveNameInput.value = '';
+          _syncSaveBtn();
+          showToast('Saved as "' + name + '".', 'success');
+        })
+        .catch(function () {
+          saveConfirmBtn.disabled = false;
+          showToast('Could not save engine.', 'error');
+        });
+    }
+    saveConfirmBtn.addEventListener('click', _submitSaveAs);
+    saveNameInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); _submitSaveAs(); }
+    });
 
     // "Choose a LoRA" — only for the curated base workflows (the ones with a
     // config.quantization block, same signal the INT8/FP8/NVFP4 picker reads
@@ -256,6 +340,7 @@ function _createWfTab(id) {
         delete _wfAdvOverrides[id][insertKey];
         _syncLoraBtnLabel();
         saveParams();
+        _syncSaveBtn();
       });
       loraBtn.addEventListener('click', function () {
         openOptionsPanel('Choose a LoRA', function (panelBody) {
@@ -265,6 +350,7 @@ function _createWfTab(id) {
               : pickedPath;
             _syncLoraBtnLabel();
             saveParams();
+            _syncSaveBtn();
             closeOptionsPanel();
           });
         }, { wide: true });
@@ -279,8 +365,8 @@ function _createWfTab(id) {
     body.appendChild(advWrap);
 
     function renderAdvInputs() {
-      buildAdvParams(record, advWrap, _wfAdvOverrides[id], id + '-');
-      enhanceAdvParamsWithOptions(record, advWrap, _wfAdvOverrides[id]);
+      buildAdvParams(record, advWrap, _wfAdvOverrides[id], id + '-', _syncSaveBtn);
+      enhanceAdvParamsWithOptions(record, advWrap, _wfAdvOverrides[id], _syncSaveBtn);
     }
 
     function renderPresetPills() {
@@ -305,6 +391,8 @@ function _createWfTab(id) {
           updateStateLabel();
           renderAdvInputs();
           saveParams();
+          _wfSaveBaseline[id] = Object.assign({}, _wfAdvOverrides[id]);
+          _syncSaveBtn();
         });
         presetListEl.appendChild(pbtn);
       });
@@ -324,6 +412,8 @@ function _createWfTab(id) {
       updateStateLabel();
       renderAdvInputs();
       saveParams();
+      _wfSaveBaseline[id] = {};
+      _syncSaveBtn();
     });
 
     _wfTabRefreshFns[id] = function () {
@@ -346,6 +436,7 @@ function _removeWfTab(id) {
   if (_wfActiveTabId === id) _wfActiveTabId = null;
   delete _wfAdvOverrides[id];
   delete _wfActivePreset[id];
+  delete _wfSaveBaseline[id];
   saveParams();
 }
 

@@ -59,7 +59,17 @@ REGISTRY_PATH = DATA_DIR / "import_registry.json"
 PACKAGES_DIR = DATA_DIR / "packages"
 IMAGES_DIR = DATA_DIR / "images"
 UPDATES_DIR = DATA_DIR / "updates"
-BUNDLED_PACKAGES_DIR = REPO_DIR / "bundled-packages"
+# Release builds place the package ZIPs next to the portable app. In a source
+# checkout those ZIPs are generated under dist/packages instead; using that
+# directory as a development fallback keeps the same startup/install path as a
+# release without committing generated binaries to git.
+_RELEASE_BUNDLED_PACKAGES_DIR = REPO_DIR / "bundled-packages"
+_DEV_BUNDLED_PACKAGES_DIR = REPO_DIR / "dist" / "packages"
+BUNDLED_PACKAGES_DIR = (
+    _RELEASE_BUNDLED_PACKAGES_DIR
+    if _RELEASE_BUNDLED_PACKAGES_DIR.is_dir()
+    else _DEV_BUNDLED_PACKAGES_DIR
+)
 
 
 def data_file(name: str) -> Path:

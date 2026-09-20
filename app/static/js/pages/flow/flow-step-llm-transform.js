@@ -26,20 +26,12 @@ function renderLLMTransform(stepDef, el) {
     var llmTools = document.createElement('span');
     llmTools.className = 'ncf-step-label-tools';
 
-    if (hasPanelOptions) {
-      var llmOptionsBtn = document.createElement('button');
-      llmOptionsBtn.type = 'button';
-      llmOptionsBtn.className = 'nsc-history-btn nsc-options-trigger';
-      llmOptionsBtn.setAttribute('aria-label', 'Assist options');
-      llmOptionsBtn.innerHTML =
-        '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
-          '<line x1="3" y1="5" x2="15" y2="5"/><circle cx="11" cy="5" r="1.6" fill="currentColor" stroke="none"/>' +
-          '<line x1="3" y1="13" x2="15" y2="13"/><circle cx="7" cy="13" r="1.6" fill="currentColor" stroke="none"/>' +
-        '</svg>';
-      llmOptionsBtn.addEventListener('click', function () { openLLMOptionsPanel(params); });
-      llmTools.appendChild(llmOptionsBtn);
-    }
-
+    // Bare icon-only circles always sit at the row's right edge — text/name
+    // chips (the model button) and switches (Think) come first, reading
+    // left to right, with the one control that's a plain circle (Assist
+    // options) pushed past all of them via margin-left:auto. Was the other
+    // way round (circle first); the model chip's own name text made it read
+    // like a label for the circle instead of a control in its own right.
     var llmModelBtn = document.createElement('button');
     llmModelBtn.type = 'button';
     // --named so the model's name fits beside the icon. It used to be a bare
@@ -89,6 +81,20 @@ function renderLLMTransform(stepDef, el) {
       llmTools.appendChild(thinkLabel);
     }
 
+    if (hasPanelOptions) {
+      var llmOptionsBtn = document.createElement('button');
+      llmOptionsBtn.type = 'button';
+      llmOptionsBtn.className = 'nsc-history-btn nsc-options-trigger';
+      llmOptionsBtn.setAttribute('aria-label', 'Assist options');
+      llmOptionsBtn.innerHTML =
+        '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
+          '<line x1="3" y1="5" x2="15" y2="5"/><circle cx="11" cy="5" r="1.6" fill="currentColor" stroke="none"/>' +
+          '<line x1="3" y1="13" x2="15" y2="13"/><circle cx="7" cy="13" r="1.6" fill="currentColor" stroke="none"/>' +
+        '</svg>';
+      llmOptionsBtn.addEventListener('click', function () { openLLMOptionsPanel(params); });
+      llmTools.appendChild(llmOptionsBtn);
+    }
+
     llmStepLabelEl.appendChild(llmTools);
   }
 
@@ -97,19 +103,34 @@ function renderLLMTransform(stepDef, el) {
     renderComposePromptChip(stepDef, el);
   }
 
-  // Genre cards — only if the step defines a genre param
+  // Genre — used to be a full 3x3 card grid inline (a lot of vertical space
+  // for a rarely-changed choice); now a compact title-row chip that opens
+  // the shared side panel, same pattern as Presets (flow-step-workflow-
+  // params.js) and Resolution/Aspect ratio above.
   if (params.genre) {
     var genreBlock = document.createElement('div');
     genreBlock.className = 'nse-control-block';
-    genreBlock.innerHTML = '<p class="nsc-param-title">Genre</p>';
-    var genreCardsEl = document.createElement('div');
-    genreCardsEl.className = 'nse-genre-cards';
-    genreCardsEl.setAttribute('role', 'group');
-    genreCardsEl.innerHTML = '<span class="nse-genre-loading">Loading genres…</span>';
-    genreBlock.appendChild(genreCardsEl);
+    genreBlock.innerHTML =
+      '<p class="nsc-param-title nsc-param-title--flex">Genre ' +
+      '<span class="nsc-param-value" id="ncf-genre-label-' + stepDef.id + '">None</span>' +
+      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-genre-picker-btn-' + stepDef.id + '" aria-label="Choose genre"></button>' +
+      '</p>';
     el.appendChild(genreBlock);
+    var genreLabelEl  = genreBlock.querySelector('#ncf-genre-label-' + stepDef.id);
+    var genrePickerBtn = genreBlock.querySelector('#ncf-genre-picker-btn-' + stepDef.id);
+    genrePickerBtn.innerHTML =
+      '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M9 2l1.8 3.7L15 6.3l-3 3 .7 4.2L9 11.6 5.3 13.5 6 9.3l-3-3 4.2-.6z"/>' +
+      '</svg>';
 
-    var renderGenreCards = function (genres) {
+    function updateGenreLabel() {
+      if (!genreLabelEl) return;
+      if (!selectedGenre) { genreLabelEl.textContent = 'None'; return; }
+      var found = (_genresCache || []).find(function (g) { return g.id === selectedGenre; });
+      genreLabelEl.textContent = found ? (found.label || found.id) : selectedGenre;
+    }
+
+    function renderGenreCards(genreCardsEl, genres) {
       genreCardsEl.innerHTML = '';
 
       // "None" card — clears the genre and leaves level/flair untouched
@@ -120,8 +141,8 @@ function renderLLMTransform(stepDef, el) {
       noneCard.innerHTML = '<span class="nse-genre-icon">—</span><span class="nse-genre-label">None</span>';
       noneCard.addEventListener('click', function () {
         selectedGenre = '';
-        genreCardsEl.querySelectorAll('.nse-genre-card')
-          .forEach(function (c) { c.classList.toggle('is-active', c === noneCard); });
+        updateGenreLabel();
+        closeOptionsPanel();
       });
       genreCardsEl.appendChild(noneCard);
 
@@ -135,8 +156,7 @@ function renderLLMTransform(stepDef, el) {
           '<span class="nse-genre-label">' + escHtml(g.label || g.id) + '</span>';
         card.addEventListener('click', function () {
           selectedGenre = g.id;
-          genreCardsEl.querySelectorAll('.nse-genre-card')
-            .forEach(function (c) { c.classList.toggle('is-active', c === card); });
+          updateGenreLabel();
 
           // Apply the genre's suggested flair/level — still editable by the
           // user after, via the options modal (level/flair now live there,
@@ -144,24 +164,34 @@ function renderLLMTransform(stepDef, el) {
           if (g.flair != null) flairValue = Number(g.flair);
           if (g.level) selectedLevel = g.level;
           if (typeof syncLLMOptionsModalUI === 'function') syncLLMOptionsModalUI();
+          closeOptionsPanel();
         });
         genreCardsEl.appendChild(card);
       });
-    };
-
-    if (_genresCache) {
-      renderGenreCards(_genresCache);
-    } else {
-      fetch('/api/flows/genres')
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          _genresCache = Array.isArray(data.genres) ? data.genres : [];
-          renderGenreCards(_genresCache);
-        })
-        .catch(function () {
-          genreCardsEl.innerHTML = '<span class="nse-genre-loading">Could not load genres.</span>';
-        });
     }
+
+    genrePickerBtn.addEventListener('click', function () {
+      openOptionsPanel('Genre', function (panelBody) {
+        var cardsEl = document.createElement('div');
+        cardsEl.className = 'nse-genre-cards';
+        cardsEl.setAttribute('role', 'group');
+        panelBody.appendChild(cardsEl);
+        if (_genresCache) {
+          renderGenreCards(cardsEl, _genresCache);
+        } else {
+          cardsEl.innerHTML = '<span class="nse-genre-loading">Loading genres…</span>';
+          fetch('/api/flows/genres')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              _genresCache = Array.isArray(data.genres) ? data.genres : [];
+              renderGenreCards(cardsEl, _genresCache);
+            })
+            .catch(function () {
+              cardsEl.innerHTML = '<span class="nse-genre-loading">Could not load genres.</span>';
+            });
+        }
+      });
+    });
   }
 
   // Enhance level / Flair defaults — the controls themselves now live in the

@@ -579,8 +579,15 @@ window.albumImagesPage = (function albumImagesModule() {
           <img src="${thumbUrl}" alt="Generated image" class="explore-thumb-image" loading="lazy"
             onload="this.closest('.explore-thumb').classList.remove('explore-thumb--loading')"
             onerror="if(this.dataset.fallback!='1'){this.dataset.fallback='1';this.src='${item.imageDataUrl}';}else{this.closest('.explore-thumb').classList.remove('explore-thumb--loading');}" />
-          <button type="button" class="explore-heart ${item.favorite ? 'active' : ''}" data-fav-batch-id="${item.batchId}" data-fav-index="${item.index}" aria-label="Toggle favorite">${item.favorite ? '♥' : '♡'}</button>
-          <button type="button" class="explore-diamond ${item.diamond ? 'active' : ''}" data-diamond-batch-id="${item.batchId}" data-diamond-index="${item.index}" aria-label="Toggle diamond">${item.diamond ? '◆' : '◇'}</button>
+          <button type="button" class="explore-heart ${item.favorite ? 'active' : ''}" data-fav-batch-id="${item.batchId}" data-fav-index="${item.index}" aria-label="Toggle favorite">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.7c0 5.5-8.8 10.2-8.8 10.2S3.2 14.2 3.2 8.7A4.7 4.7 0 0 1 12 6.1a4.7 4.7 0 0 1 8.8 2.6Z" /></svg>
+          </button>
+          <button type="button" class="explore-diamond ${item.diamond ? 'active' : ''}" data-diamond-batch-id="${item.batchId}" data-diamond-index="${item.index}" aria-label="Toggle diamond">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 9-9 9-9-9 9-9Z" /></svg>
+          </button>
+          <button type="button" class="explore-delete" data-delete-batch-id="${item.batchId}" data-delete-index="${item.index}" aria-label="Delete image" title="Delete image (Shift/Ctrl+click to skip confirmation)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3,6 21,6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+          </button>
         </article>
       `;
     }
@@ -970,6 +977,64 @@ window.albumImagesPage = (function albumImagesModule() {
       renderGroups(false);
     }
 
+    function confirmDeleteImage() {
+      return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'create-modal album-delete-modal open';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', 'Delete image');
+        modal.innerHTML = `
+          <div class="create-modal-backdrop"></div>
+          <div class="create-modal-shell">
+            <h3 class="album-delete-title">Delete image?</h3>
+            <p class="album-delete-message">This image will be permanently removed from the album.</p>
+            <div class="album-delete-actions">
+              <button type="button" class="btn album-delete-cancel" data-delete-cancel>Cancel</button>
+              <button type="button" class="btn album-delete-confirm" data-delete-confirm>Delete</button>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+
+        let settled = false;
+        const finish = (confirmed) => {
+          if (settled) return;
+          settled = true;
+          document.removeEventListener('keydown', onKeyDown);
+          modal.remove();
+          resolve(confirmed);
+        };
+        const onKeyDown = (event) => {
+          if (event.key === 'Escape') finish(false);
+        };
+        modal.querySelector('[data-delete-cancel]').addEventListener('click', () => finish(false));
+        modal.querySelector('[data-delete-confirm]').addEventListener('click', () => finish(true));
+        modal.querySelector('.create-modal-backdrop').addEventListener('click', () => finish(false));
+        document.addEventListener('keydown', onKeyDown);
+        modal.querySelector('[data-delete-confirm]').focus();
+      });
+    }
+
+    async function deleteImage(batchId, index, skipConfirm) {
+      const gallery = Array.isArray(galleryCache) ? [...galleryCache] : [];
+      const batch = gallery.find((entry) => String(entry.id) === String(batchId));
+      const tile = batch && Array.isArray(batch.images) ? batch.images[index] : null;
+      const filename = String(tile && tile.filename || '').trim();
+      if (!batch || !tile || !filename) return;
+      if (!skipConfirm && !await confirmDeleteImage()) return;
+
+      try {
+        const api = window.openJourneyApi;
+        if (!api || typeof api.deleteImages !== 'function') throw new Error('Delete is unavailable');
+        await api.deleteImages([filename]);
+        const nextGallery = gallery.filter((entry) => String(entry.id) !== String(batchId));
+        await persistGallery(nextGallery);
+        renderGroups(true);
+      } catch (error) {
+        setStatus(error && error.message ? error.message : 'Failed to delete image.', true);
+      }
+    }
+
     async function loadMore() {
       if (isLoadingMore || !hasMoreItems()) return;
       isLoadingMore = true;
@@ -999,7 +1064,7 @@ window.albumImagesPage = (function albumImagesModule() {
 
     groupsEl.addEventListener('click', async (event) => {
       const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
+      if (!(target instanceof Element)) return;
 
       const favBtn = target.closest('[data-fav-batch-id]');
       if (favBtn instanceof HTMLElement) {
@@ -1027,9 +1092,24 @@ window.albumImagesPage = (function albumImagesModule() {
         }
       }
 
+      const deleteBtn = target.closest('[data-delete-batch-id]');
+      if (deleteBtn instanceof HTMLElement) {
+        const deleteBatchId = deleteBtn.getAttribute('data-delete-batch-id');
+        const deleteIndexText = deleteBtn.getAttribute('data-delete-index');
+        if (deleteBatchId !== null && deleteIndexText !== null) {
+          const index = Number(deleteIndexText);
+          if (Number.isInteger(index) && index >= 0) {
+            // Shift or Ctrl/Cmd held — delete immediately, skip the confirm modal (#114).
+            const skipConfirm = event.shiftKey || event.ctrlKey || event.metaKey;
+            await deleteImage(deleteBatchId, index, skipConfirm);
+            return;
+          }
+        }
+      }
+
       const cardEl = target.closest('[data-open-item-id]');
       if (!(cardEl instanceof HTMLElement)) return;
-      if (target.closest('.explore-heart') || target.closest('.explore-diamond')) return;
+      if (target.closest('.explore-heart') || target.closest('.explore-diamond') || target.closest('.explore-delete')) return;
       const itemId = cardEl.getAttribute('data-open-item-id');
       if (!itemId) return;
 

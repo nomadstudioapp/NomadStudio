@@ -934,6 +934,17 @@ function _showChatBar(actionStepDef) {
   var wfEditWith = document.getElementById('ncf-chat-wf-editwith');
   var wfSep = document.getElementById('ncf-chat-wf-sep');
 
+  // Writing-model chip — same picker (openModelOptionsPanel) the Assist step
+  // uses, so the chat bar names which LLM rewrites the instruction and lets
+  // you switch it without leaving the flow. Changes the same global setting
+  // Assist reads (there's only one "writing model" today, not a per-chat one).
+  var chatModelBtn  = document.getElementById('ncf-chat-model-btn');
+  var chatModelName = document.getElementById('ncf-chat-model-name');
+  if (chatModelBtn) {
+    chatModelBtn.addEventListener('click', function () { openModelOptionsPanel(); });
+    if (typeof loadPromptModelHint === 'function') loadPromptModelHint(chatModelBtn, chatModelName);
+  }
+
   // "Edit with" is only shown once "Edit Prompt" is turned on — the select's
   // own value is never touched by this, it just stays hidden/shown.
   function _updateWfSelectVisibility() {
@@ -988,7 +999,11 @@ function _showChatBar(actionStepDef) {
 
   // Run refine on the selected scene (defaults to the last generated image)
   // with the chosen refine workflow + prompt
-  function _chatRunRefine(refineFlowId, promptText) {
+  // card: the queued card _submitChatInstruction already put in the grid
+  // before any of this async work started — passed straight through to
+  // _runRefine so it updates that card in place instead of creating its own
+  // (much) later, once prepare/submit have both round-tripped.
+  function _chatRunRefine(refineFlowId, promptText, card) {
     if (!sessionImages.length) return Promise.reject(new Error('No image to edit yet'));
     var sceneSelect = document.getElementById('ncf-chat-scene-select');
     var sceneIdx = sceneSelect && sceneSelect.value !== '' ? parseInt(sceneSelect.value, 10) : NaN;
@@ -1030,7 +1045,7 @@ function _showChatBar(actionStepDef) {
           imageNodeId:    imageNode,
           promptText:     promptText,
         };
-        return _runRefine(synthStepDef, { snapshot: snapshot });
+        return _runRefine(synthStepDef, { snapshot: snapshot, card: card });
       });
     });
   }
@@ -1043,24 +1058,72 @@ function _showChatBar(actionStepDef) {
     return sessionImages[idx].prompt || '';
   }
 
+  // ── Chat queue — one instruction runs at a time, in the order sent, but
+  // sending never blocks: keep typing and hitting Enter, each one gets its
+  // own card immediately (queued if something's still ahead of it, straight
+  // to generating if it's next) and waits its turn. Running them in order
+  // (not in parallel) matters here, not just for politeness — each message
+  // edits the scene_prompt the previous one just finished writing, so #2
+  // has to see #1's result, not the prompt that was live when #2 was typed.
+  var _chatQueue = [];
+  var _chatBusy = false;
+
   function _submitChatInstruction() {
     var text = chatInput.value.trim();
     if (!text) return;
-    if (sendBtn.disabled) return;
 
     var selectedWf = wfSelect ? wfSelect.value : '';
     var epToggle = document.getElementById('ncf-chat-ep-toggle');
     var useEditPrompt = epToggle && epToggle.checked;
 
-    // Disable send + clear input
-    sendBtn.disabled = true;
+    // Card goes up the instant you hit send — queued (amber) if something's
+    // already running, straight to generating otherwise — instead of
+    // leaving nothing but a text hint until everything else finishes (#109).
+    // + 1 for the item already shifted out of _chatQueue and running, if any.
+    var idx = generatedCount + 1 + _chatQueue.length + (_chatBusy ? 1 : 0);
+    var card = _chatBusy
+      ? _addQueuedCard(idx, text)
+      : ((typeof addGeneratingCard === 'function') ? addGeneratingCard(idx, text) : null);
+
+    _chatQueue.push({ text: text, selectedWf: selectedWf, useEditPrompt: useEditPrompt, card: card });
     chatInput.value = '';
     chatInput.style.height = 'auto';
+    chatInput.focus();
+    _processChatQueue();
+  }
+
+  function _processChatQueue() {
+    if (_chatBusy || !_chatQueue.length) return;
+    _chatBusy = true;
+    var item = _chatQueue.shift();
+    if (item.card && item.card.getAttribute('data-status') === 'queuing') {
+      _markCardGenerating(item.card);
+    }
+    if (chatHint) {
+      chatHint.textContent = _chatQueue.length ? 'Editing prompt… (' + _chatQueue.length + ' queued)' : 'Editing prompt…';
+    }
+
+    _runChatItem(item).then(function () {
+      if (chatHint) chatHint.textContent = '';
+    }).catch(function (err) {
+      if (chatHint) chatHint.textContent = '✗ ' + (err.message || 'Edit failed');
+      if (typeof _markCardError === 'function') _markCardError(item.card);
+    }).then(function () {
+      _chatBusy = false;
+      _processChatQueue();
+    });
+  }
+
+  // Runs exactly one chat instruction (the logic _submitChatInstruction used
+  // to run inline) — text/selectedWf/useEditPrompt/card come from the queue
+  // item, not the live chat bar, since by the time this runs the user may
+  // already be typing the next one.
+  function _runChatItem(item) {
+    var text = item.text, selectedWf = item.selectedWf, useEditPrompt = item.useEditPrompt, chatCard = item.card;
 
     if (selectedWf) {
       if (useEditPrompt) {
         // Run edit-prompt LLM first, then pass refined text to refine workflow
-        if (chatHint) chatHint.textContent = 'Editing prompt…';
         var scenePromptTaEP = document.getElementById('ncf-input-scene_prompt');
         var worldTaEP = document.getElementById('ncf-input-world');
         var basePromptEP = _selectedScenePrompt()
@@ -1070,7 +1133,7 @@ function _showChatBar(actionStepDef) {
           || getVal('world', 'prompt_text')
           || sessionState.world_context
           || '';
-        fetch('/api/models/chat/edit-prompt', {
+        return fetch('/api/models/chat/edit-prompt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mode: 'single', instruction: text, currentPrompt: basePromptEP, thinking: false }),
@@ -1080,103 +1143,73 @@ function _showChatBar(actionStepDef) {
           // Fallback: if model just echoed back the instruction, combine manually
           var refined = (ep && ep.toLowerCase() !== text.toLowerCase()) ? ep : ((basePromptEP ? basePromptEP + ', ' : '') + text);
           if (chatHint) chatHint.textContent = 'Editing image…';
-          return _chatRunRefine(selectedWf, refined);
-        }).then(function () {
-          if (chatHint) chatHint.textContent = '';
-          sendBtn.disabled = false;
-          chatInput.focus();
-        }).catch(function (err) {
-          if (chatHint) chatHint.textContent = '✗ ' + (err.message || 'Edit failed');
-          sendBtn.disabled = false;
+          return _chatRunRefine(selectedWf, refined, chatCard);
         });
-        return;
       }
       // Pass the chat text directly as the prompt to the refine workflow
       if (chatHint) chatHint.textContent = 'Editing image…';
-      _chatRunRefine(selectedWf, text).then(function () {
-        if (chatHint) chatHint.textContent = '';
-        sendBtn.disabled = false;
-        chatInput.focus();
-      }).catch(function (err) {
-        if (chatHint) chatHint.textContent = '✗ ' + (err.message || 'Edit failed');
-        sendBtn.disabled = false;
-      });
-    } else {
-      // No edit workflow — call edit-prompt LLM then fresh generate
-      if (chatHint) chatHint.textContent = 'Editing prompt…';
-      if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = 'LLM processing…';
+      return _chatRunRefine(selectedWf, text, chatCard);
+    }
 
-      var scenePromptTa = document.getElementById('ncf-input-scene_prompt');
-      var worldTa = document.getElementById('ncf-input-world');
-      var currentPrompt = _selectedScenePrompt()
-        || (scenePromptTa && !scenePromptTa.disabled && scenePromptTa.value.trim())
-        || getVal('scene_prompt', 'prompt_text')
-        || (worldTa && worldTa.value.trim())
-        || getVal('world', 'prompt_text')
-        || sessionState.world_context
-        || '';
+    // No edit workflow — call edit-prompt LLM then fresh generate
+    if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = 'LLM processing…';
 
-      if (!currentPrompt) {
-        if (chatHint) chatHint.textContent = '✗ No base prompt found';
-        if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = '✗ No base prompt found';
-        sendBtn.disabled = false;
-        return;
+    var scenePromptTa = document.getElementById('ncf-input-scene_prompt');
+    var worldTa = document.getElementById('ncf-input-world');
+    var currentPrompt = _selectedScenePrompt()
+      || (scenePromptTa && !scenePromptTa.disabled && scenePromptTa.value.trim())
+      || getVal('scene_prompt', 'prompt_text')
+      || (worldTa && worldTa.value.trim())
+      || getVal('world', 'prompt_text')
+      || sessionState.world_context
+      || '';
+
+    if (!currentPrompt) {
+      if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = '✗ No base prompt found';
+      return Promise.reject(new Error('No base prompt found'));
+    }
+
+    return fetch('/api/models/chat/edit-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'single',
+        instruction: text,
+        currentPrompt: currentPrompt,
+        thinking: false,
+      }),
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data.error) throw new Error(data.error);
+      var newPrompt = (data.editedPrompt || '').trim();
+      // Fallback: if model just echoed back the instruction, combine manually
+      if (!newPrompt || newPrompt.toLowerCase() === text.toLowerCase()) {
+        newPrompt = (currentPrompt ? currentPrompt + ', ' : '') + text;
       }
 
-      fetch('/api/models/chat/edit-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'single',
-          instruction: text,
-          currentPrompt: currentPrompt,
-          thinking: false,
-        }),
-      }).then(function (r) { return r.json(); }).then(function (data) {
-        if (data.error) throw new Error(data.error);
-        var newPrompt = (data.editedPrompt || '').trim();
-        // Fallback: if model just echoed back the instruction, combine manually
-        if (!newPrompt || newPrompt.toLowerCase() === text.toLowerCase()) {
-          newPrompt = (currentPrompt ? currentPrompt + ', ' : '') + text;
+      if (scenePromptTa) {
+        scenePromptTa.value = newPrompt;
+        if (scenePromptTa.disabled) {
+          scenePromptTa.disabled = false;
+          scenePromptTa.classList.remove('is-prefill-pending');
+          scenePromptTa.placeholder = '';
         }
+        // Written from outside flow-step-prompt-input.js's own closure — a
+        // real "input" event is what refreshes its phrase chips.
+        scenePromptTa.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      setVal('scene_prompt', 'prompt_text', newPrompt);
+      if (!sessionState.world_context) sessionState.world_context = currentPrompt;
 
-        if (scenePromptTa) {
-          scenePromptTa.value = newPrompt;
-          if (scenePromptTa.disabled) {
-            scenePromptTa.disabled = false;
-            scenePromptTa.classList.remove('is-prefill-pending');
-            scenePromptTa.placeholder = '';
-          }
-        }
-        setVal('scene_prompt', 'prompt_text', newPrompt);
-        if (!sessionState.world_context) sessionState.world_context = currentPrompt;
+      // Find the generate action step to pass into runGenerate directly
+      var actionStep = allSteps && allSteps.find(function (s) { return s.type === 'action'; });
+      if (!actionStep) throw new Error('Generate step not found');
 
-        // Find the generate action step to pass into runGenerate directly
-        var actionStep = allSteps && allSteps.find(function (s) { return s.type === 'action'; });
-        if (!actionStep) {
-          if (chatHint) chatHint.textContent = '✗ Generate step not found';
-          sendBtn.disabled = false;
-          return;
-        }
+      if (chatHint) chatHint.textContent = 'Generating…';
+      // Ensure button is enabled for updateGenerateBtn called inside runGenerate
+      if (generateBtn && generateBtn.disabled) generateBtn.removeAttribute('disabled');
 
-        if (chatHint) chatHint.textContent = 'Generating…';
-        // Ensure button is enabled for updateGenerateBtn called inside runGenerate
-        if (generateBtn && generateBtn.disabled) generateBtn.removeAttribute('disabled');
-
-        runGenerate(actionStep).then(function () {
-          if (chatHint) chatHint.textContent = '';
-          sendBtn.disabled = false;
-          chatInput.focus();
-        }).catch(function (err) {
-          if (chatHint) chatHint.textContent = '✗ ' + (err.message || 'Generation failed');
-          sendBtn.disabled = false;
-        });
-      }).catch(function (err) {
-        if (chatHint) chatHint.textContent = '✗ ' + (err.message || 'LLM error');
-        if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = '✗ ' + (err.message || 'LLM error');
-        sendBtn.disabled = false;
-      });
-    }
+      return runGenerate(actionStep, { card: chatCard });
+    });
   }
 }
 
@@ -1459,6 +1492,7 @@ function _showStoryBar(actionStepDef) {
             scenePromptTa.classList.remove('is-prefill-pending');
             scenePromptTa.placeholder = '';
           }
+          scenePromptTa.dispatchEvent(new Event('input', { bubbles: true }));
         }
         setVal('scene_prompt', 'prompt_text', sceneText);
 

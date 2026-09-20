@@ -1158,50 +1158,9 @@
   cursor: default;
 }
 
-/* Save-to-Library button, next to the instance-id badge above. */
-.nsc-flow-save-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 0.4rem;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  padding: 0;
-  background: color-mix(in srgb, var(--accent, #6366f1) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent, #6366f1) 35%, transparent);
-  border-radius: 5px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.nsc-flow-save-btn:hover {
-  color: var(--text);
-}
-
-.nsc-flow-save-btn:hover .cs-mode-tip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.nsc-flow-save-btn svg {
-  width: 24px;
-  height: 20px;
-  stroke: currentColor;
-  /* Authored in a 100×160 viewBox (not the usual 24×24), so it needs a much
-     larger stroke-width than typical icons to read as "thick" once scaled
-     down to its rendered size — 1.8 here would come out near-invisible. */
-  stroke-width: 8;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  /* Button lives inside .cs-breadcrumb, which dims *any* descendant svg
-     (its own chevron separators) via `.cs-breadcrumb svg { opacity: 0.5 }` —
-     opt back out so this icon reads at the same weight as .cs-history-toggle. */
-  opacity: 1;
-}
+/* Save-to-Build button moved into .ncf-results-toolbar--rail (flow-boot.js) —
+   it's a plain .create-action-btn there now, styled by that rail's own
+   rules; nothing bespoke needed here any more. */
 
 
 /* ─── Sub-grid (6 Create cards: 3 × 2 uniform) ──────────────────────────── */
@@ -5535,6 +5494,58 @@ body.nsc-enhance-page .nsc-inputs::-webkit-scrollbar-thumb:hover {
   flex-shrink: 0;
 }
 
+/* "Save as new engine" — appears once a manual edit makes Custom Params
+   diverge from whatever was last applied (a preset, Reset, or a previous
+   save). flow-workflow-params-aside.js. */
+.ncf-wf-save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg-panel);
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.ncf-wf-save-btn:hover {
+  transform: scale(1.08);
+}
+
+.ncf-wf-save-btn svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ncf-wf-save-form {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.85rem;
+}
+
+.ncf-wf-save-form .nsc-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ncf-wf-save-form .ncf-wf-save-confirm {
+  width: auto;
+  padding: 0.3rem 0.7rem;
+  font-size: var(--fs-xs);
+  flex-shrink: 0;
+}
+
 /* "Choose a LoRA" row (curated base workflows only, Custom mode) —
    flow-workflow-params-aside.js. */
 .ncf-wf-lora-row {
@@ -7990,6 +8001,34 @@ button.nse-model-hint.ncf-enum-picker-btn:hover {
 }
 .ncf-civ-tag--model { color: var(--nse-accent); border-color: color-mix(in srgb, var(--nse-accent) 50%, transparent); }
 .ncf-civ-tag--lora  { color: #c4b5fd; border-color: #4c1d95; }
+
+/* Chat scene_prompt phrase chips — flow-step-prompt-input.js. One chip per
+   ","/"."-separated phrase, read-only mirror of the textarea right below it;
+   click a chip to drop that whole phrase instead of hunting for it in the
+   free-text box. */
+.ncf-prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+.ncf-prompt-chip {
+  font-size: var(--fs-xxs);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--bg3, var(--bg2));
+  color: var(--text-secondary, var(--muted));
+  border: 1px solid var(--border-subtle, var(--border));
+  cursor: pointer;
+  line-height: 1.5;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.ncf-prompt-chip:hover {
+  color: #f87171;
+  border-color: #f87171;
+  background: color-mix(in srgb, #f87171 12%, transparent);
+  text-decoration: line-through;
+}
 .ncf-civ-edit-btn {
   font-size: var(--fs-xxs);
   padding: 0.15rem 0.4rem;
@@ -10353,6 +10392,26 @@ body.nsc-session-workspace-page .nss-scenes-area {
   right: calc(100% + 8px);
   transform: translateY(-50%) translateX(3px);
 }
+
+/* Export choices use the shared Nomad options-menu rows. */
+.ncf-export-panel { gap: 0.5rem; }
+.ncf-export-panel-hint { margin: 0 0 0.35rem; color: var(--muted); font-size: 0.8rem; }
+.nsc-options-menu.ncf-export-panel .ncf-export-option {
+  padding: 0.6rem 1rem;
+  background: var(--bg-toggle);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  border-radius: 20px;
+  color: var(--text);
+}
+.nsc-options-menu.ncf-export-panel .ncf-export-option:hover,
+.nsc-options-menu.ncf-export-panel .ncf-export-option:focus-visible {
+  background: color-mix(in srgb, var(--accent) 34%, var(--bg-toggle));
+  border-color: var(--accent);
+}
+.nsc-options-menu.ncf-export-panel .ncf-export-option .nsc-options-menu-item-icon {
+  color: #fff;
+}
+.ncf-export-option:disabled { opacity: 0.45; cursor: not-allowed; }
 .ncf-results-toolbar--rail .create-action-btn:not(:disabled):hover .action-tip,
 .ncf-results-toolbar--rail .create-action-btn:not(:disabled):focus-visible .action-tip {
   transform: translateY(-50%) translateX(0);
@@ -13999,26 +14058,34 @@ body.nsc-session-workspace-page .nss-scenes-area {
    already toggles that class page-wide on every mode switch — this just
    keys off it instead of the elements' own container being hidden/shown
    like before). */
-/* Absolutely centered in the full topbar (same technique as
-   .nsc-topbar-center above, which already centers the viewer/depot badge
-   the same way) — a flex `margin:auto` approach only centers within the
-   leftover space after the trailing spacer div also claims its own
-   flex:1 share, which reads as "centered in the right two-thirds", not
-   centered in the bar as a whole. Taking it out of flow avoids that. */
+/* Keep search in the flex layout so it follows the available bar width. */
+body.album-page.explore-page-body .nsc-topbar {
+  flex-wrap: wrap;
+}
 #album-topbar-toolbar {
   display: none;
   align-items: center;
-  gap: 16px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  max-width: 760px;
-  justify-content: center;
+  gap: clamp(8px, 1.2vw, 16px);
+  flex: 1 1 320px;
+  min-width: 0;
 }
 body.explore-page-body #album-topbar-toolbar {
   display: flex;
+}
+body.explore-page-body #album-topbar-toolbar + div {
+  display: none;
+}
+#album-topbar-toolbar .explore-filter-tools {
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  body.explore-page-body #album-topbar-toolbar {
+    order: 1;
+    flex-basis: 100%;
+  }
+  body.album-page.explore-page-body .album-count {
+    margin-left: auto;
+  }
 }
 
 /* Search icon + ⌘K hint removed (just the bare input now, see album.html) —
@@ -14028,31 +14095,30 @@ body.explore-page-body #album-topbar-toolbar {
   background: none;
   border: none;
   flex: 1;
-  max-width: 640px;
-  margin: 0 auto;
+  min-width: 0;
+  border-radius: 20px;
 }
 
-/* Same visual treatment as .nsc-input (the flow panels' own search/text
-   field, e.g. .ncf-style-picker-search) — no visible border, a subtle
-   inset ring instead, background matches the surrounding panel — instead
-   of the harder accent-tinted border box this used to have. */
+/* Quiet at rest; restore the panel background and accent ring on focus. */
 #album-topbar-toolbar #album-images-search-input {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   height: 38px;
   padding: 0 0.9rem;
   border: none;
-  background: var(--bg-panel);
+  background: color-mix(in srgb, var(--bg) 80%, var(--bg-panel));
   color: var(--text);
   font-size: var(--fs-base);
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1.5px var(--scrollbar-hover);
-  transition: box-shadow 0.15s ease;
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--scrollbar-hover) 25%, transparent);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 #album-topbar-toolbar #album-images-search-input::placeholder {
   color: var(--muted);
 }
 #album-topbar-toolbar #album-images-search-input:hover {
-  box-shadow: inset 0 0 0 1.5px var(--text-secondary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--scrollbar-hover) 45%, transparent);
 }
 #album-topbar-toolbar #album-images-search-input:focus {
   outline: none;
@@ -14120,6 +14186,10 @@ body.explore-page-body #album-topbar-toolbar {
   width: var(--explore-thumb-min, 320px);
   flex: 0 0 auto;
   transition: width 0.28s ease;
+}
+#album-images-view .explore-thumb,
+#album-images-view .explore-thumb-image {
+  border-radius: 4px;
 }
 
 /* ── Expand overlay (click-to-open) ──────────────────────────────────── */
@@ -14884,4 +14954,66 @@ body.explore-page-body #album-topbar-toolbar {
   width: 100%;
   justify-content: center;
   margin: 0.5rem 0 0.9rem;
+}
+
+/* Album image deletion confirmation — compact Nomad modal, rather than the
+   full-height generic create-modal shell. */
+.album-delete-modal .create-modal-backdrop {
+  background: rgba(5, 9, 18, 0.78);
+  opacity: 1;
+  backdrop-filter: blur(3px);
+}
+.album-delete-modal .create-modal-shell {
+  width: min(440px, calc(100vw - 32px));
+  height: auto;
+  max-height: none;
+  margin: 12vh auto 0;
+  padding: 18px;
+  gap: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  border-radius: 14px;
+  background: var(--bg-panel);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(125, 145, 205, 0.06) inset;
+}
+.album-delete-title {
+  margin: 0;
+  color: var(--text-bright);
+  font-size: 18px;
+  line-height: 1.25;
+}
+.album-delete-message {
+  margin: 14px 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.album-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.album-delete-actions .btn {
+  min-height: 34px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.album-delete-cancel {
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  background: var(--bg-toggle);
+  color: var(--text);
+}
+.album-delete-cancel:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-toggle));
+}
+.album-delete-confirm {
+  border-color: color-mix(in srgb, #ef4444 62%, transparent);
+  background: color-mix(in srgb, #ef4444 18%, var(--bg-panel));
+  color: #ffd8d8;
+}
+.album-delete-confirm:hover {
+  border-color: #ef4444;
+  background: color-mix(in srgb, #ef4444 30%, var(--bg-panel));
 }

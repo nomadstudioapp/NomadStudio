@@ -17,6 +17,7 @@ from app.routes.models_api_shared import (
     _ensure_registry,
     _inject_uploaded_image_into_workflow,
     _parse_image_data_url,
+    _registry_transaction,
     _resolve_upscale_scale,
     _safe_comfy_url,
     _save_registry,
@@ -94,68 +95,66 @@ def get_models_upscale_settings():
 @models_api_bp.patch("/models/upscale/settings")
 def update_models_upscale_settings():
     payload = request.get_json(silent=True) or {}
-    data = _ensure_registry()
-    upscale = data.setdefault("upscaleSettings", {})
+    with _registry_transaction() as data:
+        upscale = data.setdefault("upscaleSettings", {})
 
-    if "comfyApiUrl" in payload:
-        try:
-            upscale["comfyApiUrl"] = _safe_comfy_url(
-                str(payload.get("comfyApiUrl", "")).strip()
-            )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "comfyApiUrl" in payload:
+            try:
+                upscale["comfyApiUrl"] = _safe_comfy_url(
+                    str(payload.get("comfyApiUrl", "")).strip()
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    models = _upscale_models_catalog(data)
-    current_model = _upscale_model_by_id(data, str(upscale.get("modelId", "")))
-    if "modelId" in payload:
-        current_model = _upscale_model_by_id(data, str(payload.get("modelId", "")))
-        upscale["modelId"] = current_model.get("id")
+        models = _upscale_models_catalog(data)
+        current_model = _upscale_model_by_id(data, str(upscale.get("modelId", "")))
+        if "modelId" in payload:
+            current_model = _upscale_model_by_id(data, str(payload.get("modelId", "")))
+            upscale["modelId"] = current_model.get("id")
 
-    requested_scale = payload.get(
-        "scale",
-        upscale.get(
+        requested_scale = payload.get(
             "scale",
-            current_model.get("defaultScale", current_model.get("fixedScale", 2)),
-        ),
-    )
-    upscale["scale"] = _resolve_upscale_scale(current_model, requested_scale)
+            upscale.get(
+                "scale",
+                current_model.get("defaultScale", current_model.get("fixedScale", 2)),
+            ),
+        )
+        upscale["scale"] = _resolve_upscale_scale(current_model, requested_scale)
 
-    if not str(upscale.get("comfyApiUrl", "")).strip():
-        upscale["comfyApiUrl"] = (
-            str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
-            or DEFAULT_COMFY_URL
+        if not str(upscale.get("comfyApiUrl", "")).strip():
+            upscale["comfyApiUrl"] = (
+                str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+                or DEFAULT_COMFY_URL
+            )
+
+        selected_import_id = str(
+            current_model.get("importId", "") or current_model.get("id", "")
+        ).strip()
+        selected_record = next(
+            (
+                item
+                for item in data.get("imports", [])
+                if str(item.get("id", "")) == selected_import_id
+            ),
+            None,
         )
 
-    selected_import_id = str(
-        current_model.get("importId", "") or current_model.get("id", "")
-    ).strip()
-    selected_record = next(
-        (
-            item
-            for item in data.get("imports", [])
-            if str(item.get("id", "")) == selected_import_id
-        ),
-        None,
-    )
-
-    selected_import = None
-    if isinstance(selected_record, dict):
-        analysis = (
-            selected_record.get("analysis", {})
-            if isinstance(selected_record.get("analysis", {}), dict)
-            else {}
-        )
-        selected_import = {
-            "id": selected_record.get("id"),
-            "name": selected_record.get("name"),
-            "basicValues": selected_record.get("basicValues", {}),
-            "advancedValues": selected_record.get("advancedValues", {}),
-            "basicParameters": analysis.get("basicParameters", []),
-            "advancedParameters": analysis.get("advancedParameters", []),
-            "detected": analysis.get("detected", {}),
-        }
-
-    _save_registry(data)
+        selected_import = None
+        if isinstance(selected_record, dict):
+            analysis = (
+                selected_record.get("analysis", {})
+                if isinstance(selected_record.get("analysis", {}), dict)
+                else {}
+            )
+            selected_import = {
+                "id": selected_record.get("id"),
+                "name": selected_record.get("name"),
+                "basicValues": selected_record.get("basicValues", {}),
+                "advancedValues": selected_record.get("advancedValues", {}),
+                "basicParameters": analysis.get("basicParameters", []),
+                "advancedParameters": analysis.get("advancedParameters", []),
+                "detected": analysis.get("detected", {}),
+            }
     return jsonify(
         {
             "models": models,

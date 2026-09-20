@@ -346,12 +346,11 @@ function _enqueueGeneration(stepDef) {
 }
 
 // Consume the next queued item and run it.
-async function _processQueue() {
-  if (isGenerating || !_genQueue.length) return;
-  var item = _genQueue.shift();
-  var card = item.card;
-
-  // Transition card: queued → generating
+// Shared "queued → generating" transition — swaps in the spinner ring and
+// flips the status dot/label. Used by _processQueue (the main app's own
+// queue) and by the chat bar's queue (_processChatQueue, flow-gallery.js),
+// so both look the same the moment a card's turn actually comes up.
+function _markCardGenerating(card) {
   card.setAttribute('data-status', 'generating');
   var dot = card.querySelector('.nss-card-status-dot');
   var lbl = card.querySelector('.nss-card-status-label');
@@ -367,6 +366,25 @@ async function _processQueue() {
       '<span class="nsc-ring-pct"></span><span class="nsc-ring-steps"></span><span class="nsc-ring-eta"></span>';
     card._genStartTime = Date.now();
   }
+}
+
+// Same "error" flip _processQueue's own catch block already used inline —
+// shared with the chat queue (flow-gallery.js) so a failed chat send looks
+// the same as any other failed queued job.
+function _markCardError(card) {
+  if (!card) return;
+  card.setAttribute('data-status', 'error');
+  var dot = card.querySelector('.nss-card-status-dot');
+  var lbl = card.querySelector('.nss-card-status-label');
+  if (dot) dot.setAttribute('data-status', 'error');
+  if (lbl) lbl.textContent = 'error';
+}
+
+async function _processQueue() {
+  if (isGenerating || !_genQueue.length) return;
+  var item = _genQueue.shift();
+  var card = item.card;
+  _markCardGenerating(card);
 
   isGenerating = true;
   updateGenerateBtn();
@@ -386,9 +404,7 @@ async function _processQueue() {
       if (typeof saveSessionSnapshot === 'function') saveSessionSnapshot();
     }
   } catch (err) {
-    card.setAttribute('data-status', 'error');
-    if (dot) dot.setAttribute('data-status', 'error');
-    if (lbl) lbl.textContent = 'error';
+    _markCardError(card);
     if (generateStatus) generateStatus.textContent = '✗ ' + (err.message || 'Generation failed');
     console.error('[FlowEngine] queued job failed:', err);
   } finally {

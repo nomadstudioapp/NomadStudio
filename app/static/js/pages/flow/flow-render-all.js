@@ -1718,7 +1718,13 @@ async function _runMix(stepDef, ctx) {
   saveSessionSnapshot();
 }
 
-async function runGenerate(stepDef) {
+// ctx.card: an already-created card (from addGeneratingCard/_addQueuedCard)
+// to update in place instead of creating a new one — the chat bar's own
+// card, put up the instant it sends, before this function's two network
+// round-trips (prepare-queue, then the actual ComfyUI submit) even start.
+// Single-workflow, single-prompt path only (pi === 0) — chat never sends more
+// than one prompt at a time.
+async function runGenerate(stepDef, ctx) {
   isGenerating = true;
   // Reflect the enqueueable state (button stays enabled + relabels to "Enqueue")
   updateGenerateBtn();
@@ -1942,6 +1948,8 @@ async function runGenerate(stepDef) {
           // as this scene's own generation begins so its displayed duration
           // is just its own.
           pendingCard._genStartTime = Date.now();
+        } else if (pi === 0 && ctx && ctx.card) {
+          pendingCard = ctx.card;
         } else {
           pendingCard = addGeneratingCard(generatedCount + 1, positivePrompt);
         }

@@ -41,6 +41,7 @@ from app.routes.models_api_shared import (
     _normalize_lmstudio_conversation_messages,
     _parse_image_data_url,
     _reasoning_only_error,
+    _registry_transaction,
     _safe_http_url,
     _save_registry,
     _sanitize_lmstudio_edited_prompt,
@@ -159,7 +160,10 @@ def describe_image_with_lmstudio():
     if configured_vision_models and lmstudio_model not in configured_vision_models:
         lmstudio_model = configured_vision_models[0]
         settings["lmStudioVisionModel"] = lmstudio_model
-        _save_registry(data)
+        # Small, quick correction — done before the slow vision call below, so
+        # the registry lock is only held for this write, not for the request.
+        with _registry_transaction() as tx_data:
+            tx_data.setdefault("settings", {})["lmStudioVisionModel"] = lmstudio_model
     auto_disconnect = bool(settings.get("lmStudioAutoDisconnect", False))
     context_size = _auto_context_size(*_context_texts(payload))
     lmstudio_temperature = _coerce_lmstudio_temperature(

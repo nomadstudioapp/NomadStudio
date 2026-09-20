@@ -41,6 +41,7 @@ from app.routes.models_api_shared import (
     _lmstudio_unload_model,
     _normalize_lmstudio_conversation_messages,
     _parse_image_data_url,
+    _registry_transaction,
     _safe_http_url,
     _save_registry,
     _sanitize_lmstudio_edited_prompt,
@@ -545,6 +546,131 @@ def _call_studio_llm(
     return answer.strip(), source
 
 
+# JSON Schema for studio-ideogram (NomadStudio#3 / OPENHIKER#105), translated
+# from the "main" compose prompt's own prose spec (settings_routes.py,
+# DEFAULT_COMPOSE_PROMPTS["main"]) — keep the two in sync if that prompt's
+# shape ever changes. "photo" isn't required: the prompt asks for it but
+# real outputs (including schema-constrained ones) often only have
+# aesthetics/lighting/medium/color_palette when the piece isn't photographic.
+IDEOGRAM_COMPOSE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "high_level_description": {"type": "string"},
+        "style_description": {
+            "type": "object",
+            "properties": {
+                "aesthetics": {"type": "string"},
+                "lighting": {"type": "string"},
+                "photo": {"type": "string"},
+                "medium": {"type": "string"},
+                "color_palette": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["aesthetics", "lighting", "medium", "color_palette"],
+        },
+        "compositional_deconstruction": {
+            "type": "object",
+            "properties": {
+                "background": {"type": "string"},
+                "elements": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {"type": "string", "enum": ["obj", "text", "bg"]},
+                            "bbox": {
+                                "type": "array",
+                                "items": {"type": "integer"},
+                                "minItems": 4,
+                                "maxItems": 4,
+                            },
+                            "desc": {"type": "string"},
+                            "text": {"type": "string"},
+                            "color_palette": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": ["type", "bbox", "desc"],
+                    },
+                },
+            },
+            "required": ["background", "elements"],
+        },
+    },
+    "required": ["high_level_description", "style_description", "compositional_deconstruction"],
+}
+
+
+def _call_studio_llm_json(
+    lmstudio_url: str,
+    model: str,
+    messages: list[dict[str, Any]],
+    temperature: float,
+    max_tokens: int,
+    schema: dict[str, Any],
+    schema_name: str,
+    reasoning: str = "off",
+    timeout: int = 300,
+    schema_timeout: int = 90,
+    label: str = "studio",
+) -> tuple[dict[str, Any] | list[Any] | None, str, bool]:
+    """Get JSON from LM Studio for a step that needs strict structure — tries
+    schema-constrained decoding (response_format/json_schema, OPENHIKER#105 /
+    NomadStudio#3) first, short-timeout, and falls back to _call_studio_llm's
+    normal free-text path (still recovered through
+    _extract_json_payload_from_text) on ANY failure, not just an explicit
+    rejection from LM Studio.
+
+    That "any failure" is the point, measured empirically against a real LM
+    Studio (2026-09-20): qwen3.8-9b-distill — the model this recovery path
+    was originally built around — went from 0/3 valid free-text answers
+    (wraps the JSON in a trailing ```json fence even though nothing asked
+    for one) to 3/3 valid with the schema, ~20-35s each. But
+    qwythos-9b-claude-mythos-5-1m, the app's own default prompt model, was
+    erratic under that same schema on the same prompt: sometimes fine,
+    once the LM Studio *engine itself* gave up after producing nothing for
+    ten minutes ("Engine protocol predict stream timed out after 600000ms
+    without receiving data."). Schema-constrained decoding removes one
+    failure mode (malformed JSON) but is not something to trust
+    unconditionally across models — a short timeout on the schema attempt
+    with the existing free-text path as the real safety net is essential,
+    not optional. response_format is only sent on the legacy
+    /v1/chat/completions call (the documented OpenAI-compatible shape);
+    the native /api/v1/chat endpoint's schema support, if any, is
+    unverified, so the schema attempt doesn't go through it.
+
+    Returns (parsed_json_or_None, raw_source, used_schema) — used_schema
+    tells the caller (for logging/telemetry) which path actually produced
+    the answer.
+    """
+    try:
+        payload = _build_chat_payload(model, messages, temperature, max_tokens)
+        payload["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {"name": schema_name, "strict": True, "schema": schema},
+        }
+        response = http_json(
+            url=_lmstudio_chat_endpoint(lmstudio_url), gpu_category="lmstudio",
+            method="POST", payload=payload, timeout=schema_timeout,
+        )
+        answer, source = _extract_lmstudio_message_text(response)
+        parsed = _extract_json_payload_from_text(answer)
+        if isinstance(parsed, (dict, list)):
+            return parsed, source, True
+        logger.warning(
+            "%s: schema-constrained call returned no usable JSON (empty or "
+            "unparseable); falling back to free-text.", label,
+        )
+    except Exception as exc:
+        logger.warning(
+            "%s: schema-constrained call failed (%s); falling back to free-text.",
+            label, exc,
+        )
+
+    raw_output, raw_source = _call_studio_llm(
+        lmstudio_url, model, messages, temperature, max_tokens,
+        reasoning=reasoning, timeout=timeout, label=label,
+    )
+    return _extract_json_payload_from_text(raw_output), raw_source, False
+
+
 def _sanitize_lmstudio_favorite_models(
     values: Any, available_models: list[str] | None = None
 ) -> list[str]:
@@ -709,66 +835,65 @@ def get_models_chat_settings():
 @models_api_bp.patch("/models/chat/settings")
 def update_models_chat_settings():
     payload = request.get_json(silent=True) or {}
-    data = _ensure_registry()
-    settings = data.setdefault("settings", {})
+    with _registry_transaction() as data:
+        settings = data.setdefault("settings", {})
 
-    if "lmStudioApiUrl" in payload:
-        try:
-            settings["lmStudioApiUrl"] = _safe_http_url(
-                str(payload.get("lmStudioApiUrl", "")), "LM Studio"
+        if "lmStudioApiUrl" in payload:
+            try:
+                settings["lmStudioApiUrl"] = _safe_http_url(
+                    str(payload.get("lmStudioApiUrl", "")), "LM Studio"
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        if "lmStudioModel" in payload:
+            settings["lmStudioPromptModel"] = str(payload.get("lmStudioModel", "")).strip()
+        if "lmStudioPromptModel" in payload:
+            settings["lmStudioPromptModel"] = str(
+                payload.get("lmStudioPromptModel", "")
+            ).strip()
+        if "lmStudioVisionModel" in payload:
+            settings["lmStudioVisionModel"] = str(
+                payload.get("lmStudioVisionModel", "")
+            ).strip()
+        if "lmStudioFavoriteModels" in payload:
+            settings["lmStudioFavoriteModels"] = _sanitize_lmstudio_favorite_models(
+                payload.get("lmStudioFavoriteModels", []),
+                settings.get("lmStudioModels", []),
             )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if "lmStudioVisionFavoriteModels" in payload:
+            settings["lmStudioVisionFavoriteModels"] = _sanitize_lmstudio_favorite_models(
+                payload.get("lmStudioVisionFavoriteModels", []),
+                settings.get("lmStudioModels", []),
+            )
+        if "lmStudioShowFavoritesOnly" in payload:
+            settings["lmStudioShowFavoritesOnly"] = bool(
+                payload.get("lmStudioShowFavoritesOnly")
+            )
+        if "lmStudioVisionShowFavoritesOnly" in payload:
+            settings["lmStudioVisionShowFavoritesOnly"] = bool(
+                payload.get("lmStudioVisionShowFavoritesOnly")
+            )
+        if "lmStudioAutoDisconnect" in payload:
+            settings["lmStudioAutoDisconnect"] = bool(payload.get("lmStudioAutoDisconnect"))
+        if "lmStudioContextSize" in payload:
+            settings["lmStudioContextSize"] = _coerce_context_size(
+                payload.get("lmStudioContextSize")
+            )
+        if "lmStudioTemperature" in payload:
+            settings["lmStudioTemperature"] = _coerce_lmstudio_temperature(
+                payload.get("lmStudioTemperature")
+            )
+        if "clearLmStudioOutputLog" in payload and bool(
+            payload.get("clearLmStudioOutputLog")
+        ):
+            settings["lmStudioOutputLog"] = []
 
-    if "lmStudioModel" in payload:
-        settings["lmStudioPromptModel"] = str(payload.get("lmStudioModel", "")).strip()
-    if "lmStudioPromptModel" in payload:
-        settings["lmStudioPromptModel"] = str(
-            payload.get("lmStudioPromptModel", "")
-        ).strip()
-    if "lmStudioVisionModel" in payload:
-        settings["lmStudioVisionModel"] = str(
-            payload.get("lmStudioVisionModel", "")
-        ).strip()
-    if "lmStudioFavoriteModels" in payload:
-        settings["lmStudioFavoriteModels"] = _sanitize_lmstudio_favorite_models(
-            payload.get("lmStudioFavoriteModels", []),
-            settings.get("lmStudioModels", []),
-        )
-    if "lmStudioVisionFavoriteModels" in payload:
-        settings["lmStudioVisionFavoriteModels"] = _sanitize_lmstudio_favorite_models(
-            payload.get("lmStudioVisionFavoriteModels", []),
-            settings.get("lmStudioModels", []),
-        )
-    if "lmStudioShowFavoritesOnly" in payload:
-        settings["lmStudioShowFavoritesOnly"] = bool(
-            payload.get("lmStudioShowFavoritesOnly")
-        )
-    if "lmStudioVisionShowFavoritesOnly" in payload:
-        settings["lmStudioVisionShowFavoritesOnly"] = bool(
-            payload.get("lmStudioVisionShowFavoritesOnly")
-        )
-    if "lmStudioAutoDisconnect" in payload:
-        settings["lmStudioAutoDisconnect"] = bool(payload.get("lmStudioAutoDisconnect"))
-    if "lmStudioContextSize" in payload:
-        settings["lmStudioContextSize"] = _coerce_context_size(
-            payload.get("lmStudioContextSize")
-        )
-    if "lmStudioTemperature" in payload:
-        settings["lmStudioTemperature"] = _coerce_lmstudio_temperature(
-            payload.get("lmStudioTemperature")
-        )
-    if "clearLmStudioOutputLog" in payload and bool(
-        payload.get("clearLmStudioOutputLog")
-    ):
-        settings["lmStudioOutputLog"] = []
+        prompt_model = _resolve_prompt_model(settings)
+        settings["lmStudioPromptModel"] = prompt_model
+        settings["lmStudioVisionModel"] = _resolve_vision_model(settings, prompt_model)
+        settings["lmStudioModel"] = prompt_model
 
-    prompt_model = _resolve_prompt_model(settings)
-    settings["lmStudioPromptModel"] = prompt_model
-    settings["lmStudioVisionModel"] = _resolve_vision_model(settings, prompt_model)
-    settings["lmStudioModel"] = prompt_model
-
-    _save_registry(data)
     return jsonify({"settings": _chat_settings_response(settings)})
 
 
@@ -819,8 +944,13 @@ def check_think_compatibility():
     verdict.
     """
     payload = request.get_json(silent=True) or {}
+    # Read-only here on purpose — this settings snapshot is only for the URL
+    # and model id, not mutated. The two network calls below can each take up
+    # to 120s; holding the registry's mutation lock for that long would
+    # freeze every other read/write in the app for minutes, so the lock is
+    # only taken right at the end, around the small persisted result.
     data = _ensure_registry()
-    settings = data.setdefault("settings", {})
+    settings = data.get("settings", {})
     model = str(payload.get("model", "")).strip() or _resolve_prompt_model(settings)
     if not model:
         return jsonify({"error": "No model selected to check"}), 400
@@ -876,9 +1006,10 @@ def check_think_compatibility():
             # over a network hiccup on the second call).
             state = "supported"
 
-    compat = settings.setdefault("lmStudioThinkCompat", {})
-    compat[model] = {"state": state, "checkedAt": checked_at}
-    _save_registry(data)
+    with _registry_transaction() as tx_data:
+        tx_settings = tx_data.setdefault("settings", {})
+        compat = tx_settings.setdefault("lmStudioThinkCompat", {})
+        compat[model] = {"state": state, "checkedAt": checked_at}
 
     return jsonify({"model": model, "state": state, "checkedAt": checked_at})
 
@@ -1132,28 +1263,26 @@ def benchmark_model():
 @models_api_bp.post("/models/chat/models/load")
 def load_models_chat_models():
     payload = request.get_json(silent=True) or {}
-    data = _ensure_registry()
-    settings = data.setdefault("settings", {})
+    with _registry_transaction() as data:
+        settings = data.setdefault("settings", {})
 
-    input_url = (
-        str(payload.get("lmStudioApiUrl", "")).strip()
-        or str(settings.get("lmStudioApiUrl", "")).strip()
-    )
-    if not input_url:
-        return jsonify({"error": "LM Studio URI is required"}), 400
+        input_url = (
+            str(payload.get("lmStudioApiUrl", "")).strip()
+            or str(settings.get("lmStudioApiUrl", "")).strip()
+        )
+        if not input_url:
+            return jsonify({"error": "LM Studio URI is required"}), 400
 
-    try:
-        lmstudio_url = _safe_http_url(input_url, "LM Studio")
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+        try:
+            lmstudio_url = _safe_http_url(input_url, "LM Studio")
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
 
-    try:
-        model_ids, vision_model_ids = refresh_lmstudio_model_lists(settings, lmstudio_url)
-    except Exception as exc:
-        logger.exception("Failed loading models from LM Studio URL '%s'", lmstudio_url)
-        return jsonify({"error": f"Failed loading models from LM Studio: {exc}"}), 502
-
-    _save_registry(data)
+        try:
+            model_ids, vision_model_ids = refresh_lmstudio_model_lists(settings, lmstudio_url)
+        except Exception as exc:
+            logger.exception("Failed loading models from LM Studio URL '%s'", lmstudio_url)
+            return jsonify({"error": f"Failed loading models from LM Studio: {exc}"}), 502
     return jsonify(
         {
             "models": model_ids,

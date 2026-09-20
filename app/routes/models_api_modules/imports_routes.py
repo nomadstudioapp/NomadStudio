@@ -14,6 +14,10 @@ from flask import Response, jsonify, make_response, request
 from app.config import DEFAULT_COMFY_URL, MAX_IMPORT_NAME_LENGTH
 from app import paths
 from app.services.http_client import http_json
+from app.services.workflow_service import (
+    _apply_basic_values_to_workflow,
+    _normalize_clip_last_layer_advanced_values,
+)
 from app.routes.models_api_shared import (
     _analyze_workflow,
     _ensure_registry,
@@ -25,6 +29,7 @@ from app.routes.models_api_shared import (
     _normalize_record_negative,
     _parse_workflow_config_node,
     _parse_workflow_payload,
+    _registry_transaction,
     _resolve_text_from_node,
     _safe_comfy_url,
     _save_registry,
@@ -529,7 +534,17 @@ def get_active_import():
         return jsonify({"active": None, "activeImportIds": []})
     record = next((item for item in image_imports if item.get("id") == active_id), None)
     if record is not None and _normalize_record_negative(record):
-        _save_registry(data)
+        # One-time migration self-heal — only take the registry lock (and
+        # only write) on the rare call that actually needs it, not on every
+        # GET (this is one of the app's hottest endpoints). Re-fetches a
+        # fresh copy under the lock rather than saving the `data` already
+        # read above, in case another request changed it in the meantime.
+        with _registry_transaction() as tx_data:
+            tx_record = next(
+                (item for item in tx_data.get("imports", []) if item.get("id") == active_id), None
+            )
+            if tx_record is not None:
+                _normalize_record_negative(tx_record)
     active_ids = data.get("activeImportIds", [])
     if not isinstance(active_ids, list):
         active_ids = []
@@ -574,8 +589,6 @@ def save_import():
 
     name = str(payload.get("name", "")).strip()
 
-    data = _ensure_registry()
-
     try:
         workflow = _parse_workflow_payload(payload)
         analysis = _analyze_workflow(workflow)
@@ -589,78 +602,144 @@ def save_import():
             {"error": f"name exceeds max length ({MAX_IMPORT_NAME_LENGTH})"}
         ), 400
 
-    record_id = f"imp-{uuid.uuid4().hex[:8]}"
-    category = str(payload.get("category", "image")).strip().lower() or "image"
-    if category not in {"image", "upscale", "compose"}:
-        category = "image"
-    settings_default_comfy = (
-        str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
-        or DEFAULT_COMFY_URL
-    )
-    requested_comfy = (
-        str(payload.get("comfyApiUrl", "")).strip() or settings_default_comfy
-    )
-    try:
-        import_comfy_api_url = _safe_comfy_url(requested_comfy)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+    with _registry_transaction() as data:
+        record_id = f"imp-{uuid.uuid4().hex[:8]}"
+        category = str(payload.get("category", "image")).strip().lower() or "image"
+        if category not in {"image", "upscale", "compose"}:
+            category = "image"
+        settings_default_comfy = (
+            str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+            or DEFAULT_COMFY_URL
+        )
+        requested_comfy = (
+            str(payload.get("comfyApiUrl", "")).strip() or settings_default_comfy
+        )
+        try:
+            import_comfy_api_url = _safe_comfy_url(requested_comfy)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
 
-    record = {
-        "id": record_id,
-        "category": category,
-        "name": name,
-        "createdAt": datetime.now(timezone.utc).isoformat(),
-        "comfyApiUrl": import_comfy_api_url,
-        "workflow": workflow,
-        "analysis": analysis,
-        "basicValues": analysis.get("basicValues", {}),
-        "advancedValues": {
-            item["key"]: item["value"]
-            for item in analysis.get("advancedParameters", [])
-            if not bool(item.get("isLinked"))
-        },
-    }
-    record["annotation"] = _build_default_annotation(record)
+        record = {
+            "id": record_id,
+            "category": category,
+            "name": name,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "comfyApiUrl": import_comfy_api_url,
+            "workflow": workflow,
+            "analysis": analysis,
+            "basicValues": analysis.get("basicValues", {}),
+            "advancedValues": {
+                item["key"]: item["value"]
+                for item in analysis.get("advancedParameters", [])
+                if not bool(item.get("isLinked"))
+            },
+        }
+        record["annotation"] = _build_default_annotation(record)
 
-    data.setdefault("imports", []).append(record)
-    if category == "image":
-        # Add to active queue on first save as well
-        active_ids = data.get("activeImportIds", [])
-        if not isinstance(active_ids, list):
-            active_ids = []
-        if record_id not in active_ids:
-            active_ids.append(record_id)
-        data["activeImportIds"] = active_ids
-        data["activeImportId"] = active_ids[0]
-    _save_registry(data)
+        data.setdefault("imports", []).append(record)
+        if category == "image":
+            # Add to active queue on first save as well
+            active_ids = data.get("activeImportIds", [])
+            if not isinstance(active_ids, list):
+                active_ids = []
+            if record_id not in active_ids:
+                active_ids.append(record_id)
+            data["activeImportIds"] = active_ids
+            data["activeImportId"] = active_ids[0]
+        active_import_id = data.get("activeImportId")
 
     return jsonify(
-        {"import": record, "activeImportId": data.get("activeImportId")}
+        {"import": record, "activeImportId": active_import_id}
     ), 201
+
+
+@models_api_bp.post("/models/imports/<import_id>/save-as")
+def save_import_as(import_id: str):
+    """Clone an existing engine as a new one with the Custom Params tweaks
+    (checkpoint/LoRA choices, weights, steps…) baked in — the "Save as new
+    engine" action from the Custom-mode aside (e.g. Krea2 Monaco → Krea2 Pisa).
+    Unlike /models/imports, the values come from the caller's advancedValues
+    override on top of the source record, not the workflow's own defaults."""
+    payload = request.get_json(silent=True) or {}
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    if len(name) > MAX_IMPORT_NAME_LENGTH:
+        return jsonify({"error": f"name exceeds max length ({MAX_IMPORT_NAME_LENGTH})"}), 400
+
+    with _registry_transaction() as data:
+        source = next((item for item in data.get("imports", []) if item.get("id") == import_id), None)
+        if source is None:
+            return jsonify({"error": "import not found"}), 404
+
+        input_advanced_values = payload.get("advancedValues", {})
+        merged_advanced = {
+            **source.get("advancedValues", {}),
+            **(input_advanced_values if isinstance(input_advanced_values, dict) else {}),
+        }
+        merged_advanced = _normalize_clip_last_layer_advanced_values(source.get("workflow", {}), merged_advanced)
+
+        try:
+            baked_workflow = _apply_basic_values_to_workflow(source, source.get("basicValues", {}), merged_advanced)
+            baked_workflow.pop("config", None)
+            analysis = _analyze_workflow(baked_workflow)
+        except (ValueError, Exception) as exc:  # noqa: BLE001 — mirrors save_import's own catch-all
+            return jsonify({"error": f"invalid workflow: {exc}"}), 400
+
+        record_id = f"imp-{uuid.uuid4().hex[:8]}"
+        record = {
+            "id": record_id,
+            "category": source.get("category", "image"),
+            "name": name,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "comfyApiUrl": source.get("comfyApiUrl", ""),
+            "workflow": baked_workflow,
+            "analysis": analysis,
+            "basicValues": analysis.get("basicValues", {}),
+            "advancedValues": {
+                item["key"]: item["value"]
+                for item in analysis.get("advancedParameters", [])
+                if not bool(item.get("isLinked"))
+            },
+        }
+        record["annotation"] = _build_default_annotation(record)
+
+        data.setdefault("imports", []).append(record)
+        if record["category"] == "image":
+            active_ids = data.get("activeImportIds", [])
+            if not isinstance(active_ids, list):
+                active_ids = []
+            if record_id not in active_ids:
+                active_ids.append(record_id)
+            data["activeImportIds"] = active_ids
+            data["activeImportId"] = active_ids[0]
+        active_import_id = data.get("activeImportId")
+
+    return jsonify({"import": record, "activeImportId": active_import_id}), 201
 
 
 @models_api_bp.post("/models/imports/<import_id>/activate")
 def activate_import(import_id: str):
-    data = _ensure_registry()
-    image_imports = _image_import_records(data)
-    record = next((item for item in image_imports if item.get("id") == import_id), None)
-    if record is None:
-        return jsonify({"error": "image import not found"}), 404
+    with _registry_transaction() as data:
+        image_imports = _image_import_records(data)
+        record = next((item for item in image_imports if item.get("id") == import_id), None)
+        if record is None:
+            return jsonify({"error": "image import not found"}), 404
 
-    # Add to activeImportIds list (no duplicates, preserve order)
-    active_ids = data.get("activeImportIds", [])
-    if not isinstance(active_ids, list):
-        active_ids = []
-    if import_id not in active_ids:
-        active_ids.append(import_id)
-    data["activeImportIds"] = active_ids
-    # Keep singular field = first of the list for backward compatibility
-    data["activeImportId"] = active_ids[0] if active_ids else import_id
-    _save_registry(data)
+        # Add to activeImportIds list (no duplicates, preserve order)
+        active_ids = data.get("activeImportIds", [])
+        if not isinstance(active_ids, list):
+            active_ids = []
+        if import_id not in active_ids:
+            active_ids.append(import_id)
+        data["activeImportIds"] = active_ids
+        # Keep singular field = first of the list for backward compatibility
+        data["activeImportId"] = active_ids[0] if active_ids else import_id
+        active_import_id = data["activeImportId"]
     return jsonify(
         {
             "active": record,
-            "activeImportId": data["activeImportId"],
+            "activeImportId": active_import_id,
             "activeImportIds": active_ids,
         }
     )
@@ -668,14 +747,13 @@ def activate_import(import_id: str):
 
 @models_api_bp.delete("/models/imports/<import_id>/activate")
 def deactivate_import(import_id: str):
-    data = _ensure_registry()
-    active_ids = data.get("activeImportIds", [])
-    if not isinstance(active_ids, list):
-        active_ids = []
-    active_ids = [i for i in active_ids if i != import_id]
-    data["activeImportIds"] = active_ids
-    data["activeImportId"] = active_ids[0] if active_ids else None
-    _save_registry(data)
+    with _registry_transaction() as data:
+        active_ids = data.get("activeImportIds", [])
+        if not isinstance(active_ids, list):
+            active_ids = []
+        active_ids = [i for i in active_ids if i != import_id]
+        data["activeImportIds"] = active_ids
+        data["activeImportId"] = active_ids[0] if active_ids else None
     return jsonify(
         {"activeImportId": data["activeImportId"], "activeImportIds": active_ids}
     )
@@ -691,7 +769,13 @@ def get_import(import_id: str):
         return jsonify({"error": "import not found"}), 404
     if not isinstance(record.get("annotation"), dict):
         record["annotation"] = _build_default_annotation(record)
-        _save_registry(data)
+        # Self-heal, lock only taken on the rare write — see get_active_import.
+        with _registry_transaction() as tx_data:
+            tx_record = next(
+                (item for item in tx_data.get("imports", []) if item.get("id") == import_id), None
+            )
+            if tx_record is not None and not isinstance(tx_record.get("annotation"), dict):
+                tx_record["annotation"] = _build_default_annotation(tx_record)
     return jsonify({"import": record})
 
 
@@ -707,44 +791,43 @@ def update_import(import_id: str):
             {"error": f"name exceeds max length ({MAX_IMPORT_NAME_LENGTH})"}
         ), 400
 
-    data = _ensure_registry()
-    record = next(
-        (item for item in data.get("imports", []) if item.get("id") == import_id), None
-    )
-    if record is None:
-        return jsonify({"error": "import not found"}), 404
-
     try:
         workflow = _parse_workflow_payload(payload)
         analysis = _analyze_workflow(workflow)
     except Exception as exc:
         return jsonify({"error": f"invalid workflow: {exc}"}), 400
 
-    settings_default_comfy = (
-        str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
-        or DEFAULT_COMFY_URL
-    )
-    requested_comfy = (
-        str(payload.get("comfyApiUrl", "")).strip() or settings_default_comfy
-    )
-    try:
-        import_comfy_api_url = _safe_comfy_url(requested_comfy)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+    with _registry_transaction() as data:
+        record = next(
+            (item for item in data.get("imports", []) if item.get("id") == import_id), None
+        )
+        if record is None:
+            return jsonify({"error": "import not found"}), 404
 
-    record["name"] = name
-    record["comfyApiUrl"] = import_comfy_api_url
-    record["workflow"] = workflow
-    record["analysis"] = analysis
-    record["basicValues"] = analysis.get("basicValues", {})
-    record["advancedValues"] = {
-        item["key"]: item["value"]
-        for item in analysis.get("advancedParameters", [])
-        if not bool(item.get("isLinked"))
-    }
-    if not isinstance(record.get("annotation"), dict):
-        record["annotation"] = _build_default_annotation(record)
-    _save_registry(data)
+        settings_default_comfy = (
+            str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip()
+            or DEFAULT_COMFY_URL
+        )
+        requested_comfy = (
+            str(payload.get("comfyApiUrl", "")).strip() or settings_default_comfy
+        )
+        try:
+            import_comfy_api_url = _safe_comfy_url(requested_comfy)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
+        record["name"] = name
+        record["comfyApiUrl"] = import_comfy_api_url
+        record["workflow"] = workflow
+        record["analysis"] = analysis
+        record["basicValues"] = analysis.get("basicValues", {})
+        record["advancedValues"] = {
+            item["key"]: item["value"]
+            for item in analysis.get("advancedParameters", [])
+            if not bool(item.get("isLinked"))
+        }
+        if not isinstance(record.get("annotation"), dict):
+            record["annotation"] = _build_default_annotation(record)
     return jsonify({"import": record})
 
 
@@ -761,7 +844,13 @@ def get_import_annotations(import_id: str):
     if not isinstance(annotation, dict):
         annotation = _build_default_annotation(record)
         record["annotation"] = annotation
-        _save_registry(data)
+        # Self-heal, lock only taken on the rare write — see get_active_import.
+        with _registry_transaction() as tx_data:
+            tx_record = next(
+                (item for item in tx_data.get("imports", []) if item.get("id") == import_id), None
+            )
+            if tx_record is not None and not isinstance(tx_record.get("annotation"), dict):
+                tx_record["annotation"] = _build_default_annotation(tx_record)
     else:
         annotation = _normalize_annotation_payload({}, annotation)
 
@@ -791,55 +880,51 @@ def get_import_annotations(import_id: str):
 @models_api_bp.patch("/models/imports/<import_id>/annotations")
 def update_import_annotations(import_id: str):
     payload = request.get_json(silent=True) or {}
-    data = _ensure_registry()
-    record = next(
-        (item for item in data.get("imports", []) if item.get("id") == import_id), None
-    )
-    if record is None:
-        return jsonify({"error": "import not found"}), 404
+    with _registry_transaction() as data:
+        record = next(
+            (item for item in data.get("imports", []) if item.get("id") == import_id), None
+        )
+        if record is None:
+            return jsonify({"error": "import not found"}), 404
 
-    current = (
-        record.get("annotation")
-        if isinstance(record.get("annotation"), dict)
-        else _build_default_annotation(record)
-    )
-    record["annotation"] = _normalize_annotation_payload(payload, current)
-    _sync_image_to_workflow(record)
-    _save_registry(data)
+        current = (
+            record.get("annotation")
+            if isinstance(record.get("annotation"), dict)
+            else _build_default_annotation(record)
+        )
+        record["annotation"] = _normalize_annotation_payload(payload, current)
+        _sync_image_to_workflow(record)
     return jsonify({"importId": import_id, "annotation": record["annotation"]})
 
 
 @models_api_bp.delete("/models/imports/<import_id>")
 def delete_import(import_id: str):
-    data = _ensure_registry()
-    imports = data.get("imports", [])
-    kept = [item for item in imports if item.get("id") != import_id]
-    if len(kept) == len(imports):
-        return jsonify({"error": "import not found"}), 404
+    with _registry_transaction(deleted_import_ids={import_id}) as data:
+        imports = data.get("imports", [])
+        kept = [item for item in imports if item.get("id") != import_id]
+        if len(kept) == len(imports):
+            return jsonify({"error": "import not found"}), 404
 
-    data["imports"] = kept
-    # Remove from active lists
-    active_ids = data.get("activeImportIds", [])
-    if isinstance(active_ids, list):
-        data["activeImportIds"] = [i for i in active_ids if i != import_id]
-    if data.get("activeImportId") == import_id:
-        image_kept = _image_import_records(data)
-        remaining = data.get("activeImportIds", [])
-        data["activeImportId"] = (
-            remaining[0]
-            if remaining
-            else (image_kept[0].get("id") if image_kept else None)
-        )
-
-    _save_registry(data, deleted_import_ids={import_id})
-    return jsonify(
-        {
+        data["imports"] = kept
+        # Remove from active lists
+        active_ids = data.get("activeImportIds", [])
+        if isinstance(active_ids, list):
+            data["activeImportIds"] = [i for i in active_ids if i != import_id]
+        if data.get("activeImportId") == import_id:
+            image_kept = _image_import_records(data)
+            remaining = data.get("activeImportIds", [])
+            data["activeImportId"] = (
+                remaining[0]
+                if remaining
+                else (image_kept[0].get("id") if image_kept else None)
+            )
+        result = {
             "ok": True,
             "activeImportId": data.get("activeImportId"),
             "activeImportIds": data.get("activeImportIds", []),
             "imports": data.get("imports", []),
         }
-    )
+    return jsonify(result)
 
 
 @models_api_bp.patch("/models/imports/<import_id>/values")
@@ -850,85 +935,84 @@ def update_import_values(import_id: str):
     comfy_api_url = payload.get("comfyApiUrl")
     new_name = payload.get("name")
 
-    data = _ensure_registry()
-    record = next(
-        (item for item in data.get("imports", []) if item.get("id") == import_id), None
-    )
-    if record is None:
-        return jsonify({"error": "import not found"}), 404
-
-    if isinstance(basic_values, dict):
-        record.setdefault("basicValues", {}).update(basic_values)
-    if isinstance(advanced_values, dict):
-        filtered_advanced_values = {
-            str(key): value
-            for key, value in advanced_values.items()
-            if isinstance(key, str)
-            and "." in key
-            and not (
-                isinstance(value, str)
-                and value.strip().startswith("[")
-                and value.strip().endswith("]")
-            )
-        }
-        lora_request_values = {
-            str(key): value
-            for key, value in filtered_advanced_values.items()
-            if "lora_name" in str(key)
-            or "strength_model" in str(key)
-            or "strength_clip" in str(key)
-            or "__lora_chain" in str(key)
-        }
-        if lora_request_values:
-            logger.info(
-                "[LoRA][PATCH /values] request import=%s values=%s",
-                import_id,
-                lora_request_values,
-            )
-        workflow = (
-            record.get("workflow", {})
-            if isinstance(record.get("workflow", {}), dict)
-            else {}
+    with _registry_transaction() as data:
+        record = next(
+            (item for item in data.get("imports", []) if item.get("id") == import_id), None
         )
-        try:
-            _validate_clip_last_layer_advanced_values(
-                workflow, filtered_advanced_values
+        if record is None:
+            return jsonify({"error": "import not found"}), 404
+
+        if isinstance(basic_values, dict):
+            record.setdefault("basicValues", {}).update(basic_values)
+        if isinstance(advanced_values, dict):
+            filtered_advanced_values = {
+                str(key): value
+                for key, value in advanced_values.items()
+                if isinstance(key, str)
+                and "." in key
+                and not (
+                    isinstance(value, str)
+                    and value.strip().startswith("[")
+                    and value.strip().endswith("]")
+                )
+            }
+            lora_request_values = {
+                str(key): value
+                for key, value in filtered_advanced_values.items()
+                if "lora_name" in str(key)
+                or "strength_model" in str(key)
+                or "strength_clip" in str(key)
+                or "__lora_chain" in str(key)
+            }
+            if lora_request_values:
+                logger.info(
+                    "[LoRA][PATCH /values] request import=%s values=%s",
+                    import_id,
+                    lora_request_values,
+                )
+            workflow = (
+                record.get("workflow", {})
+                if isinstance(record.get("workflow", {}), dict)
+                else {}
             )
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
-        record.setdefault("advancedValues", {}).update(filtered_advanced_values)
-        saved_advanced = (
-            record.get("advancedValues", {})
-            if isinstance(record.get("advancedValues", {}), dict)
-            else {}
-        )
-        lora_saved_values = {
-            str(key): saved_advanced.get(str(key)) for key in lora_request_values.keys()
-        }
-        if lora_saved_values:
-            logger.info(
-                "[LoRA][PATCH /values] saved import=%s values=%s",
-                import_id,
-                lora_saved_values,
+            try:
+                _validate_clip_last_layer_advanced_values(
+                    workflow, filtered_advanced_values
+                )
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
+            record.setdefault("advancedValues", {}).update(filtered_advanced_values)
+            saved_advanced = (
+                record.get("advancedValues", {})
+                if isinstance(record.get("advancedValues", {}), dict)
+                else {}
             )
+            lora_saved_values = {
+                str(key): saved_advanced.get(str(key)) for key in lora_request_values.keys()
+            }
+            if lora_saved_values:
+                logger.info(
+                    "[LoRA][PATCH /values] saved import=%s values=%s",
+                    import_id,
+                    lora_saved_values,
+                )
 
-    if new_name is not None:
-        name_str = str(new_name).strip()
-        if not name_str:
-            return jsonify({"error": "name cannot be empty"}), 400
-        if len(name_str) > MAX_IMPORT_NAME_LENGTH:
-            return jsonify(
-                {"error": f"name exceeds max length ({MAX_IMPORT_NAME_LENGTH})"}
-            ), 400
-        record["name"] = name_str
+        if new_name is not None:
+            name_str = str(new_name).strip()
+            if not name_str:
+                return jsonify({"error": "name cannot be empty"}), 400
+            if len(name_str) > MAX_IMPORT_NAME_LENGTH:
+                return jsonify(
+                    {"error": f"name exceeds max length ({MAX_IMPORT_NAME_LENGTH})"}
+                ), 400
+            record["name"] = name_str
 
-    if comfy_api_url is not None:
-        try:
-            record["comfyApiUrl"] = _safe_comfy_url(str(comfy_api_url))
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        if comfy_api_url is not None:
+            try:
+                record["comfyApiUrl"] = _safe_comfy_url(str(comfy_api_url))
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
 
-    _save_registry(data)
     return jsonify({"import": record})
 
 

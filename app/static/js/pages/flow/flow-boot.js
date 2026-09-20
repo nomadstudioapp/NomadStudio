@@ -47,18 +47,28 @@ function flowBootLoad(id) {
         bc.parentElement.appendChild(instBadge);
       }
 
-      // Save-to-Build button — sits next to the instance-id badge.
-      if (bc && bc.parentElement && !document.getElementById('nsc-flow-save-btn')) {
+      // Save-to-Build button — sits at the top of the results rail (Refine /
+      // Zoom in / Zoom out below it), not next to the instance-id badge
+      // anymore: same widget family as its new neighbors instead of its own
+      // one-off chip floating near the breadcrumb.
+      var _saveBtnRail = document.querySelector('.ncf-results-toolbar--rail');
+      if (_saveBtnRail && !document.getElementById('nsc-flow-save-btn')) {
         var saveBtn = document.createElement('button');
         saveBtn.type = 'button';
         saveBtn.id = 'nsc-flow-save-btn';
-        saveBtn.className = 'nsc-flow-save-btn';
+        saveBtn.className = 'btn create-action-btn';
         saveBtn.setAttribute('aria-label', 'Save this flow instance to Build');
         var saveBtnTip = document.createElement('span');
-        saveBtnTip.className = 'cs-mode-tip';
+        saveBtnTip.className = 'action-tip';
         saveBtnTip.textContent = 'Save to Build';
         saveBtn.innerHTML =
-          '<svg viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">' +
+          // Authored in a 100×160 viewBox (not the usual 24×24), so it needs a
+          // much heavier stroke-width than typical icons to read as "thick"
+          // once scaled down to the rail's 16px — 1.8 would come out near-
+          // invisible (used to be handled by the now-removed .nsc-flow-save-btn
+          // svg rule; inlined here since .explore-zoom-icon doesn't set it).
+          '<svg class="explore-zoom-icon" viewBox="0 0 100 160" preserveAspectRatio="none" ' +
+          'fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
           '<path d="M50 8 L15 55"/>' +
           '<path d="M50 8 L85 55"/>' +
           '<path d="M15 55 L15 105"/>' +
@@ -85,7 +95,7 @@ function flowBootLoad(id) {
             setTimeout(function () { saveBtnTip.textContent = 'Save to Build'; saveBtn.disabled = false; }, 1500);
           });
         });
-        bc.parentElement.appendChild(saveBtn);
+        _saveBtnRail.insertBefore(saveBtn, _saveBtnRail.firstChild);
       }
 
       // Apply the persisted Guided/Custom mode now so the toggle button and

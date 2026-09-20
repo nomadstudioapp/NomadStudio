@@ -37,7 +37,7 @@ function openLoraNamePickerPanel(title, options, current, onSelect) {
   }, { wide: true, flexBody: true });
 }
 
-async function enhanceAdvParamsWithOptions(record, containerEl, overridesObj) {
+async function enhanceAdvParamsWithOptions(record, containerEl, overridesObj, onChange) {
   if (!record || !record.id || !containerEl) return;
   if (!overridesObj) overridesObj = currentAdvOverrides;
 
@@ -88,6 +88,7 @@ async function enhanceAdvParamsWithOptions(record, containerEl, overridesObj) {
           overridesObj[key] = chosen;
           if (typeof _syncKeywordToggle === 'function') _syncKeywordToggle();
           saveParams();
+          if (onChange) onChange();
         });
       });
 
@@ -161,7 +162,7 @@ function _applyNcfNumericStepper(inp, parentEl) {
   incBtn.addEventListener('click', function () { _nudgeNcfInput(inp, 1); });
 }
 
-function buildAdvParams(record, containerEl, overridesObj, idPrefix) {
+function buildAdvParams(record, containerEl, overridesObj, idPrefix, onChange) {
   if (!containerEl) return;
   containerEl.innerHTML = '';
   if (!overridesObj) { currentAdvOverrides = {}; overridesObj = currentAdvOverrides; }
@@ -195,6 +196,7 @@ function buildAdvParams(record, containerEl, overridesObj, idPrefix) {
         var v = isNum ? Number(inp.value) : inp.value;
         if (v === dv) delete overridesObj[k]; else overridesObj[k] = v;
         saveParams();
+        if (onChange) onChange();
       });
     }(key, defVal));
     row.appendChild(lbl);

@@ -31,7 +31,7 @@ from typing import Any
 from flask import Blueprint, jsonify, request, send_file, session
 
 from app.routes.models_api import _ensure_registry, _save_registry
-from app.routes.models_api_shared import _resolve_output_dir
+from app.routes.models_api_shared import _registry_transaction, _resolve_output_dir
 from app.services import session_service, flow_engine, story_project_service
 
 # Must match viewers_routes.SESSION_KEY — duplicated as a plain string (rather
@@ -416,6 +416,37 @@ def export_session_docs():
     )
 
 
+@flows_api_bp.post("/flow/export-images")
+def export_flow_images():
+    """Build a ZIP containing only the generated images for a flow."""
+    payload = request.get_json(silent=True) or {}
+    images = payload.get("images") if isinstance(payload.get("images"), list) else []
+    name = str(payload.get("name") or "flow-images")
+    data = _ensure_registry()
+    output_dir = Path(_resolve_output_dir(data))
+    zip_buf = io.BytesIO()
+    saved = 0
+
+    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for idx, url in enumerate(images, start=1):
+            got = _image_bytes_from_url(output_dir, str(url))
+            if not got:
+                continue
+            raw, ext = got
+            zf.writestr("images/image_%02d.%s" % (idx, ext), raw)
+            saved += 1
+
+    if not saved:
+        return jsonify({"error": "No exportable images"}), 400
+    zip_buf.seek(0)
+    return send_file(
+        zip_buf,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=_slugify(name) + "-images.zip",
+    )
+
+
 @flows_api_bp.post("/session/import-zip")
 def import_session_zip():
     """Unzip an uploaded Session export and return its session.json contents.
@@ -622,25 +653,24 @@ def install_pack():
         ), 400
 
     # Registrar pack
-    data = _ensure_registry()
-    packs = data.setdefault("installedPacks", [])
+    with _registry_transaction() as data:
+        packs = data.setdefault("installedPacks", [])
 
-    # Reemplaza si ya estaba instalado
-    packs = [p for p in packs if p.get("packId") != pack_id]
-    packs.append(
-        {
-            "packId": pack_id,
-            "packDir": str(pack_path.resolve()),
-            "name": str(manifest.get("name", pack_id)),
-            "version": str(manifest.get("version", "0.0")),
-            "description": str(manifest.get("description", "")),
-            "installDate": __import__("datetime")
-            .datetime.now(__import__("datetime").timezone.utc)
-            .isoformat(),
-        }
-    )
-    data["installedPacks"] = packs
-    _save_registry(data)
+        # Reemplaza si ya estaba instalado
+        packs = [p for p in packs if p.get("packId") != pack_id]
+        packs.append(
+            {
+                "packId": pack_id,
+                "packDir": str(pack_path.resolve()),
+                "name": str(manifest.get("name", pack_id)),
+                "version": str(manifest.get("version", "0.0")),
+                "description": str(manifest.get("description", "")),
+                "installDate": __import__("datetime")
+                .datetime.now(__import__("datetime").timezone.utc)
+                .isoformat(),
+            }
+        )
+        data["installedPacks"] = packs
 
     return jsonify({"ok": True, "packId": pack_id, "packsTotal": len(packs)})
 
@@ -652,16 +682,15 @@ def uninstall_pack(pack_id: str):
     if not pack_id:
         return jsonify({"error": "packId is required"}), 400
 
-    data = _ensure_registry()
-    packs = data.get("installedPacks", [])
-    before = len(packs)
-    packs = [p for p in packs if p.get("packId") != pack_id]
+    with _registry_transaction() as data:
+        packs = data.get("installedPacks", [])
+        before = len(packs)
+        packs = [p for p in packs if p.get("packId") != pack_id]
 
-    if len(packs) == before:
-        return jsonify({"error": f"Pack '{pack_id}' not installed"}), 404
+        if len(packs) == before:
+            return jsonify({"error": f"Pack '{pack_id}' not installed"}), 404
 
-    data["installedPacks"] = packs
-    _save_registry(data)
+        data["installedPacks"] = packs
     return jsonify({"ok": True, "packId": pack_id})
 
 

@@ -77,11 +77,11 @@ ENGINES = {
         "zh": "基于 Z-Image 的动漫风格图像引擎，蒸馏至 4 步。",
         "ko": "Z-Image 기반 애니메 스타일 이미지 엔진, 4단계로 증류.",
     }),
-    "Krea2 Roma": ("krea2-roma", {
-        "en": "Krea 2 with the Roma setup. Some of its files come from third parties.",
-        "es": "Krea 2 con la configuración Roma. Algunos de sus ficheros son de terceros.",
-        "zh": "采用 Roma 配置的 Krea 2，部分文件来自第三方。",
-        "ko": "Roma 구성의 Krea 2. 일부 파일은 서드파티 제공입니다.",
+    "Krea2 Monaco": ("krea2-monaco", {
+        "en": "Krea 2 with the Monaco setup. Some of its files come from third parties under their published terms.",
+        "es": "Krea 2 con la configuración Monaco. Algunos de sus ficheros son de terceros y se distribuyen bajo sus términos publicados.",
+        "zh": "采用 Monaco 配置的 Krea 2，部分文件来自第三方并遵循其公布的条款。",
+        "ko": "Monaco 구성의 Krea 2. 일부 파일은 서드파티 제공이며 게시된 약관을 따릅니다.",
     }),
 }
 
@@ -99,13 +99,13 @@ EXTRA_DOWNLOADS = {
         {"subfolder": "loras/qwen_2511", "filename": "Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors",
          "url": "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors?download=true"},
     ],
-    # Krea2 Roma needs three files published only on CivitAI, which refuses
+    # Krea2 Monaco needs four files published only on CivitAI, which refuses
     # anonymous downloads: the app asks for the user's own API key (Settings).
-    # Each was identified by the sha256 of the local file against CivitAI's
-    # by-hash endpoint, which is also where these permissions come from
-    # (OPENHIKER#91). They all derive from Krea 2, whose own licence is still
-    # unread — OPENHIKER#16.
-    "Krea2 Roma": [
+    # It reuses a Krea 2 base checkpoint and swaps the Midjourney-style LoRA
+    # for one with clearer, more permissive terms (OPENHIKER#91). The
+    # checkpoint itself derives from Krea 2, whose own
+    # licence is still unread — OPENHIKER#16.
+    "Krea2 Monaco": [
         {"subfolder": "text_encoders", "filename": "qwen3vl_4b_fp8_scaled.safetensors",
          "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors?download=true"},
         {"subfolder": "vae", "filename": "wan_2.1_vae.safetensors",
@@ -120,13 +120,13 @@ EXTRA_DOWNLOADS = {
          "source": {"name": "GonzaLomo Krea 2 v4.0 (int8)", "author": "GBRX",
                     "page": "https://civitai.com/models/2761943",
                     "credit": False, "commercial": ["Image", "RentCivit"], "derivatives": True}},
-        {"subfolder": "loras/krea2", "filename": "midjourney_8_2_k2_epoch_20.safetensors",
-         "url": "https://civitai.com/api/download/models/3252404?fileId=3135445",
-         "sha256": "849F53831D235BD4DE58E43AE05C78F9F338867F5803747726D47B638F9EA41C",
-         "sizeBytes": 228588920, "needsCivitaiKey": True,
-         "source": {"name": "Midjourney Style v1.0 K2", "author": "zwaetschge",
-                    "page": "https://civitai.com/models/601666",
-                    "credit": True, "commercial": ["RentCivit"], "derivatives": True}},
+        {"subfolder": "loras/krea2", "filename": "KREA_MIDJ_1.safetensors",
+         "url": "https://civitai.com/api/download/models/3095398?fileId=2974963",
+         "sha256": "AD4A9F0B4D61BA77C5783B51FE3A2B637F8245144C1CE5E6A3FCD8225FD7DF8A",
+         "sizeBytes": 228587776, "needsCivitaiKey": True,
+         "source": {"name": "KREA_2_MIDJOURNEY (KREA_v1.0)", "author": "SPOON_IA",
+                    "page": "https://civitai.com/models/2751419",
+                    "credit": False, "commercial": ["Image", "RentCivit", "Rent", "Sell"], "derivatives": True}},
         {"subfolder": "loras/krea2", "filename": "ultra_real_krea2_v2.safetensors",
          "url": "https://civitai.com/api/download/models/3182356?fileId=3062944",
          "sha256": "233A8B1DF4B3387F9F2BEDAA2099D0E14CC946D1105F732DE2A8600310B86F07",

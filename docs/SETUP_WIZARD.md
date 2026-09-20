@@ -301,7 +301,7 @@ Verificado contra el código y los datos de OPENHIKER. Hay que corregirlos antes
 1. **`GET /api/models/imports/<id>/requirements` da error 500.** `_extract_model_files` se movió a `imports_lora_catalog.py`, pero la constante `_MODEL_FILE_EXTENSIONS` que usa sigue definida en `imports_routes.py` (`NameError`). Confirmado en el servidor en marcha.
 2. **Krea 2 Turbo declara mal la subcarpeta de descarga**: `krea2` en lugar de `diffusion_models/krea2`. El sistema de instalación descargaría a `models/krea2/`, donde ComfyUI no busca. Los ficheros del equipo de desarrollo están bien colocados porque se pusieron a mano.
 3. **Qwen Image usa una LoRA que no está en sus descargas** (`loras/qwen_2511/Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors`): referenciada por el grafo, pero sin URL. Por eso la detección debe combinar las dos fuentes (§4.1).
-4. **Z Anime y Krea2 Roma no declaran ninguna descarga**: hoy quedarían como instalación manual. Antes de publicarlos como paquetes gratuitos hay que añadir sus URLs y, en Krea2 Roma, revisar la licencia de los ficheros de terceros (issue #91).
+4. **Z Anime y Krea2 Monaco no declaran ninguna descarga**: hoy quedarían como instalación manual. Antes de publicarlos como paquetes gratuitos hay que añadir sus URLs y revisar la licencia de los ficheros de terceros (issue #91).
 
 Estado en el equipo de desarrollo: los 7 motores tienen todos sus ficheros de nodo presentes.
 
@@ -318,7 +318,7 @@ Montado para revisarlo antes de migrar al repo `NomadStudio`.
 | Estilos | `app/static/css/setup.css` |
 | API y página | `app/routes/setup_routes.py` (blueprint `setup`, registrado en `app/__init__.py`) |
 | Comprobaciones y detección de motores | `app/services/setup_service.py` |
-| URLs que faltan en los workflows | Dentro de cada paquete de motor, en `annotation.downloads` (las pone `tools/packages/build_packages.py`, del vault: Z Anime, LoRA Lightning de Qwen, codificador y VAE de Krea2 Roma). El núcleo no guarda listas de descargas por motor. |
+| URLs que faltan en los workflows | Dentro de cada paquete de motor, en `annotation.downloads` (las pone `tools/packages/build_packages.py`, del vault: Z Anime, LoRA Lightning de Qwen, codificador y VAE de Krea2 Monaco). El núcleo no guarda listas de descargas por motor. |
 | Textos | `setup.*` y `settings.setup.*` en `en/es/zh/ko.json` (113 claves) |
 | Entrada desde Ajustes | Sección "Asistente de configuración" › **Ver el asistente** → `/setup?preview=1` |
 | Primer arranque | `/` redirige a `/setup` si no está terminado; `nav_status.js` también. Las instalaciones que ya tenían carpeta de salida cuentan como terminadas |
@@ -333,7 +333,7 @@ API nueva: `GET/PATCH /api/setup/state`, `POST /api/setup/check/comfy`, `POST /a
 - **Carpeta de datos**: solo informativa (OPENHIKER aún guarda los datos dentro de `app/`).
 - **Descargas**: van dentro de la página del asistente, de una en una, con aviso al intentar cerrarla; no siguen en segundo plano si se cierra (§4.5). No se reanudan.
 - **Recomendación de variante**: nunca propone una variante que no se pueda descargar (W4A8 no tiene URL).
-- Motores con ficheros sin URL (modelo y LoRAs de Krea2 Roma, variantes W4A8) quedan como instalación manual.
+- Motores con ficheros sin URL (modelo y LoRAs de Krea2 Monaco, variantes W4A8) quedan como instalación manual.
 
 ## 6. Preguntas abiertas
 

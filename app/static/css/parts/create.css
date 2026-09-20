@@ -871,23 +871,34 @@ textarea.prompt-input::-webkit-scrollbar-thumb:hover {
 .explore-heart {
   position: absolute;
   top: 10px;
-  right: 10px;
-  width: auto;
-  height: auto;
+  left: 10px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: transparent;
-  color: var(--text-bright);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
   cursor: pointer;
-  font-size: 36px;
   line-height: 1;
   padding: 0;
   opacity: 0;
   transform: translateY(-4px);
-  transition: opacity 120ms ease, transform 120ms ease;
-  text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.55),
-    0 0 22px color-mix(in srgb, var(--accent) 86%, transparent),
-    0 0 40px color-mix(in srgb, var(--accent) 52%, transparent);
+  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease, color 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.explore-heart svg,
+.explore-diamond svg,
+.explore-delete svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .explore-heart.active {
@@ -901,23 +912,22 @@ textarea.prompt-input::-webkit-scrollbar-thumb:hover {
 .explore-diamond {
   position: absolute;
   top: 10px;
-  right: 46px;
-  width: auto;
-  height: auto;
+  left: 44px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: transparent;
-  color: var(--text-bright);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
   cursor: pointer;
-  font-size: 32px;
   line-height: 1;
   padding: 0;
   opacity: 0;
   transform: translateY(-4px);
-  transition: opacity 120ms ease, transform 120ms ease;
-  text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.52),
-    0 0 22px color-mix(in srgb, var(--accent) 82%, transparent),
-    0 0 38px color-mix(in srgb, var(--accent) 48%, transparent);
+  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease, color 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .explore-diamond.active {
@@ -934,6 +944,38 @@ textarea.prompt-input::-webkit-scrollbar-thumb:hover {
 .explore-thumb:focus-within .explore-diamond {
   opacity: 1;
   transform: translateY(0);
+}
+
+.explore-delete {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease;
+}
+
+.explore-thumb:hover .explore-delete,
+.explore-thumb:focus-within .explore-delete {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.explore-delete:hover,
+.explore-delete:focus-visible {
+  background: color-mix(in srgb, #ef4444 80%, #000);
+  outline: none;
 }
 
 .explore-heart:hover,

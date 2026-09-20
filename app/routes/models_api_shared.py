@@ -780,29 +780,42 @@ def _normalize_lmstudio_conversation_messages(raw_messages: Any, context_size: i
 
 
 def _append_lmstudio_output_log(data: dict[str, Any], settings: dict[str, Any], entry: dict[str, Any]) -> None:
-    logs = settings.get("lmStudioOutputLog")
-    if not isinstance(logs, list):
-        logs = []
-    logs.insert(0, entry)
-    settings["lmStudioOutputLog"] = logs[:LMSTUDIO_OUTPUT_LOG_MAX_ITEMS]
-    data["settings"] = settings
-    _save_registry(data)
+    # `data`/`settings` are the caller's own snapshot — typically read via
+    # _ensure_registry() *before* the slow LLM call whose result this entry
+    # records, so by now it can be stale (issue #4: ~20 call sites across
+    # prompt_routes.py/studio_routes.py/vision_routes.py/vision_benchmark_routes.py,
+    # each firing after its own LLM round-trip). Kept in the signature so none
+    # of those call sites need to change, but the actual mutation re-fetches a
+    # fresh copy under the registry lock instead of trusting them — two of
+    # these racing (or one racing a Settings save) would otherwise silently
+    # drop a log entry.
+    with _registry_transaction() as fresh_data:
+        fresh_settings = fresh_data.setdefault("settings", {})
+        logs = fresh_settings.get("lmStudioOutputLog")
+        if not isinstance(logs, list):
+            logs = []
+        logs.insert(0, entry)
+        fresh_settings["lmStudioOutputLog"] = logs[:LMSTUDIO_OUTPUT_LOG_MAX_ITEMS]
 
 
 def _describe_cache_set(data: dict[str, Any], settings: dict[str, Any], image_hash: str, describe_type: str, entry: dict[str, Any]) -> None:
-    cache = _get_describe_cache(settings)
-    key = _describe_cache_key(image_hash, describe_type)
-    cache.pop(key, None)
-    cache[key] = entry
+    # Same reasoning as _append_lmstudio_output_log just above — `settings`
+    # may be stale by the time the (slow) describe-image call this caches
+    # has actually returned, so re-fetch fresh under the lock rather than
+    # trusting it.
+    with _registry_transaction() as fresh_data:
+        fresh_settings = fresh_data.setdefault("settings", {})
+        cache = _get_describe_cache(fresh_settings)
+        key = _describe_cache_key(image_hash, describe_type)
+        cache.pop(key, None)
+        cache[key] = entry
 
-    max_items = 80
-    while len(cache) > max_items:
-        oldest_key = next(iter(cache))
-        cache.pop(oldest_key, None)
+        max_items = 80
+        while len(cache) > max_items:
+            oldest_key = next(iter(cache))
+            cache.pop(oldest_key, None)
 
-    settings["lmStudioDescribeCache"] = cache
-    data["settings"] = settings
-    _save_registry(data)
+        fresh_settings["lmStudioDescribeCache"] = cache
 
 
 

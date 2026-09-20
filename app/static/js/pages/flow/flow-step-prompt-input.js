@@ -81,6 +81,7 @@ function renderPromptInput(stepDef, el) {
       return;
     }
     setVal(stepDef.id, 'prompt_text', ta.value.trim());
+    if (typeof _renderPromptChips === 'function') _renderPromptChips();
     if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
   });
   function _applyTemplate(template) {
@@ -107,6 +108,7 @@ function renderPromptInput(stepDef, el) {
     ta.value = _rebuild();
     _lastAutoValue = ta.value;
     setVal(stepDef.id, 'prompt_text', ta.value.trim());
+    if (typeof _renderPromptChips === 'function') _renderPromptChips();
   });
   document.addEventListener('ncf-vision-described', function (e) {
     var d = e.detail || {};
@@ -116,6 +118,7 @@ function renderPromptInput(stepDef, el) {
     ta.value = _rebuild();
     _lastAutoValue = ta.value;
     setVal(stepDef.id, 'prompt_text', ta.value.trim());
+    if (typeof _renderPromptChips === 'function') _renderPromptChips();
     d.handled = true; // tell vision-describe.js not to also full-overwrite via prefill_from
   });
 
@@ -380,10 +383,67 @@ function renderPromptInput(stepDef, el) {
   }
 
   // Chat flows: scene_prompt starts disabled until the LLM fills it
-  if (typeof flowId === 'string' && flowId.indexOf('.chat') !== -1 && stepDef.id === 'scene_prompt') {
+  var _isChatScenePrompt = typeof flowId === 'string' && flowId.indexOf('.chat') !== -1 && stepDef.id === 'scene_prompt';
+  if (_isChatScenePrompt) {
     ta.disabled = true;
     ta.classList.add('is-prefill-pending');
     ta.placeholder = 'Click "Update scene prompt" to generate with AI…';
+  }
+
+  // Phrase chips (Chat's scene_prompt only, #109): a session's prompt grows by
+  // edit after edit, and leftover fragments the image model misreads are hard
+  // to spot in a wall of comma-separated text. Mirrors ta.value read-only, one
+  // chip per ","/"."-separated phrase — click a chip to drop that phrase
+  // (with its trailing separator) from the real textarea below, which stays
+  // fully free-text and editable exactly as before. Kept in sync with every
+  // in-file place that sets ta.value directly (below); flow-gallery.js's chat
+  // bar, which also writes this textarea from outside this closure, re-fires
+  // a real "input" event after it does so the listener here catches it too.
+  var chipsWrap = null;
+  if (_isChatScenePrompt) {
+    chipsWrap = document.createElement('div');
+    chipsWrap.className = 'ncf-prompt-chips';
+    chipsWrap.hidden = true;
+    el.insertBefore(chipsWrap, ta);
+  }
+  function _splitPromptPhrases(text) {
+    // Alternating [phrase, separator, phrase, separator, …] — the separator
+    // carries its punctuation plus any following whitespace, so re-joining
+    // every kept pair reproduces the original spacing exactly.
+    var parts = String(text || '').split(/([,.]+\s*)/);
+    var phrases = [];
+    for (var i = 0; i < parts.length; i += 2) {
+      var phrase = parts[i] || '';
+      var sep = parts[i + 1] || '';
+      if (phrase.trim() || sep.trim()) phrases.push({ phrase: phrase, sep: sep });
+    }
+    return phrases;
+  }
+  function _renderPromptChips() {
+    if (!chipsWrap) return;
+    var phrases = _splitPromptPhrases(ta.value);
+    chipsWrap.innerHTML = '';
+    var shown = 0;
+    phrases.forEach(function (p, idx) {
+      var label = p.phrase.trim();
+      if (!label) return; // pure leading/stray separator — nothing to show
+      shown++;
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'ncf-prompt-chip';
+      chip.textContent = label;
+      chip.title = 'Remove this phrase';
+      chip.addEventListener('click', function () {
+        var rest = phrases.slice();
+        rest.splice(idx, 1);
+        ta.value = rest.map(function (r) { return r.phrase + r.sep; }).join('').trim();
+        _syncOnConfirm();
+        _renderPromptChips();
+        if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
+      });
+      chipsWrap.appendChild(chip);
+    });
+    chipsWrap.hidden = !shown;
   }
 
   // Restore prompt from session history click
@@ -396,6 +456,7 @@ function renderPromptInput(stepDef, el) {
       }
     }
   } catch (_) {}
+  _renderPromptChips();
 
   function _syncOnConfirm() {
     setVal(stepDef.id, 'prompt_text', ta.value.trim());
@@ -413,6 +474,7 @@ function renderPromptInput(stepDef, el) {
         }
       });
     }
+    _renderPromptChips();
   }
 
   ta.addEventListener('input', _syncOnConfirm);

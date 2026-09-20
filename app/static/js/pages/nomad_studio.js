@@ -2354,7 +2354,25 @@
         var incomingMain = doc.querySelector('.main-wrap');
         if (!incomingMain) throw new Error('Unexpected response');
 
-        embedEl.innerHTML = incomingMain.innerHTML;
+        // A target fragment (e.g. "…/settings#packages") means "just that
+        // section", not "the whole page, scrolled" — Settings is nine
+        // sections long, and a flyout meant to be a quick side panel
+        // shouldn't make Packages compete with Output/ComfyUI/three prompt
+        // editors for space. Rebuilt inside the same settings-layout-v2
+        // wrapper the full page uses, so its existing embed CSS (sizing,
+        // section-card look) still applies to the lone section.
+        var targetSection = targetHash
+          ? incomingMain.querySelector('#' + CSS.escape(targetHash))
+          : null;
+        if (targetSection) {
+          var wrap = doc.createElement('div');
+          wrap.className = 'settings-layout settings-layout-v2';
+          wrap.appendChild(targetSection);
+          embedEl.innerHTML = '';
+          embedEl.appendChild(wrap);
+        } else {
+          embedEl.innerHTML = incomingMain.innerHTML;
+        }
 
         var scriptSources = Array.prototype.slice
           .call(doc.querySelectorAll('script[src]:not([data-shell-script])'))

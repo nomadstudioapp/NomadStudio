@@ -36,6 +36,14 @@ from app.routes.models_api_modules.imports_routes import _extract_downloads_from
 from app.services import package_service  # noqa: E402
 
 DIST = REPO / "dist" / "packages"
+# Packages that ship with the app go in DIST — paths.BUNDLED_PACKAGES_DIR
+# (dist/packages in a dev checkout) is scanned whole and every ZIP in it gets
+# auto-installed on startup (package_service.plan_bundled globs *.zip with no
+# filtering). Free/optional packs the user installs by choice — CivitAI is
+# the first one — must NOT land there, or every fresh app would get them
+# whether the user asked for them or not. DIST_OPTIONAL keeps them out of
+# that scan while still producing a real, installable ZIP.
+DIST_OPTIONAL = REPO / "dist" / "optional-packages"
 LICENSE_TEXT = "Copyright (c) Nomad Studio. All rights reserved.\nInternal test package — not for distribution.\n"
 AUTHOR = {"name": "Nomad Studio"}
 
@@ -259,9 +267,9 @@ def flow_from_source(source: Path, flow_id: str) -> dict:
     return json.loads((source / "app" / "instructions" / entry["file"]).read_text(encoding="utf-8"))
 
 
-def write_zip(name: str, files: dict[str, object]) -> Path:
-    DIST.mkdir(parents=True, exist_ok=True)
-    path = DIST / f"{name}.zip"
+def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
+    dest.mkdir(parents=True, exist_ok=True)
+    path = dest / f"{name}.zip"
     path.unlink(missing_ok=True)
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for rel, content in files.items():
@@ -444,7 +452,8 @@ def build_core_civitai(source: Path, version: str) -> Path:
     }
     print(f"  core-civitai texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
     return write_zip("nomad.core-civitai", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
-                                            **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}})
+                                            **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
 
 
 def main() -> None:

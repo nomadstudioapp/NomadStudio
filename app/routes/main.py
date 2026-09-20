@@ -231,7 +231,13 @@ _GROUP_LABELS: dict[str, str] = {
     "presets": "Presets",
     "layout": "Layout",
     "upscale": "Upscale",
+    "civitai": "CivitAI",
 }
+
+# Fixed spot for the groups we ship an order for; anything else falls in
+# after them, alphabetically by label (a purchased expansion pack works
+# with no code change here — see _GROUP_LABELS above).
+_GROUP_ORDER: list[str] = ["core", "layout", "civitai"]
 
 
 def _group_label(group_id: str) -> str:
@@ -240,14 +246,17 @@ def _group_label(group_id: str) -> str:
 
 def _group_flows_by_pack(flows: list[dict]) -> list[dict]:
     """Buckets a flat flow list into [{id, label, flows}, ...] by their
-    "group" field — "core" always first, everything else alphabetically by
-    label. Preserves each group's existing internal ordering."""
+    "group" field — ordered per _GROUP_ORDER first, everything else
+    alphabetically by label after. Preserves each group's existing internal
+    ordering."""
     buckets: dict[str, list[dict]] = {}
     for flow in flows:
         buckets.setdefault(flow.get("group") or "core", []).append(flow)
 
-    def _sort_key(group_id: str) -> tuple[int, str]:
-        return (0 if group_id == "core" else 1, _group_label(group_id).lower())
+    def _sort_key(group_id: str) -> tuple[int, int, str]:
+        if group_id in _GROUP_ORDER:
+            return (0, _GROUP_ORDER.index(group_id), "")
+        return (1, 0, _group_label(group_id).lower())
 
     return [
         {"id": gid, "label": _group_label(gid), "flows": buckets[gid]}

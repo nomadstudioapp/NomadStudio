@@ -494,6 +494,79 @@ def _qwen_image_21_edit_workflow() -> dict:
     }
 
 
+# ── Qwen 2.1 Outpaint (replaces outpaint_qwen_2511.json, one of Outpaint's
+# engine_select options) ─────────────────────────────────────────────────
+# Same conversion as the Edit engine (single reference image via
+# "images.image_1", no LoraLoaderModelOnly), except the output latent stays
+# a plain EmptyLatentImage sized to the pre-padded canvas (node 11 in the
+# source, untouched by app code that fills in the real width/height at
+# generation time) rather than GetImageSize(source) — outpaint's whole point
+# is generating INTO an area larger than the source image, so matching the
+# source's own size here would defeat it.
+QWEN_2511_OUTPAINT_WORKFLOW_REL = "workflows/refine/outpaint_qwen_2511.json"
+
+
+def _qwen_image_21_outpaint_workflow() -> dict:
+    return {
+        "2": {
+            "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
+            "class_type": "VAELoader",
+            "_meta": {"title": "Load VAE"},
+        },
+        "3": {
+            "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors", "type": "qwen_image", "device": "default"},
+            "class_type": "CLIPLoader",
+            "_meta": {"title": "Load CLIP"},
+        },
+        "6": {
+            "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"},
+            "class_type": "UNETLoader",
+            "_meta": {"title": "Load Diffusion Model"},
+        },
+        "7": {
+            "inputs": {"image": "oj-refine-placeholder.png"},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"},
+        },
+        "11": {
+            "inputs": {"width": 1024, "height": 1024, "batch_size": 1},
+            "class_type": "EmptySD3LatentImage",
+            "_meta": {"title": "EmptySD3LatentImage"},
+        },
+        "13": {
+            "inputs": {
+                "prompt": "Replace the black area with a continuation of the image. change a bit",
+                "negative_prompt": "",
+                "resolution": 0,
+                "clip": ["3", 0],
+                "vae": ["2", 0],
+                "images.image_1": ["7", 0],
+            },
+            "class_type": "TextEncodeQwenImage21",
+            "_meta": {"title": "Text Encode Qwen Image 2.1"},
+        },
+        "15": {
+            "inputs": {
+                "seed": 718059206771042, "steps": 25, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+                "denoise": 1, "model": ["6", 0], "positive": ["13", 0], "negative": ["13", 1],
+                "latent_image": ["11", 0],
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"},
+        },
+        "17": {
+            "inputs": {"samples": ["15", 0], "vae": ["2", 0]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"},
+        },
+        "21": {
+            "inputs": {"filename_prefix": "qwen-image-2.1-outpaint", "images": ["17", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"},
+        },
+    }
+
+
 def build_qwen_image_21_engine(version: str) -> Path:
     from app.services.workflow_service import _analyze_workflow
 
@@ -791,6 +864,29 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
 REFINE_PILOT_VERSION = "0.1.0"
 
 
+# Applied unconditionally to every flow build_refine_pilot/
+# build_refine_static_group package — a no-op for flows without this
+# engine_select option, a rename for the ones that offer it (Outpaint, Look
+# Book once packaged, every Photo Editing/Portrait Fix/Creator Pack flow).
+QWEN_ENGINE_SELECT_RELABEL = {"qwen_2511": "Qwen 2.1 Edit"}
+
+
+def _rename_engine_select_option(flow: dict, option_id: str, new_label: str) -> None:
+    """Renames one option's label inside an engine_select field (e.g.
+    Outpaint's "qwen_2511" -> "Qwen 2.1 Edit") — same idea as
+    _override_flow_field, but engine_select's options live one level deeper,
+    in field.engines[], keyed by their own "id" rather than the field's."""
+    for step in flow.get("steps") or []:
+        if not isinstance(step, dict) or step.get("type") != "workflow_params":
+            continue
+        for f in step.get("fields") or []:
+            if not isinstance(f, dict) or f.get("type") != "engine_select":
+                continue
+            for engine in f.get("engines") or []:
+                if isinstance(engine, dict) and engine.get("id") == option_id:
+                    engine["label"] = new_label
+
+
 def _override_flow_field(flow: dict, field_id: str, overrides: dict) -> None:
     """Applies `overrides` onto the named field (by its own "id", e.g.
     "steps") inside a flow's workflow_params step — wherever it lives among
@@ -849,11 +945,13 @@ def _rename_embedded_flow_data(graph: dict, id_overrides: dict[str, str], label_
 
 
 def _load_workflow_ref(source: Path, ref: str) -> dict:
-    """Loads a `workflow_file`-referenced ComfyUI graph — from the hand-authored
-    Qwen 2.1 replacement when `ref` is QWEN_2511_EDIT_WORKFLOW_REL (see its own
-    comment for why), otherwise straight from OPENHIKER, same as always."""
+    """Loads a `workflow_file`-referenced ComfyUI graph — from a hand-authored
+    Qwen 2.1 replacement for the two refs that have one (see their own
+    comments for why), otherwise straight from OPENHIKER, same as always."""
     if ref == QWEN_2511_EDIT_WORKFLOW_REL:
         return _qwen_image_21_edit_workflow()
+    if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
+        return _qwen_image_21_outpaint_workflow()
     src_path = source / "app" / ref
     if not src_path.is_file():
         raise SystemExit(f"referenced workflow_file not found: {src_path}")
@@ -923,6 +1021,8 @@ def build_refine_static_group(
             names = label_overrides[flow_id]
             flow["label"] = names["en"]
             flow["card"]["label"] = names
+        for option_id, new_label in QWEN_ENGINE_SELECT_RELABEL.items():
+            _rename_engine_select_option(flow, option_id, new_label)
         final_id = id_overrides.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)
@@ -1064,6 +1164,8 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
         if flow_id in REFINE_PILOT_STEPS_FIELD_OVERRIDES:
             _override_flow_field(flow, "steps", REFINE_PILOT_STEPS_FIELD_OVERRIDES[flow_id])
+        for option_id, new_label in QWEN_ENGINE_SELECT_RELABEL.items():
+            _rename_engine_select_option(flow, option_id, new_label)
         final_id = REFINE_PILOT_ID_OVERRIDES.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)

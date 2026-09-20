@@ -1003,6 +1003,16 @@ def _override_flow_field(flow: dict, field_id: str, overrides: dict) -> None:
                 f.update(overrides)
 
 
+def _add_flow_field(flow: dict, field: dict) -> None:
+    """Appends a brand-new field to a flow's (single) workflow_params step —
+    for a control the source flow never exposed at all (Camera Angles baked
+    its steps count straight into the graph, no UI for it)."""
+    for step in flow.get("steps") or []:
+        if isinstance(step, dict) and step.get("type") == "workflow_params":
+            step.setdefault("fields", []).append(field)
+            return
+
+
 def _collect_workflow_file_refs(node: object) -> set[str]:
     """Recursively finds every `workflow_file` value and every `file=...`
     inside an `options_src` URL — a flow can reference one from a top-level
@@ -1100,6 +1110,7 @@ def build_refine_static_group(
     unregistered: dict[str, str] | None = None,
     id_overrides: dict[str, str] | None = None,
     label_overrides: dict[str, dict[str, str]] | None = None,
+    new_fields: dict[str, list[dict]] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -1120,6 +1131,7 @@ def build_refine_static_group(
     unregistered = unregistered or {}
     id_overrides = id_overrides or {}
     label_overrides = label_overrides or {}
+    new_fields = new_fields or {}
 
     final_flow_ids: list[str] = []
     for flow_id in flow_ids:
@@ -1135,6 +1147,8 @@ def build_refine_static_group(
             flow["card"]["label"] = names
         for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
             _update_engine_select_option(flow, option_id, opt_overrides)
+        for new_field in new_fields.get(flow_id, []):
+            _add_flow_field(flow, new_field)
         final_id = id_overrides.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)
@@ -1214,13 +1228,17 @@ def build_photo_editing(source: Path, version: str) -> Path:
         },
         flow_ids=PHOTO_EDITING_FLOWS,
         unregistered=PHOTO_EDITING_UNREGISTERED,
-        # Still runs the 2511 engine internally (refine_qwen_2511_angles.json
-        # hasn't been migrated to Qwen Image 2.1 yet) — renamed anyway, on
-        # request, ahead of that migration.
         id_overrides={"refine.qwen_2511_angles": "refine.qwen2_angles"},
         label_overrides={"refine.qwen_2511_angles": {
             "en": "Qwen 2.1 Angles", "es": "Ángulos Qwen 2.1", "zh": "Qwen 2.1 视角", "ko": "Qwen 2.1 앵글",
         }},
+        # The source never exposed Steps at all — baked at 4 into the graph,
+        # tied to the Lightning LoRA the 2.1 migration dropped. Now that it's
+        # a plain number input like Edit Qwen 2.1's, same quick-pick presets.
+        new_fields={"refine.qwen_2511_angles": [{
+            "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+            "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+        }]},
     )
 
 

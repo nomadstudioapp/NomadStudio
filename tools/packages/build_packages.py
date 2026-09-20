@@ -767,6 +767,13 @@ REFINE_PILOT_DESC_OVERRIDES = {
         },
     },
 }
+# The source field (default 4, quick_options [4, 8], max 20) matched the old
+# 2511 + Lightning-LoRA 4-step setup. 2.1 has no confirmed fast LoRA and runs
+# at 25 steps (the verified-good setting) — bumped max so 25 is reachable at
+# all, default now matches what the engine actually ships with.
+REFINE_PILOT_STEPS_FIELD_OVERRIDES = {
+    "refine.edit_qwen_2511_basic": {"default": 25, "max": 25, "quick_options": [8, 16, 25]},
+}
 REFINE_PILOT_LABEL_OVERRIDES = {
     "refine.edit_qwen_2511_basic": {"en": "Edit Qwen 2.1", "es": "Editar Qwen 2.1", "zh": "编辑 Qwen 2.1", "ko": "편집 Qwen 2.1"},
     "refine.edit_fluxklein_9b_basic": {"en": "Edit Flux Klein 9B", "es": "Editar Flux Klein 9B", "zh": "编辑 Flux Klein 9B", "ko": "편집 Flux Klein 9B"},
@@ -782,6 +789,18 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
 REFINE_PILOT_VERSION = "0.1.0"
+
+
+def _override_flow_field(flow: dict, field_id: str, overrides: dict) -> None:
+    """Applies `overrides` onto the named field (by its own "id", e.g.
+    "steps") inside a flow's workflow_params step — wherever it lives among
+    possibly several steps/fields."""
+    for step in flow.get("steps") or []:
+        if not isinstance(step, dict) or step.get("type") != "workflow_params":
+            continue
+        for f in step.get("fields") or []:
+            if isinstance(f, dict) and f.get("id") == field_id:
+                f.update(overrides)
 
 
 def _collect_workflow_file_refs(node: object) -> set[str]:
@@ -1043,6 +1062,8 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             flow["card"]["desc"] = desc_override["desc"]
         if flow_id in REFINE_PILOT_GROUP_OVERRIDES:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
+        if flow_id in REFINE_PILOT_STEPS_FIELD_OVERRIDES:
+            _override_flow_field(flow, "steps", REFINE_PILOT_STEPS_FIELD_OVERRIDES[flow_id])
         final_id = REFINE_PILOT_ID_OVERRIDES.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)

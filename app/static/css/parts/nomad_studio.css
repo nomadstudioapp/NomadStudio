@@ -9468,17 +9468,21 @@ body.nsc-scenes-page .nsc-inputs::-webkit-scrollbar-thumb:hover {
   width: 120px;
 }
 
-/* Quick-pick pills next to a numeric field (Steps: "4 / 8", etc.) — see
-   f.quick_options in the flow JSON. */
+/* Quick-pick pills below a numeric field's stepper (Steps: "8 / 16 / 25",
+   etc.) — see f.quick_options in the flow JSON. Own row, full width, each
+   pill sharing it equally, instead of squeezed beside the stepper. */
 .nsc-quick-options {
   display: flex;
   gap: 0.35rem;
-  flex: 0 0 auto;
+  width: 100%;
+  margin-top: 0.4rem;
 }
 
 .nsc-quick-option-btn {
+  flex: 1 1 0;
   padding: 4px 10px;
   font-size: 0.72rem;
+  text-align: center;
   color: var(--text-dim);
   background: var(--bg-panel);
   border: none;

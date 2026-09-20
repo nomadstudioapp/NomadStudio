@@ -1704,10 +1704,10 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             });
           });
         }(f, input, quickWrap));
-        row.appendChild(quickWrap);
       }
 
       _advFieldBody(f).appendChild(row);
+      if (quickWrap) _advFieldBody(f).appendChild(quickWrap);
     });
     buildAdv();
     triggerPreviewUpdate();

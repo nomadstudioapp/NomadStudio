@@ -576,6 +576,154 @@ def _collect_workflow_file_refs(node: object) -> set[str]:
     return refs
 
 
+def _strip_foreign_flow_data(graph: dict, own_ids: set[str]) -> None:
+    """A shared base workflow (e.g. refine_qwen_2511_edit.json, reused by
+    several flows via `workflow_file`) can itself carry a `flow_data` node
+    that's the authoritative source of a DIFFERENT flow — Edit Qwen 2511, in
+    the pilot package. Bundling that file unmodified into another package
+    would let package_service's install-time flow_data conversion (§5.3)
+    silently redeclare that other package's flow here too, and the second
+    install to try it would be rejected as "Flow id already in use". The
+    node is metadata only (nothing in the graph consumes its output), so
+    dropping it is safe — this package's own flows never needed it; they
+    only needed the ComfyUI graph around it."""
+    from app.services.flow_engine import _extract_flow_data_node
+
+    meta = _extract_flow_data_node(graph)
+    if meta is None:
+        return
+    flow_id = str(meta.get("id", "")).strip()
+    if flow_id and flow_id in own_ids:
+        return  # this package does mean to (re)declare it — leave it
+    for node_id, node in list(graph.items()):
+        if isinstance(node, dict) and str(node.get("_meta", {}).get("title", "")) == "flow_data":
+            del graph[node_id]
+            return
+
+
+def build_refine_static_group(
+    source: Path, version: str, pkg_id: str, group_id: str,
+    name: dict[str, str], summary: dict[str, str], flow_ids: list[str],
+) -> Path:
+    """A Refine package whose flows all already have an authored flow.json
+    (contributes.flows only, no flow_data-only ones — see build_refine_pilot
+    for that path) — same shape as Create/Layout/CivitAI. group_id is set on
+    the manifest for clarity/consistency with the docs, though these flows
+    already declare their own group correctly (unlike the pilot's
+    Edit/Outpaint, which had to be moved out of "core")."""
+    table = load_translations(source)
+    files: dict[str, object] = {}
+    flows = []
+    workflow_refs: set[str] = set()
+
+    for flow_id in flow_ids:
+        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        flows.append(flow)
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+
+    own_ids = set(flow_ids)
+    for ref in sorted(workflow_refs):
+        src_path = source / "app" / ref
+        if not src_path.is_file():
+            raise SystemExit(f"referenced workflow_file not found: {src_path}")
+        graph = json.loads(src_path.read_text(encoding="utf-8"))
+        _strip_foreign_flow_data(graph, own_ids)
+        files[ref] = graph
+
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": pkg_id,
+        "version": version,
+        "default_lang": "en",
+        "name": name,
+        "summary": summary,
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": group_id, "label": {"en": name.get("en", group_id)}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in flow_ids],
+            "workflows": sorted(workflow_refs),
+        },
+    }
+    print(f"  {pkg_id} texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip(pkg_id, {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                               **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
+
+
+# Photo Editing / Portrait Fix / Creator Pack: each flow already carries its
+# own correct "group" (unlike Edit/Outpaint, no override needed here).
+PHOTO_EDITING_FLOWS = [
+    "refine.pe_color_grading", "refine.pe_color_preset_cinema", "refine.pe_color_preset_editorial",
+    "refine.pe_correct_enhance", "refine.pe_effects_artistic", "refine.pe_effects_cinematic",
+    "refine.pe_open_eyes", "refine.pe_portrait_enhance", "refine.pe_portrait_retouch",
+    "refine.qwen_2511_angles", "refine.pe_remove_hair_face",
+    "refine.pe_remove_watermark", "refine.pe_restore",
+    # refine.pe_remove_glare exists on disk (flows/refine/photo-editing/
+    # pe_remove_glare.json) but isn't registered in OPENHIKER's index.json —
+    # same orphan situation as refine/layer_composer.json and
+    # remove_checker.json — left out until that gets sorted on that side.
+]
+PORTRAIT_FIX_FLOWS = [
+    "refine.pf_change_hair_color", "refine.pf_dark_circles", "refine.pf_expression_changer",
+    "refine.pf_hairstyle_changer", "refine.pf_hand_wrinkles", "refine.pf_red_eye_removal",
+    "refine.pf_relight", "refine.pf_remove_freckles", "refine.pf_remove_glasses_glare",
+    "refine.pf_remove_overexposed_highlights", "refine.pf_remove_skin_glare",
+]
+CREATOR_PACK_FLOWS = [
+    "refine.cp_cartoon_to_realistic", "refine.cp_comic_book_style", "refine.cp_headshot_generator",
+    "refine.cp_pet_portrait_generator", "refine.cp_profile_picture_generator", "refine.cp_selfie_generator",
+    "refine.cp_silhouette_maker", "refine.cp_superhero_generator", "refine.cp_yearbook_generator",
+]
+REFINE_GROUPS_VERSION = "0.1.0"
+
+
+def build_photo_editing(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-photo-editing", "photo-editing",
+        name={"en": "Photo Editing", "es": "Edición de fotos", "zh": "照片编辑", "ko": "사진 편집"},
+        summary={
+            "en": "Color grading, cinematic looks, restoration, watermark/glare removal and camera-angle changes.",
+            "es": "Gradación de color, looks cinematográficos, restauración, quitar marcas de agua/brillos y cambio de ángulo de cámara.",
+            "zh": "调色、电影感风格、修复、去除水印/眩光以及机位角度调整。",
+            "ko": "컬러 그레이딩, 시네마틱 룩, 복원, 워터마크/글레어 제거, 카메라 앵글 변경.",
+        },
+        flow_ids=PHOTO_EDITING_FLOWS,
+    )
+
+
+def build_portrait_fix(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-portrait-fix", "portrait-fix",
+        name={"en": "Portrait Fix", "es": "Retoque de retrato", "zh": "人像修饰", "ko": "인물 보정"},
+        summary={
+            "en": "Targeted portrait fixes: hair color/style, dark circles, expression, relight, red-eye, glare and more.",
+            "es": "Arreglos concretos de retrato: color/estilo de pelo, ojeras, expresión, relight, ojos rojos, brillos y más.",
+            "zh": "针对性人像修饰：发色/发型、黑眼圈、表情、重新布光、红眼、眩光等。",
+            "ko": "타깃 인물 보정: 헤어 컬러/스타일, 다크서클, 표정, 리라이팅, 적목 현상, 글레어 등.",
+        },
+        flow_ids=PORTRAIT_FIX_FLOWS,
+    )
+
+
+def build_creator_pack(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-creator-pack", "creator-pack",
+        name={"en": "Creator Pack", "es": "Pack Creador", "zh": "创作者礼包", "ko": "크리에이터 팩"},
+        summary={
+            "en": "Ready-made looks: headshot, selfie, profile picture, pet portrait, superhero, comic book and more.",
+            "es": "Looks ya hechos: headshot, selfie, foto de perfil, retrato de mascota, superhéroe, cómic y más.",
+            "zh": "现成风格：形象照、自拍、头像、宠物肖像、超级英雄、漫画风格等。",
+            "ko": "완성형 룩: 헤드샷, 셀카, 프로필 사진, 반려동물 초상화, 슈퍼히어로, 만화 스타일 등.",
+        },
+        flow_ids=CREATOR_PACK_FLOWS,
+    )
+
+
 def build_refine_pilot(source: Path, version: str) -> Path:
     table = load_translations(source)
     files: dict[str, object] = {}
@@ -649,6 +797,7 @@ def main() -> None:
     # own comment for why Krea2 Roma lives there instead of in ENGINES).
     ap.add_argument("--optional", action="store_true")
     ap.add_argument("--refine-pilot", action="store_true")
+    ap.add_argument("--refine-groups", action="store_true")
     args = ap.parse_args()
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
@@ -658,6 +807,9 @@ def main() -> None:
                   for name in ENGINES_OPTIONAL]
     if args.refine_pilot:
         paths.append(build_refine_pilot(args.source, args.version))
+    if args.refine_groups:
+        paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
+                  build_creator_pack(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

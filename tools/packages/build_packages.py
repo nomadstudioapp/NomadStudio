@@ -530,6 +530,18 @@ REFINE_PILOT_GROUP_OVERRIDES = {
     "refine.edit_fluxklein_9b_restore": "edit", "refine.outpaint": "edit",
     "refine.upscale_model": "upscale",
 }
+# Action-first naming ("Edit <engine>", matching Upscale's own "Upscale
+# (<engine>)" cards) instead of the source's "<engine> Edit" — Outpaint is
+# already action-first, left alone. Hand-translated (not run through
+# load_translations: that table is keyed by the OLD English text, which
+# these labels no longer are).
+REFINE_PILOT_LABEL_OVERRIDES = {
+    "refine.edit_qwen_2511_basic": {"en": "Edit Qwen 2511", "es": "Editar Qwen 2511", "zh": "编辑 Qwen 2511", "ko": "편집 Qwen 2511"},
+    "refine.edit_fluxklein_9b_basic": {"en": "Edit Flux Klein 9B", "es": "Editar Flux Klein 9B", "zh": "编辑 Flux Klein 9B", "ko": "편집 Flux Klein 9B"},
+    "refine.edit_fluxklein_4b_basic": {"en": "Edit Flux Klein 4B", "es": "Editar Flux Klein 4B", "zh": "编辑 Flux Klein 4B", "ko": "편집 Flux Klein 4B"},
+    "refine.edit_boogu_turbo_basic": {"en": "Edit Boogu Turbo", "es": "Editar Boogu Turbo", "zh": "编辑 Boogu Turbo", "ko": "편집 Boogu Turbo"},
+    "refine.edit_fluxklein_9b_restore": {"en": "Edit Flux Klein 9B (Restore)", "es": "Editar Flux Klein 9B (Restaurar)", "zh": "编辑 Flux Klein 9B（修复）", "ko": "편집 Flux Klein 9B (복원)"},
+}
 # Relative to `source` (the OPENHIKER checkout), not to the package.
 REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_klein_4b.json",
@@ -572,6 +584,10 @@ def build_refine_pilot(source: Path, version: str) -> Path:
 
     for flow_id in REFINE_PILOT_STATIC_FLOWS:
         flow = add_card_texts(flow_from_source(source, flow_id), table)
+        if flow_id in REFINE_PILOT_LABEL_OVERRIDES:
+            names = REFINE_PILOT_LABEL_OVERRIDES[flow_id]
+            flow["label"] = names["en"]
+            flow["card"]["label"] = names
         if flow_id in REFINE_PILOT_GROUP_OVERRIDES:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
         flows.append(flow)

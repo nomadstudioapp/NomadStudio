@@ -416,6 +416,84 @@ def _qwen_image_21_workflow() -> dict:
     }
 
 
+# ── Qwen 2.1 Edit (replaces refine_qwen_2511_edit.json, the shared engine
+# behind Edit Qwen 2.1/Outpaint/Look Book/every Photo Editing-Portrait
+# Fix-Creator Pack flow's engine_select) ────────────────────────────────────
+# Single reference image via TextEncodeQwenImage21's Autogrow "images.image_1"
+# input (dotted key — confirmed against a real generated PNG's embedded
+# metadata) instead of the old VAEEncode+ReferenceLatent chain: 2.1 handles
+# image conditioning inside the encode node itself. Output latent now comes
+# from GetImageSize(source image) -> EmptyLatentImage, so the result keeps
+# the input's own resolution the same way the old ReferenceLatent path did.
+QWEN_2511_EDIT_WORKFLOW_REL = "workflows/refine/refine_qwen_2511_edit.json"
+
+
+def _qwen_image_21_edit_workflow() -> dict:
+    return {
+        "2": {
+            "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
+            "class_type": "VAELoader",
+            "_meta": {"title": "Load VAE"},
+        },
+        "3": {
+            "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors", "type": "qwen_image", "device": "default"},
+            "class_type": "CLIPLoader",
+            "_meta": {"title": "Load CLIP"},
+        },
+        "6": {
+            "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"},
+            "class_type": "UNETLoader",
+            "_meta": {"title": "Load Diffusion Model"},
+        },
+        "7": {
+            "inputs": {"image": "oj-refine-placeholder.png"},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"},
+        },
+        "13": {
+            "inputs": {
+                "prompt": "change the background to a sunset beach",
+                "negative_prompt": "",
+                "resolution": 0,
+                "clip": ["3", 0],
+                "vae": ["2", 0],
+                "images.image_1": ["7", 0],
+            },
+            "class_type": "TextEncodeQwenImage21",
+            "_meta": {"title": "Text Encode Qwen Image 2.1"},
+        },
+        "15": {
+            "inputs": {
+                "seed": 796693962184957, "steps": 25, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+                "denoise": 1, "model": ["6", 0], "positive": ["13", 0], "negative": ["13", 1],
+                "latent_image": ["25", 0],
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"},
+        },
+        "17": {
+            "inputs": {"samples": ["15", 0], "vae": ["2", 0]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"},
+        },
+        "21": {
+            "inputs": {"filename_prefix": "qwen-image-2.1-edit", "images": ["17", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"},
+        },
+        "24": {
+            "inputs": {"image": ["7", 0]},
+            "class_type": "GetImageSize",
+            "_meta": {"title": "Get Image Size"},
+        },
+        "25": {
+            "inputs": {"width": ["24", 0], "height": ["24", 1], "batch_size": 1},
+            "class_type": "EmptyLatentImage",
+            "_meta": {"title": "Empty Latent Image"},
+        },
+    }
+
+
 def build_qwen_image_21_engine(version: str) -> Path:
     from app.services.workflow_service import _analyze_workflow
 
@@ -734,6 +812,18 @@ def _rename_embedded_flow_data(graph: dict, id_overrides: dict[str, str], label_
         return
 
 
+def _load_workflow_ref(source: Path, ref: str) -> dict:
+    """Loads a `workflow_file`-referenced ComfyUI graph — from the hand-authored
+    Qwen 2.1 replacement when `ref` is QWEN_2511_EDIT_WORKFLOW_REL (see its own
+    comment for why), otherwise straight from OPENHIKER, same as always."""
+    if ref == QWEN_2511_EDIT_WORKFLOW_REL:
+        return _qwen_image_21_edit_workflow()
+    src_path = source / "app" / ref
+    if not src_path.is_file():
+        raise SystemExit(f"referenced workflow_file not found: {src_path}")
+    return json.loads(src_path.read_text(encoding="utf-8"))
+
+
 def _strip_foreign_flow_data(graph: dict) -> None:
     """A shared base workflow (e.g. refine_qwen_2511_edit.json, reused by
     several flows via `workflow_file`) can itself carry a `flow_data` node
@@ -805,10 +895,7 @@ def build_refine_static_group(
         workflow_refs |= _collect_workflow_file_refs(flow)
 
     for ref in sorted(workflow_refs):
-        src_path = source / "app" / ref
-        if not src_path.is_file():
-            raise SystemExit(f"referenced workflow_file not found: {src_path}")
-        graph = json.loads(src_path.read_text(encoding="utf-8"))
+        graph = _load_workflow_ref(source, ref)
         _strip_foreign_flow_data(graph)
         files[ref] = graph
 
@@ -940,12 +1027,7 @@ def build_refine_pilot(source: Path, version: str) -> Path:
         workflow_refs |= _collect_workflow_file_refs(flow)
 
     for ref in sorted(workflow_refs):
-        # workflow_file values are relative to app/ (same base load_flow_file
-        # in the app itself uses), not to the OPENHIKER checkout root.
-        src_path = source / "app" / ref
-        if not src_path.is_file():
-            raise SystemExit(f"referenced workflow_file not found: {src_path}")
-        graph = json.loads(src_path.read_text(encoding="utf-8"))
+        graph = _load_workflow_ref(source, ref)
         _strip_foreign_flow_data(graph)
         files[ref] = graph
 

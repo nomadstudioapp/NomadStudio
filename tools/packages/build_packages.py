@@ -1013,6 +1013,24 @@ def _add_flow_field(flow: dict, field: dict) -> None:
             return
 
 
+def _upgrade_seed_fields_to_similarity(flow: dict) -> None:
+    """Every seed field across every Refine flow in OPENHIKER still uses the
+    old plain numeric-input-plus-dice-button UI (no seed_mode set at all) —
+    audited across all ~90 flows this build packages, zero already opted
+    into the "Visual similarity" toggle flow-step-workflow-params.js
+    already supports (f.seed_mode === 'similarity': a single switch, ON
+    pins the seed so repeats stay visually close, OFF randomizes each
+    time — same control Create's own Simple/Guided panel already uses).
+    Applied unconditionally to every field of type "seed" that doesn't
+    already declare its own seed_mode."""
+    for step in flow.get("steps") or []:
+        if not isinstance(step, dict) or step.get("type") != "workflow_params":
+            continue
+        for f in step.get("fields") or []:
+            if isinstance(f, dict) and f.get("type") == "seed" and not f.get("seed_mode"):
+                f["seed_mode"] = "similarity"
+
+
 def _collect_workflow_file_refs(node: object) -> set[str]:
     """Recursively finds every `workflow_file` value and every `file=...`
     inside an `options_src` URL — a flow can reference one from a top-level
@@ -1149,6 +1167,7 @@ def build_refine_static_group(
             _update_engine_select_option(flow, option_id, opt_overrides)
         for new_field in new_fields.get(flow_id, []):
             _add_flow_field(flow, new_field)
+        _upgrade_seed_fields_to_similarity(flow)
         final_id = id_overrides.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)
@@ -1296,6 +1315,7 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             _override_flow_field(flow, "steps", REFINE_PILOT_STEPS_FIELD_OVERRIDES[flow_id])
         for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
             _update_engine_select_option(flow, option_id, opt_overrides)
+        _upgrade_seed_fields_to_similarity(flow)
         final_id = REFINE_PILOT_ID_OVERRIDES.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)

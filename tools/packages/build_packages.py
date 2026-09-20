@@ -298,8 +298,8 @@ def build_engine(source: Path, version: str, name: str) -> Path:
 
 # Create › core flows shipped with the app. They only need an image engine,
 # plus LM Studio for the LLM ones. Left out: the CivitAI flows (their own free
-# pack later), From Template (needs template packs, which packages cannot
-# carry yet) and the unfinished ones (Character, From Brief, Style).
+# pack, build_core_civitai below), From Template (needs template packs, which
+# packages cannot carry yet) and the unfinished ones (Character, From Brief, Style).
 CORE_CREATE_FLOWS = [
     "create.simple", "create.simple_json", "create.assist", "create.chat",
     "create.variations", "create.variations_json", "create.story", "create.scenes",
@@ -396,13 +396,65 @@ def build_create_layout(source: Path, version: str) -> Path:
                                              **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}})
 
 
+# Create › CivitAI: paste a CivitAI generation block, match its model/LoRAs
+# against an installed engine, generate. Left out of nomad.core-create
+# (comment there) so a user who never touches CivitAI doesn't get a card
+# offering to paste one — this is its own free pack, installed separately.
+CIVITAI_FLOWS = [
+    "create.simple_civitai", "create.enhance_civitai", "create.chat_civitai",
+]
+CORE_CIVITAI_VERSION = "0.1.0"
+
+
+def build_core_civitai(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    files: dict[str, object] = {}
+    flows = []
+    for flow_id in CIVITAI_FLOWS:
+        flow = flow_from_source(source, flow_id)
+        # The source flow (OPENHIKER) predates this pack and carries no group
+        # of its own — unlike the Layout flows, which already say "layout" in
+        # their source file. flow_engine._enrich_entry cards which section a
+        # flow shows under off the flow file's own "group" field, not the
+        # manifest's (that one only feeds the packages page) — has to be set
+        # here.
+        flow["group"] = "civitai"
+        flow = add_card_texts(flow, table)
+        flows.append(flow)
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.core-civitai",
+        "version": CORE_CIVITAI_VERSION,
+        "default_lang": "en",
+        "name": {"en": "CivitAI", "es": "CivitAI", "zh": "CivitAI", "ko": "CivitAI"},
+        "summary": {
+            "en": "Paste a CivitAI generation block: Simple runs it directly, Enhance uses it as an AI style reference, Chat keeps it as a fixed style anchor across turns. Model and LoRAs are matched to your installed engines automatically.",
+            "es": "Pega un bloque de generación de CivitAI: Simple lo ejecuta directo, Enhance lo usa como referencia de estilo para la IA, Chat lo mantiene fijo como ancla de estilo turno a turno. El modelo y las LoRAs se casan automáticamente con tus motores instalados.",
+            "zh": "粘贴一个 CivitAI 生成块：Simple 直接运行，Enhance 将其作为 AI 风格参考，Chat 在多轮对话中保持其为固定的风格锚点。模型和 LoRA 会自动与你安装的引擎匹配。",
+            "ko": "CivitAI 생성 블록을 붙여넣으세요: Simple은 바로 실행하고, Enhance는 AI 스타일 참조로 사용하며, Chat은 턴마다 고정된 스타일 기준점으로 유지합니다. 모델과 LoRA는 설치된 엔진과 자동으로 매칭됩니다.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "civitai", "label": {"en": "CivitAI", "es": "CivitAI", "zh": "CivitAI", "ko": "CivitAI"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {"flows": list(files)},
+    }
+    print(f"  core-civitai texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.core-civitai", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                            **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}})
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path(r"D:\OPENHIKER"))
     ap.add_argument("--version", default="0.1.0")
     args = ap.parse_args()
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
-        build_core_create(args.source, args.version), build_create_layout(args.source, args.version)]
+        build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
+        build_core_civitai(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

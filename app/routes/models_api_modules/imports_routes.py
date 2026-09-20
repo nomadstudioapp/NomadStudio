@@ -26,6 +26,8 @@ from app.routes.models_api_shared import (
     _extract_clip_last_layer_keys,
     _extract_lora_loader_keys,
     _extract_lora_options_from_object_info,
+    _extract_unet_loader_keys,
+    _extract_unet_options_from_object_info,
     _normalize_record_negative,
     _parse_workflow_config_node,
     _parse_workflow_payload,
@@ -1163,7 +1165,17 @@ def list_import_checkpoints(import_id: str):
         if isinstance(record.get("workflow", {}), dict)
         else {}
     )
+    # Engines that load their model via UNETLoader (Krea 2, Z-Image, Flux
+    # Klein, Qwen Image, Z Anime — every CivitAI-recognized engine we ship)
+    # have no CheckpointLoader node at all, so checkpoint_keys comes back
+    # empty and the endpoint used to stop right there — no dropdown, no way
+    # to match a CivitAI block's model to them. Falls back to the diffusion
+    # model loader so the same matching/dropdown flow works for both.
     checkpoint_keys = _extract_checkpoint_loader_keys(workflow)
+    options_extractor = _extract_checkpoint_options_from_object_info
+    if not checkpoint_keys:
+        checkpoint_keys = _extract_unet_loader_keys(workflow)
+        options_extractor = _extract_unet_options_from_object_info
     clip_skip_keys = _extract_clip_last_layer_keys(workflow)
     if not checkpoint_keys:
         return jsonify({"checkpoints": [], "selected": "", "advancedKeys": [], "clipSkipAdvancedKeys": clip_skip_keys})
@@ -1189,7 +1201,7 @@ def list_import_checkpoints(import_id: str):
     options: list[str] = []
     try:
         object_info = http_json(f"{comfy_api_url}/object_info", timeout=20)
-        options = _extract_checkpoint_options_from_object_info(object_info)
+        options = options_extractor(object_info)
     except Exception:
         logger.exception("Failed to load checkpoint options for import '%s'", import_id)
         options = []

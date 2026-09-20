@@ -32,6 +32,7 @@ from app.services.workflow_utils import (  # noqa: F401
     _extract_lora_options_from_object_info,
     _extract_seed_from_inputs,
     _extract_unet_loader_keys,
+    _extract_unet_options_from_object_info,
     _is_link,
     _is_negative_like_key,
     _is_prompt_like_key,

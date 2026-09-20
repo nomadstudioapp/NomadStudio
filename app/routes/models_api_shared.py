@@ -65,6 +65,8 @@ from app.services.workflow_service import (  # noqa: F401 — re-exported for ba
     _extract_lora_loader_keys,
     _extract_lora_options_from_object_info,
     _extract_loras_used_from_workflow,
+    _extract_unet_loader_keys,
+    _extract_unet_options_from_object_info,
     _extract_quality_blocks_from_text,
     _extract_quality_presets,
     _extract_seed_from_inputs,

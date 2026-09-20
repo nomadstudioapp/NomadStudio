@@ -270,6 +270,42 @@ def _extract_checkpoint_options_from_object_info(
     return deduped
 
 
+def _extract_unet_options_from_object_info(
+    object_info: dict[str, Any],
+) -> list[str]:
+    if not isinstance(object_info, dict):
+        return []
+
+    class_info = object_info.get("UNETLoader", {})
+    if not isinstance(class_info, dict):
+        return []
+    input_info = (
+        class_info.get("input", {})
+        if isinstance(class_info.get("input", {}), dict)
+        else {}
+    )
+    required = (
+        input_info.get("required", {})
+        if isinstance(input_info.get("required", {}), dict)
+        else {}
+    )
+    unet_spec = required.get("unet_name")
+    if not isinstance(unet_spec, list) or not unet_spec:
+        return []
+    candidates = unet_spec[0]
+    if not isinstance(candidates, list):
+        return []
+
+    seen: set[str] = set()
+    options: list[str] = []
+    for item in candidates:
+        name = str(item).strip()
+        if name and name not in seen:
+            seen.add(name)
+            options.append(name)
+    return options
+
+
 def _extract_lora_options_from_object_info(object_info: dict[str, Any]) -> list[str]:
     if not isinstance(object_info, dict):
         return []

@@ -14,6 +14,7 @@ from flask import jsonify, request
 from PIL import Image
 
 from app.config import DEFAULT_COMFY_URL
+from app.paths import PACKAGES_DIR
 from app.services.http_client import http_json, http_bytes, http_multipart_upload_image
 from app.services import gpu_coordinator
 from app.services.workflow_service import _extract_lora_options_from_object_info, _analyze_workflow
@@ -46,14 +47,26 @@ def _drop_unloadable_model_files(options: list[str]) -> list[str]:
 
 
 def _load_workflow_file(relative_path: str) -> dict:
+    """Resolves a refine flow's `workflow_file` against the two places it can
+    live: `app/workflows/` for anything still shipped in the app's own code
+    tree (legacy/addons), and `<data>/packages/` for a flow that came from an
+    installed package — those declare their workflow_file already prefixed
+    with their own package id (e.g. "nomad.core-refine/workflows/x.json"),
+    written that way by tools/packages/build_packages.py at build time.
+    Tries app dir first so no existing flow changes behavior."""
     safe = Path(relative_path).as_posix()
     if ".." in safe or safe.startswith("/"):
         raise ValueError("Invalid workflow_file path")
-    full = (_APP_DIR / relative_path).resolve()
-    if not str(full).startswith(str(_APP_DIR.resolve())):
-        raise ValueError("Invalid workflow_file path")
-    raw = json.loads(full.read_text(encoding="utf-8"))
-    return {k: v for k, v in raw.items() if not str(k).startswith("_")}
+    for base in (_APP_DIR, PACKAGES_DIR):
+        full = (base / safe).resolve()
+        try:
+            full.relative_to(base.resolve())
+        except ValueError:
+            continue  # escaped base, e.g. via a symlink — skip this base
+        if full.is_file():
+            raw = json.loads(full.read_text(encoding="utf-8"))
+            return {k: v for k, v in raw.items() if not str(k).startswith("_")}
+    raise ValueError(f"workflow_file not found: {relative_path}")
 
 
 def _extract_combo_options(input_def) -> list[str]:

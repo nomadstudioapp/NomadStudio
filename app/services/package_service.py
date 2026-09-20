@@ -267,6 +267,91 @@ def validate_flow(flow: Any, rel: str, files: set[str]) -> None:
             raise PackageError(f"{rel}: workflow_file not in the package: {wf}")
 
 
+def _workflow_derived_flows(
+    zf: zipfile.ZipFile, workflow_rels: list[str], skip_ids: set[str] = frozenset()
+) -> list[tuple[str, dict[str, Any]]]:
+    """§5.3 — a `contributes.workflows` file carrying a `{"_meta": {"title":
+    "flow_data"}}` node describes a whole flow, not just a ComfyUI graph.
+    flow_engine's runtime scanner (`_load_refine_flows_from_workflows`) used
+    to redo this conversion on every request, and only for `app/workflows/`
+    — never for an installed package. Doing it once, here, at install time
+    means the app never has to look for it again (matches the doc's own
+    "el nodo flow_data queda en el workflow, pero la app ya no lo busca en
+    tiempo de ejecución").
+
+    Returns [(generated flow.json's rel path inside the package, flow dict), ...].
+    `rel` passed to the builder is the bare zip-member path (matches
+    `contributes.workflows` and what `validate_flow` checks `workflow_file`
+    against) — package-id prefixing happens later, only once the package's
+    on-disk folder name is known (see `install()`).
+    """
+    from app.services.flow_engine import (
+        _build_mix_flow_definition,
+        _build_refine_flow_definition,
+        _extract_flow_data_node,
+    )
+
+    out: list[tuple[str, dict[str, Any]]] = []
+    for rel in workflow_rels:
+        data = _load_json_member(zf, rel)
+        if not isinstance(data, dict):
+            continue
+        meta = _extract_flow_data_node(data)
+        if meta is None:
+            continue
+        flow_id = str(meta.get("id", "")).strip()
+        if not flow_id:
+            # Some workflow variants (e.g. Outpaint's per-engine files) carry
+            # a "flow_data"-titled node that's only partial config (e.g. just
+            # `preprocess`) read by whichever flow references them through
+            # engine_select — not a standalone flow of their own. Same lenient
+            # skip flow_engine's runtime scanner already used for this.
+            continue
+        if flow_id in skip_ids:
+            # A workflow file can be both a supporting asset referenced by an
+            # authored contributes.flows entry (via workflow_file) AND still
+            # carry its own leftover flow_data with the SAME id — the
+            # authored flow.json is the maintained one; the embedded copy is
+            # stale and would otherwise silently overwrite it at install.
+            continue
+        is_mix = str(meta.get("category", "")).strip() == "mix" or flow_id.startswith("mix.")
+        definition = (
+            _build_mix_flow_definition(meta, rel)
+            if is_mix
+            else _build_refine_flow_definition(meta, rel)
+        )
+        out.append((f"flows/{flow_id.split('.', 1)[1]}.json", definition))
+    return out
+
+
+def _prefix_workflow_file_paths(node: Any, pkg_id: str) -> None:
+    """In place: every `workflow_file` value and every `file=...` inside an
+    `options_src` URL gets the installed package's id prefixed on — e.g.
+    "workflows/x.json" -> "nomad.core-refine/workflows/x.json". Those bare
+    paths are how the ZIP itself and `validate_flow` refer to a workflow
+    (relative to the package root); once installed at
+    `<data>/packages/<pkg_id>/`, `refine_routes.py::_load_workflow_file`
+    needs the pkg_id on the front to know which package's copy to read —
+    two installed refine packages can otherwise share the exact same bare
+    filename with no way to tell them apart."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "workflow_file" and isinstance(value, str) and value and "/" in value:
+                if not value.startswith(pkg_id + "/"):
+                    node[key] = f"{pkg_id}/{value}"
+            elif key == "options_src" and isinstance(value, str) and "file=" in value:
+                prefix, _, rest = value.partition("file=")
+                file_val, sep, tail = rest.partition("&")
+                if file_val and not file_val.startswith(pkg_id + "/"):
+                    file_val = f"{pkg_id}/{file_val}"
+                node[key] = f"{prefix}file={file_val}{sep}{tail}"
+            else:
+                _prefix_workflow_file_paths(value, pkg_id)
+    elif isinstance(node, list):
+        for item in node:
+            _prefix_workflow_file_paths(item, pkg_id)
+
+
 def card_fields(flow: dict[str, Any], lang: str, default_lang: str = "en") -> dict[str, Any]:
     """Card texts for the hub. Accepts the package format (card.label/desc as
     texts, §6.1) and the legacy flat fields (label, card_desc, card_tags)."""
@@ -375,6 +460,14 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
                 raise PackageError(f"{rel}: a workflow must be a JSON object")
         for rel in contributes.get("flows", []):
             flow = _load_json_member(zf, rel)
+            validate_flow(flow, rel, files)
+            owner = (index.get("flows", {}).get(flow["id"]) or {}).get("package")
+            if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id):
+                raise PackageError(f"Flow id already in use: {flow['id']}")
+            card = card_fields(flow, lang, default_lang)
+            flows.append({"id": flow["id"], "category": flow["category"], "label": card["label"], "desc": card["desc"]})
+        static_flow_ids = {f["id"] for f in flows}
+        for rel, flow in _workflow_derived_flows(zf, contributes.get("workflows", []), skip_ids=static_flow_ids):
             validate_flow(flow, rel, files)
             owner = (index.get("flows", {}).get(flow["id"]) or {}).get("package")
             if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id):
@@ -490,7 +583,33 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         engine = None
         if manifest["contributes"].get("engines"):
             engine = json.loads((stage / manifest["contributes"]["engines"][0]).read_text(encoding="utf-8"))
-        flows = [json.loads((stage / rel).read_text(encoding="utf-8")) for rel in manifest["contributes"].get("flows", [])]
+        flow_rels = list(manifest["contributes"].get("flows", []))
+        flows = [json.loads((stage / rel).read_text(encoding="utf-8")) for rel in flow_rels]
+
+        # §5.3 flows synthesized from a `contributes.workflows` file's
+        # flow_data node (see _workflow_derived_flows) don't exist as a real
+        # file yet — materialize one now under flows/, same as an authored
+        # one, so flow_engine's pack loader (which just globs
+        # pack_dir/flows/**/*.json, no flow_data awareness of its own) finds
+        # it with no changes of its own.
+        with zipfile.ZipFile(zip_path) as zf:
+            static_flow_ids = {f["id"] for f in flows}
+            for rel, flow in _workflow_derived_flows(
+                zf, manifest["contributes"].get("workflows", []), skip_ids=static_flow_ids
+            ):
+                flow_rels.append(rel)
+                flows.append(flow)
+
+        # workflow_file/options_src are bare inside the ZIP (validate_flow
+        # checks them against the ZIP's own member list); from here on they
+        # need the pkg_id prefix _load_workflow_file resolves against
+        # PACKAGES_DIR, so every flow — authored or just-generated — gets
+        # rewritten and (re)written to disk before the package goes live.
+        for rel, flow in zip(flow_rels, flows):
+            _prefix_workflow_file_paths(flow, pkg_id)
+            target = stage / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps(flow, indent=2, ensure_ascii=False), encoding="utf-8")
 
         final = base / pkg_id
         if final.exists():
@@ -510,7 +629,7 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
     index.get("engines", {}).pop(pkg_id, None)
     was_bundled = bool((index.get("packages", {}).get(pkg_id) or {}).get("bundled"))
     default_lang = manifest["default_lang"]
-    for rel, flow in zip(manifest["contributes"].get("flows", []), flows):
+    for rel, flow in zip(flow_rels, flows):
         index["flows"][flow["id"]] = {
             "package": pkg_id,
             "category": flow["category"],

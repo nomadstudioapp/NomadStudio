@@ -502,6 +502,116 @@ def build_core_civitai(source: Path, version: str) -> Path:
                       dest=DIST_OPTIONAL)
 
 
+# ── Refine pilot (docs/PACKAGE_FORMAT.md §5.2/§5.3, contributes.workflows) ──
+# Refine has never had a package at all — every flow here either:
+#  - already has an authored flow.json (Edit x5, Outpaint, Upscale Model —
+#    the exact same contributes.flows path Create/Layout/CivitAI use), or
+#  - only exists as a `flow_data` node buried inside its ComfyUI workflow
+#    file (the 4 newer Upscale engines) — package_service.install() now
+#    knows how to turn that into a real flow at install time (§5.3), so it
+#    ships via contributes.workflows alone, no flow.json authored for it at
+#    all.
+# Deliberately NOT wired into the default build yet — this is the first,
+# small pilot proving the contributes.workflows path end-to-end before the
+# rest of Refine (photo-editing, portrait-fix, creator-pack, presets,
+# look-book, mix) gets the same treatment.
+REFINE_PILOT_STATIC_FLOWS = [
+    "refine.edit_qwen_2511_basic", "refine.edit_fluxklein_9b_basic", "refine.edit_fluxklein_4b_basic",
+    "refine.edit_boogu_turbo_basic", "refine.edit_fluxklein_9b_restore", "refine.outpaint",
+    "refine.upscale_model",
+]
+# Relative to `source` (the OPENHIKER checkout), not to the package.
+REFINE_PILOT_WORKFLOW_ONLY_FILES = [
+    "app/workflows/upscale/upscale_klein_4b.json",
+    "app/workflows/upscale/upscale_klein_9b.json",
+    "app/workflows/upscale/upscale_qwen_2511.json",
+    "app/workflows/upscale/refine_upscale_seedvr2.json",
+]
+REFINE_PILOT_VERSION = "0.1.0"
+
+
+def _collect_workflow_file_refs(node: object) -> set[str]:
+    """Recursively finds every `workflow_file` value and every `file=...`
+    inside an `options_src` URL — a flow can reference one from a top-level
+    `workflow_params` step, or several more from an `engine_select` field's
+    nested `engines[].workflow_file` (e.g. Outpaint, Look Book)."""
+    import re
+
+    refs: set[str] = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "workflow_file" and isinstance(value, str) and value:
+                refs.add(value)
+            elif key == "options_src" and isinstance(value, str):
+                m = re.search(r"file=([^&]+)", value)
+                if m:
+                    refs.add(m.group(1))
+            else:
+                refs |= _collect_workflow_file_refs(value)
+    elif isinstance(node, list):
+        for item in node:
+            refs |= _collect_workflow_file_refs(item)
+    return refs
+
+
+def build_refine_pilot(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    files: dict[str, object] = {}
+    flows = []
+    workflow_refs: set[str] = set()
+
+    for flow_id in REFINE_PILOT_STATIC_FLOWS:
+        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        flows.append(flow)
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+
+    for ref in sorted(workflow_refs):
+        # workflow_file values are relative to app/ (same base load_flow_file
+        # in the app itself uses), not to the OPENHIKER checkout root.
+        src_path = source / "app" / ref
+        if not src_path.is_file():
+            raise SystemExit(f"referenced workflow_file not found: {src_path}")
+        files[ref] = json.loads(src_path.read_text(encoding="utf-8"))
+
+    workflow_only_rels = []
+    for rel_from_source in REFINE_PILOT_WORKFLOW_ONLY_FILES:
+        src_path = source / rel_from_source
+        if not src_path.is_file():
+            raise SystemExit(f"flow_data workflow not found: {src_path}")
+        pkg_rel = f"workflows/{src_path.name}"
+        files[pkg_rel] = json.loads(src_path.read_text(encoding="utf-8"))
+        workflow_only_rels.append(pkg_rel)
+
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.refine-pilot",
+        "version": REFINE_PILOT_VERSION,
+        "default_lang": "en",
+        "name": {"en": "Refine Pilot (Edit/Outpaint/Upscale)", "es": "Refine Piloto (Edit/Outpaint/Upscale)",
+                  "zh": "Refine 试点（Edit/Outpaint/Upscale）", "ko": "Refine 파일럿 (Edit/Outpaint/Upscale)"},
+        "summary": {
+            "en": "Pilot package proving Refine's contributes.workflows path: prompt-driven edit engines, outpaint, and model/AI upscalers.",
+            "es": "Paquete piloto que prueba la vía contributes.workflows de Refine: motores de edición por prompt, outpaint y upscalers.",
+            "zh": "验证 Refine 的 contributes.workflows 路径的试点包：提示词驱动的编辑引擎、外扩绘制与放大器。",
+            "ko": "Refine의 contributes.workflows 경로를 검증하는 파일럿 패키지: 프롬프트 기반 편집 엔진, 아웃페인트, 업스케일러.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in REFINE_PILOT_STATIC_FLOWS],
+            "workflows": [ref for ref in sorted(workflow_refs)] + workflow_only_rels,
+        },
+    }
+    print(f"  refine-pilot texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.refine-pilot", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                             **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path(r"D:\OPENHIKER"))
@@ -510,6 +620,7 @@ def main() -> None:
     # build, only produced when explicitly asked for (see ENGINES_OPTIONAL's
     # own comment for why Krea2 Roma lives there instead of in ENGINES).
     ap.add_argument("--optional", action="store_true")
+    ap.add_argument("--refine-pilot", action="store_true")
     args = ap.parse_args()
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
@@ -517,6 +628,8 @@ def main() -> None:
     if args.optional:
         paths += [build_engine(args.source, args.version, name, catalog=ENGINES_OPTIONAL, dest=DIST_OPTIONAL)
                   for name in ENGINES_OPTIONAL]
+    if args.refine_pilot:
+        paths.append(build_refine_pilot(args.source, args.version))
     for path in paths:
         summary = validate(path)
         engine_note = ""

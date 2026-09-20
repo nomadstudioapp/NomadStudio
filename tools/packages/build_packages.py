@@ -73,12 +73,11 @@ ENGINES = {
         "zh": "Ideogram 4：擅长在图片中生成文字与字体设计。",
         "ko": "Ideogram 4: 이미지 안의 글자와 레터링에 강합니다.",
     }),
-    "Qwen Image": ("qwen-image", {
-        "en": "Qwen Image Edit 2511 with a Lightning LoRA for fewer steps.",
-        "es": "Qwen Image Edit 2511 con una LoRA Lightning para usar menos pasos.",
-        "zh": "Qwen Image Edit 2511，配合 Lightning LoRA 以更少步数生成。",
-        "ko": "Qwen Image Edit 2511과 Lightning LoRA로 더 적은 단계에서 생성합니다.",
-    }),
+    # "Qwen Image" is NOT here anymore — build_qwen_image_21_engine() builds
+    # it by hand (Qwen Image 2.1, no OPENHIKER source exists for it yet) and
+    # main() calls that directly instead of engine_from_registry(). Keeping
+    # the name in ENGINES would have the default build silently overwrite it
+    # back to the old 2511-based content every run.
     "Z Anime": ("z-anime", {
         "en": "Anime-style image engine based on Z-Image, distilled to 4 steps.",
         "es": "Motor de imagen de estilo anime basado en Z-Image, destilado a 4 pasos.",
@@ -119,10 +118,6 @@ EXTRA_DOWNLOADS = {
          "url": "https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors?download=true"},
         {"subfolder": "vae", "filename": "ae.safetensors",
          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors?download=true"},
-    ],
-    "Qwen Image": [
-        {"subfolder": "loras/qwen_2511", "filename": "Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors",
-         "url": "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors?download=true"},
     ],
     # Krea2 Monaco needs four files published only on CivitAI, which refuses
     # anonymous downloads: the app asks for the user's own API key (Settings).
@@ -333,6 +328,124 @@ def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
 
 def validate(path: Path) -> dict:
     return package_service.inspect_zip(path, package_service._empty_index(), builtin_flow_ids=set())
+
+
+# ── Qwen Image 2.1 (hand-authored, no OPENHIKER source — see build_qwen_image_21_engine) ──
+# Reverse-engineered from a generated PNG's embedded ComfyUI metadata (no
+# import_registry.json record exists for this yet, it's genuinely new):
+# UNETLoader qwen_image_2.1_int8_convrot.safetensors, CLIPLoader
+# qwen3vl_8b_int8_convrot.safetensors, VAELoader qwen_image_2.1_vae_bf16.safetensors,
+# TextEncodeQwenImage21 (one node, outputs BOTH positive[0] and negative[1] —
+# replaces the old pair of TextEncodeQwenImageEditPlus nodes), 25 steps/CFG 1/
+# euler/simple — the settings that actually produced the verified-good
+# outputs; the old Lightning LoRA is 2511-specific and dropped rather than
+# guessed as compatible.
+def _qwen_image_21_workflow() -> dict:
+    return {
+        "config": {
+            "inputs": {"value": json.dumps({
+                "name": "Qwen Image",
+                # Bare filename, no subfolder — confirmed against the connected
+                # ComfyUI's own UNETLoader object_info (a made-up subfolder
+                # prefix here caused "node errors: 55": the quantization
+                # switcher would swap in a unet_name that doesn't exist).
+                "quantization": {"int8": "qwen_image_2.1_int8_convrot.safetensors"},
+                # No confirmed download URLs yet for this model (too new to
+                # have a settled HF repo layout at build time) — left empty
+                # rather than guessing a URL that would 404 in the Setup
+                # wizard. Fill in once confirmed.
+                "downloads": "",
+            })},
+            "class_type": "PrimitiveStringMultiline",
+            "_meta": {"title": "config"},
+        },
+        "29": {
+            "inputs": {"filename_prefix": "qwen-image-2.1-create-simple", "images": ["54", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"},
+        },
+        "51": {
+            "inputs": {
+                "prompt": "a small red fox sitting in snow, studio photo",
+                "negative_prompt": "text, watermark, signature, logo, blurry, jpeg artifacts, lowres, worst quality, low quality, deformed hands, extra fingers",
+                "resolution": 1024,
+                "clip": ["56", 0],
+                "vae": ["57", 0],
+            },
+            "class_type": "TextEncodeQwenImage21",
+            "_meta": {"title": "Text Encode Qwen Image 2.1"},
+        },
+        "53": {
+            "inputs": {
+                "seed": 1166088861, "steps": 25, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+                "denoise": 1, "model": ["55", 0], "positive": ["51", 0], "negative": ["51", 1],
+                "latent_image": ["71", 0],
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"},
+        },
+        "54": {
+            "inputs": {"samples": ["53", 0], "vae": ["57", 0]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"},
+        },
+        "55": {
+            "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"},
+            "class_type": "UNETLoader",
+            "_meta": {"title": "Load Diffusion Model"},
+        },
+        "56": {
+            "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors", "type": "qwen_image", "device": "default"},
+            "class_type": "CLIPLoader",
+            "_meta": {"title": "Load CLIP"},
+        },
+        "57": {
+            "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
+            "class_type": "VAELoader",
+            "_meta": {"title": "Load VAE"},
+        },
+        "71": {
+            "inputs": {"width": 1024, "height": 1024, "batch_size": 1},
+            "class_type": "EmptySD3LatentImage",
+            "_meta": {"title": "EmptySD3LatentImage"},
+        },
+    }
+
+
+def build_qwen_image_21_engine(version: str) -> Path:
+    from app.services.workflow_service import _analyze_workflow
+
+    workflow = _qwen_image_21_workflow()
+    analysis = _analyze_workflow(workflow)
+    engine = {
+        "category": "image",
+        "name": "Qwen Image",
+        "workflow": workflow,
+        "analysis": analysis,
+        "basicValues": analysis.get("basicValues", {}),
+        "advancedValues": {p["key"]: p["value"] for p in analysis.get("advancedParameters", []) if not p.get("isLinked")},
+        "annotation": {"downloads": [], "loras": [], "optionalSubgraphs": []},
+    }
+    pkg_id = "nomad.engine.qwen-image"
+    file_rel = "engines/qwen_image.json"
+    manifest = {
+        "schema_version": 1,
+        "id": pkg_id,
+        "version": version,
+        "default_lang": "en",
+        "name": {lang: "Qwen Image" for lang in ("en", "es", "zh", "ko")},
+        "summary": {
+            "en": "Qwen Image 2.1: fast text-to-image, native transparent-background generation.",
+            "es": "Qwen Image 2.1: texto a imagen rápido, con generación nativa de fondo transparente.",
+            "zh": "Qwen Image 2.1：快速文生图，原生支持透明背景生成。",
+            "ko": "Qwen Image 2.1: 빠른 텍스트-이미지 생성, 네이티브 투명 배경 지원.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "order": 50,
+        "contributes": {"engines": [file_rel]},
+    }
+    return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT})
 
 
 def build_engine(source: Path, version: str, name: str, catalog: dict = ENGINES, dest: Path = DIST) -> Path:
@@ -824,6 +937,7 @@ def main() -> None:
     ap.add_argument("--refine-groups", action="store_true")
     args = ap.parse_args()
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
+        build_qwen_image_21_engine(args.version),
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
         build_core_civitai(args.source, args.version)]
     if args.optional:

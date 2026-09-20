@@ -508,6 +508,24 @@ QWEN_2511_OUTPAINT_WORKFLOW_REL = "workflows/refine/outpaint_qwen_2511.json"
 
 def _qwen_image_21_outpaint_workflow() -> dict:
     return {
+        # Not wired to anything in the graph — refine_routes.py's
+        # _get_flow_preprocess() reads this straight off the submitted
+        # workflow to pad/position the source image onto the target canvas
+        # before it ever reaches ComfyUI (11.width/height are this same
+        # replacement's EmptySD3LatentImage). Carried over unchanged from
+        # the source outpaint_qwen_2511.json — dropping it when hand-writing
+        # this replacement silently broke Outpaint's position/scale panel
+        # for the Qwen option specifically (caught by hand-testing).
+        "flow_data": {
+            "inputs": {"value": json.dumps({
+                "preprocess": {
+                    "type": "pad_canvas", "width_key": "11.width", "height_key": "11.height",
+                    "background": "transparent", "position": "center",
+                },
+            })},
+            "class_type": "PrimitiveStringMultiline",
+            "_meta": {"title": "flow_data"},
+        },
         "2": {
             "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
             "class_type": "VAELoader",
@@ -866,16 +884,23 @@ REFINE_PILOT_VERSION = "0.1.0"
 
 # Applied unconditionally to every flow build_refine_pilot/
 # build_refine_static_group package — a no-op for flows without this
-# engine_select option, a rename for the ones that offer it (Outpaint, Look
+# engine_select option, an update for the ones that offer it (Outpaint, Look
 # Book once packaged, every Photo Editing/Portrait Fix/Creator Pack flow).
-QWEN_ENGINE_SELECT_RELABEL = {"qwen_2511": "Qwen 2.1 Edit"}
+# steps_quick_options/steps_default: the flow-step-workflow-params.js side
+# (esApplyEngine) reads these off the selected engine and re-renders the
+# Steps field's quick-pick pills to match — Qwen 2.1 (8/16/25, no confirmed
+# fast LoRA) needs different ones than Klein/Boogu's Lightning-style 4/8.
+QWEN_ENGINE_SELECT_OVERRIDES = {
+    "qwen_2511": {"label": "Qwen 2.1 Edit", "steps_quick_options": [8, 16, 25], "steps_default": 25},
+}
 
 
-def _rename_engine_select_option(flow: dict, option_id: str, new_label: str) -> None:
-    """Renames one option's label inside an engine_select field (e.g.
-    Outpaint's "qwen_2511" -> "Qwen 2.1 Edit") — same idea as
-    _override_flow_field, but engine_select's options live one level deeper,
-    in field.engines[], keyed by their own "id" rather than the field's."""
+def _update_engine_select_option(flow: dict, option_id: str, overrides: dict) -> None:
+    """Merges `overrides` onto one option inside an engine_select field (e.g.
+    Outpaint's "qwen_2511" -> label "Qwen 2.1 Edit" + new steps presets) —
+    same idea as _override_flow_field, but engine_select's options live one
+    level deeper, in field.engines[], keyed by their own "id" rather than
+    the field's."""
     for step in flow.get("steps") or []:
         if not isinstance(step, dict) or step.get("type") != "workflow_params":
             continue
@@ -884,7 +909,7 @@ def _rename_engine_select_option(flow: dict, option_id: str, new_label: str) -> 
                 continue
             for engine in f.get("engines") or []:
                 if isinstance(engine, dict) and engine.get("id") == option_id:
-                    engine["label"] = new_label
+                    engine.update(overrides)
 
 
 def _override_flow_field(flow: dict, field_id: str, overrides: dict) -> None:
@@ -967,14 +992,20 @@ def _strip_foreign_flow_data(graph: dict) -> None:
     redeclare that flow here too — under its OLD id even when the owning
     package renamed it (build_refine_pilot/build_refine_static_group's
     id_overrides), since this embedded copy is untouched by that rename.
-    Always stripped, unconditionally: every flow these two builders package
-    already comes fully authored via contributes.flows, so this embedded
-    copy is 100% redundant even on an id match — nothing in the graph
-    consumes its output, dropping it is safe."""
+
+    Only strips a flow_data node that carries an "id" — that's the one that
+    would make package_service synthesize a competing flow (it already
+    skips id-less ones on its own, see _workflow_derived_flows). An id-less
+    flow_data can still be load-bearing on its own: Outpaint's per-engine
+    files (outpaint_qwen_2511.json etc.) carry no id, only a `preprocess`
+    block that refine_routes.py's _get_flow_preprocess() reads straight off
+    the SUBMITTED workflow at generation time — stripping it unconditionally
+    silently broke Outpaint's canvas-padding step (position/scale settings
+    stopped doing anything, caught by hand-testing, not by any error)."""
     from app.services.flow_engine import _extract_flow_data_node
 
     meta = _extract_flow_data_node(graph)
-    if meta is None:
+    if meta is None or not str(meta.get("id", "")).strip():
         return
     for node_id, node in list(graph.items()):
         if isinstance(node, dict) and str(node.get("_meta", {}).get("title", "")) == "flow_data":
@@ -1021,8 +1052,8 @@ def build_refine_static_group(
             names = label_overrides[flow_id]
             flow["label"] = names["en"]
             flow["card"]["label"] = names
-        for option_id, new_label in QWEN_ENGINE_SELECT_RELABEL.items():
-            _rename_engine_select_option(flow, option_id, new_label)
+        for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
+            _update_engine_select_option(flow, option_id, opt_overrides)
         final_id = id_overrides.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)
@@ -1164,8 +1195,8 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
         if flow_id in REFINE_PILOT_STEPS_FIELD_OVERRIDES:
             _override_flow_field(flow, "steps", REFINE_PILOT_STEPS_FIELD_OVERRIDES[flow_id])
-        for option_id, new_label in QWEN_ENGINE_SELECT_RELABEL.items():
-            _rename_engine_select_option(flow, option_id, new_label)
+        for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
+            _update_engine_select_option(flow, option_id, opt_overrides)
         final_id = REFINE_PILOT_ID_OVERRIDES.get(flow_id, flow_id)
         flow["id"] = final_id
         final_flow_ids.append(final_id)

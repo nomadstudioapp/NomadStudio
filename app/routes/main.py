@@ -224,6 +224,7 @@ def _load_flows_from_workflows(category: str) -> list[dict]:
 # new pack works without a code change here.
 _GROUP_LABELS: dict[str, str] = {
     "core": "Core",
+    "edit": "Edit",
     "photo-editing": "Photo Editing",
     "portrait-fix": "Portrait Fix",
     "creator-pack": "Creator Pack",
@@ -237,7 +238,7 @@ _GROUP_LABELS: dict[str, str] = {
 # Fixed spot for the groups we ship an order for; anything else falls in
 # after them, alphabetically by label (a purchased expansion pack works
 # with no code change here — see _GROUP_LABELS above).
-_GROUP_ORDER: list[str] = ["core", "layout", "civitai"]
+_GROUP_ORDER: list[str] = ["core", "layout", "civitai", "edit", "upscale"]
 
 
 def _group_label(group_id: str) -> str:

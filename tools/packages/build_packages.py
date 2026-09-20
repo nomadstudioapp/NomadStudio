@@ -520,6 +520,16 @@ REFINE_PILOT_STATIC_FLOWS = [
     "refine.edit_boogu_turbo_basic", "refine.edit_fluxklein_9b_restore", "refine.outpaint",
     "refine.upscale_model",
 ]
+# The source flow.json files (OPENHIKER) all say group "core" — Edit/Outpaint
+# and the classic Upscale model belong under their own groups instead. The 4
+# flow_data-only Upscale engines already declare "group": "upscale" in their
+# own metadata, so only the static ones need a build-time override here.
+REFINE_PILOT_GROUP_OVERRIDES = {
+    "refine.edit_qwen_2511_basic": "edit", "refine.edit_fluxklein_9b_basic": "edit",
+    "refine.edit_fluxklein_4b_basic": "edit", "refine.edit_boogu_turbo_basic": "edit",
+    "refine.edit_fluxklein_9b_restore": "edit", "refine.outpaint": "edit",
+    "refine.upscale_model": "upscale",
+}
 # Relative to `source` (the OPENHIKER checkout), not to the package.
 REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_klein_4b.json",
@@ -562,6 +572,8 @@ def build_refine_pilot(source: Path, version: str) -> Path:
 
     for flow_id in REFINE_PILOT_STATIC_FLOWS:
         flow = add_card_texts(flow_from_source(source, flow_id), table)
+        if flow_id in REFINE_PILOT_GROUP_OVERRIDES:
+            flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
         flows.append(flow)
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)

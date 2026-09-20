@@ -344,7 +344,7 @@ def _qwen_image_21_workflow() -> dict:
     return {
         "config": {
             "inputs": {"value": json.dumps({
-                "name": "Qwen Image",
+                "name": "Qwen Image 2.1",
                 # Bare filename, no subfolder — confirmed against the connected
                 # ComfyUI's own UNETLoader object_info (a made-up subfolder
                 # prefix here caused "node errors: 55": the quantization
@@ -368,7 +368,11 @@ def _qwen_image_21_workflow() -> dict:
             "inputs": {
                 "prompt": "a small red fox sitting in snow, studio photo",
                 "negative_prompt": "text, watermark, signature, logo, blurry, jpeg artifacts, lowres, worst quality, low quality, deformed hands, extra fingers",
-                "resolution": 1024,
+                # 0 = no reference images to resize (pure text-to-image, no
+                # `images` input wired) — a nonzero value here reportedly
+                # triggered the txt_in RMSNorm shape mismatch (3584 vs 4096)
+                # even with zero images connected. Confirmed fixed by testing.
+                "resolution": 0,
                 "clip": ["56", 0],
                 "vae": ["57", 0],
             },
@@ -419,7 +423,7 @@ def build_qwen_image_21_engine(version: str) -> Path:
     analysis = _analyze_workflow(workflow)
     engine = {
         "category": "image",
-        "name": "Qwen Image",
+        "name": "Qwen Image 2.1",
         "workflow": workflow,
         "analysis": analysis,
         "basicValues": analysis.get("basicValues", {}),
@@ -433,7 +437,7 @@ def build_qwen_image_21_engine(version: str) -> Path:
         "id": pkg_id,
         "version": version,
         "default_lang": "en",
-        "name": {lang: "Qwen Image" for lang in ("en", "es", "zh", "ko")},
+        "name": {lang: "Qwen Image 2.1" for lang in ("en", "es", "zh", "ko")},
         "summary": {
             "en": "Qwen Image 2.1: fast text-to-image, native transparent-background generation.",
             "es": "Qwen Image 2.1: texto a imagen rápido, con generación nativa de fondo transparente.",

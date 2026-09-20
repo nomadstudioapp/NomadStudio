@@ -585,6 +585,85 @@ def _qwen_image_21_outpaint_workflow() -> dict:
     }
 
 
+# ── Qwen 2.1 Camera Angles (replaces refine_qwen_2511_angles.json) ─────────
+# The source chained TWO LoRAs on top of the base model: a 2511-specific
+# "multiple-angles" LoRA plus the Lightning 4-step speed LoRA. Qwen 2.1 does
+# viewpoint changes natively off the base model with no LoRA at all —
+# verified today generating several angle changes of the same
+# character/scene from one reference image, plain UNETLoader straight into
+# KSampler. Both LoRA nodes (and the identity-scale ImageScaleBy the source
+# had ahead of the encode step) are dropped rather than carried over
+# unverified. Node ids match the source's own where the node itself carries
+# over (2/3/6/7/11/15/17/20/21) so nothing else has to change.
+QWEN_2511_ANGLES_WORKFLOW_REL = "workflows/refine/refine_qwen_2511_angles.json"
+
+
+def _qwen_image_21_angles_workflow() -> dict:
+    return {
+        "2": {
+            "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
+            "class_type": "VAELoader",
+            "_meta": {"title": "Load VAE"},
+        },
+        "3": {
+            "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors", "type": "qwen_image", "device": "default"},
+            "class_type": "CLIPLoader",
+            "_meta": {"title": "Load CLIP"},
+        },
+        "6": {
+            "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"},
+            "class_type": "UNETLoader",
+            "_meta": {"title": "Load Diffusion Model"},
+        },
+        "7": {
+            "inputs": {"image": "oj-refine-placeholder.png"},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"},
+        },
+        "13": {
+            "inputs": {
+                "prompt": "front view",
+                "negative_prompt": "",
+                "resolution": 0,
+                "clip": ["3", 0],
+                "vae": ["2", 0],
+                "images.image_1": ["7", 0],
+            },
+            "class_type": "TextEncodeQwenImage21",
+            "_meta": {"title": "Text Encode Qwen Image 2.1"},
+        },
+        "15": {
+            "inputs": {
+                "seed": 388457959464449, "steps": 25, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+                "denoise": 1, "model": ["6", 0], "positive": ["13", 0], "negative": ["13", 1],
+                "latent_image": ["11", 0],
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"},
+        },
+        "17": {
+            "inputs": {"samples": ["15", 0], "vae": ["2", 0]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"},
+        },
+        "20": {
+            "inputs": {"image": ["7", 0]},
+            "class_type": "GetImageSize",
+            "_meta": {"title": "Get Image Size"},
+        },
+        "11": {
+            "inputs": {"width": ["20", 0], "height": ["20", 1], "batch_size": 1},
+            "class_type": "EmptyLatentImage",
+            "_meta": {"title": "Empty Latent Image"},
+        },
+        "21": {
+            "inputs": {"filename_prefix": "qwen-image-2.1-angles", "images": ["17", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"},
+        },
+    }
+
+
 def build_qwen_image_21_engine(version: str) -> Path:
     from app.services.workflow_service import _analyze_workflow
 
@@ -971,12 +1050,14 @@ def _rename_embedded_flow_data(graph: dict, id_overrides: dict[str, str], label_
 
 def _load_workflow_ref(source: Path, ref: str) -> dict:
     """Loads a `workflow_file`-referenced ComfyUI graph — from a hand-authored
-    Qwen 2.1 replacement for the two refs that have one (see their own
-    comments for why), otherwise straight from OPENHIKER, same as always."""
+    Qwen 2.1 replacement for the refs that have one (see their own comments
+    for why), otherwise straight from OPENHIKER, same as always."""
     if ref == QWEN_2511_EDIT_WORKFLOW_REL:
         return _qwen_image_21_edit_workflow()
     if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
         return _qwen_image_21_outpaint_workflow()
+    if ref == QWEN_2511_ANGLES_WORKFLOW_REL:
+        return _qwen_image_21_angles_workflow()
     src_path = source / "app" / ref
     if not src_path.is_file():
         raise SystemExit(f"referenced workflow_file not found: {src_path}")

@@ -740,6 +740,23 @@ def mark_bundled(index: dict[str, Any], manifest: dict[str, Any]) -> None:
 # ── Registry integration ────────────────────────────────────────────────────
 
 
+# Input names that point at a specific model FILE rather than a tunable
+# generation parameter. An engine update always wins on these — the old
+# value names whatever checkpoint/CLIP/VAE/LoRA the PREVIOUS package
+# version shipped, and if the update swapped the underlying model (the
+# whole point of the update), "preserving user tuning" across these keys
+# would silently keep every future generation running the old model with
+# no visible sign anything is wrong. Caught via nomad.engine.qwen-image's
+# 2511→2.1 update: ComfyUI's own logs showed the old CLIP/VAE files
+# loading even though the package's new workflow said otherwise.
+_MODEL_FILE_INPUT_NAMES = frozenset({"unet_name", "clip_name", "vae_name", "ckpt_name", "lora_name"})
+
+
+def _is_model_file_key(key: str) -> bool:
+    _, _, input_name = key.partition(".")
+    return input_name in _MODEL_FILE_INPUT_NAMES
+
+
 def apply_to_registry(data: dict[str, Any], data_dir: Path, result: dict[str, Any]) -> None:
     """Register the installed engine as an import and the package's flows as
     an installed pack (read by flow_engine and the hub)."""
@@ -764,9 +781,15 @@ def apply_to_registry(data: dict[str, Any], data_dir: Path, result: dict[str, An
             "packageVersion": manifest["version"],
         }
         if previous:
-            # An update keeps what the user tuned on this engine.
+            # An update keeps what the user tuned on this engine — except
+            # model-file references (_is_model_file_key), where the new
+            # package always wins. See _MODEL_FILE_INPUT_NAMES above.
+            prev_advanced = {
+                k: v for k, v in (previous.get("advancedValues") or {}).items()
+                if not _is_model_file_key(k)
+            }
             record["basicValues"] = {**record["basicValues"], **(previous.get("basicValues") or {})}
-            record["advancedValues"] = {**record["advancedValues"], **(previous.get("advancedValues") or {})}
+            record["advancedValues"] = {**record["advancedValues"], **prev_advanced}
             imports[imports.index(previous)] = record
         else:
             imports.append(record)

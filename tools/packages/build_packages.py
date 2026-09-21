@@ -664,6 +664,186 @@ def _qwen_image_21_angles_workflow() -> dict:
     }
 
 
+# ── Qwen 2.1 Camera Shoot (new — no OPENHIKER source, requested to see how
+# the camera/lens/lighting/color-grading compose prompt performs on Qwen 2.1
+# vs. the existing Klein 9B version). Same shape as Edit Qwen 2.1: single
+# reference image via TextEncodeQwenImage21, output latent sized off the
+# source image via GetImageSize -> EmptyLatentImage. The flow.json itself
+# (_camera_shoot_qwen2_flow below) reuses camera_shoot_klein_9b's compose
+# field groups verbatim — only the adv_key wiring changes.
+CAMERA_SHOOT_QWEN2_WORKFLOW_REL = "workflows/refine/refine_camera_shoot_qwen_2.1.json"
+
+
+def _qwen_image_21_camera_shoot_workflow() -> dict:
+    return {
+        "2": {
+            "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
+            "class_type": "VAELoader",
+            "_meta": {"title": "Load VAE"},
+        },
+        "3": {
+            "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors", "type": "qwen_image", "device": "default"},
+            "class_type": "CLIPLoader",
+            "_meta": {"title": "Load CLIP"},
+        },
+        "6": {
+            "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"},
+            "class_type": "UNETLoader",
+            "_meta": {"title": "Load Diffusion Model"},
+        },
+        "7": {
+            "inputs": {"image": "oj-refine-placeholder.png"},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"},
+        },
+        "13": {
+            "inputs": {
+                "prompt": "shot on Arri Alexa LF, 35mm lens, f/2.8 aperture, golden hour, "
+                          "teal and orange color grading, clean digital noise-free",
+                "negative_prompt": "",
+                "resolution": 0,
+                "clip": ["3", 0],
+                "vae": ["2", 0],
+                "images.image_1": ["7", 0],
+            },
+            "class_type": "TextEncodeQwenImage21",
+            "_meta": {"title": "Text Encode Qwen Image 2.1"},
+        },
+        "15": {
+            "inputs": {
+                "seed": 615177249481830, "steps": 25, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+                "denoise": 1, "model": ["6", 0], "positive": ["13", 0], "negative": ["13", 1],
+                "latent_image": ["25", 0],
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"},
+        },
+        "17": {
+            "inputs": {"samples": ["15", 0], "vae": ["2", 0]},
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"},
+        },
+        "21": {
+            "inputs": {"filename_prefix": "qwen-image-2.1-camera-shoot", "images": ["17", 0]},
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"},
+        },
+        "24": {
+            "inputs": {"image": ["7", 0]},
+            "class_type": "GetImageSize",
+            "_meta": {"title": "Get Image Size"},
+        },
+        "25": {
+            "inputs": {"width": ["24", 0], "height": ["24", 1], "batch_size": 1},
+            "class_type": "EmptyLatentImage",
+            "_meta": {"title": "Empty Latent Image"},
+        },
+    }
+
+
+def _camera_shoot_qwen2_flow(source: Path) -> dict:
+    """Camera Shoot, retargeted to the Qwen 2.1 engine — reuses the Klein 9B
+    source's compose field groups (camera/focal/dof/lighting/palette/texture)
+    verbatim, only rewiring adv_key/workflow_file/image_node to the Qwen 2.1
+    graph's node ids (13=TextEncodeQwenImage21, 15=KSampler) instead of
+    Klein 9B's (165=CLIPTextEncode, 159=Flux2Scheduler, 154=RandomNoise)."""
+    flow = json.loads(json.dumps(flow_from_source(source, "refine.camera_shoot_klein_9b")))
+    flow["id"] = "refine.camera_shoot_qwen2"
+    flow["label"] = "Camera Shoot — Qwen 2.1"
+    flow["group"] = "camera"
+    flow["card_css_modifier"] = "edit-qwen-2511"
+    flow["description"] = "Apply cinematic camera, lens, lighting and color grading to your image using Qwen Image 2.1."
+    flow["card_desc"] = "Transform your image with real-world camera models, focal lengths, aperture, lighting and color palettes."
+    flow["card_tags"] = ["Qwen", "2.1", "Camera", "Cinematic"]
+    for step in flow.get("steps", []):
+        if step.get("type") != "workflow_params":
+            continue
+        step["workflow_file"] = CAMERA_SHOOT_QWEN2_WORKFLOW_REL
+        step["image_node"] = "7"
+        for f in step.get("fields", []):
+            if f.get("id") in ("look", "prompt_preview"):
+                f["adv_key"] = "13.prompt"
+            elif f.get("id") == "steps":
+                f["adv_key"] = "15.steps"
+                f["default"] = 25
+                f["max"] = 25
+                f["quick_options"] = [8, 16, 25]
+            elif f.get("id") == "seed":
+                f["adv_key"] = "15.seed"
+    return flow
+
+
+# The 3 flows that all live under a real-world "camera" theme: two Camera
+# Shoot variants (Klein 9B and the new Qwen 2.1 one, side by side so the
+# user can compare) plus Relight (moved out of Portrait Fix — lighting
+# direction/mood is a camera concern, not a portrait-retouch one).
+CAMERA_PACK_SOURCE_FLOWS = ["refine.pf_relight", "refine.camera_shoot_klein_9b"]
+
+
+def build_camera_pack(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    files: dict[str, object] = {}
+    flows: list[dict] = []
+    workflow_refs: set[str] = set()
+
+    for flow_id in CAMERA_PACK_SOURCE_FLOWS:
+        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        flow["group"] = "camera"
+        _upgrade_seed_fields_to_similarity(flow)
+        flows.append(flow)
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+
+    qwen2_flow = add_card_texts(_camera_shoot_qwen2_flow(source), table)
+    qwen2_flow["card"]["label"] = {
+        "en": "Camera Shoot — Qwen 2.1", "es": "Sesión de cámara — Qwen 2.1",
+        "zh": "运镜 — Qwen 2.1", "ko": "카메라 촬영 — Qwen 2.1",
+    }
+    qwen2_flow["card"]["desc"] = {
+        "en": "Transform your image with real-world camera models, focal lengths, aperture, lighting and color palettes.",
+        "es": "Transforma tu imagen con modelos de cámara reales, distancias focales, apertura, iluminación y paletas de color.",
+        "zh": "用真实相机型号、焦距、光圈、灯光和调色板转变你的图像。",
+        "ko": "실제 카메라 모델, 초점 거리, 조리개, 조명, 색상 팔레트로 이미지를 변환합니다.",
+    }
+    _upgrade_seed_fields_to_similarity(qwen2_flow)
+    flows.append(qwen2_flow)
+    files[f"flows/{qwen2_flow['id'].split('.', 1)[1]}.json"] = qwen2_flow
+    workflow_refs |= _collect_workflow_file_refs(qwen2_flow)
+
+    for ref in sorted(workflow_refs):
+        graph = _load_workflow_ref(source, ref)
+        _strip_foreign_flow_data(graph)
+        files[ref] = graph
+
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.refine-camera",
+        "version": version,
+        "default_lang": "en",
+        "name": {"en": "Camera", "es": "Cámara", "zh": "相机", "ko": "카메라"},
+        "summary": {
+            "en": "Cinematic camera looks (real camera/lens/lighting/color-grading presets, on Klein 9B or Qwen Image 2.1) plus directional relighting.",
+            "es": "Looks cinematográficos de cámara (presets reales de cámara/lente/luz/color, en Klein 9B o Qwen Image 2.1) más relighting direccional.",
+            "zh": "电影感相机风格（Klein 9B 或 Qwen Image 2.1 上的真实相机/镜头/灯光/调色预设）以及方向性重新布光。",
+            "ko": "시네마틱 카메라 룩(Klein 9B 또는 Qwen Image 2.1의 실제 카메라/렌즈/조명/컬러 그레이딩 프리셋)과 방향성 재조명.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "camera", "label": {"en": "Camera"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "flows": [f"flows/{f['id'].split('.', 1)[1]}.json" for f in flows],
+            "workflows": sorted(workflow_refs),
+        },
+    }
+    print(f"  camera-pack texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.refine-camera", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                              **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
+
+
 def build_qwen_image_21_engine(version: str) -> Path:
     from app.services.workflow_service import _analyze_workflow
 
@@ -1087,6 +1267,8 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
         return _qwen_image_21_outpaint_workflow()
     if ref == QWEN_2511_ANGLES_WORKFLOW_REL:
         return _qwen_image_21_angles_workflow()
+    if ref == CAMERA_SHOOT_QWEN2_WORKFLOW_REL:
+        return _qwen_image_21_camera_shoot_workflow()
     src_path = source / "app" / ref
     if not src_path.is_file():
         raise SystemExit(f"referenced workflow_file not found: {src_path}")
@@ -1233,8 +1415,10 @@ PHOTO_EDITING_UNREGISTERED = {
 PORTRAIT_FIX_FLOWS = [
     "refine.pf_change_hair_color", "refine.pf_dark_circles", "refine.pf_expression_changer",
     "refine.pf_hairstyle_changer", "refine.pf_hand_wrinkles", "refine.pf_red_eye_removal",
-    "refine.pf_relight", "refine.pf_remove_freckles", "refine.pf_remove_glasses_glare",
+    "refine.pf_remove_freckles", "refine.pf_remove_glasses_glare",
     "refine.pf_remove_overexposed_highlights", "refine.pf_remove_skin_glare",
+    # refine.pf_relight moved to nomad.refine-camera — lighting/camera looks
+    # belong together, not split across two packages.
 ]
 CREATOR_PACK_FLOWS = [
     "refine.cp_cartoon_to_realistic", "refine.cp_comic_book_style", "refine.cp_headshot_generator",
@@ -1424,7 +1608,8 @@ def main() -> None:
         paths.append(build_refine_pilot(args.source, args.version))
     if args.refine_groups:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
-                  build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version)]
+                  build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version),
+                  build_camera_pack(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

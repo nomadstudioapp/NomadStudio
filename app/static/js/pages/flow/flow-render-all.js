@@ -1148,11 +1148,32 @@ function _snapshotRefine(stepDef) {
     if (Array.isArray(multi) && multi.length > 1) imageDataUrls = multi;
   }
 
+  var advancedValues = resolveRef(inputMap['advancedValues']) || {};
+
+  // Seed handling (same logic as Mix's _snapshotMix below): buildAdv()'s
+  // "seed" branch (flow-step-workflow-params.js) just echoes back whatever
+  // is stored in field_<id>, which is only randomized once when the field
+  // is first created — with the "Visual similarity" toggle OFF (seed_mode
+  // 'random'), every subsequent Generate reused that same stale value
+  // instead of rolling a fresh one. Recomputed here, once per Generate
+  // click, so ON keeps pinning the stored seed and OFF always sends a new
+  // random one. ──────────────────────────────────────────────────────────
+  if (paramsStep && Array.isArray(paramsStep.fields)) {
+    paramsStep.fields.forEach(function (f) {
+      if (f.seed_mode && f.adv_key) {
+        var mode = getVal(paramsStep.id, 'seed_mode_' + f.id) || 'random';
+        var cur  = Number(getVal(paramsStep.id, 'field_' + f.id)) || 0;
+        var seed = mode === 'random' ? Math.floor(Math.random() * 0x7FFFFFFF) : cur;
+        advancedValues[f.adv_key] = seed;
+      }
+    });
+  }
+
   return {
     workflowFile:   resolveRef(inputMap['workflowFile']) || '',
     imageDataUrl:   imageDataUrl,
     imageDataUrls:  imageDataUrls,
-    advancedValues: resolveRef(inputMap['advancedValues']) || {},
+    advancedValues: advancedValues,
     imageNodeId:      paramsStep ? (paramsStep.image_node || null) : null,
     promptText:       promptText,
     promptHistoryId:  promptHistoryId,

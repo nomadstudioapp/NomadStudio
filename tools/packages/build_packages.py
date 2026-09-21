@@ -1029,6 +1029,7 @@ def _upgrade_seed_fields_to_similarity(flow: dict) -> None:
         for f in step.get("fields") or []:
             if isinstance(f, dict) and f.get("type") == "seed" and not f.get("seed_mode"):
                 f["seed_mode"] = "similarity"
+                f["label"] = "Visual similarity"
 
 
 def _collect_workflow_file_refs(node: object) -> set[str]:

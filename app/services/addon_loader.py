@@ -42,27 +42,56 @@ def _addons_dir() -> Path:
 
 
 def load_addons(app: Flask) -> None:
-    """Discover and register all addons found in ``addons/``."""
+    """Discover and register all addons found in ``addons/`` (source-tree,
+    built-in ones) and in each installed package's own ``addon/`` folder
+    (``contributes.addon`` — PACKAGE_FORMAT.md §9, minimal slice: still a
+    plain ``from app…``-importing Flask blueprint, same contract as a
+    source-tree addon, just delivered inside a package zip instead of
+    checked into git. Installing one requires an app restart to activate —
+    this function only ever runs once, at create_app() time)."""
     addons_path = _addons_dir()
-    if not addons_path.is_dir():
+    if addons_path.is_dir():
+        # Ensure the parent 'addons' package exists in sys.modules so that
+        # relative imports inside addon submodules resolve correctly.
+        if "addons" not in sys.modules:
+            addons_pkg = types.ModuleType("addons")
+            addons_pkg.__path__ = [str(addons_path)]  # type: ignore[attr-defined]
+            addons_pkg.__package__ = "addons"
+            sys.modules["addons"] = addons_pkg
+
+        for entry in sorted(addons_path.iterdir()):
+            if not entry.is_dir():
+                continue
+            if not (entry / "__init__.py").exists():
+                continue
+            _load_addon(app, entry.name, entry)
+    else:
         logger.debug("No addons/ directory found at %s — skipping.", addons_path)
+
+    _load_package_addons(app)
+
+
+def _load_package_addons(app: Flask) -> None:
+    """Same as the source-tree scan above, but for packages installed via
+    the normal /api/packages/install pipeline that carry a
+    ``contributes.addon`` (package_service.py already extracts their
+    ``addon/`` folder onto disk unconditionally — this is the only part
+    that still needs to notice it's there and import it)."""
+    from app.paths import PACKAGES_DIR
+
+    if not PACKAGES_DIR.is_dir():
         return
-
-    # Ensure the parent 'addons' package exists in sys.modules so that
-    # relative imports inside addon submodules resolve correctly.
-    if "addons" not in sys.modules:
-        addons_pkg = types.ModuleType("addons")
-        addons_pkg.__path__ = [str(addons_path)]  # type: ignore[attr-defined]
-        addons_pkg.__package__ = "addons"
-        sys.modules["addons"] = addons_pkg
-
-    for entry in sorted(addons_path.iterdir()):
-        if not entry.is_dir():
+    for pkg_dir in sorted(PACKAGES_DIR.iterdir()):
+        if not pkg_dir.is_dir() or pkg_dir.name.startswith("."):
             continue
-        if not (entry / "__init__.py").exists():
+        addon_path = pkg_dir / "addon"
+        if not (addon_path / "__init__.py").exists():
             continue
-        addon_id = entry.name
-        _load_addon(app, addon_id, entry)
+        # Sanitized, not the raw dotted/hyphenated package id: kept out of
+        # Python's import machinery entirely as anything but an opaque
+        # sys.modules string key, but no reason to risk relying on that.
+        addon_id = "pkg_" + "".join(c if c.isalnum() else "_" for c in pkg_dir.name)
+        _load_addon(app, addon_id, addon_path)
 
 
 def _load_addon(app: Flask, addon_id: str, path: Path) -> None:

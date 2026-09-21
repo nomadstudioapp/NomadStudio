@@ -1339,6 +1339,8 @@ def build_refine_static_group(
     new_fields: dict[str, list[dict]] | None = None,
     group_overrides: dict[str, str] | None = None,
     hand_authored: list[dict] | None = None,
+    extra_files: dict[str, object] | None = None,
+    extra_contributes: dict | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -1359,7 +1361,11 @@ def build_refine_static_group(
     with no OPENHIKER source at all (e.g. Local Editing: Region Selection) —
     a list of already-complete flow dicts (already carrying their own id/
     group/card texts) to fold in alongside the source-loaded ones, same
-    pattern build_extract_pack used before this got generalized."""
+    pattern build_extract_pack used before this got generalized.
+    `extra_files`/`extra_contributes` bolt on non-flow zip content — e.g. an
+    `addon/` folder (contributes.addon, PACKAGE_FORMAT.md §9 minimal slice,
+    see build_styling) — merged straight into the files dict and the
+    manifest's contributes respectively, no other effect on this function."""
     table = load_translations(source)
     files: dict[str, object] = {}
     flows = []
@@ -1370,6 +1376,8 @@ def build_refine_static_group(
     new_fields = new_fields or {}
     group_overrides = group_overrides or {}
     hand_authored = hand_authored or []
+    extra_files = extra_files or {}
+    extra_contributes = extra_contributes or {}
 
     final_flow_ids: list[str] = []
     for flow_id in flow_ids:
@@ -1437,10 +1445,11 @@ def build_refine_static_group(
         "contributes": {
             "flows": [f"flows/{fid.split('.', 1)[1]}.json" for fid in final_flow_ids],
             "workflows": sorted(workflow_refs),
+            **extra_contributes,
         },
     }
     print(f"  {pkg_id} texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
-    return write_zip(pkg_id, {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+    return write_zip(pkg_id, {"manifest.json": manifest, **files, **extra_files, "LICENSE": LICENSE_TEXT,
                                **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
                       dest=DIST_OPTIONAL)
 
@@ -1630,19 +1639,44 @@ def _pixel_art_qwen2_flow(source: Path) -> dict:
     return flow
 
 
+# Pixel Matcher (contributes.addon, PACKAGE_FORMAT.md §9 minimal slice —
+# see build_refine_static_group's extra_files/extra_contributes): local,
+# no-AI KMeans pixel-art conversion, the natural next step after Pixel
+# Art's AI-model presets. Bundled as source text straight into Styling's
+# zip under addon/ — same 4 files as the addon's own OPENHIKER folder,
+# except flow.json's group is overridden to "styling" (source says "core").
+# Installing this package extracts addon/ to data/packages/<pkg>/addon/;
+# app/services/addon_loader.py picks it up from there on the NEXT app
+# start (no hot-load — same restart this addon already needed when it was
+# a manual copy in the source tree, just delivered by the pack now).
+def _pixel_matcher_addon_contribution(source: Path) -> tuple[dict[str, str], dict]:
+    addon_dir = source / "addons" / "pixel_matcher"
+    files = {
+        f"addon/{name}": (addon_dir / name).read_text(encoding="utf-8")
+        for name in ("__init__.py", "routes.py", "service.py")
+    }
+    flow = json.loads((addon_dir / "flow.json").read_text(encoding="utf-8"))
+    flow["group"] = "styling"
+    files["addon/flow.json"] = json.dumps(flow, indent=2, ensure_ascii=False)
+    return files, {"addon": {"entry": "addon/__init__.py"}}
+
+
 def build_styling(source: Path, version: str) -> Path:
+    addon_files, addon_contributes = _pixel_matcher_addon_contribution(source)
     return build_refine_static_group(
         source, version, "nomad.refine-styling", "styling",
         name={"en": "Styling", "es": "Estilizado", "zh": "风格化", "ko": "스타일링"},
         summary={
-            "en": "Restyle the whole image — re-render in a saved Style's visual language, or apply one of 70+ curated pixel-art presets on Klein 9B or Qwen Image 2.1.",
-            "es": "Reestiliza toda la imagen — re-renderiza en el lenguaje visual de un Estilo guardado, o aplica uno de más de 70 presets curados de pixel art en Klein 9B o Qwen Image 2.1.",
-            "zh": "重新设计整张图像的风格——以已保存风格的视觉语言重新渲染，或在 Klein 9B 或 Qwen Image 2.1 上应用 70 多种精选像素艺术预设之一。",
-            "ko": "이미지 전체를 재스타일링 — 저장된 스타일의 비주얼 언어로 다시 렌더링하거나, Klein 9B 또는 Qwen Image 2.1에서 70개 이상의 엄선된 픽셀 아트 프리셋 중 하나를 적용합니다.",
+            "en": "Restyle the whole image — re-render in a saved Style's visual language, apply one of 70+ curated pixel-art presets on Klein 9B or Qwen Image 2.1, or convert to pixel art locally (no AI) with Pixel Matcher.",
+            "es": "Reestiliza toda la imagen — re-renderiza en el lenguaje visual de un Estilo guardado, aplica uno de más de 70 presets curados de pixel art en Klein 9B o Qwen Image 2.1, o conviértela a pixel art localmente (sin IA) con Pixel Matcher.",
+            "zh": "重新设计整张图像的风格——以已保存风格的视觉语言重新渲染，在 Klein 9B 或 Qwen Image 2.1 上应用 70 多种精选像素艺术预设之一，或用 Pixel Matcher 在本地（无 AI）转换为像素艺术。",
+            "ko": "이미지 전체를 재스타일링 — 저장된 스타일의 비주얼 언어로 다시 렌더링하거나, Klein 9B 또는 Qwen Image 2.1에서 70개 이상의 엄선된 픽셀 아트 프리셋 중 하나를 적용하거나, Pixel Matcher로 로컬(AI 없이)에서 픽셀 아트로 변환합니다.",
         },
         flow_ids=STYLING_FLOWS,
         group_overrides=STYLING_GROUP_OVERRIDES,
         hand_authored=[_pixel_art_qwen2_flow(source)],
+        extra_files=addon_files,
+        extra_contributes=addon_contributes,
     )
 
 

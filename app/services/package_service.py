@@ -52,7 +52,7 @@ MAX_RATIO = 100
 MAX_PATH_CHARS = 180  # relative path inside the package (Windows 260-char limit, §12.1)
 IGNORED = ("__MACOSX/", ".DS_Store", "Thumbs.db", "__pycache__/")
 
-SUPPORTED_CONTRIBUTIONS = {"engines", "flows", "workflows"}
+SUPPORTED_CONTRIBUTIONS = {"engines", "flows", "workflows", "addon"}
 TOKEN_TTL_S = 3600
 
 
@@ -214,7 +214,7 @@ def validate_manifest(manifest: dict[str, Any], files: set[str]) -> list[str]:
     unsupported = sorted(set(contributes) - SUPPORTED_CONTRIBUTIONS)
     if unsupported:
         raise PackageError("This version of Nomad Studio cannot install: " + ", ".join(unsupported))
-    for key in SUPPORTED_CONTRIBUTIONS & set(contributes):
+    for key in (SUPPORTED_CONTRIBUTIONS - {"addon"}) & set(contributes):
         items = contributes[key]
         if not isinstance(items, list) or not all(isinstance(p, str) for p in items):
             raise PackageError(f"contributes.{key} must be a list of file paths")
@@ -223,6 +223,24 @@ def validate_manifest(manifest: dict[str, Any], files: set[str]) -> list[str]:
                 raise PackageError(f"contributes.{key}: file not found (check letter case): {rel}")
     if len(contributes.get("engines", [])) > 1:
         raise PackageError("A package can contribute one engine (its id is the package id)")
+    # contributes.addon (§9 PACKAGE_FORMAT.md, minimal slice — no ctx API,
+    # no hot install/uninstall yet): a dict, not a list of paths, so it
+    # can't go through the generic loop above. The addon still imports
+    # `from app…` directly and registers a plain Flask blueprint, same as
+    # the source-tree addons/ folder — only `entry`'s presence is
+    # validated here. addon_loader.py picks it up from
+    # data/packages/<pkg>/addon/ on the NEXT app start.
+    addon = contributes.get("addon")
+    if addon is not None:
+        if not isinstance(addon, dict) or not str(addon.get("entry", "")).strip():
+            raise PackageError("contributes.addon must be a dict with an \"entry\" file path")
+        entry = str(addon["entry"])
+        if entry not in files:
+            raise PackageError(f"contributes.addon.entry: file not found (check letter case): {entry}")
+        warnings.append(
+            "restart-required: this package installs code (contributes.addon) — "
+            "restart Nomad Studio for it to activate."
+        )
     if "LICENSE" not in files:
         warnings.append("no-license")
     return warnings
@@ -659,7 +677,7 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         "group": manifest.get("group"),
         "flows": [f["id"] for f in flows],
         "engines": [pkg_id] if engine else [],
-        "has_code": False,
+        "has_code": bool(manifest["contributes"].get("addon")),
         "bundled": was_bundled,
     }
     return {"manifest": manifest, "engine": engine, "flows": flows, "summary": summary}

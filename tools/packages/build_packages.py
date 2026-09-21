@@ -321,7 +321,10 @@ def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
     path.unlink(missing_ok=True)
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for rel, content in files.items():
-            data = content if isinstance(content, str) else json.dumps(content, indent=2, ensure_ascii=False)
+            if isinstance(content, (str, bytes)):
+                data = content
+            else:
+                data = json.dumps(content, indent=2, ensure_ascii=False)
             zf.writestr(rel, data)
     return path
 
@@ -1680,6 +1683,94 @@ def build_styling(source: Path, version: str) -> Path:
     )
 
 
+# Presets — 44 one-click photo color-grading looks (Photo Packs gallery,
+# /nomad-studio/refine/presets/photo_pack — ns_refine_presets.html), split
+# into 3 packages per the plan worked out with the user (2026-08-30
+# marketing-site session, recovered from transcript 2026-09-21): 2 kept
+# free/standalone, the other 42 split 21/21 into two paid packs by mood
+# (light/airy vs. dark/analog). Every preset shares the same Qwen 2.1 Edit
+# engine (workflow_file already migrated, see QWEN_2511_EDIT_WORKFLOW_REL)
+# — no per-preset engine work needed, only packaging.
+PRESETS_CORE_FLOWS = ["refine.presets_riviera", "refine.presets_spectra"]
+PRESETS_OPEN_AIR_FLOWS = [
+    "refine.presets_amour", "refine.presets_blush", "refine.presets_breeze", "refine.presets_clarity",
+    "refine.presets_ether", "refine.presets_evermore", "refine.presets_fetch", "refine.presets_gusto",
+    "refine.presets_halo", "refine.presets_icon", "refine.presets_linen", "refine.presets_lumen",
+    "refine.presets_minim", "refine.presets_mirage", "refine.presets_muse", "refine.presets_prism",
+    "refine.presets_pure", "refine.presets_reverie", "refine.presets_staple", "refine.presets_urbana",
+    "refine.presets_wander",
+]
+PRESETS_FILM_SHADOW_FLOWS = [
+    "refine.presets_azure", "refine.presets_afterglow", "refine.presets_aurea", "refine.presets_celluloid",
+    "refine.presets_companion", "refine.presets_dusk", "refine.presets_ember", "refine.presets_fade",
+    "refine.presets_fjord", "refine.presets_frame", "refine.presets_hearth", "refine.presets_marais",
+    "refine.presets_mode", "refine.presets_nocturne", "refine.presets_onyx", "refine.presets_pristine",
+    "refine.presets_reel", "refine.presets_relic", "refine.presets_rogue", "refine.presets_sand",
+    "refine.presets_terra",
+]
+
+
+def _preset_cover_files(source: Path, flow_ids: list[str]) -> dict[str, bytes]:
+    """Each preset's own preset_meta.cover_image (e.g.
+    "images/presets/afterglow/cover.webp") ships inside the package zip at
+    that SAME relative path, so packages_routes.py's serve_package_file
+    (/packages/<pkg>/<path>) can find it — the Photo Packs gallery can't
+    reach it via url_for('static', …), it's never copied into app/static/."""
+    files: dict[str, bytes] = {}
+    for flow_id in flow_ids:
+        flow = flow_from_source(source, flow_id)
+        cover_rel = (flow.get("preset_meta") or {}).get("cover_image")
+        if not cover_rel:
+            continue
+        files[cover_rel] = (source / "app" / "static" / cover_rel).read_bytes()
+    return files
+
+
+def build_presets_core(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-presets-core", "presets",
+        name={"en": "Presets", "es": "Presets", "zh": "预设", "ko": "프리셋"},
+        summary={
+            "en": "Two signature one-click photo looks — Riviera and Spectra — included free.",
+            "es": "Dos looks de foto de un clic — Riviera y Spectra — incluidos gratis.",
+            "zh": "两款标志性一键照片效果——Riviera 和 Spectra——免费附带。",
+            "ko": "시그니처 원클릭 포토 룩 2종 — Riviera, Spectra — 무료 포함.",
+        },
+        flow_ids=PRESETS_CORE_FLOWS,
+        extra_files=_preset_cover_files(source, PRESETS_CORE_FLOWS),
+    )
+
+
+def build_presets_open_air(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-presets-open-air", "presets",
+        name={"en": "Open Air", "es": "Open Air", "zh": "Open Air", "ko": "Open Air"},
+        summary={
+            "en": "21 luminous, clean photo looks for lifestyle, food, interiors and social — Breeze, Clarity, Ether, Halo, Lumen, Muse, Prism and more.",
+            "es": "21 looks de foto luminosos y limpios para lifestyle, comida, interiores y redes — Breeze, Clarity, Ether, Halo, Lumen, Muse, Prism y más.",
+            "zh": "21 种明亮清新的照片效果，适合生活方式、美食、室内和社交场景——Breeze、Clarity、Ether、Halo、Lumen、Muse、Prism 等。",
+            "ko": "라이프스타일, 음식, 인테리어, 소셜 미디어를 위한 밝고 깨끗한 포토 룩 21종 — Breeze, Clarity, Ether, Halo, Lumen, Muse, Prism 등.",
+        },
+        flow_ids=PRESETS_OPEN_AIR_FLOWS,
+        extra_files=_preset_cover_files(source, PRESETS_OPEN_AIR_FLOWS),
+    )
+
+
+def build_presets_film_shadow(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-presets-film-shadow", "presets",
+        name={"en": "Film & Shadow", "es": "Film & Shadow", "zh": "Film & Shadow", "ko": "Film & Shadow"},
+        summary={
+            "en": "21 dark, analog-leaning photo looks for portrait, night and film emulation — Celluloid, Ember, Nocturne, Onyx, Rogue, Fjord and more.",
+            "es": "21 looks de foto oscuros y de aire analógico para retrato, noche y emulación de película — Celluloid, Ember, Nocturne, Onyx, Rogue, Fjord y más.",
+            "zh": "21 种深色、模拟胶片风格的照片效果，适合人像、夜景和胶片模拟——Celluloid、Ember、Nocturne、Onyx、Rogue、Fjord 等。",
+            "ko": "인물, 야경, 필름 에뮬레이션을 위한 어둡고 아날로그 감성의 포토 룩 21종 — Celluloid, Ember, Nocturne, Onyx, Rogue, Fjord 등.",
+        },
+        flow_ids=PRESETS_FILM_SHADOW_FLOWS,
+        extra_files=_preset_cover_files(source, PRESETS_FILM_SHADOW_FLOWS),
+    )
+
+
 # Smart Selection (text-prompted SAM3 cutout) and Smart Object Removal
 # (SAM3 selection + Qwen-painted fill) are both foreground-extraction tools
 # at heart — grouped with the new hand-authored Extract (Qwen 2.1) flow.
@@ -1865,7 +1956,9 @@ def main() -> None:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
                   build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version),
                   build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version),
-                  build_extract_pack(args.source, args.version), build_styling(args.source, args.version)]
+                  build_extract_pack(args.source, args.version), build_styling(args.source, args.version),
+                  build_presets_core(args.source, args.version), build_presets_open_air(args.source, args.version),
+                  build_presets_film_shadow(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

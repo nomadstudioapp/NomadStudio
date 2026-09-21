@@ -526,12 +526,17 @@ def _extract_qwen2_flow() -> dict:
 # [BRACKETED] placeholders the user supplied verbatim (picking a preset
 # fills the textarea so the user edits the placeholder text directly,
 # same interaction Look Book's free-text presets already use).
+#
+# "Generic edit" shortened after hand-testing: the original longer wording
+# ("Modify only X. Keep the subject's position, proportions, silhouette...")
+# made Qwen 2.1 ignore the actual instruction — too many competing
+# constraints. The short "Preserve ... alpha channel. [CHANGE]." form
+# confirmed working (e.g. "...alpha channel of the input image. show the
+# back of the eagle.").
 EDIT_RGBA_PRESETS = [
     {
         "label": "Generic edit",
-        "text": "Preserve the transparent canvas and alpha channel of the input image. Modify only "
-                "[REQUESTED CHANGE]. Keep the subject's position, proportions, silhouette, transparent "
-                "regions, edge quality, and all unrelated details unchanged.",
+        "text": "Preserve the transparent canvas and alpha channel of the input image. [REQUESTED CHANGE]",
     },
     {
         "label": "Color / material",

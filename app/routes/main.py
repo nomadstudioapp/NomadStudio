@@ -224,6 +224,7 @@ def _load_flows_from_workflows(category: str) -> list[dict]:
 # new pack works without a code change here.
 _GROUP_LABELS: dict[str, str] = {
     "core": "Core",
+    "background-tools": "Background Tools",
     "edit": "Edit",
     "photo-editing": "Photo Editing",
     "portrait-fix": "Portrait Fix",

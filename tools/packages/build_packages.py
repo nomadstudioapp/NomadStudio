@@ -1130,6 +1130,7 @@ def build_refine_static_group(
     id_overrides: dict[str, str] | None = None,
     label_overrides: dict[str, dict[str, str]] | None = None,
     new_fields: dict[str, list[dict]] | None = None,
+    group_overrides: dict[str, str] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -1142,7 +1143,11 @@ def build_refine_static_group(
     its own index.json entry on the OPENHIKER side (e.g. pe_remove_glare) —
     {flow_id: path relative to app/instructions/}, loaded directly instead
     of through the index. `id_overrides`/`label_overrides` are keyed by the
-    OLD id, same pattern as REFINE_PILOT_ID_OVERRIDES/LABEL_OVERRIDES."""
+    OLD id, same pattern as REFINE_PILOT_ID_OVERRIDES/LABEL_OVERRIDES.
+    `group_overrides` re-buckets a flow into a different Refine-hub card
+    than the `group` its source flow.json already declares (e.g. moving a
+    handful of OPENHIKER's "core"-tagged flows into their own hub card) —
+    same idea as REFINE_PILOT_GROUP_OVERRIDES."""
     table = load_translations(source)
     files: dict[str, object] = {}
     flows = []
@@ -1151,6 +1156,7 @@ def build_refine_static_group(
     id_overrides = id_overrides or {}
     label_overrides = label_overrides or {}
     new_fields = new_fields or {}
+    group_overrides = group_overrides or {}
 
     final_flow_ids: list[str] = []
     for flow_id in flow_ids:
@@ -1164,6 +1170,8 @@ def build_refine_static_group(
             names = label_overrides[flow_id]
             flow["label"] = names["en"]
             flow["card"]["label"] = names
+        if flow_id in group_overrides:
+            flow["group"] = group_overrides[flow_id]
         for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
             _update_engine_select_option(flow, option_id, opt_overrides)
         for new_field in new_fields.get(flow_id, []):
@@ -1233,6 +1241,16 @@ CREATOR_PACK_FLOWS = [
     "refine.cp_pet_portrait_generator", "refine.cp_profile_picture_generator", "refine.cp_selfie_generator",
     "refine.cp_silhouette_maker", "refine.cp_superhero_generator", "refine.cp_yearbook_generator",
 ]
+# The 5 flows that are literally "remove/extract the background" out of the
+# 13 still tagged group:"core" in OPENHIKER — split out into their own hub
+# card instead of piling onto Edit/Outpaint/Upscale's existing "Core" (which
+# already has 11). The other 8 (Skin Detailer, Style Transfer, Pixel Art,
+# Camera Shoot, Smart Selection) are a separate, not-yet-decided grouping.
+BACKGROUND_TOOLS_FLOWS = [
+    "refine.remove_bg", "refine.remove_bg_multi", "refine.remove_bg_simple",
+    "refine.extract_background_boogu", "refine.extract_background_klein9b",
+]
+BACKGROUND_TOOLS_GROUP_OVERRIDES = {fid: "background-tools" for fid in BACKGROUND_TOOLS_FLOWS}
 REFINE_GROUPS_VERSION = "0.1.0"
 
 
@@ -1287,6 +1305,21 @@ def build_creator_pack(source: Path, version: str) -> Path:
             "ko": "완성형 룩: 헤드샷, 셀카, 프로필 사진, 반려동물 초상화, 슈퍼히어로, 만화 스타일 등.",
         },
         flow_ids=CREATOR_PACK_FLOWS,
+    )
+
+
+def build_background_tools(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-background-tools", "background-tools",
+        name={"en": "Background Tools", "es": "Herramientas de fondo", "zh": "背景工具", "ko": "배경 도구"},
+        summary={
+            "en": "Remove or extract the background — BiRefNet, multi-subject, simple, and edit-model variants.",
+            "es": "Quita o extrae el fondo — BiRefNet, multi-sujeto, simple y variantes por modelo de edición.",
+            "zh": "去除或提取背景 —— BiRefNet、多主体、简易及编辑模型变体。",
+            "ko": "배경 제거 또는 추출 — BiRefNet, 다중 피사체, 심플, 편집 모델 변형.",
+        },
+        flow_ids=BACKGROUND_TOOLS_FLOWS,
+        group_overrides=BACKGROUND_TOOLS_GROUP_OVERRIDES,
     )
 
 
@@ -1391,7 +1424,7 @@ def main() -> None:
         paths.append(build_refine_pilot(args.source, args.version))
     if args.refine_groups:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
-                  build_creator_pack(args.source, args.version)]
+                  build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

@@ -1343,16 +1343,16 @@ def build_refine_pilot(source: Path, version: str) -> Path:
     i18n, counts = flow_i18n(flows, table)
     manifest = {
         "schema_version": 1,
-        "id": "nomad.refine-pilot",
+        "id": "nomad.core-refine",
         "version": REFINE_PILOT_VERSION,
         "default_lang": "en",
-        "name": {"en": "Refine Pilot (Edit/Outpaint/Upscale)", "es": "Refine Piloto (Edit/Outpaint/Upscale)",
-                  "zh": "Refine 试点（Edit/Outpaint/Upscale）", "ko": "Refine 파일럿 (Edit/Outpaint/Upscale)"},
+        "name": {"en": "Core Refine (Edit/Outpaint/Upscale)", "es": "Refine Núcleo (Edit/Outpaint/Upscale)",
+                  "zh": "Refine 核心（Edit/Outpaint/Upscale）", "ko": "Refine 코어 (Edit/Outpaint/Upscale)"},
         "summary": {
-            "en": "Pilot package proving Refine's contributes.workflows path: prompt-driven edit engines, outpaint, and model/AI upscalers.",
-            "es": "Paquete piloto que prueba la vía contributes.workflows de Refine: motores de edición por prompt, outpaint y upscalers.",
-            "zh": "验证 Refine 的 contributes.workflows 路径的试点包：提示词驱动的编辑引擎、外扩绘制与放大器。",
-            "ko": "Refine의 contributes.workflows 경로를 검증하는 파일럿 패키지: 프롬프트 기반 편집 엔진, 아웃페인트, 업스케일러.",
+            "en": "Core Refine tools: prompt-driven edit engines, outpaint, and model/AI upscalers.",
+            "es": "Herramientas núcleo de Refine: motores de edición por prompt, outpaint y upscalers.",
+            "zh": "Refine 核心工具：提示词驱动的编辑引擎、外扩绘制与放大器。",
+            "ko": "Refine 핵심 도구: 프롬프트 기반 편집 엔진, 아웃페인트, 업스케일러.",
         },
         "author": AUTHOR,
         "license": "proprietary",
@@ -1363,8 +1363,8 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             "workflows": [ref for ref in sorted(workflow_refs)] + workflow_only_rels,
         },
     }
-    print(f"  refine-pilot texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
-    return write_zip("nomad.refine-pilot", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+    print(f"  core-refine texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.core-refine", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
                                              **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
                       dest=DIST_OPTIONAL)
 

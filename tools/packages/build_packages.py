@@ -1189,13 +1189,21 @@ CREATOR_PACK_FLOWS = [
 # The 5 flows that are literally "remove/extract the background" out of the
 # 13 still tagged group:"core" in OPENHIKER — split out into their own hub
 # card instead of piling onto Edit/Outpaint/Upscale's existing "Core" (which
-# already has 11). The other 8 (Skin Detailer, Style Transfer, Pixel Art,
-# Camera Shoot, Smart Selection) are a separate, not-yet-decided grouping.
+# already has 11). The other flows (Style Transfer, Pixel Art, Smart
+# Selection — Skin Detailer and Camera Shoot already found homes) are a
+# separate, not-yet-decided grouping.
 BACKGROUND_TOOLS_FLOWS = [
     "refine.remove_bg", "refine.remove_bg_multi", "refine.remove_bg_simple",
     "refine.extract_background_boogu", "refine.extract_background_klein9b",
 ]
 BACKGROUND_TOOLS_GROUP_OVERRIDES = {fid: "background-tools" for fid in BACKGROUND_TOOLS_FLOWS}
+# Skin Detailer adds fine texture/pore detail rather than removing anything —
+# closer in spirit to Upscale (more fidelity/resolution) than to any of the
+# above, so it joins the existing "upscale" hub group (nomad.core-refine's
+# Upscale (Model/Klein 4B/Klein 9B/Qwen 2.1/SeedVR2)) instead of getting a
+# card of its own for just 2 flows.
+SKIN_DETAILER_FLOWS = ["refine.skin_detailer_klein_4b", "refine.skin_detailer_klein_9b"]
+SKIN_DETAILER_GROUP_OVERRIDES = {fid: "upscale" for fid in SKIN_DETAILER_FLOWS}
 REFINE_GROUPS_VERSION = "0.1.0"
 
 
@@ -1261,6 +1269,21 @@ def build_background_tools(source: Path, version: str) -> Path:
         },
         flow_ids=BACKGROUND_TOOLS_FLOWS,
         group_overrides=BACKGROUND_TOOLS_GROUP_OVERRIDES,
+    )
+
+
+def build_skin_detailer(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-skin-detailer", "upscale",
+        name={"en": "Skin Detailer", "es": "Detalle de piel", "zh": "皮肤细节", "ko": "피부 디테일"},
+        summary={
+            "en": "Add realistic skin texture and pore detail to a portrait, preserving color, exposure and identity — Klein 4B or Klein 9B.",
+            "es": "Añade textura de piel y detalle de poro realista a un retrato, preservando color, exposición e identidad — Klein 4B o Klein 9B.",
+            "zh": "为人像添加逼真的皮肤纹理和毛孔细节，保留颜色、曝光和身份特征——Klein 4B 或 Klein 9B。",
+            "ko": "인물 사진에 사실적인 피부 텍스처와 모공 디테일을 추가하며 색상, 노출, 정체성을 유지합니다 — Klein 4B 또는 Klein 9B.",
+        },
+        flow_ids=SKIN_DETAILER_FLOWS,
+        group_overrides=SKIN_DETAILER_GROUP_OVERRIDES,
     )
 
 
@@ -1366,7 +1389,7 @@ def main() -> None:
     if args.refine_groups:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
                   build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version),
-                  build_camera_pack(args.source, args.version)]
+                  build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

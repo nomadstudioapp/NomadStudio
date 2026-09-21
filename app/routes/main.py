@@ -77,6 +77,45 @@ def _load_package_flows(category: str, route_prefix: str) -> list[dict]:
     return flows
 
 
+def _load_addon_flows(category: str, route_prefix: str) -> list[dict]:
+    """Cards for flows contributed by a loaded addon (app/services/
+    addon_loader.py's get_addon_flows()) — a source-tree addons/ folder or
+    an installed package's own addon/ (contributes.addon). Same card shape
+    as _load_package_flows, kept separate since addon flows never go
+    through packages/index.json at all (flow_engine.load_all_flows()'s
+    step 4 reads them the same way, straight from the loaded addon
+    modules, not from any index)."""
+    from ..services.addon_loader import get_addon_flows
+
+    flows = []
+    for addon_flow in get_addon_flows():
+        definition = addon_flow["definition"]
+        if definition.get("category") != category:
+            continue
+        flow_id = str(definition.get("id", "")).strip()
+        if not flow_id:
+            continue
+        action = flow_id.split(".", 1)[1]
+        flows.append({
+            "id": flow_id,
+            "action": action,
+            "route": f"{route_prefix}/{action.replace('_', '-')}",
+            "status": definition.get("status", "active"),
+            "llm_required": bool(definition.get("llm_required", False)),
+            "label": definition.get("label", action),
+            "card_desc": definition.get("card_desc", ""),
+            "card_tags": definition.get("card_tags", []),
+            "card_css_modifier": definition.get("card_css_modifier", ""),
+            "entry_category": definition.get("entry_category", ""),
+            "entry_model": definition.get("entry_model", ""),
+            "complexity": definition.get("complexity"),
+            "group": definition.get("group") or "core",
+            "preset_meta": definition.get("preset_meta"),
+            "package": f"addon:{addon_flow['addon_id']}",
+        })
+    return flows
+
+
 def _load_category_flows(category: str, route_prefix: str) -> list[dict]:
     index = json.loads((_INSTRUCTIONS_DIR / "index.json").read_text(encoding="utf-8"))
     flows = []
@@ -124,6 +163,8 @@ def _load_category_flows(category: str, route_prefix: str) -> list[dict]:
         flows.append(card)
     seen = {f["id"] for f in flows}
     flows += [f for f in _load_package_flows(category, route_prefix) if f["id"] not in seen]
+    seen = {f["id"] for f in flows}
+    flows += [f for f in _load_addon_flows(category, route_prefix) if f["id"] not in seen]
     return flows
 
 

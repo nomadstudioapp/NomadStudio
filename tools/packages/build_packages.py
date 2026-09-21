@@ -1583,18 +1583,66 @@ def build_skin_detailer(source: Path, version: str) -> Path:
     )
 
 
+def _pixel_art_qwen2_flow(source: Path) -> dict:
+    """Pixel Art, retargeted to the Qwen 2.1 engine — reuses the Klein 9B
+    source's 70+ style presets (10 groups) verbatim, only rewiring
+    adv_key/workflow_file/image_node to the Qwen 2.1 graph's node ids
+    (13=TextEncodeQwenImage21, 15=KSampler) instead of Klein 9B's
+    (165=CLIPTextEncode, 159=Flux2Scheduler, 154=RandomNoise). Hand-tested
+    by the user and confirmed working — unlike Camera Shoot's Qwen 2.1
+    attempt, kept as a second engine option alongside Klein 9B rather than
+    replacing it, since both are known-good."""
+    flow = json.loads(json.dumps(flow_from_source(source, "refine.pixel_art_klein_9b")))
+    flow["id"] = "refine.pixel_art_qwen2"
+    flow["label"] = "Pixel Art — Qwen 2.1"
+    flow["group"] = "styling"
+    flow["card_css_modifier"] = "edit-qwen-2511"
+    flow["description"] = "Apply a curated pixel-art visual style to your image using Qwen Image 2.1. 70+ styles in 10 groups."
+    flow["card_desc"] = "70+ curated pixel-art styles, on Qwen Image 2.1."
+    flow["card_tags"] = ["Qwen", "2.1", "Pixel Art", "Style"]
+    for step in flow.get("steps", []):
+        if step.get("type") != "workflow_params":
+            continue
+        step["workflow_file"] = QWEN_2511_EDIT_WORKFLOW_REL
+        step["image_node"] = "7"
+        for f in step.get("fields", []):
+            if f.get("id") in ("style", "style_preview"):
+                f["adv_key"] = "13.prompt"
+            elif f.get("id") == "steps":
+                f["adv_key"] = "15.steps"
+                f["default"] = 25
+                f["max"] = 25
+                f["quick_options"] = [8, 16, 25]
+            elif f.get("id") == "seed":
+                f["adv_key"] = "15.seed"
+    flow["_i18n_overrides"] = {
+        "label": {
+            "en": "Pixel Art — Qwen 2.1", "es": "Pixel Art — Qwen 2.1",
+            "zh": "像素艺术 — Qwen 2.1", "ko": "픽셀 아트 — Qwen 2.1",
+        },
+        "desc": {
+            "en": "70+ curated pixel-art styles, on Qwen Image 2.1.",
+            "es": "Más de 70 estilos curados de pixel art, en Qwen Image 2.1.",
+            "zh": "70 多种精选像素艺术风格，基于 Qwen Image 2.1。",
+            "ko": "70개 이상의 엄선된 픽셀 아트 스타일, Qwen Image 2.1 기반.",
+        },
+    }
+    return flow
+
+
 def build_styling(source: Path, version: str) -> Path:
     return build_refine_static_group(
         source, version, "nomad.refine-styling", "styling",
         name={"en": "Styling", "es": "Estilizado", "zh": "风格化", "ko": "스타일링"},
         summary={
-            "en": "Restyle the whole image — re-render in a saved Style's visual language, or apply one of 70+ curated pixel-art presets.",
-            "es": "Reestiliza toda la imagen — re-renderiza en el lenguaje visual de un Estilo guardado, o aplica uno de más de 70 presets curados de pixel art.",
-            "zh": "重新设计整张图像的风格——以已保存风格的视觉语言重新渲染，或应用 70 多种精选像素艺术预设之一。",
-            "ko": "이미지 전체를 재스타일링 — 저장된 스타일의 비주얼 언어로 다시 렌더링하거나, 70개 이상의 엄선된 픽셀 아트 프리셋 중 하나를 적용합니다.",
+            "en": "Restyle the whole image — re-render in a saved Style's visual language, or apply one of 70+ curated pixel-art presets on Klein 9B or Qwen Image 2.1.",
+            "es": "Reestiliza toda la imagen — re-renderiza en el lenguaje visual de un Estilo guardado, o aplica uno de más de 70 presets curados de pixel art en Klein 9B o Qwen Image 2.1.",
+            "zh": "重新设计整张图像的风格——以已保存风格的视觉语言重新渲染，或在 Klein 9B 或 Qwen Image 2.1 上应用 70 多种精选像素艺术预设之一。",
+            "ko": "이미지 전체를 재스타일링 — 저장된 스타일의 비주얼 언어로 다시 렌더링하거나, Klein 9B 또는 Qwen Image 2.1에서 70개 이상의 엄선된 픽셀 아트 프리셋 중 하나를 적용합니다.",
         },
         flow_ids=STYLING_FLOWS,
         group_overrides=STYLING_GROUP_OVERRIDES,
+        hand_authored=[_pixel_art_qwen2_flow(source)],
     )
 
 

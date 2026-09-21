@@ -519,6 +519,92 @@ def _extract_qwen2_flow() -> dict:
     }
 
 
+# ── Edit RGBA Asset (Qwen 2.1) — companion to Extract: edits an image that
+# is ALREADY transparent (a cutout Extract produced, or any RGBA asset)
+# without destroying or refilling the existing alpha. Same shared Edit
+# Qwen 2.1 graph, different preset wording — these presets keep the
+# [BRACKETED] placeholders the user supplied verbatim (picking a preset
+# fills the textarea so the user edits the placeholder text directly,
+# same interaction Look Book's free-text presets already use).
+EDIT_RGBA_PRESETS = [
+    {
+        "label": "Generic edit",
+        "text": "Preserve the transparent canvas and alpha channel of the input image. Modify only "
+                "[REQUESTED CHANGE]. Keep the subject's position, proportions, silhouette, transparent "
+                "regions, edge quality, and all unrelated details unchanged.",
+    },
+    {
+        "label": "Color / material",
+        "text": "Preserve the existing transparency and alpha boundaries. Change only [OBJECT OR AREA] to "
+                "[COLOR / MATERIAL]. Keep the original shape, placement, proportions, lighting logic, and "
+                "all transparent regions unchanged.",
+    },
+    {
+        "label": "Character asset",
+        "text": "Preserve the transparent background and alpha channel. Edit only [REQUESTED CHARACTER "
+                "CHANGE] while maintaining the character's identity, pose, proportions, silhouette, "
+                "clothing structure, and clean transparent edges.",
+    },
+]
+
+
+def _edit_rgba_qwen2_flow() -> dict:
+    return {
+        "id": "refine.edit_rgba_qwen2",
+        "label": "Edit RGBA Asset",
+        "category": "refine",
+        "group": "extract",
+        "description": "Edit an already-transparent RGBA image without destroying or refilling the existing alpha channel, using Qwen Image 2.1.",
+        "card_desc": "Modify a transparent cutout — color, material or detail — while keeping its alpha intact.",
+        "card_tags": ["Qwen", "2.1", "RGBA", "Edit"],
+        "card_css_modifier": "edit-qwen-2511",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "RGBA source image", "required": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "13.prompt",
+                        "label": "Edit prompt",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Pick a template and fill in the bracketed part, or write your own.",
+                        "default": EDIT_RGBA_PRESETS[0]["text"],
+                        "presets": EDIT_RGBA_PRESETS,
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
 def _qwen_image_21_edit_workflow() -> dict:
     return {
         "2": {
@@ -1399,20 +1485,32 @@ def build_extract_pack(source: Path, version: str) -> Path:
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)
 
-    qwen_flow = add_card_texts(_extract_qwen2_flow(), table)
-    qwen_flow["card"]["label"] = {
-        "en": "Extract (Qwen 2.1)", "es": "Extraer (Qwen 2.1)", "zh": "提取 (Qwen 2.1)", "ko": "추출 (Qwen 2.1)",
-    }
-    qwen_flow["card"]["desc"] = {
-        "en": "Clean transparent-background cutouts — subject, product or character — with Qwen Image 2.1.",
-        "es": "Recortes limpios con fondo transparente — sujeto, producto o personaje — con Qwen Image 2.1.",
-        "zh": "干净的透明背景抠图——主体、产品或角色——由 Qwen Image 2.1 驱动。",
-        "ko": "깔끔한 투명 배경 컷아웃 — 피사체, 제품 또는 캐릭터 — Qwen Image 2.1로 제작.",
-    }
-    _upgrade_seed_fields_to_similarity(qwen_flow)
-    flows.append(qwen_flow)
-    files[f"flows/{qwen_flow['id'].split('.', 1)[1]}.json"] = qwen_flow
-    workflow_refs |= _collect_workflow_file_refs(qwen_flow)
+    hand_authored = [
+        (_extract_qwen2_flow(), {
+            "en": "Extract (Qwen 2.1)", "es": "Extraer (Qwen 2.1)", "zh": "提取 (Qwen 2.1)", "ko": "추출 (Qwen 2.1)",
+        }, {
+            "en": "Clean transparent-background cutouts — subject, product or character — with Qwen Image 2.1.",
+            "es": "Recortes limpios con fondo transparente — sujeto, producto o personaje — con Qwen Image 2.1.",
+            "zh": "干净的透明背景抠图——主体、产品或角色——由 Qwen Image 2.1 驱动。",
+            "ko": "깔끔한 투명 배경 컷아웃 — 피사체, 제품 또는 캐릭터 — Qwen Image 2.1로 제작.",
+        }),
+        (_edit_rgba_qwen2_flow(), {
+            "en": "Edit RGBA Asset", "es": "Editar asset RGBA", "zh": "编辑 RGBA 素材", "ko": "RGBA 에셋 편집",
+        }, {
+            "en": "Modify a transparent cutout — color, material or detail — while keeping its alpha intact.",
+            "es": "Modifica un recorte transparente — color, material o detalle — sin tocar su alfa.",
+            "zh": "修改透明抠图——颜色、材质或细节——同时保持其 alpha 通道完整。",
+            "ko": "투명 컷아웃을 수정 — 색상, 재질 또는 디테일 — 하면서 알파 채널은 그대로 유지합니다.",
+        }),
+    ]
+    for raw_flow, label_i18n, desc_i18n in hand_authored:
+        flow = add_card_texts(raw_flow, table)
+        flow["card"]["label"] = label_i18n
+        flow["card"]["desc"] = desc_i18n
+        _upgrade_seed_fields_to_similarity(flow)
+        flows.append(flow)
+        files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
 
     for ref in sorted(workflow_refs):
         graph = _load_workflow_ref(source, ref)
@@ -1427,10 +1525,10 @@ def build_extract_pack(source: Path, version: str) -> Path:
         "default_lang": "en",
         "name": {"en": "Extract", "es": "Extraer", "zh": "提取", "ko": "추출"},
         "summary": {
-            "en": "Pull a subject, product, character or object out of a photo as a clean transparent cutout — SAM3 text-prompted selection or Qwen Image 2.1's native RGBA extraction.",
-            "es": "Saca un sujeto, producto, personaje u objeto de una foto como recorte transparente limpio — selección por texto con SAM3 o extracción nativa RGBA de Qwen Image 2.1.",
-            "zh": "从照片中提取主体、产品、角色或物体，生成干净的透明抠图——SAM3 文本提示选择或 Qwen Image 2.1 原生 RGBA 提取。",
-            "ko": "사진에서 피사체, 제품, 캐릭터, 객체를 깔끔한 투명 컷아웃으로 추출 — SAM3 텍스트 기반 선택 또는 Qwen Image 2.1의 네이티브 RGBA 추출.",
+            "en": "Pull a subject, product, character or object out of a photo as a clean transparent cutout — SAM3 text-prompted selection or Qwen Image 2.1's native RGBA extraction — then edit that RGBA asset without losing its alpha.",
+            "es": "Saca un sujeto, producto, personaje u objeto de una foto como recorte transparente limpio — selección por texto con SAM3 o extracción nativa RGBA de Qwen Image 2.1 — y edita ese asset RGBA sin perder su alfa.",
+            "zh": "从照片中提取主体、产品、角色或物体，生成干净的透明抠图——SAM3 文本提示选择或 Qwen Image 2.1 原生 RGBA 提取——然后在不丢失 alpha 的情况下编辑该 RGBA 素材。",
+            "ko": "사진에서 피사체, 제품, 캐릭터, 객체를 깔끔한 투명 컷아웃으로 추출 — SAM3 텍스트 기반 선택 또는 Qwen Image 2.1의 네이티브 RGBA 추출 — 한 뒤 알파를 유지한 채 해당 RGBA 에셋을 편집합니다.",
         },
         "author": AUTHOR,
         "license": "proprietary",

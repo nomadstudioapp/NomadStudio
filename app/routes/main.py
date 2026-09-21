@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from flask import Blueprint, abort, make_response, redirect, render_template, session, url_for
+from flask import Blueprint, abort, make_response, redirect, render_template, request, session, url_for
 
 from .viewers_routes import SESSION_KEY as _VIEWER_SESSION_KEY
 from .. import paths
@@ -365,6 +365,7 @@ def _render_nomad_studio(initial_view: str | None = None):
         # are a Create group of their own, one card per pack with its first
         # image as the cover.
         template_packs=_load_pack_summaries(),
+        presets_packs=_load_presets_pack_summaries(),
         mix_flows=mix_flows,
         mix_flow_groups=_group_flows_by_pack(mix_flows),
         initial_view=initial_view,
@@ -674,21 +675,59 @@ def ns_refine_presets_page_redirect():
     return redirect(url_for("main.ns_refine_presets_page"))
 
 
+def _preset_cover_url(preset: dict) -> str | None:
+    """cover_image is a path *inside the installing package's own zip*
+    (data/packages/<pkg>/…), not app/static/ — url_for('static', …) can't
+    reach it. Needs the flow's "package" field, which preset_meta itself
+    doesn't carry. See packages_routes.py's serve_package_file."""
+    cover = (preset.get("preset_meta") or {}).get("cover_image")
+    pkg = preset.get("package")
+    return f"/packages/{pkg}/{cover}" if cover and pkg else None
+
+
+def _load_presets_pack_summaries() -> list[dict]:
+    """One card per installed Presets package (Core/Open Air/Film & Shadow/
+    any future one) — same "one card per pack, first item's image as the
+    cover" idea _load_pack_summaries() already uses for Create's Template
+    Packs, so the Refine hub can show which packs you actually have instead
+    of collapsing all 44 presets into a single generic link."""
+    from . import packages_routes
+    from ..services import package_service
+
+    index = package_service.read_index(packages_routes.DATA_DIR)
+    by_pkg: dict[str, list[dict]] = {}
+    for f in _load_refine_flows():
+        if f.get("group") != "presets" or not f.get("preset_meta"):
+            continue
+        pkg_id = f.get("package")
+        if not pkg_id:
+            continue
+        by_pkg.setdefault(pkg_id, []).append(f)
+    packs = []
+    for pkg_id, flows in by_pkg.items():
+        pkg_info = index.get("packages", {}).get(pkg_id, {})
+        name = (pkg_info.get("name") or {}).get("en") or pkg_id
+        packs.append({
+            "pkg_id": pkg_id,
+            "name": name,
+            "count": len(flows),
+            "cover_image_url": _preset_cover_url(flows[0]),
+        })
+    # Core (the 2 free/included ones) first, then alphabetical by name.
+    packs.sort(key=lambda p: (p["pkg_id"] != "nomad.refine-presets-core", p["name"]))
+    return packs
+
+
 @main_bp.get("/nomad-studio/refine/presets/photo_pack")
 def ns_refine_presets_page():
+    pack_filter = request.args.get("pack") or None
     presets = [
         f for f in _load_refine_flows()
         if f.get("group") == "presets" and f.get("preset_meta")
+        and (pack_filter is None or f.get("package") == pack_filter)
     ]
-    # cover_image is a path *inside the installing package's own zip*
-    # (data/packages/<pkg>/…), not app/static/ — url_for('static', …) can't
-    # reach it. Precomputed here (instead of in the template) since it
-    # needs the flow's "package" field, which preset_meta itself doesn't
-    # carry. See packages_routes.py's serve_package_file.
     for preset in presets:
-        cover = (preset.get("preset_meta") or {}).get("cover_image")
-        pkg = preset.get("package")
-        preset["cover_image_url"] = f"/packages/{pkg}/{cover}" if cover and pkg else None
+        preset["cover_image_url"] = _preset_cover_url(preset)
     return render_template(
         "pages/ns_refine_presets.html",
         active_page="nomad-studio",

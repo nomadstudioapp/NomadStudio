@@ -448,20 +448,30 @@
           </div>
           <nav class="cs-sub-grid cs-sub-grid--hero" aria-label="{{ group.label }} flows">
           {% if group.id == 'presets' %}
-          <a href="{{ url_for('main.ns_refine_presets_page') }}"
-             class="cs-card cs-card--presets-hub"
-             aria-label="Photo Packs">
+          {# One card per installed Presets package (Core/Open Air/Film &
+             Shadow/…) instead of one generic "browse all" card — makes it
+             clear which packs you actually have, same cs-card--pack look
+             Create's Template Packs already use. Each opens the Photo
+             Packs gallery pre-filtered to just that pack. #}
+          {% for pack in presets_packs %}
+          <a href="{{ url_for('main.ns_refine_presets_page', pack=pack.pkg_id) }}"
+             class="cs-card cs-card--presets-hub cs-card--pack{% if not pack.cover_image_url %} cs-card--pack-nocover{% endif %}"
+             aria-label="{{ pack.name }}">
+            {% if pack.cover_image_url %}
+            <img class="cs-card-pack-cover" src="{{ pack.cover_image_url }}" alt="" loading="lazy">
+            {% else %}
             <div class="cs-card-icon" aria-hidden="true">
               {{ refine_icon('presets') }}
             </div>
+            {% endif %}
             <div class="cs-card-body">
-              <p class="cs-card-name" data-i18n-literal="Photo Packs">Photo Packs</p>
-              <p class="cs-card-desc" data-i18n-literal="Browse the full look pack collection.">Browse the full look pack collection.</p>
+              <p class="cs-card-name">{{ pack.name }}</p>
               <div class="cs-card-tag-row">
-                <span class="cs-tag" data-i18n="hub.sections.looks" data-i18n-n="{{ group.flows|length }}">{{ group.flows|length }} looks</span>
+                <span class="cs-tag" data-i18n="hub.sections.looks" data-i18n-n="{{ pack.count }}">{{ pack.count }} looks</span>
               </div>
             </div>
           </a>
+          {% endfor %}
           {% else %}
           {% for flow in group.flows %}
           <a href="#"

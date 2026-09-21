@@ -1493,6 +1493,12 @@ BACKGROUND_TOOLS_GROUP_OVERRIDES = {fid: "background-tools" for fid in BACKGROUN
 # card of its own for just 2 flows.
 SKIN_DETAILER_FLOWS = ["refine.skin_detailer_klein_4b", "refine.skin_detailer_klein_9b"]
 SKIN_DETAILER_GROUP_OVERRIDES = {fid: "upscale" for fid in SKIN_DETAILER_FLOWS}
+# Style Transfer (re-render in a saved Style's visual language) and Pixel Art
+# (70+ curated style presets) are both "restyle the whole image" tools —
+# last 3 of the original 13 core-tagged leftovers, rounding out the Refine
+# packaging work.
+STYLING_FLOWS = ["refine.style_transfer_klein_4b", "refine.style_transfer_klein_9b", "refine.pixel_art_klein_9b"]
+STYLING_GROUP_OVERRIDES = {fid: "styling" for fid in STYLING_FLOWS}
 REFINE_GROUPS_VERSION = "0.1.0"
 
 
@@ -1574,6 +1580,21 @@ def build_skin_detailer(source: Path, version: str) -> Path:
         },
         flow_ids=SKIN_DETAILER_FLOWS,
         group_overrides=SKIN_DETAILER_GROUP_OVERRIDES,
+    )
+
+
+def build_styling(source: Path, version: str) -> Path:
+    return build_refine_static_group(
+        source, version, "nomad.refine-styling", "styling",
+        name={"en": "Styling", "es": "Estilizado", "zh": "风格化", "ko": "스타일링"},
+        summary={
+            "en": "Restyle the whole image — re-render in a saved Style's visual language, or apply one of 70+ curated pixel-art presets.",
+            "es": "Reestiliza toda la imagen — re-renderiza en el lenguaje visual de un Estilo guardado, o aplica uno de más de 70 presets curados de pixel art.",
+            "zh": "重新设计整张图像的风格——以已保存风格的视觉语言重新渲染，或应用 70 多种精选像素艺术预设之一。",
+            "ko": "이미지 전체를 재스타일링 — 저장된 스타일의 비주얼 언어로 다시 렌더링하거나, 70개 이상의 엄선된 픽셀 아트 프리셋 중 하나를 적용합니다.",
+        },
+        flow_ids=STYLING_FLOWS,
+        group_overrides=STYLING_GROUP_OVERRIDES,
     )
 
 
@@ -1762,7 +1783,7 @@ def main() -> None:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
                   build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version),
                   build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version),
-                  build_extract_pack(args.source, args.version)]
+                  build_extract_pack(args.source, args.version), build_styling(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

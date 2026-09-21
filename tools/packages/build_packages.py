@@ -610,6 +610,88 @@ def _edit_rgba_qwen2_flow() -> dict:
     }
 
 
+# ── Local Editing: Region Selection (Qwen 2.1) — new flow, no OPENHIKER
+# source. Inserts the new `region_annotate` step (app/static/js/pages/flow/
+# flow-step-region-annotate.js) between image_picker and workflow_params:
+# the user paints colored freehand strokes over the source image, and the
+# FLATTENED annotated image (not the raw source) is what gets sent as
+# imageDataUrl — same shared Edit Qwen 2.1 graph and node ids as every
+# other Edit-engine flow, no backend change needed (flattening happens
+# client-side via canvas.toDataURL()).
+def _local_edit_qwen2_flow() -> dict:
+    return {
+        "id": "refine.local_edit_qwen2",
+        "label": "Local Editing: Region Selection",
+        "_i18n_overrides": {
+            "label": {
+                "en": "Local Editing: Region Selection", "es": "Edición local: selección de región",
+                "zh": "局部编辑：区域选择", "ko": "로컬 편집: 영역 선택",
+            },
+            "desc": {
+                "en": "Mark regions by color, then tell Qwen 2.1 what to change in each one.",
+                "es": "Marca regiones por color y dile a Qwen 2.1 qué cambiar en cada una.",
+                "zh": "按颜色标记区域，然后告诉 Qwen 2.1 每个区域要改什么。",
+                "ko": "색상으로 영역을 표시한 뒤 각 영역에서 무엇을 바꿀지 Qwen 2.1에게 알려주세요.",
+            },
+        },
+        "category": "refine",
+        "group": "photo-editing",
+        "description": "Paint colored circles or scribbles over specific regions of a photo, then describe what to change in each one by color — powered by Qwen Image 2.1's native region-aware editing.",
+        "card_desc": "Mark regions by color, then tell Qwen 2.1 what to change in each one.",
+        "card_tags": ["Qwen", "2.1", "Local Edit", "Region"],
+        "card_css_modifier": "edit-qwen-2511",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "annotate",
+                "type": "region_annotate",
+                "label": "Mark regions",
+                "image_step": "image",
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "13.prompt",
+                        "label": "Edit prompt",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Reference the colors you painted, e.g. \"remove the object in the blue circle, change the hair in the red circle to black\".",
+                        "default": "Remove the object in the blue circle, and change the hair in the red circle to black.",
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.annotate.output.annotated_image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
 def _qwen_image_21_edit_workflow() -> dict:
     return {
         "2": {
@@ -1256,6 +1338,7 @@ def build_refine_static_group(
     label_overrides: dict[str, dict[str, str]] | None = None,
     new_fields: dict[str, list[dict]] | None = None,
     group_overrides: dict[str, str] | None = None,
+    hand_authored: list[dict] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -1272,7 +1355,11 @@ def build_refine_static_group(
     `group_overrides` re-buckets a flow into a different Refine-hub card
     than the `group` its source flow.json already declares (e.g. moving a
     handful of OPENHIKER's "core"-tagged flows into their own hub card) —
-    same idea as REFINE_PILOT_GROUP_OVERRIDES."""
+    same idea as REFINE_PILOT_GROUP_OVERRIDES. `hand_authored` is for flows
+    with no OPENHIKER source at all (e.g. Local Editing: Region Selection) —
+    a list of already-complete flow dicts (already carrying their own id/
+    group/card texts) to fold in alongside the source-loaded ones, same
+    pattern build_extract_pack used before this got generalized."""
     table = load_translations(source)
     files: dict[str, object] = {}
     flows = []
@@ -1282,6 +1369,7 @@ def build_refine_static_group(
     label_overrides = label_overrides or {}
     new_fields = new_fields or {}
     group_overrides = group_overrides or {}
+    hand_authored = hand_authored or []
 
     final_flow_ids: list[str] = []
     for flow_id in flow_ids:
@@ -1307,6 +1395,25 @@ def build_refine_static_group(
         final_flow_ids.append(final_id)
         flows.append(flow)
         files[f"flows/{final_id.split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+
+    for raw_flow in hand_authored:
+        # "_i18n_overrides" (popped, never written to the shipped flow.json):
+        # {"label": {...}, "desc": {...}} hand translations for brand-new
+        # wording that was never run through load_translations' table (keyed
+        # by OLD English text) — same need REFINE_PILOT_DESC_OVERRIDES/
+        # LABEL_OVERRIDES filled for the pilot's new flows.
+        i18n_overrides = raw_flow.pop("_i18n_overrides", None)
+        flow = add_card_texts(raw_flow, table)
+        if i18n_overrides:
+            if "label" in i18n_overrides:
+                flow["card"]["label"] = i18n_overrides["label"]
+            if "desc" in i18n_overrides:
+                flow["card"]["desc"] = i18n_overrides["desc"]
+        _upgrade_seed_fields_to_similarity(flow)
+        flows.append(flow)
+        final_flow_ids.append(flow["id"])
+        files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)
 
     for ref in sorted(workflow_refs):
@@ -1408,6 +1515,7 @@ def build_photo_editing(source: Path, version: str) -> Path:
         # _load_workflow_ref: no more override for this ref), so id/label/
         # steps stay whatever the source itself declares (fixed 4-step
         # Lightning LoRA setup, no exposed Steps field).
+        hand_authored=[_local_edit_qwen2_flow()],
     )
 
 

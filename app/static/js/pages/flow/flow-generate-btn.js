@@ -5,6 +5,9 @@ function updateGenerateBtn() {
   // Let the Layer Composer step (if present) refresh its preview whenever any
   // step value changes — e.g. the bg/layer image_picker steps get filled in.
   if (typeof window._ncfLcRefresh === 'function') { try { window._ncfLcRefresh(); } catch (_) {} }
+  // Same hook, for the Region Annotate step (flow-step-region-annotate.js)
+  // — refreshes its inline thumbnail whenever the source image_picker changes.
+  if (typeof window._ncfAnnotateRefresh === 'function') { try { window._ncfAnnotateRefresh(); } catch (_) {} }
   // Same hook, for Refine/Mix's fixed-Resolution readout (flow-render-all.js)
   // — refreshes it whenever the picked image changes.
   if (typeof window._ncfFixedResRefresh === 'function') { try { window._ncfFixedResRefresh(); } catch (_) {} }

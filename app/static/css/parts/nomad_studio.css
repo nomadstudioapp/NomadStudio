@@ -12143,6 +12143,132 @@ body.nsc-session-workspace-page .nss-scenes-area {
   min-height: 1.4em;
 }
 
+/* ── Region Annotate step (flow-step-region-annotate.js) ─────────────────── */
+.ncf-annotate-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ncf-annotate-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--border, #333);
+  background: var(--bg2, #111);
+  display: block;
+}
+.ncf-annotate-label {
+  font-size: var(--fs-xs);
+  color: var(--text-dim, #999);
+}
+.ncf-annotate-edit-btn {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.nse-modal--annotate {
+  width: min(92vw, 1080px);
+  height: min(90vh, 760px);
+  max-height: min(90vh, 760px);
+}
+.nse-modal--annotate .nse-modal-apply {
+  background: var(--nss-accent, #a855f7);
+  color: #fff;
+}
+
+.ncf-annotate-body {
+  padding: 0 !important;
+  overflow: hidden !important;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.ncf-annotate-canvas-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--nss-bg-1, #111);
+}
+.ncf-annotate-canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.ncf-annotate-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+  border-radius: 4px;
+}
+.ncf-annotate-canvas-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-dim, #888);
+  text-align: center;
+  padding: 6px;
+}
+
+.ncf-annotate-tools-panel {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 1rem 1rem 1.25rem;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--line);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.ncf-annotate-tools-title {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim, #888);
+}
+.ncf-annotate-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ncf-annotate-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border, #333);
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.ncf-annotate-swatch:hover { transform: scale(1.08); }
+.ncf-annotate-swatch.is-active { border-color: var(--nss-accent, #a855f7); }
+.ncf-annotate-slider-row label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  margin-bottom: 0.3rem;
+}
+.ncf-annotate-slider-row input[type="range"] {
+  width: 100%;
+}
+.ncf-annotate-tools-actions {
+  display: flex;
+  gap: 8px;
+}
+.ncf-annotate-tools-actions button {
+  flex: 1;
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    Options panel — Aspect ratio / Assist options / Model, opened via their
    icon buttons. Same lateral-aside convention as Live Preview / Custom

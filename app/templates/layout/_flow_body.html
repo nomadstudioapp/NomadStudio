@@ -517,6 +517,41 @@
   </div>
 </div>
 
+<!-- ── Region Annotate modal ──────────────────────────────────────────────── -->
+<div class="nse-modal-backdrop" id="ncf-annotate-modal" role="dialog" aria-modal="true" aria-label="Annotate regions" hidden>
+  <div class="nse-modal nse-modal--annotate">
+    <header class="nse-modal-header">
+      <span class="nse-modal-title" data-i18n="flow.annotate.title">Mark Regions</span>
+      <button class="nse-modal-close" id="ncf-annotate-modal-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <div class="nse-modal-body ncf-annotate-body">
+      <div class="ncf-annotate-canvas-panel">
+        <div class="ncf-annotate-canvas-wrap">
+          <canvas id="ncf-annotate-canvas" class="ncf-annotate-canvas"></canvas>
+        </div>
+        <p class="ncf-annotate-canvas-hint" data-i18n="flow.annotate.hint">Draw a loop or scribble over a region, then reference its color in your prompt (e.g. "remove the object in the blue circle")</p>
+      </div>
+      <div class="ncf-annotate-tools-panel">
+        <p class="ncf-annotate-tools-title" data-i18n="flow.annotate.color">Color</p>
+        <div class="ncf-annotate-swatch-row" id="ncf-annotate-swatches"></div>
+        <div class="ncf-annotate-slider-row">
+          <label><span data-i18n="flow.annotate.brushSize">Brush size</span> <span id="ncf-annotate-width-val">14</span></label>
+          <input type="range" id="ncf-annotate-width" min="4" max="60" step="1" value="14">
+        </div>
+        <div class="ncf-annotate-tools-actions">
+          <button class="ncf-btn ncf-btn--secondary" id="ncf-annotate-undo" type="button" data-i18n="flow.annotate.undo">Undo</button>
+          <button class="ncf-btn ncf-btn--secondary" id="ncf-annotate-clear" type="button" data-i18n="flow.annotate.clear">Clear All</button>
+        </div>
+      </div>
+    </div>
+    <footer class="nse-modal-footer">
+      <button class="nse-modal-apply" id="ncf-annotate-modal-apply" type="button" data-i18n="flow.common.apply">Apply</button>
+    </footer>
+  </div>
+</div>
+
 <!-- ── Image Tray modal ───────────────────────────────────────────────────── -->
 <div class="nse-modal-backdrop" id="nit-tray-modal" role="dialog" aria-modal="true" aria-label="Image Tray" hidden>
   <div class="nse-modal nse-modal--wide">

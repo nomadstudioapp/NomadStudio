@@ -250,6 +250,10 @@ function renderAllSteps() {
         try { renderLayerCompositor(stepDef, contentEl); }
         catch (e) { console.error('[FlowEngine] layer_compositor:', e); }
         break;
+      case 'region_annotate':
+        try { renderRegionAnnotate(stepDef, contentEl); }
+        catch (e) { console.error('[FlowEngine] region_annotate:', e); }
+        break;
       case 'action':              renderAction(stepDef, wrap);                break;
     }
     if (stepDef.type === 'action' && stepsFooterEl) stepsFooterEl.appendChild(wrap);

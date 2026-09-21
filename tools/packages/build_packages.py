@@ -585,85 +585,6 @@ def _qwen_image_21_outpaint_workflow() -> dict:
     }
 
 
-# ── Qwen 2.1 Camera Angles (replaces refine_qwen_2511_angles.json) ─────────
-# The source chained TWO LoRAs on top of the base model: a 2511-specific
-# "multiple-angles" LoRA plus the Lightning 4-step speed LoRA. Qwen 2.1 does
-# viewpoint changes natively off the base model with no LoRA at all —
-# verified today generating several angle changes of the same
-# character/scene from one reference image, plain UNETLoader straight into
-# KSampler. Both LoRA nodes (and the identity-scale ImageScaleBy the source
-# had ahead of the encode step) are dropped rather than carried over
-# unverified. Node ids match the source's own where the node itself carries
-# over (2/3/6/7/11/15/17/20/21) so nothing else has to change.
-QWEN_2511_ANGLES_WORKFLOW_REL = "workflows/refine/refine_qwen_2511_angles.json"
-
-
-def _qwen_image_21_angles_workflow() -> dict:
-    return {
-        "2": {
-            "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
-            "class_type": "VAELoader",
-            "_meta": {"title": "Load VAE"},
-        },
-        "3": {
-            "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors", "type": "qwen_image", "device": "default"},
-            "class_type": "CLIPLoader",
-            "_meta": {"title": "Load CLIP"},
-        },
-        "6": {
-            "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"},
-            "class_type": "UNETLoader",
-            "_meta": {"title": "Load Diffusion Model"},
-        },
-        "7": {
-            "inputs": {"image": "oj-refine-placeholder.png"},
-            "class_type": "LoadImage",
-            "_meta": {"title": "Load Image"},
-        },
-        "13": {
-            "inputs": {
-                "prompt": "front view",
-                "negative_prompt": "",
-                "resolution": 0,
-                "clip": ["3", 0],
-                "vae": ["2", 0],
-                "images.image_1": ["7", 0],
-            },
-            "class_type": "TextEncodeQwenImage21",
-            "_meta": {"title": "Text Encode Qwen Image 2.1"},
-        },
-        "15": {
-            "inputs": {
-                "seed": 388457959464449, "steps": 25, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
-                "denoise": 1, "model": ["6", 0], "positive": ["13", 0], "negative": ["13", 1],
-                "latent_image": ["11", 0],
-            },
-            "class_type": "KSampler",
-            "_meta": {"title": "KSampler"},
-        },
-        "17": {
-            "inputs": {"samples": ["15", 0], "vae": ["2", 0]},
-            "class_type": "VAEDecode",
-            "_meta": {"title": "VAE Decode"},
-        },
-        "20": {
-            "inputs": {"image": ["7", 0]},
-            "class_type": "GetImageSize",
-            "_meta": {"title": "Get Image Size"},
-        },
-        "11": {
-            "inputs": {"width": ["20", 0], "height": ["20", 1], "batch_size": 1},
-            "class_type": "EmptyLatentImage",
-            "_meta": {"title": "Empty Latent Image"},
-        },
-        "21": {
-            "inputs": {"filename_prefix": "qwen-image-2.1-angles", "images": ["17", 0]},
-            "class_type": "SaveImage",
-            "_meta": {"title": "Save Image"},
-        },
-    }
-
-
 # ── Qwen 2.1 Camera Shoot (new — no OPENHIKER source, requested to see how
 # the camera/lens/lighting/color-grading compose prompt performs on Qwen 2.1
 # vs. the existing Klein 9B version). Same shape as Edit Qwen 2.1: single
@@ -1265,8 +1186,6 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
         return _qwen_image_21_edit_workflow()
     if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
         return _qwen_image_21_outpaint_workflow()
-    if ref == QWEN_2511_ANGLES_WORKFLOW_REL:
-        return _qwen_image_21_angles_workflow()
     if ref == CAMERA_SHOOT_QWEN2_WORKFLOW_REL:
         return _qwen_image_21_camera_shoot_workflow()
     src_path = source / "app" / ref
@@ -1450,17 +1369,13 @@ def build_photo_editing(source: Path, version: str) -> Path:
         },
         flow_ids=PHOTO_EDITING_FLOWS,
         unregistered=PHOTO_EDITING_UNREGISTERED,
-        id_overrides={"refine.qwen_2511_angles": "refine.qwen2_angles"},
-        label_overrides={"refine.qwen_2511_angles": {
-            "en": "Qwen 2.1 Angles", "es": "Ángulos Qwen 2.1", "zh": "Qwen 2.1 视角", "ko": "Qwen 2.1 앵글",
-        }},
-        # The source never exposed Steps at all — baked at 4 into the graph,
-        # tied to the Lightning LoRA the 2.1 migration dropped. Now that it's
-        # a plain number input like Edit Qwen 2.1's, same quick-pick presets.
-        new_fields={"refine.qwen_2511_angles": [{
-            "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
-            "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
-        }]},
+        # Angles was migrated to bare Qwen 2.1 (no LoRA) earlier, but
+        # hand-testing showed 2.1 doesn't reproduce the viewpoint change
+        # reliably without the "multiple-angles" LoRA — reverted to the
+        # source's own Qwen 2511 + LoRA workflow verbatim (see
+        # _load_workflow_ref: no more override for this ref), so id/label/
+        # steps stay whatever the source itself declares (fixed 4-step
+        # Lightning LoRA setup, no exposed Steps field).
     )
 
 

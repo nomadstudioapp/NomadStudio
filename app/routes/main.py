@@ -680,6 +680,15 @@ def ns_refine_presets_page():
         f for f in _load_refine_flows()
         if f.get("group") == "presets" and f.get("preset_meta")
     ]
+    # cover_image is a path *inside the installing package's own zip*
+    # (data/packages/<pkg>/…), not app/static/ — url_for('static', …) can't
+    # reach it. Precomputed here (instead of in the template) since it
+    # needs the flow's "package" field, which preset_meta itself doesn't
+    # carry. See packages_routes.py's serve_package_file.
+    for preset in presets:
+        cover = (preset.get("preset_meta") or {}).get("cover_image")
+        pkg = preset.get("package")
+        preset["cover_image_url"] = f"/packages/{pkg}/{cover}" if cover and pkg else None
     return render_template(
         "pages/ns_refine_presets.html",
         active_page="nomad-studio",

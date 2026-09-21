@@ -34,7 +34,9 @@
       {% for preset in presets %}
       <a href="{{ preset.route }}" class="rp-card" aria-label="{{ preset.preset_meta.card_title }}">
         <div class="rp-card-media">
-          <img src="{{ url_for('static', filename=preset.preset_meta.cover_image) }}" alt="{{ preset.preset_meta.card_title }} preview" loading="lazy">
+          {% if preset.cover_image_url %}
+          <img src="{{ preset.cover_image_url }}" alt="{{ preset.preset_meta.card_title }} preview" loading="lazy">
+          {% endif %}
         </div>
         <div class="rp-card-body">
           <p class="rp-card-name">{{ preset.preset_meta.card_title }}</p>

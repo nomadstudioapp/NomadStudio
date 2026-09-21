@@ -12,9 +12,11 @@ are only allowed from the computer Nomad Studio runs on (local_access).
 
 from __future__ import annotations
 
+import os
 import threading
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, abort, jsonify, request, send_from_directory
+from werkzeug.security import safe_join
 
 from .. import paths
 from ..services import flow_engine, package_service
@@ -133,6 +135,24 @@ def install_package():
 def discard_package():
     package_service.discard_upload(DATA_DIR, str((request.get_json(silent=True) or {}).get("token", "")))
     return jsonify({"ok": True})
+
+
+@packages_bp.get("/packages/<pkg_id>/<path:rel>")
+def serve_package_file(pkg_id: str, rel: str):
+    """Static files a package carries alongside its flows — today just
+    preset cover images (§10, Photo Packs gallery), same idea
+    PACKAGE_FORMAT.md §9.8 already names for a step-type's own ui/*
+    (`/packages/<id>/ui/…`): the file lives inside data/packages/<pkg_id>/,
+    not app/static/, so it can't go through url_for('static', …) — same
+    safe_join + send_from_directory pattern user_images_routes.py already
+    uses for the data-folder image kinds."""
+    base = package_service.packages_dir(DATA_DIR) / pkg_id
+    full = safe_join(str(base), rel)
+    if not full or not os.path.isfile(full):
+        abort(404)
+    response = send_from_directory(base, rel)
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
 
 
 @packages_bp.delete("/api/packages/<pkg_id>")

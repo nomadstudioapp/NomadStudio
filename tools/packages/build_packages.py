@@ -428,6 +428,97 @@ def _qwen_image_21_workflow() -> dict:
 QWEN_2511_EDIT_WORKFLOW_REL = "workflows/refine/refine_qwen_2511_edit.json"
 
 
+# ── Extract (Qwen 2.1) — new flow, no OPENHIKER source. Reuses the shared
+# Edit Qwen 2.1 graph verbatim (QWEN_2511_EDIT_WORKFLOW_REL, already migrated
+# — same node ids as every other Edit-engine flow: 13=TextEncodeQwenImage21,
+# 15=KSampler), just with a different default/preset prompts aimed at
+# isolating a subject/product/character as a transparent RGBA cutout instead
+# of general scene editing. Preset wording supplied by the user, each one
+# already wraps the "RGBA image with transparency / alpha channel" phrasing
+# Qwen Image 2.1 needs to actually output an alpha channel (confirmed via
+# the model's own usage notes) — nothing else has to force transparency.
+EXTRACT_SUBJECT_PRESETS = [
+    {
+        "label": "General subject",
+        "text": "Extract the main subject from this image as a clean RGBA image with transparency. "
+                "Preserve the subject's full appearance, original colors, fine edges, hair, fur, small "
+                "details, and semi-transparent regions. Remove the entire background. The image has an "
+                "alpha channel and the background is transparent.",
+    },
+    {
+        "label": "Product",
+        "text": "Isolate the main product from this image and return it as a clean RGBA asset with "
+                "transparency. Preserve its exact silhouette, materials, colors, branding, reflections, "
+                "fine edges, and structural details. Remove the entire background while keeping the "
+                "product intact. The image has an alpha channel and the background is transparent.",
+    },
+    {
+        "label": "Character / person",
+        "text": "Extract the person or character from this image as a clean transparent RGBA asset. "
+                "Preserve identity, hairstyle, clothing, body silhouette, fine hair strands, soft edges, "
+                "and all visible details. Remove the background completely. The image has an alpha "
+                "channel and the background is transparent.",
+    },
+]
+
+
+def _extract_qwen2_flow() -> dict:
+    return {
+        "id": "refine.extract_qwen2",
+        "label": "Extract (Qwen 2.1)",
+        "category": "refine",
+        "group": "extract",
+        "description": "Extract the subject, product or character from a photo as a clean RGBA cutout with transparency, using Qwen Image 2.1.",
+        "card_desc": "Clean transparent-background cutouts — subject, product or character — with Qwen Image 2.1.",
+        "card_tags": ["Qwen", "2.1", "Extract", "RGBA"],
+        "card_css_modifier": "edit-qwen-2511",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "13.prompt",
+                        "label": "Extract prompt",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Pick what to extract, or write your own.",
+                        "default": EXTRACT_SUBJECT_PRESETS[0]["text"],
+                        "presets": EXTRACT_SUBJECT_PRESETS,
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
 def _qwen_image_21_edit_workflow() -> dict:
     return {
         "2": {
@@ -1287,6 +1378,76 @@ def build_skin_detailer(source: Path, version: str) -> Path:
     )
 
 
+# Smart Selection (text-prompted SAM3 cutout) and Smart Object Removal
+# (SAM3 selection + Qwen-painted fill) are both foreground-extraction tools
+# at heart — grouped with the new hand-authored Extract (Qwen 2.1) flow.
+EXTRACT_SOURCE_FLOWS = ["refine.smart_selection", "refine.smart_selection_fill"]
+EXTRACT_GROUP_OVERRIDES = {fid: "extract" for fid in EXTRACT_SOURCE_FLOWS}
+
+
+def build_extract_pack(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    files: dict[str, object] = {}
+    flows: list[dict] = []
+    workflow_refs: set[str] = set()
+
+    for flow_id in EXTRACT_SOURCE_FLOWS:
+        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        flow["group"] = "extract"
+        _upgrade_seed_fields_to_similarity(flow)
+        flows.append(flow)
+        files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+
+    qwen_flow = add_card_texts(_extract_qwen2_flow(), table)
+    qwen_flow["card"]["label"] = {
+        "en": "Extract (Qwen 2.1)", "es": "Extraer (Qwen 2.1)", "zh": "提取 (Qwen 2.1)", "ko": "추출 (Qwen 2.1)",
+    }
+    qwen_flow["card"]["desc"] = {
+        "en": "Clean transparent-background cutouts — subject, product or character — with Qwen Image 2.1.",
+        "es": "Recortes limpios con fondo transparente — sujeto, producto o personaje — con Qwen Image 2.1.",
+        "zh": "干净的透明背景抠图——主体、产品或角色——由 Qwen Image 2.1 驱动。",
+        "ko": "깔끔한 투명 배경 컷아웃 — 피사체, 제품 또는 캐릭터 — Qwen Image 2.1로 제작.",
+    }
+    _upgrade_seed_fields_to_similarity(qwen_flow)
+    flows.append(qwen_flow)
+    files[f"flows/{qwen_flow['id'].split('.', 1)[1]}.json"] = qwen_flow
+    workflow_refs |= _collect_workflow_file_refs(qwen_flow)
+
+    for ref in sorted(workflow_refs):
+        graph = _load_workflow_ref(source, ref)
+        _strip_foreign_flow_data(graph)
+        files[ref] = graph
+
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.refine-extract",
+        "version": version,
+        "default_lang": "en",
+        "name": {"en": "Extract", "es": "Extraer", "zh": "提取", "ko": "추출"},
+        "summary": {
+            "en": "Pull a subject, product, character or object out of a photo as a clean transparent cutout — SAM3 text-prompted selection or Qwen Image 2.1's native RGBA extraction.",
+            "es": "Saca un sujeto, producto, personaje u objeto de una foto como recorte transparente limpio — selección por texto con SAM3 o extracción nativa RGBA de Qwen Image 2.1.",
+            "zh": "从照片中提取主体、产品、角色或物体，生成干净的透明抠图——SAM3 文本提示选择或 Qwen Image 2.1 原生 RGBA 提取。",
+            "ko": "사진에서 피사체, 제품, 캐릭터, 객체를 깔끔한 투명 컷아웃으로 추출 — SAM3 텍스트 기반 선택 또는 Qwen Image 2.1의 네이티브 RGBA 추출.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "extract", "label": {"en": "Extract"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "flows": [f"flows/{f['id'].split('.', 1)[1]}.json" for f in flows],
+            "workflows": sorted(workflow_refs),
+        },
+    }
+    print(f"  extract-pack texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.refine-extract", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                               **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
+
+
 def build_refine_pilot(source: Path, version: str) -> Path:
     table = load_translations(source)
     files: dict[str, object] = {}
@@ -1389,7 +1550,8 @@ def main() -> None:
     if args.refine_groups:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
                   build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version),
-                  build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version)]
+                  build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version),
+                  build_extract_pack(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

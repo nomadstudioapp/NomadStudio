@@ -226,6 +226,7 @@ _GROUP_LABELS: dict[str, str] = {
     "core": "Core",
     "background-tools": "Background Tools",
     "camera": "Camera",
+    "extract": "Extract",
     "edit": "Edit",
     "photo-editing": "Photo Editing",
     "portrait-fix": "Portrait Fix",

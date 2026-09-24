@@ -1,6 +1,7 @@
 {% extends 'layout/base.html' %}
 
 {% block title %}NomadStudio{% if initial_view_label %} - {{ initial_view_label }}{% endif %}{% endblock %}
+{% block head_prepaint %}{% include 'layout/_ns_prepaint.html' %}{% endblock %}
 
 {% block body_class %}nomad-studio-page{% endblock %}
 

@@ -1,0 +1,27 @@
+<script>
+  /* Pre-paint copy of two nomad_studio.js preferences (filter sidebar hidden,
+     card zoom step). That script only runs at the end of <body>, behind the
+     render-blocking lucide CDN script, so the hub used to paint once with the
+     filter sidebar visible and the default card size, then reflow when it
+     applied the saved values — the cards visibly jumped on every load (e.g.
+     coming Back from a flow). Applying them here, like data-theme above, makes
+     the first paint final; nomad_studio.js re-applies the same values later
+     and nothing moves. Keep the keys and the step formula in sync with
+     CS_FILTERS_KEY / CS_CARD_ZOOM_* / csApplyCardZoom() in nomad_studio.js. */
+  (function () {
+    try {
+      var root = document.documentElement;
+      if (localStorage.getItem('ns-filters-hidden') === '1') root.classList.add('cs-filters-hidden');
+      var DOWN = 4, UP = 0, DEF = DOWN;
+      var i = parseInt(localStorage.getItem('ns-card-zoom-step-v2'), 10);
+      if (isNaN(i) || i < 0 || i > DOWN + UP) i = DEF;
+      var k = i - DOWN;
+      var size = 200 + k * 15, hero = 360 + k * 20;
+      root.style.setProperty('--cs-card-size', size + 'px');
+      root.style.setProperty('--cs-card-hero-size', hero + 'px');
+      root.style.setProperty('--cs-session-card-min', (260 + k * 15) + 'px');
+      root.style.setProperty('--cs-card-text-scale', String(size / 200));
+      root.style.setProperty('--cs-card-hero-text-scale', String(hero / 360));
+    } catch (e) {}
+  })();
+</script>

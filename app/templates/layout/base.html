@@ -23,6 +23,7 @@
          this doesn't require touching the later script or other pages. */
       document.documentElement.setAttribute('data-theme', localStorage.getItem('oj-theme-v1') || '4');
     </script>
+    {% block head_prepaint %}{% endblock %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">

@@ -31,13 +31,17 @@ function updateGenerateBtn() {
   } else if (actionStep && actionStep.calls === 'generation.submit_mix') {
     var im = actionStep.input_map || {};
     var imagesDef = im['images'];
-    // An entry flagged `optional` (e.g. Clothes Mix's reference photo) is
-    // satisfied by either its image OR its textFallback (the manual
-    // description field next to it) — everything else still needs the
-    // actual image.
+    // An entry flagged `optional` is satisfied by its image OR — only for
+    // entries that actually declare a textFallback (e.g. Clothes Mix's
+    // reference photo, backed by a manual description field next to it) —
+    // that text instead. An optional entry with no textFallback key at all
+    // (e.g. Multi-Reference Compose's 3rd/4th reference slots — nothing to
+    // fall back to, they're just skippable extra references) needs neither:
+    // being flagged optional is enough on its own.
     var allImagesReady = Array.isArray(imagesDef) && imagesDef.every(function (e) {
       if (!!resolveRef(e.dataUrl)) return true;
-      return !!e.optional && !!resolveRef(e.textFallback);
+      if (!e.optional) return false;
+      return e.textFallback ? !!resolveRef(e.textFallback) : true;
     });
     disabled = !allImagesReady; // enqueueable while generating
     if (!allImagesReady) tip = 'Pick all the images to mix';

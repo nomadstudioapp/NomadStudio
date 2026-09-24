@@ -531,9 +531,14 @@
         <div class="ncf-annotate-canvas-wrap">
           <canvas id="ncf-annotate-canvas" class="ncf-annotate-canvas"></canvas>
         </div>
-        <p class="ncf-annotate-canvas-hint" data-i18n="flow.annotate.hint">Draw a loop or scribble over a region, then reference its color in your prompt (e.g. "remove the object in the blue circle")</p>
+        <p class="ncf-annotate-canvas-hint" data-i18n="flow.annotate.hint" id="ncf-annotate-hint">Draw a loop or scribble over a region, then reference its color in your prompt (e.g. "remove the object in the blue circle")</p>
       </div>
       <div class="ncf-annotate-tools-panel">
+        <p class="ncf-annotate-tools-title" data-i18n="flow.annotate.shape">Shape</p>
+        <div class="ncf-annotate-shape-row" id="ncf-annotate-shapes" role="radiogroup" aria-label="Shape">
+          <button type="button" class="ncf-annotate-shape-btn is-active" id="ncf-annotate-shape-freehand" data-i18n="flow.annotate.shapeFreehand">Freehand</button>
+          <button type="button" class="ncf-annotate-shape-btn" id="ncf-annotate-shape-rect" data-i18n="flow.annotate.shapeRect">Rectangle</button>
+        </div>
         <p class="ncf-annotate-tools-title" data-i18n="flow.annotate.color">Color</p>
         <div class="ncf-annotate-swatch-row" id="ncf-annotate-swatches"></div>
         <div class="ncf-annotate-slider-row">

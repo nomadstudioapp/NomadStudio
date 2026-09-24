@@ -604,7 +604,13 @@
       "Licence page": "许可页面",
       "Verified": "已验证",
       "Not verified": "未验证",
-      "No download address for this file": "此文件没有下载地址"
+      "No download address for this file": "此文件没有下载地址",
+      "Loaded in LM Studio.": "已在 LM Studio 中加载。",
+      "Fits in the free GPU memory": "可放入 GPU 的空闲显存",
+      "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "只有在 ComfyUI 释放其显存后才能放下——应用会在加载前自动释放。",
+      "Bigger than the free GPU memory": "大于 GPU 的空闲显存",
+      "it may run partly on the CPU (slow) or fail to load.": "可能部分在 CPU 上运行（较慢）或无法加载。",
+      "GPU memory could not be checked.": "无法检查 GPU 显存。"
     },
     "creativity": {
       "title": "创意程度",

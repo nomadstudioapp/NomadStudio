@@ -270,7 +270,13 @@
       "Licence page": "Licence page",
       "Verified": "Verified",
       "Not verified": "Not verified",
-      "No download address for this file": "No download address for this file"
+      "No download address for this file": "No download address for this file",
+      "Loaded in LM Studio.": "Loaded in LM Studio.",
+      "Fits in the free GPU memory": "Fits in the free GPU memory",
+      "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.",
+      "Bigger than the free GPU memory": "Bigger than the free GPU memory",
+      "it may run partly on the CPU (slow) or fail to load.": "it may run partly on the CPU (slow) or fail to load.",
+      "GPU memory could not be checked.": "GPU memory could not be checked."
     },
     "creativity": {
       "title": "Creativity",

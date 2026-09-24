@@ -358,67 +358,87 @@ def run_vision_describe_benchmark(
                 if not loaded_here and not loaded_now:
                     raise RuntimeError("Failed to load model in LM Studio")
 
-            model_l = model_id.lower()
-            prefers_raw_base64 = ("qwen" in model_l) or ("gemma" in model_l)
-            image_url_candidates = (
-                [image_base64, normalized_data_url]
-                if prefers_raw_base64
-                else [normalized_data_url, image_base64]
-            )
+            # Native /api/v1/chat first, with reasoning off (NomadStudio#12): the
+            # same call the app's describe uses, so the benchmark measures what
+            # users get, a reasoning vision model no longer spends its budget
+            # thinking and returns nothing, and a dead engine is waited for. The
+            # chat-completions attempts stay as the fallback for models the native
+            # endpoint rejects.
+            description = ""
+            try:
+                native_response, _level = lmstudio_service.native_chat(
+                    lmstudio_url, model_id, system_prompt,
+                    [{"type": "text", "content": user_instruction},
+                     {"type": "image", "data_url": normalized_data_url}],
+                    parsed_temperature, max_tokens,
+                    reasoning="off", timeout=max(10, int(per_model_timeout_sec)),
+                )
+                description = lmstudio_service.native_message_text(native_response)
+            except Exception:
+                description = ""
 
-            response: dict[str, Any] = {}
-            last_error: Exception | None = None
-            for image_url_value in image_url_candidates:
-                try:
-                    payload = _build_chat_payload(
-                        model=model_id,
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": user_instruction},
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {"url": image_url_value},
-                                    },
-                                ],
-                            },
-                        ],
-                        temperature=parsed_temperature,
-                        max_tokens=max_tokens,
-                    )
-
-                    response = http_json(
-                        lmstudio_service.chat_endpoint(lmstudio_url),
-                        gpu_category="lmstudio",
-                        method="POST",
-                        payload=payload,
-                        timeout=max(10, int(per_model_timeout_sec)),
-                    )
-                    if isinstance(response, dict):
-                        error_text = str(
-                            response.get("error") or response.get("message") or ""
-                        ).strip()
-                        if error_text:
-                            raise RuntimeError(error_text)
-                    last_error = None
-                    break
-                except Exception as exc:
-                    last_error = exc
-
-            if last_error is not None:
-                raise last_error
-
-            description, source = _extract_lmstudio_message_text(
-                response if isinstance(response, dict) else {}
-            )
             if not description:
-                if source == "reasoning_only":
-                    raise RuntimeError(
-                        "Model returned reasoning only and no final content"
-                    )
-                raise RuntimeError("LM Studio returned empty content")
+                model_l = model_id.lower()
+                prefers_raw_base64 = ("qwen" in model_l) or ("gemma" in model_l)
+                image_url_candidates = (
+                    [image_base64, normalized_data_url]
+                    if prefers_raw_base64
+                    else [normalized_data_url, image_base64]
+                )
+
+                response: dict[str, Any] = {}
+                last_error: Exception | None = None
+                for image_url_value in image_url_candidates:
+                    try:
+                        payload = _build_chat_payload(
+                            model=model_id,
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                {
+                                    "role": "user",
+                                    "content": [
+                                        {"type": "text", "text": user_instruction},
+                                        {
+                                            "type": "image_url",
+                                            "image_url": {"url": image_url_value},
+                                        },
+                                    ],
+                                },
+                            ],
+                            temperature=parsed_temperature,
+                            max_tokens=max_tokens,
+                        )
+
+                        response = http_json(
+                            lmstudio_service.chat_endpoint(lmstudio_url),
+                            gpu_category="lmstudio",
+                            method="POST",
+                            payload=payload,
+                            timeout=max(10, int(per_model_timeout_sec)),
+                        )
+                        if isinstance(response, dict):
+                            error_text = str(
+                                response.get("error") or response.get("message") or ""
+                            ).strip()
+                            if error_text:
+                                raise RuntimeError(error_text)
+                        last_error = None
+                        break
+                    except Exception as exc:
+                        last_error = exc
+
+                if last_error is not None:
+                    raise last_error
+
+                description, source = _extract_lmstudio_message_text(
+                    response if isinstance(response, dict) else {}
+                )
+                if not description:
+                    if source == "reasoning_only":
+                        raise RuntimeError(
+                            "Model returned reasoning only and no final content"
+                        )
+                    raise RuntimeError("LM Studio returned empty content")
 
             result["ok"] = True
             result["description"] = description

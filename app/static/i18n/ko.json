@@ -604,7 +604,13 @@
       "Licence page": "라이선스 페이지",
       "Verified": "확인됨",
       "Not verified": "확인 안 됨",
-      "No download address for this file": "이 파일은 다운로드 주소가 없습니다"
+      "No download address for this file": "이 파일은 다운로드 주소가 없습니다",
+      "Loaded in LM Studio.": "LM Studio에 로드됨.",
+      "Fits in the free GPU memory": "GPU 여유 메모리에 들어감",
+      "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "ComfyUI가 GPU 메모리를 비워야 들어갑니다 — 앱이 로드 전에 자동으로 비웁니다.",
+      "Bigger than the free GPU memory": "GPU 여유 메모리보다 큼",
+      "it may run partly on the CPU (slow) or fail to load.": "일부가 CPU에서 실행되어 느려지거나 로드에 실패할 수 있습니다.",
+      "GPU memory could not be checked.": "GPU 메모리를 확인할 수 없습니다."
     },
     "creativity": {
       "title": "창의성",

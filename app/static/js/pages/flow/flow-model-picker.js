@@ -71,9 +71,46 @@ function _appendThinkCompatBadge(badges, m) {
         : 'Think compatibility not checked yet (Settings > Prompts).';
   badges.appendChild(badge);
 }
+// What fits in VRAM right now (GET /api/models/chat/vram, NomadStudio#12):
+// with ComfyUI holding most of a 16 GB card, a model that doesn't fit makes
+// LM Studio's engine die or crawl on the CPU. Fetched once per picker open
+// (short cache) so each row can say so before the user picks it.
+var _vramReport = null;
+var _vramReportAt = 0;
+function _loadVramReport() {
+  if (_vramReport && Date.now() - _vramReportAt < 30000) return Promise.resolve(_vramReport);
+  return fetch('/api/models/chat/vram')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) { _vramReport = data; _vramReportAt = Date.now(); return data; })
+    .catch(function () { return null; });
+}
+// Wait for the VRAM report alongside a score table, resolving to the table
+// (the render callbacks keep their one-argument shape).
+function _withVram(scorePromise) {
+  return Promise.all([scorePromise, _loadVramReport()]).then(function (r) { return r[0]; });
+}
+function _fmtGb(bytes) {
+  return (bytes / 1e9).toFixed(bytes >= 1e10 ? 0 : 1) + ' GB';
+}
+function _appendVramBadge(badges, m) {
+  var row = _vramReport && _vramReport.models ? _vramReport.models[m] : null;
+  if (!row || !row.size) return;
+  var badge = document.createElement('span');
+  badge.className = 'nse-model-vram nse-model-vram--' + row.fit;
+  badge.textContent = _fmtGb(row.size);
+  var free = _vramReport.freeBytes ? _fmtGb(_vramReport.freeBytes) : '?';
+  badge.title = row.fit === 'loaded' ? tF('Loaded in LM Studio.')
+    : row.fit === 'fits' ? tF('Fits in the free GPU memory') + ' (' + free + ').'
+    : row.fit === 'needs_comfy_free' ? tF('Only fits once ComfyUI frees its GPU memory — the app does that before loading it.')
+    : row.fit === 'too_big' ? tF('Bigger than the free GPU memory') + ' (' + free + '): ' + tF('it may run partly on the CPU (slow) or fail to load.')
+    : tF('GPU memory could not be checked.');
+  badges.appendChild(badge);
+}
+
 function _appendModelBadges(btn, m, scoreData) {
   var entry = scoreData && scoreData.models ? scoreData.models[m] : null;
   var badges = document.createElement('span'); badges.className = 'nse-model-badges';
+  _appendVramBadge(badges, m);
   _appendThinkCompatBadge(badges, m);
   if (!entry) { btn.appendChild(badges); return; }
   var scoreBadge = document.createElement('span');
@@ -198,7 +235,7 @@ function openVisionModelOptionsPanel(hintBtn) {
         listEl.innerHTML = '<p class="nse-model-empty">No vision models found — is LM Studio running?</p>';
         return;
       }
-      _loadVisionScores().then(function (scoreData) {
+      _withVram(_loadVisionScores()).then(function (scoreData) {
         listEl.innerHTML = '';
         _sortModelsByScore(models, scoreData).forEach(function (m) {
           var btn = document.createElement('button');

@@ -276,8 +276,6 @@ def mobile_edit_image():
                 "Send result prompt only."
             )
 
-        if "qwen" in lmstudio_model.lower():
-            user_prompt = "/no_think\r\n" + user_prompt
         messages: list[dict[str, Any]] = [{"role": "user", "content": user_prompt}]
         if not skip_system_prompt:
             messages.insert(0, {"role": "system", "content": system_prompt})
@@ -291,28 +289,22 @@ def mobile_edit_image():
                     lmstudio_url, lmstudio_model
                 )
 
-            lm_response = http_json(
-                _lmstudio_chat_endpoint(lmstudio_url),
-                gpu_category="lmstudio",
-                method="POST",
-                payload={
-                    "model": lmstudio_model,
-                    "messages": messages,
-                    "temperature": lmstudio_temperature,
-                    "max_tokens": max_output_tokens,
-                    "thinking": thinking,
-                    "enable_thinking": thinking,
-                    **( {"extra_body": {"chat_template_kwargs": {"enable_thinking": thinking}}}
-                        if "qwen" in lmstudio_model.lower() else {} ),
-                },
-                timeout=600,
+            # Native /api/v1/chat with an explicit reasoning level
+            # (NomadStudio#12): the chat-completions call used here before
+            # could not turn reasoning off, so reasoning models spent the
+            # budget thinking and returned nothing. _call_studio_llm also waits
+            # for LM Studio to come back if its engine dies, and makes VRAM
+            # room before a load (Qwen's /no_think prefix is no longer needed).
+            from .chat_routes import _call_studio_llm
+
+            raw_text, text_source = _call_studio_llm(
+                lmstudio_url, lmstudio_model, messages,
+                lmstudio_temperature, max_output_tokens,
+                reasoning="on" if thinking else "off", timeout=600, label="mobile-edit",
             )
-            raw_text, text_source = (
-                _extract_lmstudio_message_text_with_reasoning_fallback(lm_response)
-            )
-            if text_source == "reasoning_content":
+            if text_source == "reasoning_only":
                 logger.warning(
-                    "LM Studio returned empty content; using reasoning_content fallback for mobile edit"
+                    "LM Studio returned reasoning only for the mobile edit; keeping the original prompt"
                 )
 
             refined_prompt = (

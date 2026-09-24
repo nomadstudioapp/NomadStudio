@@ -313,6 +313,7 @@
       benchmarkCancelled = false;
       let benchmarked = 0;
       let failed = 0;
+      let engineDown = false;
       for (let i = 0; i < pending.length; i += 1) {
         if (benchmarkCancelled) break;
         const model = pending[i];
@@ -327,6 +328,14 @@
           } else {
             failed += 1;
             setStatus(`${model}: ${result.error || 'benchmark failed'}`, true);
+            // LM Studio's engine died and didn't come back (the server
+            // already waited for it): every remaining model would fail in
+            // under a second, so stop the run instead (NomadStudio#12).
+            if (result.engineDown) {
+              engineDown = true;
+              renderModelBrowserList();
+              break;
+            }
           }
         } catch (error) {
           failed += 1;
@@ -340,7 +349,9 @@
       benchmarkNewModelsBtn.disabled = false;
       benchmarkNewModelsBtn.textContent = benchmarkOriginalLabel;
       if (benchmarkStatusEl) {
-        benchmarkStatusEl.textContent = wasCancelled
+        benchmarkStatusEl.textContent = engineDown
+          ? `Stopped — LM Studio stopped responding. Scored ${benchmarked} model(s), ${failed} failed. Restart LM Studio and run it again.`
+          : wasCancelled
           ? `Stopped — scored ${benchmarked} model(s), ${failed} failed.`
           : `Scored ${benchmarked} model(s), ${failed} failed.`;
       }

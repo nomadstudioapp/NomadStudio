@@ -150,7 +150,7 @@ async function openModelOptionsPanel() {
         listEl.innerHTML = '<p class="nse-model-empty">No models found — is LM Studio running?</p>';
         return;
       }
-      _loadModelScores().then(function (scoreData) {
+      _withVram(_loadModelScores()).then(function (scoreData) {
         listEl.innerHTML = '';
         var favs = _pickerSettings.lmStudioFavoriteModels || [];
         var ordered = _sortModelsByScore(models, scoreData).sort(function (a, b) {

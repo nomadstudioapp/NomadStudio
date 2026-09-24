@@ -15581,3 +15581,19 @@ body.explore-page-body #album-topbar-toolbar + div {
   font-size: var(--fs-xs);
   line-height: 1.35;
 }
+
+/* LM Studio model size vs. free VRAM (flow-model-picker.js, NomadStudio#12). */
+.nse-model-vram {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.28rem 0.35rem;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+.nse-model-vram--loaded { color: #3aa869; background: color-mix(in srgb, #3aa869 16%, transparent); }
+.nse-model-vram--needs_comfy_free { color: #c58f1a; background: color-mix(in srgb, #dbb23c 18%, transparent); }
+.nse-model-vram--too_big { color: #d64541; background: color-mix(in srgb, #d64541 16%, transparent); }

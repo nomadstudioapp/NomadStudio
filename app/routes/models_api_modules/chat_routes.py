@@ -308,48 +308,22 @@ def _reasoning_level_from_request(payload: dict[str, Any]) -> str:
     return "on" if bool(payload.get("thinking", False)) else "off"
 
 
-# Graduated levels aren't supported by every loaded model — LM Studio reports
-# this via an explicit "not supported by model" error. Fall back one step
-# toward "on" rather than failing the request outright.
-#
-# "off" belongs here too, and its absence used to fail hard: a model that can
-# only reason answers the request with
-#   "Reasoning setting 'off' is not supported by model '…'. Supported
-#    settings: 'on'."
-# and with no entry to fall back to, the call raised and the route returned
-# 502. Measured on mistralai/ministral-3-14b-reasoning: 12 of 12 calls dead.
-# The gap predates routing every studio call through this endpoint, but only
-# showed up once "off" started being asked for everywhere.
-#
-# Falling back to "on" means those models reason whether we want it or not —
-# that is their nature, and a slow answer beats no answer.
-_REASONING_FALLBACK = {"off": "on", "low": "on", "medium": "on", "high": "on"}
+# The reasoning fallbacks, the engine-recovery wait and the VRAM check live in
+# lmstudio_service.native_chat (NomadStudio#12) so the routes and the vision
+# benchmark service share one implementation. These names stay for callers.
+_REASONING_FALLBACK = lmstudio_service.REASONING_FALLBACK
 
 
 def _extract_lmstudio_v1_message_text(response: dict[str, Any]) -> str:
-    """Extract the final answer text from a native /api/v1/chat response.
-
-    Skips 'reasoning' output items (chain-of-thought) and returns the first
-    'message' item's content.
-    """
-    output = response.get("output")
-    if not isinstance(output, list):
-        return ""
-    for item in output:
-        if not isinstance(item, dict):
-            continue
-        if str(item.get("type", "")).strip().lower() == "message":
-            content = item.get("content", "")
-            if isinstance(content, str) and content.strip():
-                return content.strip()
-    return ""
+    """Extract the final answer text from a native /api/v1/chat response."""
+    return lmstudio_service.native_message_text(response)
 
 
 def _call_lmstudio_v1_chat(
     lmstudio_url: str,
     model: str,
     system_prompt: str,
-    user_input: str,
+    user_input: Any,
     temperature: float,
     max_tokens: int,
     reasoning: str = "off",
@@ -357,40 +331,14 @@ def _call_lmstudio_v1_chat(
 ) -> tuple[dict[str, Any], str]:
     """Call LM Studio's native /api/v1/chat endpoint with a reasoning level.
 
-    Returns (response, level_actually_used) — the level can differ from the
-    requested one when a graduated level got rejected and we fell back to "on".
+    Returns (response, level_actually_used). See lmstudio_service.native_chat:
+    it also makes VRAM room before a load and waits for LM Studio to come back
+    when its engine dies, instead of failing straight away.
     """
-
-    def _payload(level: str | None) -> dict[str, Any]:
-        payload: dict[str, Any] = {
-            "model": model,
-            "system_prompt": system_prompt,
-            "input": user_input,
-            "temperature": temperature,
-            "max_output_tokens": max_tokens,
-        }
-        if level is not None:
-            payload["reasoning"] = level
-        return payload
-
-    level: str | None = reasoning
-    url = _lmstudio_rest_chat_endpoint(lmstudio_url)
-    try:
-        response = http_json(url=url, method="POST", payload=_payload(level), timeout=timeout, gpu_category="lmstudio")
-    except RuntimeError as exc:
-        exc_text = str(exc).lower()
-        fallback = _REASONING_FALLBACK.get(level)
-        if fallback and "not supported by model" in exc_text:
-            level = fallback
-            response = http_json(url=url, method="POST", payload=_payload(level), timeout=timeout, gpu_category="lmstudio")
-        elif "does not expose reasoning configuration" in exc_text:
-            # Plain non-reasoning models reject the "reasoning" field outright,
-            # even at "off" — omit it entirely rather than fail the request.
-            level = None
-            response = http_json(url=url, method="POST", payload=_payload(level), timeout=timeout, gpu_category="lmstudio")
-        else:
-            raise
-    return response, (level or "off")
+    return lmstudio_service.native_chat(
+        lmstudio_url, model, system_prompt, user_input,
+        temperature, max_tokens, reasoning=reasoning, timeout=timeout,
+    )
 
 
 # Older LM Studio builds have no /api/v1/chat at all. That was the only reason
@@ -774,6 +722,25 @@ def _chat_settings_response(settings: dict[str, Any]) -> dict[str, Any]:
 # re-checks so a click always reflects LM Studio's current state).
 _PING_CACHE: dict[str, dict[str, Any]] = {}
 _PING_CACHE_TTL_SECONDS = 60.0
+
+
+@models_api_bp.get("/models/chat/vram")
+def lmstudio_vram_report():
+    """What fits in VRAM right now, for the model pickers (NomadStudio#12):
+    free VRAM, what ComfyUI could give back, and each LM Studio model's size
+    with a verdict — fits / needs_comfy_free (the app frees ComfyUI's VRAM
+    itself before loading it) / too_big / loaded / unknown."""
+    data = _ensure_registry()
+    settings = data.get("settings", {})
+    lmstudio_url = str(settings.get("lmStudioApiUrl", "")).strip()
+    if not lmstudio_url:
+        return jsonify({"known": False, "models": {}})
+    try:
+        lmstudio_url = _safe_http_url(lmstudio_url, "LM Studio")
+    except ValueError:
+        return jsonify({"known": False, "models": {}})
+    comfy_url = str(settings.get("comfyApiUrl", "")).strip()
+    return jsonify(lmstudio_service.vram_report(lmstudio_url, comfy_url))
 
 
 @models_api_bp.get("/models/chat/ping")
@@ -1162,19 +1129,26 @@ def benchmark_model():
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
+    # Native endpoint with reasoning off (NomadStudio#12): through
+    # chat-completions a reasoning model burnt the budget thinking and was
+    # scored on an empty answer. _call_studio_llm also waits for LM Studio to
+    # come back when a model that doesn't fit kills the engine — in
+    # story_benchmark_20260829 every model after the first crash "failed to
+    # load" in 0.3 s. If it never comes back, engineDown tells the page to stop
+    # the run instead of failing every remaining model.
     start = time.monotonic()
     try:
-        response = http_json(
-            _lmstudio_chat_endpoint(lmstudio_url), gpu_category="lmstudio",
-            method="POST",
-            payload=_build_chat_payload(model, _benchmark_story_messages(), 0.7, 1600, thinking=False),
-            timeout=180,
+        raw_output, _raw_source = _call_studio_llm(
+            lmstudio_url, model, _benchmark_story_messages(), 0.7, 1600,
+            reasoning="off", timeout=180, label="benchmark",
         )
     except Exception as exc:
-        return jsonify({"model": model, "ok": False, "error": f"LM Studio request failed: {exc}"}), 200
+        return jsonify({
+            "model": model, "ok": False, "error": f"LM Studio request failed: {exc}",
+            "engineDown": not lmstudio_service.is_ready(lmstudio_url),
+        }), 200
     duration = round(time.monotonic() - start, 2)
 
-    raw_output, _raw_source = _extract_lmstudio_message_text(response)
     scenes = _parse_benchmark_scenes(raw_output) if raw_output else []
     if not scenes:
         return jsonify({
@@ -1205,28 +1179,20 @@ def benchmark_model():
             "error": "No Prompt LLM configured to judge the output",
         }), 200
     try:
-        judge_response = http_json(
-            _lmstudio_chat_endpoint(lmstudio_url), gpu_category="lmstudio",
-            method="POST",
-            # Generous budget: the judge model is whatever the app's Prompt
-            # LLM happens to be, which can itself be a reasoning model that
-            # ignores thinking:false (see issue #1) — found live scoring
-            # qwythos-9b-claude-mythos-5-1m with its own 300-token judge
-            # budget, which mostly went to the judge's own hidden reasoning,
-            # leaving it too little room to write real JSON scores and
-            # producing garbage/unfairly-low results.
-            payload=_build_chat_payload(
-                judge_model, [{"role": "user", "content": judge_prompt}], 0.2, 900, thinking=False
-            ),
-            timeout=120,
+        # Generous budget: the judge is whatever the app's Prompt LLM happens
+        # to be, possibly a reasoning model; with reasoning off on the native
+        # endpoint the budget now goes to the scores themselves.
+        judge_raw, judge_source = _call_studio_llm(
+            lmstudio_url, judge_model, [{"role": "user", "content": judge_prompt}], 0.2, 900,
+            reasoning="off", timeout=120, label="benchmark-judge",
         )
     except Exception as exc:
         return jsonify({
             "model": model, "ok": False, "durationSec": duration,
             "error": f"Judge model request failed: {exc}",
+            "engineDown": not lmstudio_service.is_ready(lmstudio_url),
         }), 200
 
-    judge_raw, judge_source = _extract_lmstudio_message_text(judge_response)
     judge_json = _extract_json_payload_from_text(judge_raw) if judge_raw else None
     if not isinstance(judge_json, dict):
         error_msg = (

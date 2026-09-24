@@ -604,7 +604,13 @@
       "Licence page": "Página de la licencia",
       "Verified": "Verificado",
       "Not verified": "Sin verificar",
-      "No download address for this file": "Este archivo no tiene dirección de descarga"
+      "No download address for this file": "Este archivo no tiene dirección de descarga",
+      "Loaded in LM Studio.": "Cargado en LM Studio.",
+      "Fits in the free GPU memory": "Cabe en la memoria libre de la GPU",
+      "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "Solo cabe si ComfyUI libera su memoria de GPU; la app lo hace antes de cargarlo.",
+      "Bigger than the free GPU memory": "Más grande que la memoria libre de la GPU",
+      "it may run partly on the CPU (slow) or fail to load.": "puede ejecutarse en parte en la CPU (lento) o no cargar.",
+      "GPU memory could not be checked.": "No se pudo comprobar la memoria de la GPU."
     },
     "creativity": {
       "title": "Creatividad",

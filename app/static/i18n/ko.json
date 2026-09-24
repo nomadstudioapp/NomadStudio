@@ -1147,5 +1147,8 @@
     "emptyCharacters": "아직 캐릭터가 없습니다. Create, Refine 또는 Mix에서 이미지를 생성한 뒤 결과에서 「Send to Character」를 누르면 캐릭터가 됩니다.",
     "emptyBackgrounds": "아직 배경이 없습니다. Create, Refine 또는 Mix에서 이미지를 생성한 뒤 결과에서 「Send to Background」를 누르면 배경으로 저장됩니다.",
     "emptyFlows": "저장된 플로우가 아직 없습니다. Create, Refine 또는 Mix의 아무 플로우에서나 상단 바의 「Save to Build」를 누르면 설정과 이미지와 함께 여기에 저장됩니다."
+  },
+  "depot": {
+    "badgeTip": "활성 Depot — 생성하는 모든 것이 여기에 저장됩니다. 새 탭에서 Build를 엽니다."
   }
 }

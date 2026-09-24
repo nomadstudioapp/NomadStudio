@@ -1147,5 +1147,8 @@
     "emptyCharacters": "Aún no hay personajes. Genera una imagen en Create, Refine o Mix y pulsa «Send to Character» en el resultado para convertirla en personaje.",
     "emptyBackgrounds": "Aún no hay fondos. Genera una imagen en Create, Refine o Mix y pulsa «Send to Background» en el resultado para guardarla como fondo.",
     "emptyFlows": "Aún no hay flows guardados. En cualquier flow de Create, Refine o Mix, pulsa «Save to Build» en la barra de arriba para guardarlo aquí con sus ajustes e imágenes."
+  },
+  "depot": {
+    "badgeTip": "Depot activo: todo lo que generes se guarda aquí. Abre Build en una pestaña nueva."
   }
 }

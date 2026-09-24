@@ -813,5 +813,8 @@
     "emptyCharacters": "No characters yet. Generate an image in Create, Refine or Mix and press \"Send to Character\" on the result to make it a character.",
     "emptyBackgrounds": "No backgrounds yet. Generate an image in Create, Refine or Mix and press \"Send to Background\" on the result to keep it as a background.",
     "emptyFlows": "No saved flows yet. In any Create, Refine or Mix flow, press \"Save to Build\" in the top bar to keep it here with its settings and images."
+  },
+  "depot": {
+    "badgeTip": "Active Depot — everything you generate is saved here. Opens Build in a new tab."
   }
 }

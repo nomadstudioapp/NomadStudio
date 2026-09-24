@@ -15679,3 +15679,39 @@ body.explore-page-body #album-topbar-toolbar + div {
   height: 2rem;
   z-index: 12;
 }
+
+/* ── Active-Depot badge everywhere (depot_indicator.js) ─────────────────── */
+.nsc-topbar-depot[hidden] {
+  display: none;
+}
+.nsc-topbar-depot {
+  position: relative;
+}
+/* The app's tooltip, not the browser's title — and not in the badge's own
+   accent/uppercase (".nsc-topbar-depot span" would colour it too). */
+.nsc-topbar-depot .cs-mode-tip {
+  color: var(--label-text);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+.nsc-topbar-depot:hover .cs-mode-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+/* Added to any page's top bar that has no badge of its own: right of the
+   centred search slot, same place as in Build. */
+.cs-sub-header > .nsc-depot-badge--auto {
+  position: fixed;
+  top: 0.45rem;
+  height: 2rem;
+  left: calc(50% + min(210px, 50vw) + 1rem);
+  z-index: 12;
+}
+/* Home: next to "What do you want to create today?". */
+.cs-subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}

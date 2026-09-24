@@ -1147,5 +1147,8 @@
     "emptyCharacters": "还没有角色。在 Create、Refine 或 Mix 中生成图像，然后在结果上点击「Send to Character」即可将其设为角色。",
     "emptyBackgrounds": "还没有背景。在 Create、Refine 或 Mix 中生成图像，然后在结果上点击「Send to Background」即可保存为背景。",
     "emptyFlows": "还没有保存的流程。在任意 Create、Refine 或 Mix 流程中，点击顶部栏的「Save to Build」，即可连同设置和图像保存到这里。"
+  },
+  "depot": {
+    "badgeTip": "当前 Depot——你生成的所有内容都会保存到这里。在新标签页中打开 Build。"
   }
 }

@@ -1,40 +1,93 @@
 'use strict';
-// Sidebar "Active Depot" indicator (see layout/base.html's #sidebar-depot-panel)
-// — shown on every page, not just Build, since a Depot gets activated on the
-// Build > Depot detail page but generations happen on Create/Refine/Mix/
-// Upscale. Server-side state only (session["active_depot_id"]); this just
-// mirrors it on load and lets you deactivate from anywhere.
+// "Active Depot" indicator — while a Depot is active, everything generated
+// goes into it, so the user should see that on every page, not only in
+// Build. Server-side state only (session["active_depot_id"]); this mirrors it.
+//
+// Three places show it:
+//   - the sidebar panel (layout/base.html #sidebar-depot-panel), with a
+//     Deactivate button;
+//   - a badge in each page's top bar (.nsc-topbar-depot): the flow pages,
+//     Session and Build carry it in their templates; every other page with a
+//     .cs-sub-header (Create/Refine/Mix hubs, Album, Settings…) gets one
+//     added here, placed right of the top bar's search slot;
+//   - next to the home page's "What do you want to create today?".
+// The badge opens Build in a new tab, so an open flow and its running job
+// are not lost. Elements are looked up on every refresh: shell_router.js
+// swaps pages in without a reload.
 (function () {
-  // Flow pages (Create/Refine/Mix/Upscale/Session) and Build also show a badge
-  // in the topbar — see _flow_body.html / ns_session_workspace.html /
-  // library.html's #nsc-topbar-depot. Not every page has it, so this half of
-  // the indicator is optional. The elements are looked up on every refresh,
-  // not once at startup: shell_router.js swaps pages in without a reload, so
-  // the badge of the page you land on may not have existed when this ran.
-  function els() {
-    return {
-      panel: document.getElementById('sidebar-depot-panel'),
-      nameEl: document.getElementById('sidebar-depot-name'),
-      topbarBadge: document.getElementById('nsc-topbar-depot'),
-      topbarNameEl: document.getElementById('nsc-topbar-depot-name'),
-    };
+  var BADGE_SVG =
+    '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>' +
+    '<path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>';
+
+  function tipText() {
+    var fallback = 'Active Depot — everything you generate is saved here. Opens Build in a new tab.';
+    return (window.NomadI18n && window.NomadI18n.t) ? window.NomadI18n.t('depot.badgeTip', fallback) : fallback;
+  }
+
+  function makeBadge(extraClass) {
+    var a = document.createElement('a');
+    a.className = 'nsc-topbar-depot ' + extraClass;
+    a.hidden = true;
+    a.innerHTML = BADGE_SVG + '<span class="nsc-topbar-depot-name"></span>';
+    return a;
+  }
+
+  // Same look and behaviour for badges from templates and from here: new
+  // tab, the app's tooltip instead of the browser's plain title.
+  function normalize(badge) {
+    badge.href = '/build';
+    badge.target = '_blank';
+    badge.rel = 'noopener';
+    badge.removeAttribute('title');
+    var tip = badge.querySelector('.cs-mode-tip');
+    if (!tip) {
+      tip = document.createElement('span');
+      tip.className = 'cs-mode-tip';
+      badge.appendChild(tip);
+    }
+    tip.textContent = tipText();
+  }
+
+  function ensureBadges() {
+    document.querySelectorAll('.cs-sub-header').forEach(function (header) {
+      if (!header.querySelector('.nsc-topbar-depot')) header.appendChild(makeBadge('nsc-depot-badge--auto'));
+    });
+    var subtitle = document.getElementById('cs-subtitle');
+    if (subtitle && !document.getElementById('cs-hero-depot')) {
+      var row = document.createElement('div');
+      row.className = 'cs-subtitle-row';
+      subtitle.parentNode.insertBefore(row, subtitle);
+      row.appendChild(subtitle);
+      var badge = makeBadge('nsc-depot-badge--hero');
+      badge.id = 'cs-hero-depot';
+      row.appendChild(badge);
+    }
+    var badges = document.querySelectorAll('.nsc-topbar-depot');
+    badges.forEach(normalize);
+    return badges;
   }
 
   function refresh() {
-    var e = els();
-    if (!e.panel && !e.topbarBadge) return Promise.resolve();
+    var badges = ensureBadges();
+    var panel = document.getElementById('sidebar-depot-panel');
+    var panelName = document.getElementById('sidebar-depot-name');
+    if (!panel && !badges.length) return Promise.resolve();
     return fetch('/api/depots/active')
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var depot = data && data.depot;
-        if (e.panel) e.panel.hidden = !depot;
-        if (depot && e.nameEl) e.nameEl.textContent = depot.name;
-        if (e.topbarBadge) e.topbarBadge.hidden = !depot;
-        if (depot && e.topbarNameEl) e.topbarNameEl.textContent = depot.name;
+        if (panel) panel.hidden = !depot;
+        if (depot && panelName) panelName.textContent = depot.name;
+        badges.forEach(function (b) {
+          b.hidden = !depot;
+          var nameEl = b.querySelector('.nsc-topbar-depot-name, #nsc-topbar-depot-name');
+          if (depot && nameEl) nameEl.textContent = depot.name;
+        });
       })
       .catch(function () {
-        if (e.panel) e.panel.hidden = true;
-        if (e.topbarBadge) e.topbarBadge.hidden = true;
+        if (panel) panel.hidden = true;
+        badges.forEach(function (b) { b.hidden = true; });
       });
   }
 
@@ -53,5 +106,8 @@
   // shell_router.js swaps pages in without one either.
   window.NomadDepotIndicator = { refresh: refresh };
   window.addEventListener('oj:shell:navigate-end', refresh);
+  document.addEventListener('nomad-i18n-applied', function () {
+    document.querySelectorAll('.nsc-topbar-depot .cs-mode-tip').forEach(function (t) { t.textContent = tipText(); });
+  });
   refresh();
 })();

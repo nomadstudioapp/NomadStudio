@@ -610,7 +610,12 @@
       "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "只有在 ComfyUI 释放其显存后才能放下——应用会在加载前自动释放。",
       "Bigger than the free GPU memory": "大于 GPU 的空闲显存",
       "it may run partly on the CPU (slow) or fail to load.": "可能部分在 CPU 上运行（较慢）或无法加载。",
-      "GPU memory could not be checked.": "无法检查 GPU 显存。"
+      "GPU memory could not be checked.": "无法检查 GPU 显存。",
+      "Send to Character": "发送到角色",
+      "Send to Background": "发送到背景",
+      "Character created": "角色已创建",
+      "Background created": "背景已创建",
+      "edit it in Build.": "可在 Build 中编辑。"
     },
     "creativity": {
       "title": "创意程度",
@@ -1136,6 +1141,11 @@
     "queued": "排队中…",
     "starting": "正在开始…",
     "search": "搜索…",
-    "noMatch": "没有符合搜索的结果。"
+    "noMatch": "没有符合搜索的结果。",
+    "newDepot": "新建 Depot",
+    "newTemplate": "新建模板",
+    "emptyCharacters": "还没有角色。在 Create、Refine 或 Mix 中生成图像，然后在结果上点击「Send to Character」即可将其设为角色。",
+    "emptyBackgrounds": "还没有背景。在 Create、Refine 或 Mix 中生成图像，然后在结果上点击「Send to Background」即可保存为背景。",
+    "emptyFlows": "还没有保存的流程。在任意 Create、Refine 或 Mix 流程中，点击顶部栏的「Save to Build」，即可连同设置和图像保存到这里。"
   }
 }

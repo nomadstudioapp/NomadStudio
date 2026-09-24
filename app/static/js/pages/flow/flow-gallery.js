@@ -522,28 +522,30 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   });
   imgWrap.appendChild(sendDepotBtn);
 
-  // Send to Character — sets this result as the reference image of one of
-  // the user's named Characters (Build), distinct from "Send to Depot"'s
-  // generic Background/Character/Asset depot buckets above: this PATCHes a
-  // *specific* character's own image field (see characters_routes.py,
-  // PATCH /api/characters/<keyword>/image), same lateral options-panel
-  // pattern as _openSendToDepotPanel just with a different target list.
-  var sendCharacterBtn = document.createElement('button');
-  sendCharacterBtn.type = 'button';
-  sendCharacterBtn.id = 'nit-send-character-btn-' + idx;
-  sendCharacterBtn.className = 'nit-send-tray-btn nit-send-character-btn nsc-options-trigger';
-  sendCharacterBtn.setAttribute('aria-label', 'Send to Character');
-  sendCharacterBtn.title = 'Send to Character';
-  sendCharacterBtn.innerHTML =
-    '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      '<circle cx="12" cy="8" r="4"/>' +
-      '<path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>' +
-    '</svg>';
-  sendCharacterBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    _openSendToCharacterPanel(imgUrl);
+  // Send to Character / Send to Background — create a new Build Character
+  // or Background from this result right away (image + the card's prompt),
+  // see _sendResultToBuild below. Distinct from "Send to Depot" above, which
+  // files the image into the active Depot's own buckets.
+  [
+    { kind: 'character', label: 'Send to Character',
+      svg: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>' },
+    { kind: 'background', label: 'Send to Background',
+      svg: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/>' },
+  ].forEach(function (target) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'nit-send-' + target.kind + '-btn-' + idx;
+    btn.className = 'nit-send-tray-btn nit-send-' + target.kind + '-btn';
+    btn.setAttribute('aria-label', tF(target.label));
+    btn.title = tF(target.label);
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+      target.svg + '</svg>';
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      _sendResultToBuild(target.kind, imgUrl, _cardPromptStr, btn);
+    });
+    imgWrap.appendChild(btn);
   });
-  imgWrap.appendChild(sendCharacterBtn);
 
   // Auto-save to the active Depot's Flows section — every generation while
   // a depot is active, no manual picking. Distinct from the button above
@@ -657,61 +659,50 @@ function _openSendToDepotPanel(imgUrl, caption) {
   });
 }
 
-// "Send to Character" — set a result image as the reference image of one of
-// the user's named Characters (Build → Character panel's own "Change image"
-// upload does this same job from a local file; this is the flow-result
-// equivalent, no download/re-upload round trip needed). Lists every
-// character from GET /api/characters and PATCHes the chosen one's image via
-// PATCH /api/characters/<keyword>/image — see characters_routes.py.
-function _openSendToCharacterPanel(imgUrl) {
-  fetch('/api/characters').then(function (r) { return r.json(); }).then(function (data) {
-    var characters = (data && Array.isArray(data.characters)) ? data.characters : [];
-    openOptionsPanel('Send to Character', function (body) {
-      var info = document.createElement('p');
-      info.className = 'ncf-depot-send-info';
-      body.appendChild(info);
-
-      if (!characters.length) {
-        info.textContent = 'No characters yet. Create one in Build → Characters first.';
-        return;
-      }
-      info.textContent = 'Set as reference image for:';
-
-      var list = document.createElement('div');
-      list.className = 'nse-model-list';
-      body.appendChild(list);
-
-      characters.forEach(function (ch) {
-        var keyword = String((ch && ch.keyword) || '').trim();
-        if (!keyword) return;
-        var label = String((ch && ch.description) || keyword).trim();
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'nse-model-item ncf-history-item';
-        btn.textContent = label;
-        btn.addEventListener('click', function () {
-          list.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
-          fetch('/api/characters/' + encodeURIComponent(keyword) + '/image', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ imageUrl: imgUrl }),
-          }).then(function (r) {
-            return r.json().then(function (d) { return { ok: r.ok, data: d }; });
-          }).then(function (res) {
-            if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed');
-            info.textContent = 'Set as reference image for "' + label + '".';
-            setTimeout(closeOptionsPanel, 900);
-          }).catch(function (err) {
-            console.error('[FlowGallery] Send to character failed:', err);
-            info.textContent = 'Failed to send: ' + (err && err.message ? err.message : err);
-            list.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-          });
-        });
-        list.appendChild(btn);
+// "Send to Character" / "Send to Background" — turn a result into a new
+// Build Character or Background on the spot: POST /api/characters (or
+// /api/backgrounds) with a description taken from the start of the card's
+// prompt and the full prompt as the item's own prompt, then set this image as
+// its reference image (PATCH …/<keyword>/image, same call Build's "Change
+// image" makes). The server picks a unique keyword (character, character_2…).
+// Picking an existing character to update instead is still to be designed.
+function _sendResultToBuild(kind, imgUrl, prompt, btn) {
+  var plural = kind + 's';
+  var fullPrompt = String(prompt || '').trim();
+  var words = fullPrompt.split(/\s+/).filter(Boolean);
+  var description = words.slice(0, 12).join(' ');
+  if (words.length > 12) description += '…';
+  if (!description) description = kind === 'character' ? 'New character' : 'New background';
+  if (btn) btn.disabled = true;
+  fetch('/api/' + plural, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keyword: kind, description: description, prompt: fullPrompt || description }),
+  }).then(function (r) {
+    return r.json().then(function (d) { return { ok: r.ok, data: d }; });
+  }).then(function (res) {
+    if (!res.ok) throw new Error((res.data && res.data.error) || 'Create failed');
+    var item = res.data[kind] || {};
+    return fetch('/api/' + plural + '/' + encodeURIComponent(item.keyword) + '/image', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl: imgUrl }),
+    }).then(function (r) {
+      return r.json().then(function (d) {
+        if (!r.ok) throw new Error((d && d.error) || 'Image failed');
+        return item;
       });
     });
+  }).then(function (item) {
+    if (typeof showToast === 'function') {
+      showToast((kind === 'character' ? tF('Character created') : tF('Background created')) +
+        ': ' + item.keyword + ' — ' + tF('edit it in Build.'), 'info');
+    }
   }).catch(function (err) {
-    console.error('[FlowGallery] Failed to load characters:', err);
+    console.error('[FlowGallery] Send to ' + kind + ' failed:', err);
+    if (typeof showErrorToast === 'function') showErrorToast((err && err.message) || String(err));
+  }).then(function () {
+    if (btn) btn.disabled = false;
   });
 }
 

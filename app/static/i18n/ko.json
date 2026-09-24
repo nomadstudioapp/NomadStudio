@@ -610,7 +610,12 @@
       "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "ComfyUI가 GPU 메모리를 비워야 들어갑니다 — 앱이 로드 전에 자동으로 비웁니다.",
       "Bigger than the free GPU memory": "GPU 여유 메모리보다 큼",
       "it may run partly on the CPU (slow) or fail to load.": "일부가 CPU에서 실행되어 느려지거나 로드에 실패할 수 있습니다.",
-      "GPU memory could not be checked.": "GPU 메모리를 확인할 수 없습니다."
+      "GPU memory could not be checked.": "GPU 메모리를 확인할 수 없습니다.",
+      "Send to Character": "캐릭터로 보내기",
+      "Send to Background": "배경으로 보내기",
+      "Character created": "캐릭터 생성됨",
+      "Background created": "배경 생성됨",
+      "edit it in Build.": "Build에서 편집하세요."
     },
     "creativity": {
       "title": "창의성",
@@ -1136,6 +1141,11 @@
     "queued": "대기 중…",
     "starting": "시작하는 중…",
     "search": "검색…",
-    "noMatch": "검색과 일치하는 항목이 없습니다."
+    "noMatch": "검색과 일치하는 항목이 없습니다.",
+    "newDepot": "새 Depot",
+    "newTemplate": "새 템플릿",
+    "emptyCharacters": "아직 캐릭터가 없습니다. Create, Refine 또는 Mix에서 이미지를 생성한 뒤 결과에서 「Send to Character」를 누르면 캐릭터가 됩니다.",
+    "emptyBackgrounds": "아직 배경이 없습니다. Create, Refine 또는 Mix에서 이미지를 생성한 뒤 결과에서 「Send to Background」를 누르면 배경으로 저장됩니다.",
+    "emptyFlows": "저장된 플로우가 아직 없습니다. Create, Refine 또는 Mix의 아무 플로우에서나 상단 바의 「Save to Build」를 누르면 설정과 이미지와 함께 여기에 저장됩니다."
   }
 }

@@ -487,6 +487,12 @@
     });
   }
 
+  // Tabs whose "create" button sits in the nav footer (renderNav).
+  var NAV_FOOTER_ACTIONS = {
+    depot: { key: 'build.newDepot', label: 'New Depot', open: function () { openCreateDepotModal(); } },
+    templates: { key: 'build.newTemplate', label: 'New Template', open: function () { openCreateTemplateModal(); } },
+  };
+
   function renderNav() {
     var items = CATEGORIES.map(function (cat) {
       var active = cat.id === activeId;
@@ -548,7 +554,19 @@
       }
       return chip;
     }).join('');
-    nav.innerHTML = '<p class="group-label">Build</p><nav class="nav-block">' + items + '</nav>';
+    // The tab's "create" action lives in a footer pinned to the bottom of
+    // this panel — same button as the Styles panel's footer — instead of a
+    // toolbar or a floating round "+" above the grid.
+    var action = NAV_FOOTER_ACTIONS[activeId];
+    var footer = action
+      ? '<div class="lib-nav-footer">' +
+          '<button type="button" class="nss-generate-scenes-btn" id="lib-nav-create" data-action="' + activeId + '" style="--nss-accent:var(--accent)">' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' +
+            '<span>' + escHtml(tr(action.key, action.label)) + '</span>' +
+          '</button>' +
+        '</div>'
+      : '';
+    nav.innerHTML = '<p class="group-label">Build</p><nav class="nav-block">' + items + '</nav>' + footer;
     if (window.lucide) window.lucide.createIcons();
   }
 
@@ -752,8 +770,16 @@
     if (!items.length) {
       grid.style.display = 'none';
       empty.hidden = false;
+      // Empty sections say how things get here, not just that nothing has.
+      var EMPTY_HINTS = {
+        characters: ['build.emptyCharacters', 'No characters yet. Generate an image in Create, Refine or Mix and press "Send to Character" on the result to make it a character.'],
+        backgrounds: ['build.emptyBackgrounds', 'No backgrounds yet. Generate an image in Create, Refine or Mix and press "Send to Background" on the result to keep it as a background.'],
+        flows: ['build.emptyFlows', 'No saved flows yet. In any Create, Refine or Mix flow, press "Save to Build" in the top bar to keep it here with its settings and images.'],
+      };
+      var hint = EMPTY_HINTS[cat.id];
       empty.textContent = searchQuery.trim()
         ? tr('build.noMatch', 'Nothing matches your search.')
+        : hint ? tr(hint[0], hint[1])
         : 'No ' + cat.label.toLowerCase() + ' saved yet.';
       return;
     }
@@ -883,7 +909,7 @@
     if (depotDetailEl) { depotDetailEl.hidden = true; depotDetailEl.innerHTML = ''; }
     if (depotAside) depotAside.hidden = true;
     if (breadcrumbDepots) breadcrumbDepots.hidden = true;
-    if (breadcrumbDepotsArrow) breadcrumbDepotsArrow.hidden = true;
+    if (breadcrumbDepotsArrow) breadcrumbDepotsArrow.setAttribute('hidden', ''); // SVG: no .hidden property
 
     fetchItems(cat).then(function (items) {
       if (activeId !== id) return;
@@ -902,6 +928,12 @@
   }
 
   nav.addEventListener('click', function (e) {
+    var createBtn = e.target.closest('#lib-nav-create');
+    if (createBtn) {
+      var navAction = NAV_FOOTER_ACTIONS[createBtn.dataset.action];
+      if (navAction) navAction.open();
+      return;
+    }
     var groupToggle = e.target.closest('.lib-style-cat-group-toggle');
     if (groupToggle) {
       var g = groupToggle.dataset.styleGroup;
@@ -2144,12 +2176,11 @@
     // the list — replaces the aside's old dedicated back button.
     if (breadcrumbCurrent) breadcrumbCurrent.textContent = depot.name;
     if (breadcrumbDepots) breadcrumbDepots.hidden = false;
-    if (breadcrumbDepotsArrow) breadcrumbDepotsArrow.hidden = false;
+    if (breadcrumbDepotsArrow) breadcrumbDepotsArrow.removeAttribute('hidden'); // SVG: no .hidden property
     var activateBtn = document.getElementById('lib-depot-activate-btn');
     if (activateBtn) {
       activateBtn.dataset.depotId = String(depot.id);
       activateBtn.classList.toggle('is-active', isActive);
-      activateBtn.classList.toggle('nsc-generate-btn--ghost', !isActive);
       var activateLabel = activateBtn.querySelector('span');
       if (activateLabel) activateLabel.textContent = isActive ? 'Active — click to deactivate' : 'Activate';
     }
@@ -2224,7 +2255,11 @@
         var req = isActive
           ? fetch('/api/depots/deactivate', { method: 'POST' })
           : fetch('/api/depots/' + encodeURIComponent(id) + '/activate', { method: 'POST' });
-        req.then(function () { showDepotDetail(id); })
+        req.then(function () {
+          showDepotDetail(id);
+          // Header badge + sidebar "Active Depot" panel (depot_indicator.js).
+          if (window.NomadDepotIndicator) window.NomadDepotIndicator.refresh();
+        })
           .catch(function (err) { console.error('[Library] Depot activate toggle failed:', err); })
           .finally(function () { activateBtn.disabled = false; });
         return;

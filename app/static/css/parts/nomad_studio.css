@@ -1028,6 +1028,13 @@
   opacity: 0.7;
 }
 
+/* The browser's own [hidden] rule only covers HTML elements, not inline
+   SVG — Build's "Depots >" arrow (hidden outside a depot) kept showing as a
+   second ">" between BUILD and the section name. */
+.cs-breadcrumb [hidden] {
+  display: none;
+}
+
 .cs-breadcrumb svg {
   width: 12px;
   height: 12px;
@@ -1679,7 +1686,10 @@
    isn't safe to blanket-rescope) — so it gets the same panel background
    #lib-category-nav gets, applied directly by id instead. */
 #lib-styles-aside {
-  background: var(--bg-soft);
+  /* A subpanel beside the category nav, not part of it: same tone as a
+     Create flow's options panel (.nsc-options-panel), so the two read as
+     separate panels instead of one dark block. */
+  background: color-mix(in srgb, var(--bg-panel) 40%, var(--bg-soft));
   /* .nsc-inputs' own 1.75rem top padding sits ~24px lower than
      #lib-category-nav's "BUILD" label — "MODEL" should start level with it. */
   padding-top: 0.25rem;
@@ -2223,7 +2233,9 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg-panel);
+  /* Same side-panel tone as Create's options panel (.nsc-options-panel) —
+     plain --bg-panel read as a bright slab next to the grid. */
+  background: color-mix(in srgb, var(--bg-panel) 40%, var(--bg-soft));
   overflow: hidden;
   align-self: stretch;
   /* Same slide-open language as .cs-history-toggle's aside (.cs-history-content
@@ -2469,6 +2481,12 @@
    Session workspace action bar. Save and Change image are filled accent;
    Delete is the red-tinted variant of the same pill. */
 .lib-style-edit-panel-apply,
+/* display:inline-flex below outranks the browser's [hidden] rule — the
+   Depot panel's Delete showed while *creating* a depot. */
+.lib-style-edit-panel-secondary[hidden] {
+  display: none;
+}
+
 .lib-style-edit-panel-secondary {
   display: inline-flex;
   align-items: center;
@@ -11594,6 +11612,17 @@ body.nsc-session-workspace-page .nss-scenes-area {
   opacity: 1;
 }
 
+.nit-send-background-btn {
+  right: 142px;
+}
+.nit-send-background-btn:hover {
+  background: color-mix(in srgb, var(--accent) 80%, #000);
+}
+.nss-card-img-wrap:hover .nit-send-background-btn,
+.nsc-image-tile:hover .nit-send-background-btn {
+  opacity: 1;
+}
+
 .ncf-depot-send-info {
   font-size: var(--fs-sm);
   color: var(--text-muted);
@@ -15040,16 +15069,20 @@ body.explore-page-body #album-topbar-toolbar + div {
   margin: 0 0 1rem;
 }
 
-/* Same primary/ghost pill Nomad Studio's own "Generate images" button uses
-   (.nsc-generate-btn/--ghost) — solid accent fill while active, outline
-   while not, instead of the plain .rp-btn treatment this used to borrow.
-   Toggled in renderDepotDetail (library.js). Radius overridden back to the
-   app's standard --radius: .nsc-generate-btn's own 20px pill is correct for
-   the footer CTA it was built for, but reads inconsistent with every other
-   rounded-rect control in this panel (inputs, counters, cards). */
+/* Same pill as every other Build action (Generate / New Style / New Depot:
+   .nss-generate-scenes-btn). Active depot: green, so "this depot is
+   collecting everything you generate" reads at a glance. */
 .lib-depot-activate-btn {
+  --nss-accent: var(--accent);
+  justify-content: center;
   margin-top: 0.9rem;
-  border-radius: var(--radius);
+}
+/* Active: the theme accent's complementary hue (blue accent → amber), so it
+   stands out against the theme whichever theme is on. Dark text: white on
+   amber doesn't read. */
+.lib-depot-activate-btn.is-active {
+  --nss-accent: hsl(from var(--accent) calc(h + 180) s l);
+  color: #1c1605;
 }
 .lib-depot-activate-btn i,
 .lib-depot-activate-btn svg {
@@ -15058,31 +15091,36 @@ body.explore-page-body #album-topbar-toolbar + div {
   stroke-width: 2;
 }
 
+/* One column — the panel has the height for it — each counter a row:
+   section name left, count right. */
 .lib-depot-counters {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .lib-depot-counter {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.6rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
   border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
 .lib-depot-counter-count {
+  order: 2;
   font-size: var(--fs-lg);
   font-weight: 700;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .lib-depot-counter-label {
   font-size: var(--fs-xs, 11px);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
 }
 
@@ -15597,3 +15635,47 @@ body.explore-page-body #album-topbar-toolbar + div {
 .nse-model-vram--loaded { color: #3aa869; background: color-mix(in srgb, #3aa869 16%, transparent); }
 .nse-model-vram--needs_comfy_free { color: #c58f1a; background: color-mix(in srgb, #dbb23c 18%, transparent); }
 .nse-model-vram--too_big { color: #d64541; background: color-mix(in srgb, #d64541 16%, transparent); }
+
+/* ── Build: left panel (2026-09-24 polish) ─────────────────────────────── */
+/* The panels run to the bottom edge of the window: .cs-view--library's 2rem
+   bottom padding left a strip of page background under them. */
+#lib-body > aside {
+  margin-bottom: -2rem;
+}
+/* "BUILD" lines up with the row icons, like WORKSPACE/MODELS in the app's
+   own sidebar — the 44px indent of .cs-tag-filter--sidebar .group-label is
+   sized for Create's chips, not for these rows. */
+#lib-category-nav .group-label {
+  padding-left: 11px;
+  margin: 8px 0 12px;
+}
+/* Depot tab: "New Depot" pinned to the bottom of the panel (library.js
+   renderNav), same button as the Styles panel's footer. */
+#lib-category-nav .nav-block {
+  flex-shrink: 0;
+}
+.lib-nav-footer {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  padding: 12px 0 4px;
+  background: var(--bg-soft);
+}
+.lib-nav-footer .nss-generate-scenes-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Build: the active-Depot badge sits just right of the search bar, which is
+   fixed and centred in the top bar (.cs-flow-search, max 420px wide) — the
+   badge used to be centred too, underneath it. Same top and height as the
+   bar so the two line up. */
+.library-page .cs-sub-header .nsc-topbar-center {
+  position: fixed;
+  top: 0.45rem;
+  left: calc(50% + min(210px, 50vw) + 1rem);
+  transform: none;
+  height: 2rem;
+  z-index: 12;
+}

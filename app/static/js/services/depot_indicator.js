@@ -5,33 +5,40 @@
 // Upscale. Server-side state only (session["active_depot_id"]); this just
 // mirrors it on load and lets you deactivate from anywhere.
 (function () {
-  var panel = document.getElementById('sidebar-depot-panel');
-  var nameEl = document.getElementById('sidebar-depot-name');
-  var deactivateBtn = document.getElementById('sidebar-depot-deactivate-btn');
-  // Flow pages (Create/Refine/Mix/Upscale/Session) also show a badge in the
-  // topbar, centered next to the viewer name — see _flow_body.html /
-  // ns_session_workspace.html's #nsc-topbar-depot. Not every page has it
-  // (only flow pages do), so this half of the indicator is optional.
-  var topbarBadge = document.getElementById('nsc-topbar-depot');
-  var topbarNameEl = document.getElementById('nsc-topbar-depot-name');
-  if (!panel && !topbarBadge) return;
+  // Flow pages (Create/Refine/Mix/Upscale/Session) and Build also show a badge
+  // in the topbar — see _flow_body.html / ns_session_workspace.html /
+  // library.html's #nsc-topbar-depot. Not every page has it, so this half of
+  // the indicator is optional. The elements are looked up on every refresh,
+  // not once at startup: shell_router.js swaps pages in without a reload, so
+  // the badge of the page you land on may not have existed when this ran.
+  function els() {
+    return {
+      panel: document.getElementById('sidebar-depot-panel'),
+      nameEl: document.getElementById('sidebar-depot-name'),
+      topbarBadge: document.getElementById('nsc-topbar-depot'),
+      topbarNameEl: document.getElementById('nsc-topbar-depot-name'),
+    };
+  }
 
   function refresh() {
-    fetch('/api/depots/active')
+    var e = els();
+    if (!e.panel && !e.topbarBadge) return Promise.resolve();
+    return fetch('/api/depots/active')
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var depot = data && data.depot;
-        if (panel) panel.hidden = !depot;
-        if (depot && nameEl) nameEl.textContent = depot.name;
-        if (topbarBadge) topbarBadge.hidden = !depot;
-        if (depot && topbarNameEl) topbarNameEl.textContent = depot.name;
+        if (e.panel) e.panel.hidden = !depot;
+        if (depot && e.nameEl) e.nameEl.textContent = depot.name;
+        if (e.topbarBadge) e.topbarBadge.hidden = !depot;
+        if (depot && e.topbarNameEl) e.topbarNameEl.textContent = depot.name;
       })
       .catch(function () {
-        if (panel) panel.hidden = true;
-        if (topbarBadge) topbarBadge.hidden = true;
+        if (e.panel) e.panel.hidden = true;
+        if (e.topbarBadge) e.topbarBadge.hidden = true;
       });
   }
 
+  var deactivateBtn = document.getElementById('sidebar-depot-deactivate-btn');
   if (deactivateBtn) {
     deactivateBtn.addEventListener('click', function () {
       deactivateBtn.disabled = true;
@@ -42,5 +49,9 @@
     });
   }
 
+  // Build's Activate button changes the state without a page load, and
+  // shell_router.js swaps pages in without one either.
+  window.NomadDepotIndicator = { refresh: refresh };
+  window.addEventListener('oj:shell:navigate-end', refresh);
   refresh();
 })();

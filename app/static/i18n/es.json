@@ -610,7 +610,12 @@
       "Only fits once ComfyUI frees its GPU memory — the app does that before loading it.": "Solo cabe si ComfyUI libera su memoria de GPU; la app lo hace antes de cargarlo.",
       "Bigger than the free GPU memory": "Más grande que la memoria libre de la GPU",
       "it may run partly on the CPU (slow) or fail to load.": "puede ejecutarse en parte en la CPU (lento) o no cargar.",
-      "GPU memory could not be checked.": "No se pudo comprobar la memoria de la GPU."
+      "GPU memory could not be checked.": "No se pudo comprobar la memoria de la GPU.",
+      "Send to Character": "Enviar a personaje",
+      "Send to Background": "Enviar a fondo",
+      "Character created": "Personaje creado",
+      "Background created": "Fondo creado",
+      "edit it in Build.": "edítalo en Build."
     },
     "creativity": {
       "title": "Creatividad",
@@ -1136,6 +1141,11 @@
     "queued": "En cola…",
     "starting": "Empezando…",
     "search": "Buscar…",
-    "noMatch": "Nada coincide con tu búsqueda."
+    "noMatch": "Nada coincide con tu búsqueda.",
+    "newDepot": "Nuevo Depot",
+    "newTemplate": "Nueva plantilla",
+    "emptyCharacters": "Aún no hay personajes. Genera una imagen en Create, Refine o Mix y pulsa «Send to Character» en el resultado para convertirla en personaje.",
+    "emptyBackgrounds": "Aún no hay fondos. Genera una imagen en Create, Refine o Mix y pulsa «Send to Background» en el resultado para guardarla como fondo.",
+    "emptyFlows": "Aún no hay flows guardados. En cualquier flow de Create, Refine o Mix, pulsa «Save to Build» en la barra de arriba para guardarlo aquí con sus ajustes e imágenes."
   }
 }

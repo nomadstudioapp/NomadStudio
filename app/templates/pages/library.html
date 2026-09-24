@@ -24,6 +24,14 @@
           <svg viewBox="0 0 24 24" aria-hidden="true" id="lib-breadcrumb-depots-arrow" hidden><path d="M9 18l6-6-6-6"/></svg>
           <span class="cs-breadcrumb-current" id="lib-breadcrumb-current">Styles</span>
         </p>
+        <!-- Active Depot badge, same as the flow pages' topbar (_flow_body.html),
+             filled in by services/depot_indicator.js. -->
+        <div class="nsc-topbar-center">
+          <a class="nsc-topbar-depot" id="nsc-topbar-depot" href="/build" title="Active Depot — click to manage" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
+            <span id="nsc-topbar-depot-name"></span>
+          </a>
+        </div>
       </div>
 
       <div class="cs-create-body" id="lib-body">
@@ -264,7 +272,7 @@
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
                 <label class="nsc-field-label" for="lib-depot-edit-description">Description</label>
-                <textarea class="nsc-input" id="lib-depot-edit-description" rows="3" spellcheck="false"></textarea>
+                <textarea class="nsc-input" id="lib-depot-edit-description" rows="3"></textarea>
               </div>
             </div>
             <p class="lib-style-edit-status" id="lib-depot-edit-status"></p>
@@ -320,7 +328,7 @@
               <p class="nsc-step-label">Details</p>
               <div class="nsc-field-row nsc-field-row--compose">
                 <label class="nsc-field-label" for="lib-item-edit-description">Description</label>
-                <textarea class="nsc-input" id="lib-item-edit-description" rows="2" spellcheck="false"></textarea>
+                <textarea class="nsc-input" id="lib-item-edit-description" rows="2"></textarea>
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
                 <label class="nsc-field-label" for="lib-item-edit-prompt">Prompt</label>
@@ -359,7 +367,7 @@
                 </button>
               </div>
               <p class="lib-depot-aside-desc" id="lib-depot-aside-desc" hidden></p>
-              <button type="button" class="nsc-generate-btn nsc-generate-btn--ghost lib-depot-activate-btn" id="lib-depot-activate-btn">
+              <button type="button" class="nss-generate-scenes-btn lib-depot-activate-btn" id="lib-depot-activate-btn">
                 <i data-lucide="zap" aria-hidden="true"></i>
                 <span></span>
               </button>
@@ -416,25 +424,6 @@
           <input type="text" class="nsc-input cs-flow-search" id="lib-search"
                  placeholder="Search…" aria-label="Search"
                  data-i18n-attr="placeholder:build.search,aria-label:build.search" autocomplete="off">
-
-          <div class="lib-toolbar" id="lib-templates-toolbar" hidden>
-            <button type="button" class="ncf-btn ncf-btn--secondary lib-toolbar-create-btn" id="lib-create-template-btn">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-              <span>Create Template</span>
-            </button>
-            <span class="lib-toolbar-count" id="lib-templates-count"></span>
-          </div>
-
-          <!-- Vertical rail of round icon buttons to the left of the Depot
-               grid — same .cs-card-zoom-btn circular treatment (+ .cs-mode-tip
-               hover label) Album's grid-zoom controls already use, reused
-               here for a single action instead of zoom. -->
-          <div class="lib-depot-rail" id="lib-depot-toolbar" hidden>
-            <button type="button" class="cs-card-zoom-btn" id="lib-create-depot-btn" aria-label="Create Depot">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-              <span class="cs-mode-tip">Create Depot</span>
-            </button>
-          </div>
 
           <p class="cs-tag-filter-empty" id="lib-empty" hidden>Nothing here yet.</p>
           <nav class="cs-sub-grid" id="lib-grid" aria-label="Build items"></nav>

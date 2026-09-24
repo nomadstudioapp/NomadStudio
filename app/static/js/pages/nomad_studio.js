@@ -1075,7 +1075,9 @@
 
   function sessionSetFlowChromeVisible(visible) {
     [sessionFlowCrumb, sessionFlowCrumbSep, sessionFlowTrayBtn, sessionFlowModeToggle, sessionFlowPanelClose]
-      .forEach(function (el) { if (el) el.hidden = !visible; });
+      // toggleAttribute, not .hidden: the crumb separator is an <svg>, which
+      // has no .hidden property — setting it left the attribute in place.
+      .forEach(function (el) { if (el) el.toggleAttribute('hidden', !visible); });
     // Collapse the session header (name/meta/icon/delete) down to just its
     // action row while a flow is open — see .cs-session-hdr--compact.
     var hdr = document.querySelector('.cs-session-hdr');

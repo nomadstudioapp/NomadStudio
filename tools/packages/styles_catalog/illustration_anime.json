@@ -1,0 +1,646 @@
+[
+  {
+    "src": [
+      17
+    ],
+    "key": "90s-ova-anime",
+    "name": {
+      "en": "90s OVA Anime",
+      "es": "Anime OVA de los 90",
+      "zh": "90 年代 OVA 动画",
+      "ko": "90년대 OVA 애니메"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "1990s OVA anime aesthetic, sharp cel outlines",
+    "suffix": "retro hand-painted color palette, dramatic highlights, soft film grain, nostalgic cel shading",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      18
+    ],
+    "key": "early-2000s-anime",
+    "name": {
+      "en": "Early 2000s Anime",
+      "es": "Anime de principios de los 2000",
+      "zh": "2000 年代初动画",
+      "ko": "2000년대 초 애니메"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "early-2000s anime, hybrid cel and digital coloring",
+    "suffix": "bright saturated colors, clean digital gradients, crisp character silhouettes, glossy highlights",
+    "prompt": "a young girl with a long ponytail standing on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "note": "Preview closely resembles a trademarked character — regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      19
+    ],
+    "key": "retro-vhs-anime",
+    "name": {
+      "en": "Retro VHS Anime",
+      "es": "Anime VHS retro",
+      "zh": "复古录像带动画",
+      "ko": "레트로 VHS 애니메"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "retro VHS anime aesthetic, soft analog blur",
+    "suffix": "muted faded colors, chromatic bleeding, scanlines, tape noise and tracking artifacts",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      307
+    ],
+    "key": "retro-cel-animation",
+    "name": {
+      "en": "Retro Cel Animation",
+      "es": "Animación en acetato retro",
+      "zh": "复古赛璐珞动画",
+      "ko": "레트로 셀 애니메이션"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "retro cel animation, late-80s anime film aesthetic, digital painting that mimics hand-painted cels",
+    "suffix": "clean crisp black outlines, smooth flat cel colors, glossy hair highlights, large expressive eyes, soft diffuse lighting, slight film grain",
+    "prompt": "a close-up portrait of a young woman with long black hair, gold earrings and a crimson top against a soft beige interior",
+    "review": {
+      "status": "rewritten",
+      "note": "Prefix/suffix trimmed to the look; the long preview description moved to the example prompt.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      45
+    ],
+    "key": "jrpg-fantasy",
+    "name": {
+      "en": "JRPG Fantasy",
+      "es": "Fantasía JRPG",
+      "zh": "日式 RPG 奇幻",
+      "ko": "JRPG 판타지"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "high-fantasy anime key art in the spirit of classic Japanese role-playing games",
+    "suffix": "detailed fantasy costume design, vibrant magic effects, grand scale, polished cel shading",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      303
+    ],
+    "key": "lofi-sunset-anime",
+    "name": {
+      "en": "Lo-fi Sunset Anime",
+      "es": "Anime lo-fi al atardecer",
+      "zh": "低保真黄昏动漫",
+      "ko": "로파이 선셋 애니메"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "lo-fi anime illustration, clean black outlines, flat cel-shaded color blocks",
+    "suffix": "warm sunset palette of red, soft orange and deep purple, rim light from a window, subtle film grain, calm nostalgic mood",
+    "prompt": "a young woman in a red sweater resting her chin on her hand by a window overlooking the sea at sunset",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Sunset Vector Melancholy'. Body-proportion tags removed from the suffix.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      163
+    ],
+    "key": "kawaii",
+    "name": {
+      "en": "Kawaii",
+      "es": "Kawaii",
+      "zh": "可爱风",
+      "ko": "카와이"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "kawaii illustration",
+    "suffix": "cute rounded shapes, pastel candy colors, sparkles and hearts, cheerful soft lighting, adorable mascot details",
+    "prompt": "a cheerful character surrounded by plush toys and pastel decorations",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Kawaii'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      15,
+      166
+    ],
+    "key": "manga",
+    "name": {
+      "en": "Manga",
+      "es": "Manga",
+      "zh": "漫画",
+      "ko": "만화"
+    },
+    "category": "Anime & Manga/Manga",
+    "prefix": "black-and-white manga page, strong confident inking",
+    "suffix": "screentone shading, dramatic panel-style contrast, stylized expressions, dynamic motion lines",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "merged",
+      "note": "Manga (#15) + Misc Manga (#166).",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      44
+    ],
+    "key": "seinen-noir-manga",
+    "name": {
+      "en": "Seinen Noir Manga",
+      "es": "Manga seinen noir",
+      "zh": "青年黑色漫画",
+      "ko": "세이넨 누아르 만화"
+    },
+    "category": "Anime & Manga/Manga",
+    "prefix": "dark seinen graphic novel style, high-contrast black and white",
+    "suffix": "heavy cross-hatching, gritty realism, deep dramatic shadows, cinematic mood",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      46
+    ],
+    "key": "shonen-action-manga",
+    "name": {
+      "en": "Shonen Action Manga",
+      "es": "Manga shonen de acción",
+      "zh": "少年热血漫画",
+      "ko": "소년 액션 만화"
+    },
+    "category": "Anime & Manga/Manga",
+    "prefix": "high-action shonen manga panels, dynamic poses",
+    "suffix": "speed lines, dramatic impact frames, intense energy bursts, bold inking, explosive composition",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      47
+    ],
+    "key": "shojo-romance-manga",
+    "name": {
+      "en": "Shojo Romance Manga",
+      "es": "Manga shojo romántico",
+      "zh": "少女恋爱漫画",
+      "ko": "순정 로맨스 만화"
+    },
+    "category": "Anime & Manga/Manga",
+    "prefix": "romantic shojo manga illustration, delicate fine lines",
+    "suffix": "soft focus, sparkling floral backgrounds, flowing hair details, large expressive eyes, heartfelt pastel atmosphere",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      275
+    ],
+    "key": "classic-american-comic",
+    "name": {
+      "en": "Classic American Comic",
+      "es": "Cómic americano clásico",
+      "zh": "经典美式漫画",
+      "ko": "클래식 아메리칸 코믹"
+    },
+    "category": "Comics/Western",
+    "prefix": "classic 1990s American comic book art",
+    "suffix": "thick black outlines, halftone dots, vibrant four-color printing, muscular heroic poses, original character designs, no logos",
+    "prompt": "a single original heroine in a green and gold costume standing heroically on a rooftop, no other characters",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7'. Preview shows a trademarked superhero — regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      290
+    ],
+    "key": "manga-influenced-comic",
+    "name": {
+      "en": "Manga-Influenced Comic",
+      "es": "Cómic con influencia manga",
+      "zh": "漫画风美漫",
+      "ko": "만화풍 코믹"
+    },
+    "category": "Comics/Western",
+    "prefix": "western comic art with manga influence",
+    "suffix": "clean confident lines, expressive large eyes, dynamic panel layouts, hybrid shading, original character designs, no logos",
+    "prompt": "an original heroine with flowing hair standing on a rooftop",
+    "review": {
+      "status": "cleaned",
+      "note": "Preview shows a trademarked emblem — regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      291
+    ],
+    "key": "cyberpunk-comic",
+    "name": {
+      "en": "Cyberpunk Comic",
+      "es": "Cómic cyberpunk",
+      "zh": "赛博朋克漫画",
+      "ko": "사이버펑크 코믹"
+    },
+    "category": "Comics/Western",
+    "prefix": "cyberpunk comic book art, neon noir inking",
+    "suffix": "saturated neon colors, rain streaks, futuristic city background, bold shadows",
+    "prompt": "a hacker with neon pink hair in a rainy city",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      292
+    ],
+    "key": "horror-comic",
+    "name": {
+      "en": "Horror Comic",
+      "es": "Cómic de terror",
+      "zh": "恐怖漫画",
+      "ko": "호러 코믹"
+    },
+    "category": "Comics/Western",
+    "prefix": "vintage horror comic book art",
+    "suffix": "creepy suspenseful mood, heavy shadows, lurid pulp colors, eerie lighting, atmospheric dread without gore, no text, no title lettering",
+    "prompt": "a monster emerging from the shadows of an old cellar",
+    "review": {
+      "status": "rewritten",
+      "note": "Removed publisher name (EC Comics). Preview shows blood — regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      4,
+      6
+    ],
+    "key": "digital-illustration",
+    "name": {
+      "en": "Digital Illustration",
+      "es": "Ilustración digital",
+      "zh": "数字插画",
+      "ko": "디지털 일러스트"
+    },
+    "category": "Illustration/Digital",
+    "prefix": "highly detailed digital illustration",
+    "suffix": "rich painted textures, clean shapes, balanced color, soft cinematic lighting, polished finish",
+    "prompt": "a futuristic explorer standing on a megacity rooftop at sunset",
+    "review": {
+      "status": "merged",
+      "note": "Digital Art (#4) + Digital Illustration (#6). Removed 'masterpiece, best quality'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      5
+    ],
+    "key": "vibrant-digital-art",
+    "name": {
+      "en": "Vibrant Digital Art",
+      "es": "Arte digital vibrante",
+      "zh": "鲜艳数字艺术",
+      "ko": "비비드 디지털 아트"
+    },
+    "category": "Illustration/Digital",
+    "prefix": "vibrant semi-realistic digital artwork",
+    "suffix": "saturated color grading, smooth shading, cinematic contrast, glowing accents",
+    "prompt": "a futuristic explorer standing on a megacity rooftop at sunset",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      94
+    ],
+    "key": "matte-painting",
+    "name": {
+      "en": "Matte Painting",
+      "es": "Matte painting",
+      "zh": "场景概念绘画",
+      "ko": "매트 페인팅"
+    },
+    "category": "Illustration/Digital",
+    "prefix": "painterly concept art matte painting",
+    "suffix": "illustrative brushwork, atmospheric depth, cinematic wide composition, rich environment detail",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Digital Art' in the 'Stability AI' category (duplicate name).",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      306
+    ],
+    "key": "polished-fantasy-creature",
+    "name": {
+      "en": "Polished Fantasy Creature",
+      "es": "Criatura fantástica pulida",
+      "zh": "精致奇幻生物",
+      "ko": "정교한 판타지 크리처"
+    },
+    "category": "Illustration/Digital",
+    "prefix": "polished high-fidelity digital painting of a majestic creature",
+    "suffix": "bright sunlight with sharp directional shadows, glossy scales and soft fur, azure and emerald palette with warm ochre, crisp almost 3D finish",
+    "prompt": "a blue eastern dragon perched on a rocky cliff above the sea",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Azure Dragon Majesty'. Anatomy tags removed so it works on any subject.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      310
+    ],
+    "key": "streetwear-pop",
+    "name": {
+      "en": "Streetwear Pop",
+      "es": "Pop streetwear",
+      "zh": "街头潮流波普",
+      "ko": "스트리트웨어 팝"
+    },
+    "category": "Illustration/Digital",
+    "prefix": "bold flat-color cartoon illustration, thick clean black outlines, cel-shaded, bubblegum pink, mint green and coral palette",
+    "suffix": "sticker-style rounded clouds, flat lighting with no gradients, clean vector shapes, slightly exaggerated proportions, modern streetwear character design, no text, no logos",
+    "prompt": "a cool character in an oversized hoodie and sneakers",
+    "review": {
+      "status": "cleaned",
+      "note": "No preview existed — generate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      98
+    ],
+    "key": "line-art",
+    "name": {
+      "en": "Line Art",
+      "es": "Line art",
+      "zh": "线稿",
+      "ko": "라인 아트"
+    },
+    "category": "Illustration/Digital",
+    "prefix": "clean line art drawing",
+    "suffix": "confident black vector lines on white, no shading, minimalist modern graphic, precise contours",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "rewritten",
+      "note": "Was in the 'Stability AI' category.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      40
+    ],
+    "key": "victorian-storybook",
+    "name": {
+      "en": "Victorian Storybook",
+      "es": "Cuento victoriano",
+      "zh": "维多利亚绘本",
+      "ko": "빅토리안 동화책"
+    },
+    "category": "Illustration/Storybook",
+    "prefix": "whimsical Victorian storybook sketch, loose expressive ink linework, elongated playful character proportions",
+    "suffix": "gentle watercolor washes in muted blues, earth tones and pale yellows, stained parchment texture, subtle ink splatter, slightly eerie dreamy fairy-tale mood",
+    "prompt": "a noble court scene with rich garments and ornate interiors",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      159
+    ],
+    "key": "fairy-tale",
+    "name": {
+      "en": "Fairy Tale",
+      "es": "Cuento de hadas",
+      "zh": "童话",
+      "ko": "동화"
+    },
+    "category": "Illustration/Storybook",
+    "prefix": "enchanting fairy-tale illustration",
+    "suffix": "magical glowing light, soft painted textures, storybook charm, gentle warm palette, sense of wonder",
+    "prompt": "two fairies meeting in a sunlit enchanted forest",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Fairy Tale'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      293
+    ],
+    "key": "whimsical-storybook",
+    "name": {
+      "en": "Whimsical Storybook",
+      "es": "Cuento ilustrado alegre",
+      "zh": "奇趣绘本",
+      "ko": "기발한 동화책"
+    },
+    "category": "Illustration/Storybook",
+    "prefix": "whimsical children's storybook illustration, soft brushstrokes and bold outlines",
+    "suffix": "saturated pastel palette of mint green, coral pink and sky blue, dappled sunlight, friendly rounded shapes, warm cozy atmosphere",
+    "prompt": "a girl having a picnic in a magical forest with friendly animals",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Whimsical Forest Picnic'; removed 'intimate'. Long scene moved to the example prompt.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      294
+    ],
+    "key": "flat-vibrant-landscape",
+    "name": {
+      "en": "Flat Vibrant Landscape",
+      "es": "Paisaje plano vibrante",
+      "zh": "扁平鲜艳风景",
+      "ko": "플랫 비비드 풍경"
+    },
+    "category": "Illustration/Storybook",
+    "prefix": "stylized flat-design illustration, bold outlines",
+    "suffix": "flat color fields with subtle gradients, highly saturated reds, greens, purples and oranges, layered depth, warm late-afternoon light, dreamlike energy",
+    "prompt": "a desert village among giant cacti and flowers under a pink sky",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Vibrant Desert Paradise'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      299,
+      295
+    ],
+    "key": "bold-ink-fantasy",
+    "name": {
+      "en": "Bold Ink Fantasy",
+      "es": "Fantasía en tinta",
+      "zh": "粗墨奇幻",
+      "ko": "볼드 잉크 판타지"
+    },
+    "category": "Illustration/Storybook",
+    "prefix": "bold inked fantasy illustration, thick black outlines",
+    "suffix": "rich saturated colors, ochre earth tones and teal water, sunlit highlights with sharp shadows, strong perspective, classic graphic novel feel",
+    "prompt": "a castle on red rock formations above a winding river",
+    "review": {
+      "status": "merged",
+      "note": "Rugged Fantasy Illustration (#299) + Fantasy Valley Adventure (#295) — near-identical looks.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      298
+    ],
+    "key": "ink-and-parchment",
+    "name": {
+      "en": "Ink & Parchment",
+      "es": "Tinta y pergamino",
+      "zh": "墨线羊皮纸",
+      "ko": "잉크 & 양피지"
+    },
+    "category": "Illustration/Storybook",
+    "prefix": "ink line art with flat shading on parchment",
+    "suffix": "clean defined edges, flat color with subtle gradients, textured paper surface, bright even daylight, hand-drawn adventure-map charm",
+    "prompt": "a sweeping fantasy mountain landscape with a winding path",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Whispering Peaks Fantasy'; its example prompt had no scene.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      300
+    ],
+    "key": "fiery-ink",
+    "name": {
+      "en": "Fiery Ink",
+      "es": "Tinta de fuego",
+      "zh": "烈焰墨线",
+      "ko": "파이어리 잉크"
+    },
+    "category": "Illustration/Hand-Drawn",
+    "prefix": "bold expressive ink illustration",
+    "suffix": "fiery orange-red palette with teal accents on a dark navy background, dynamic flame-like strokes, dramatic chiaroscuro, thick confident contour lines",
+    "prompt": "a stylized fire dragon surrounded by swirling flames",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Fiery Dragon Illustration'; generalized so it works on any subject.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      301
+    ],
+    "key": "chalky-pop",
+    "name": {
+      "en": "Chalky Pop",
+      "es": "Pop de tiza",
+      "zh": "粉笔波普",
+      "ko": "초키 팝"
+    },
+    "category": "Illustration/Hand-Drawn",
+    "prefix": "rough chalk and pastel pop illustration",
+    "suffix": "hot pink, electric blue, sunny yellow and deep green, dense stippled chalk grain, soft fuzzy edges with no hard outlines, chunky toy-like proportions, flat lighting",
+    "prompt": "a pink bear character in a red hat, sunglasses and a blue vest",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      302
+    ],
+    "key": "blue-ink-scribble",
+    "name": {
+      "en": "Blue Ink Scribble",
+      "es": "Garabato en tinta azul",
+      "zh": "蓝墨速写",
+      "ko": "블루 잉크 스크리블"
+    },
+    "category": "Illustration/Hand-Drawn",
+    "prefix": "loose blue ink sketch, energetic gestural linework",
+    "suffix": "deep indigo lines on pale cream paper, cross-hatching, chaotic scribbled textures, minimal background, raw candid feel",
+    "prompt": "a man in round glasses drinking from a small cup at a table",
+    "review": {
+      "status": "rewritten",
+      "note": "Anatomy tags ('thin skeletal hands', 'large round head') removed from the suffix.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      308
+    ],
+    "key": "mixed-media-portrait",
+    "name": {
+      "en": "Mixed Media Portrait",
+      "es": "Retrato mixed media",
+      "zh": "综合材料肖像",
+      "ko": "믹스드 미디어 초상"
+    },
+    "category": "Illustration/Hand-Drawn",
+    "prefix": "vibrant mixed-media portrait illustration",
+    "suffix": "painterly brushstrokes, paint drips and splatter, warm yellow-orange background with pink, coral and teal accents, soft diffused light",
+    "prompt": "a person with dark hair in a bun against a warm background",
+    "review": {
+      "status": "cleaned",
+      "note": "Proportion tags removed from the suffix.",
+      "preview": "ok"
+    }
+  }
+]

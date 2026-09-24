@@ -1656,6 +1656,13 @@ def check_files_exist():
     return jsonify({"exists": exists})
 
 
+def _is_huggingface(url: str) -> bool:
+    from urllib.parse import urlparse
+
+    host = (urlparse(url).hostname or "").lower()
+    return host == "huggingface.co" or host.endswith(".huggingface.co")
+
+
 def _is_civitai(url: str) -> bool:
     from urllib.parse import urlparse
 
@@ -1673,6 +1680,12 @@ def download_import_file():
     subfolder = str(payload.get("subfolder", "")).strip()
     filename = str(payload.get("filename", "")).strip()
     force = bool(payload.get("force"))
+    # PACKAGE_FORMAT.md §8.2.4: when the package or the models catalog knows
+    # the file's size / SHA-256, the download is checked against them and
+    # thrown away if it doesn't match.
+    expected_sha = str(payload.get("sha256") or "").strip().lower() or None
+    expected_size = payload.get("size") if isinstance(payload.get("size"), int) and payload.get("size") > 0 else None
+    license_url = str(payload.get("licenseUrl") or "").strip()
 
     if not url or not filename:
         return jsonify({"error": "url and filename are required"}), 400
@@ -1710,8 +1723,27 @@ def download_import_file():
                                                 "Add yours in Settings (CivitAI account)."}) + "\n"
                     return
                 headers["Authorization"] = f"Bearer {key}"
+            elif _is_huggingface(url):
+                hf_token = str(settings.get("huggingfaceToken", "") or "").strip()
+                if hf_token:
+                    headers["Authorization"] = f"Bearer {hf_token}"
             req = Request(url=url, headers=headers, method="GET")
-            with urlopen(req, timeout=60) as resp:
+            try:
+                resp_cm = urlopen(req, timeout=60)
+            except HTTPError as exc:
+                # Gated model: the license has to be accepted on its page by
+                # the account whose token is sent.
+                if exc.code in (401, 403) and _is_huggingface(url):
+                    page = license_url if license_url.startswith("https://") else "/".join(url.split("/")[:5])
+                    has_token = bool(str(settings.get("huggingfaceToken", "") or "").strip())
+                    yield _json.dumps({"error": (
+                        f"This model needs its license accepted on Hugging Face: open {page}, accept it, "
+                        + ("and check your token in Settings has read access." if has_token
+                           else "then add your Hugging Face token in Settings.")),
+                        "gated": True, "page": page}) + "\n"
+                    return
+                raise
+            with resp_cm as resp:
                 kind = str(resp.headers.get("Content-Type") or "").lower()
                 # A login page or an error document instead of the model: say
                 # so, rather than writing HTML into a .safetensors.
@@ -1725,20 +1757,34 @@ def download_import_file():
                 total = int(total_header) if total_header and total_header.isdigit() else 0
                 downloaded = 0
                 last_pct = -1
+                digest = hashlib.sha256()
                 with open(tmp_path, "wb") as fh:
                     while True:
                         chunk = resp.read(1024 * 1024)
                         if not chunk:
                             break
                         fh.write(chunk)
+                        digest.update(chunk)
                         downloaded += len(chunk)
                         if total:
                             pct = int(downloaded * 100 / total)
                             if pct != last_pct:
                                 last_pct = pct
                                 yield _json.dumps({"progress": pct}) + "\n"
+            got_sha = digest.hexdigest()
+            mismatch = None
+            if expected_size and downloaded != expected_size:
+                mismatch = f"size {downloaded} bytes, expected {expected_size}"
+            elif expected_sha and got_sha != expected_sha:
+                mismatch = "SHA-256 differs from the one declared for this file"
+            if mismatch:
+                tmp_path.unlink(missing_ok=True)
+                yield _json.dumps({"error": "The downloaded file is not the expected one (" + mismatch
+                                   + "). It was deleted.", "mismatch": True}) + "\n"
+                return
             tmp_path.replace(target)
-            yield _json.dumps({"ok": True, "path": str(target), "progress": 100}) + "\n"
+            yield _json.dumps({"ok": True, "path": str(target), "progress": 100,
+                               "verified": bool(expected_sha), "sha256": got_sha}) + "\n"
         except (URLError, HTTPError, OSError) as exc:
             try:
                 if tmp_path.exists():

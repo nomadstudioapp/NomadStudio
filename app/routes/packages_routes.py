@@ -41,6 +41,18 @@ def _builtin_flow_ids() -> set[str]:
     return {str(e.get("id")) for e in flow_engine._load_index_entries() if e.get("id")}
 
 
+def _sync_styles(result: dict) -> None:
+    """contributes.styles (§10.3): copy the package's styles into
+    Build > Styles. Styles live in styles.json, not the registry."""
+    manifest = result["manifest"]
+    if not (manifest.get("contributes") or {}).get("styles"):
+        return
+    from .models_api_modules.styles_routes import sync_package_styles
+
+    pkg_id = manifest["id"]
+    sync_package_styles(pkg_id, package_service.packages_dir(DATA_DIR) / pkg_id, manifest)
+
+
 def install_bundled_packages() -> list[str]:
     """Install or update the packages shipped with the app (bundled-packages/)
     — called once at startup so a fresh install already has the free engines
@@ -61,6 +73,7 @@ def install_bundled_packages() -> list[str]:
                 package_service.mark_bundled(index, result["manifest"])
                 with _registry_transaction() as data:
                     package_service.apply_to_registry(data, DATA_DIR, result)
+                _sync_styles(result)
                 done.append(f"{action} {result['manifest']['id']} {result['manifest']['version']}")
             except Exception:  # noqa: BLE001
                 log.exception("bundled package failed: %s", zip_path.name)
@@ -122,6 +135,7 @@ def install_package():
         with _registry_transaction() as data:
             package_service.apply_to_registry(data, DATA_DIR, result)
         package_service.write_index(DATA_DIR, index)
+        _sync_styles(result)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     finally:
@@ -166,6 +180,9 @@ def uninstall_package(pkg_id: str):
         with _registry_transaction(deleted_import_ids={pkg_id}) as data:
             package_service.remove_from_registry(data, pkg_id)
         package_service.write_index(DATA_DIR, index)
+        from .models_api_modules.styles_routes import remove_package_styles
+
+        remove_package_styles(pkg_id)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 404
     finally:

@@ -65,10 +65,12 @@ def gpu_waiting():
 
 
 def _public_settings(settings: dict) -> dict:
-    """Settings as the page may see them. The CivitAI API key never travels
-    back: only whether one is stored."""
-    public = {k: v for k, v in (settings or {}).items() if k != "civitaiApiKey"}
+    """Settings as the page may see them. The CivitAI API key and the Hugging
+    Face token never travel back: only whether one is stored."""
+    secret = ("civitaiApiKey", "huggingfaceToken")
+    public = {k: v for k, v in (settings or {}).items() if k not in secret}
     public["civitaiApiKeySet"] = bool(str((settings or {}).get("civitaiApiKey", "") or "").strip())
+    public["huggingfaceTokenSet"] = bool(str((settings or {}).get("huggingfaceToken", "") or "").strip())
     return public
 
 
@@ -117,6 +119,11 @@ def update_models_settings():
         # own, from their CivitAI account; it is never sent back to the page.
         if "civitaiApiKey" in payload:
             settings["civitaiApiKey"] = str(payload.get("civitaiApiKey", "")).strip()
+
+        # Gated Hugging Face models (FLUX.2 Klein 9B…) answer 401 until the
+        # user accepts their license and sends a token of their own account.
+        if "huggingfaceToken" in payload:
+            settings["huggingfaceToken"] = str(payload.get("huggingfaceToken", "")).strip()
 
         if "allowConcurrentComfyLmstudio" in payload:
             settings["allowConcurrentComfyLmstudio"] = bool(payload.get("allowConcurrentComfyLmstudio"))

@@ -874,6 +874,7 @@
 .cs-card--mix-clothes       { --cs-card-accent: #f2795c; --cs-card-icon-bg: #2a120a; }
 .cs-card--mix-face-swap     { --cs-card-accent: #f472b6; --cs-card-icon-bg: #2a0f1e; }
 .cs-card--mix-photo-session { --cs-card-accent: #34d399; --cs-card-icon-bg: #052b1e; }
+.cs-card--mix-compose       { --cs-card-accent: #38e5c7; --cs-card-icon-bg: #04261f; }
 .cs-card--canvas-composer   { --cs-card-accent: #c084fc; --cs-card-icon-bg: #1c0a2e; }
 
 /* ─── Views & transitions ─────────────────────────────────────────────────── */
@@ -1724,6 +1725,21 @@
   margin-top: 12px;
 }
 
+/* Output-subfolder field under Image format: a plain full-width input, not
+   the flex:1 row item .nsc-input is elsewhere. */
+.lib-advanced-panel #lib-export-subfolder {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lib-param-hint {
+  margin: 6px 0 0;
+  font-size: var(--fs-xs, 12px);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
 /* Same compact pill-row layout as Refine's own quantization/quality pills
    (.nsc-quality-list) — was flex-direction:column, which stretched the
    active pill full-width and left the rest as a plain vertical text list
@@ -2043,18 +2059,56 @@
   overflow-y: auto;
 }
 
-/* Generating state — same indeterminate ring as flow result cards. */
+/* Generating state — same ring + ETA / % / steps as Create's generating
+   cards (#nsc-flow-root .nss-card-img-wrap .nsc-ring-*): ETA centred in the
+   ring, % and steps stacked under it. Filled from the ComfyUI progress
+   stream by library.js updateStyleCardProgress. */
 .lib-style-card-img-wrap--generating {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .lib-style-card-img-wrap .nsc-ring {
-  position: static;
-  transform: none;
-  width: 36px;
-  height: 36px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  z-index: 1;
+}
+
+.lib-style-card-img-wrap--generating .nsc-ring-eta,
+.lib-style-card-img-wrap--generating .nsc-ring-pct,
+.lib-style-card-img-wrap--generating .nsc-ring-steps {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.lib-style-card-img-wrap--generating .nsc-ring-eta {
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+.lib-style-card-img-wrap--generating .nsc-ring-pct {
+  top: calc(50% + 34px);
+  transform: translateX(-50%);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+.lib-style-card-img-wrap--generating .nsc-ring-steps {
+  top: calc(50% + 48px);
+  transform: translateX(-50%);
+  font-size: var(--fs-xxs);
+  color: rgba(255,255,255,0.55);
 }
 
 /* Small ring swapped into the Generate Images button's icon slot while running. */
@@ -2135,14 +2189,23 @@
   max-width: 180px;
 }
 
-.lib-toolbar-generate-btn--stop {
+.lib-toolbar-generate-btn--stop,
+.nss-generate-scenes-btn.lib-toolbar-generate-btn--stop {
   background: color-mix(in srgb, #f87171 20%, transparent);
   color: #f87171;
-  border: 1px solid color-mix(in srgb, #f87171 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #f87171 45%, transparent);
 }
 
-.lib-toolbar-generate-btn--stop:hover {
+.lib-toolbar-generate-btn--stop:hover,
+.nss-generate-scenes-btn.lib-toolbar-generate-btn--stop:hover:not(:disabled) {
   background: color-mix(in srgb, #f87171 30%, transparent);
+  opacity: 1;
+}
+
+/* Build > Styles footer reuses the Session workspace's action bar; Export
+   is a real link (download), so drop the underline it would otherwise get. */
+.lib-styles-actions a.nss-generate-scenes-btn {
+  text-decoration: none;
 }
 
 /* .ncf-results-toolbar is normally a flex-column child (self-aligned to the
@@ -2357,13 +2420,21 @@
   display: block;
 }
 
+/* The author display:block above beats the [hidden] attribute — without
+   this the empty <img> still takes the full width (broken-image box) and
+   pushes the fallback icon off to the side. */
+.lib-style-edit-image[hidden] {
+  display: none;
+}
+
 /* Character/Background portraits: crop the excess off the bottom instead of
    splitting it evenly top+bottom (object-position's own 50%/50% default) —
    these are reference photos where the face/head sits near the top, which a
    centered crop was clipping into. Scoped to this id only, not the shared
    .lib-style-edit-image class, since Style's own preview images aren't
    consistently portraits framed the same way. */
-#lib-item-edit-image {
+#lib-item-edit-image,
+#lib-style-edit-image {
   object-position: top;
 }
 
@@ -2393,31 +2464,43 @@
   flex-shrink: 0;
 }
 
-.lib-style-edit-panel-apply {
-  padding: 0.5rem;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+/* Edit-panel buttons (Save / Delete / Change image) share the app's action
+   pill — same shape, type and icon slot as .nss-generate-scenes-btn in the
+   Session workspace action bar. Save and Change image are filled accent;
+   Delete is the red-tinted variant of the same pill. */
+.lib-style-edit-panel-apply,
+.lib-style-edit-panel-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
   border: none;
-  border-radius: calc(var(--radius, 14px) - 4px);
-  background: var(--nss-accent, var(--accent));
-  color: #0b0b0f;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
   cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
 }
-.lib-style-edit-panel-apply:hover { opacity: 0.88; }
-.lib-style-edit-panel-apply:active { transform: scale(0.98); }
-.lib-style-edit-panel-apply:disabled { opacity: 0.4; cursor: not-allowed; }
+.lib-style-edit-panel-apply svg,
+.lib-style-edit-panel-secondary svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.lib-style-edit-panel-apply:hover:not(:disabled),
+.lib-style-edit-panel-secondary:hover:not(:disabled) { opacity: 0.88; }
+.lib-style-edit-panel-apply:active:not(:disabled),
+.lib-style-edit-panel-secondary:active:not(:disabled) { transform: scale(0.98); }
+.lib-style-edit-panel-apply:disabled,
+.lib-style-edit-panel-secondary:disabled { opacity: 0.38; cursor: not-allowed; }
 
 .lib-style-edit-panel-secondary {
   flex: 0 0 auto;
-  padding: 0.5rem 0.9rem;
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: calc(var(--radius, 14px) - 4px);
-  color: var(--text);
-  cursor: pointer;
 }
 
 .lib-style-edit-footer {
@@ -2433,12 +2516,13 @@
 }
 
 .lib-style-edit-delete {
+  background: color-mix(in srgb, #f87171 18%, transparent);
   color: #f87171;
 }
 
-.lib-style-edit-delete:hover {
-  border-color: #f87171;
-  color: #f87171;
+.lib-style-edit-delete:hover:not(:disabled) {
+  background: color-mix(in srgb, #f87171 30%, transparent);
+  opacity: 1;
 }
 
 .lib-style-edit-status {
@@ -2747,6 +2831,49 @@
   color: var(--text-secondary);
   padding: 0.45rem 0.95rem;
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+/* Picked style under an idea box (prompt_input style_picker: "separate",
+   flow-step-prompt-input.js): name + × to drop it. */
+.ncf-style-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  margin-top: 0.45rem;
+  padding: 0.2rem 0.3rem 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.ncf-style-chip[hidden] {
+  display: none;
+}
+.ncf-style-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ncf-style-chip-clear:hover {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text);
+}
+
+/* display:block above outranks the [hidden] attribute — the hubs hide this
+   bar on an empty section, Build hides it inside a Depot's detail view. */
+.cs-flow-search.nsc-input[hidden] {
+  display: none;
 }
 
 .cs-flow-search.nsc-input::placeholder {
@@ -7253,6 +7380,96 @@ button.nse-model-hint.ncf-enum-picker-btn:hover {
   gap: 0.5rem;
   margin-top: 0.6rem;
 }
+
+/* Edit Prompt panel, current layout: Short / Detailed / vision model on one
+   row, small pills instead of full-width Generate-sized buttons, "Refine with
+   LLM" beside the Final prompt heading. Changes apply live (no Apply). */
+.ncf-ep-vision-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.4rem;
+  align-items: stretch;
+  margin-bottom: 0.9rem;
+}
+.ncf-ep-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 34px;
+  padding: 0 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.ncf-ep-pill svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.ncf-ep-pill:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+}
+.ncf-ep-pill:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+.ncf-ep-pill.is-busy svg {
+  animation: ncf-ep-pulse 1s ease-in-out infinite;
+}
+@keyframes ncf-ep-pulse {
+  50% { opacity: 0.3; }
+}
+.ncf-ep-pill--small {
+  min-height: 26px;
+  padding: 0 0.65rem;
+  font-size: var(--fs-xs);
+}
+.ncf-ep-pill--small svg {
+  width: 13px;
+  height: 13px;
+}
+/* The vision-model chip, squared to the pills' height and shape. */
+.ncf-ep-vision-row .ncf-ep-vision-model {
+  flex-direction: row;
+  min-height: 34px;
+  max-width: 9rem;
+  padding: 0 0.7rem;
+  border-radius: var(--radius-pill);
+  gap: 0.35rem;
+}
+.ncf-ep-vision-row .ncf-ep-vision-model .ncf-model-icon-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ncf-ep-head {
+  min-height: 26px;
+}
+.ncf-ep-head .nsc-param-title {
+  margin: 0;
+}
+.ncf-ep-final {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+.ncf-ep-hint {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
 /* ── Backdrop ────────────────────────────────────────────────────────────── */
 .nse-modal-backdrop {
   position: fixed;
@@ -8527,6 +8744,19 @@ body.nsc-scenes-page .nsc-ring-pct {
 }
 .nss-card[data-status="error"] {
   border-color: color-mix(in srgb, #f87171 40%, transparent);
+}
+/* What ComfyUI said when the job failed, in place of the spinner ring. */
+.nss-card-error-msg {
+  padding: 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #f87171;
+  text-align: center;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Card header */
@@ -12151,17 +12381,14 @@ body.nsc-session-workspace-page .nss-scenes-area {
 }
 .ncf-annotate-thumb {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  max-height: 220px;
   object-fit: contain;
   border-radius: 8px;
   border: 1px solid var(--border, #333);
   background: var(--bg2, #111);
-  display: block;
+  display: none;
 }
-.ncf-annotate-label {
-  font-size: var(--fs-xs);
-  color: var(--text-dim, #999);
-}
+.ncf-annotate-thumb[src] { display: block; }
 .ncf-annotate-edit-btn {
   width: 100%;
   margin-top: 0.25rem;
@@ -12175,6 +12402,20 @@ body.nsc-session-workspace-page .nss-scenes-area {
 .nse-modal--annotate .nse-modal-apply {
   background: var(--nss-accent, #a855f7);
   color: #fff;
+}
+/* Compact, bottom-right pill instead of the default full-width bar — this
+   modal's footer has room to spare and a full-bleed Apply read as far
+   heavier than the action deserves. Same shape (20px radius) as the app's
+   other real pill buttons (.nsc-generate-btn — Refine/Apply in the Edit
+   Prompt panel), not a one-off. */
+.nse-modal--annotate .nse-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+.nse-modal--annotate .nse-modal-apply {
+  width: auto;
+  padding: 0.6rem 1.6rem;
+  border-radius: 20px;
 }
 
 .ncf-annotate-body {
@@ -12252,6 +12493,26 @@ body.nsc-session-workspace-page .nss-scenes-area {
 }
 .ncf-annotate-swatch:hover { transform: scale(1.08); }
 .ncf-annotate-swatch.is-active { border-color: var(--nss-accent, #a855f7); }
+.ncf-annotate-shape-row {
+  display: flex;
+  gap: 6px;
+}
+.ncf-annotate-shape-btn {
+  flex: 1;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: var(--nsc-label, rgba(255,255,255,0.88));
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.ncf-annotate-shape-btn:hover { background: rgba(255,255,255,0.1); }
+.ncf-annotate-shape-btn.is-active {
+  background: color-mix(in srgb, var(--nss-accent, #a855f7) 22%, transparent);
+  border-color: var(--nss-accent, #a855f7);
+}
 .ncf-annotate-slider-row label {
   display: flex;
   justify-content: space-between;
@@ -15146,4 +15407,177 @@ body.explore-page-body #album-topbar-toolbar + div {
 .album-delete-confirm:hover {
   border-color: #ef4444;
   background: color-mix(in srgb, #ef4444 30%, var(--bg-panel));
+}
+
+/* Prompt presets subpanel: name + the first lines of the preset's wording. */
+.ncf-preset-list .nsc-quality-copy small {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 1.4;
+}
+.ncf-preset-list .nsc-quality-copy small:empty {
+  display: none;
+}
+
+/* ── Missing files (flow-requirements.js) ───────────────────────────────── */
+.ncf-req-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, #f59e0b 9%, transparent);
+}
+.ncf-req-banner > svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: #f59e0b;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ncf-req-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+}
+.ncf-req-banner-copy span {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+.ncf-req-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ncf-req-panel .nsc-param-title {
+  margin: 0.5rem 0 0;
+}
+.ncf-req-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ncf-req-row,
+.ncf-req-pack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+.ncf-req-pack {
+  flex-direction: column;
+  align-items: stretch;
+}
+.ncf-req-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+.ncf-req-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ncf-req-meta {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+.ncf-req-side {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+.ncf-req-ok {
+  color: #4ade80;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.ncf-req-bar {
+  width: 84px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ncf-req-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.ncf-req-pct {
+  min-width: 2.6em;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.ncf-req-link {
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ncf-req-link:hover {
+  text-decoration: underline;
+}
+.ncf-req-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: #f87171;
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+.ncf-req-note {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+.ncf-req-note--warn {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+}
+.ncf-req-note--ok {
+  background: color-mix(in srgb, #4ade80 12%, transparent);
+}
+.ncf-req-pack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ncf-req-pack-actions a.ncf-ep-pill {
+  text-decoration: none;
+}
+.ncf-req-all,
+.ncf-req-again {
+  margin-top: 0.3rem;
+}
+.ncf-req-gated {
+  color: #f59e0b;
+  font-size: var(--fs-xs);
+  line-height: 1.35;
 }

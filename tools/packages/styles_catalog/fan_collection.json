@@ -1,0 +1,1987 @@
+[
+  {
+    "src": [
+      7
+    ],
+    "key": "greg-rutkowski-style",
+    "name": {
+      "en": "Greg Rutkowski Style"
+    },
+    "category": "Artists/Illustration & Painting",
+    "prefix": "high-fantasy digital painting with dramatic lighting and richly rendered detail",
+    "suffix": "epic composition, intricate highlights, atmospheric depth",
+    "prompt": "a lone warrior facing an ancient dragon above ruined towers",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      12
+    ],
+    "key": "ansel-adams-landscape",
+    "name": {
+      "en": "Ansel Adams Landscape"
+    },
+    "category": "Artists/Photography",
+    "prefix": "high-contrast large-format black and white photography, dramatic tonal range, crisp micro-detail, deep shadows and bright highlights, rich texture, grand sweeping landscapes, monumental natural scenery, atmospheric depth",
+    "suffix": "zone-system inspired exposure, classic fine-art wilderness photography, sharp foreground detail, expansive skies, majestic natural composition, high clarity, timeless monochrome aesthetic, fine-grain realism",
+    "prompt": "a sweeping mountain valley with a small village",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      13
+    ],
+    "key": "ansel-adams-portrait",
+    "name": {
+      "en": "Ansel Adams Portrait"
+    },
+    "category": "Artists/Photography",
+    "prefix": "high-contrast black and white fine-art portrait photography, deep rich tonal range, precise zone-system exposure, crisp micro-detail, soft diffused key lighting, classic medium-format look, sculpted highlights and deep shadows, clean minimalist backdrop",
+    "suffix": "timeless fine-art realism, carefully controlled light and form, natural expression, strong textural definition, dramatic chiaroscuro, pure monochrome aesthetic, refined tonal control, gallery-quality portraiture",
+    "prompt": "a portrait of a weathered traveler",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      21
+    ],
+    "key": "blanchitsu-style",
+    "name": {
+      "en": "Blanchitsu Style"
+    },
+    "category": "Artists/Illustration & Painting",
+    "prefix": "digital illustration, red, yellow and rust palette, apocalyptic Warhammer chaos aesthetic, scorched orange skies, baroque gothic ornamentation, sketchy chaotic brushwork, dirty parchment tones with crimson and rust, skulls and relics, ornate armor, zealous fervor, fever-dream battlefield energy",
+    "suffix": "grimdark illustration, medieval religious iconography, chaotic composition, textured traditional media feel, ink-smudged edges, heavy contrast, stained parchment ambiance, raw painterly strokes, gothic fantasy mood",
+    "prompt": "a lone warrior facing an ancient dragon above ruined towers",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'blood', 'brutal', 'insanity' and the all-caps quote.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      22
+    ],
+    "key": "moebius-style-dark",
+    "name": {
+      "en": "Moebius Style (Dark)"
+    },
+    "category": "Artists/Illustration & Painting",
+    "prefix": "graphic surrealist fantasy with stark linework and eerie dreamlike architecture",
+    "suffix": "limited palette, angular compositions, uncanny atmospheric tension",
+    "prompt": "an eerie dreamlike city of stark towers",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      23,
+      42
+    ],
+    "key": "ghibli-inspired-painting",
+    "name": {
+      "en": "Ghibli-Inspired Painting"
+    },
+    "category": "Anime/Movies",
+    "prefix": "whimsical hand-painted fantasy aesthetic with gentle storytelling atmosphere",
+    "suffix": "soft painterly lighting, warm palettes, lush environmental detail",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "merged",
+      "note": "Ghibli-Like (#23) + Ghibli Masterpiece (#42).",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      24
+    ],
+    "key": "loish-style",
+    "name": {
+      "en": "Loish Style"
+    },
+    "category": "Artists/Illustration & Painting",
+    "prefix": "smooth stylized character illustration with soft feminine shapes and warm expressive palettes",
+    "suffix": "painterly shading, gentle gradients, emotive storytelling focus",
+    "prompt": "a thoughtful young woman in a cozy room with warm light",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      25
+    ],
+    "key": "syd-mead-style",
+    "name": {
+      "en": "Syd Mead Style"
+    },
+    "category": "Artists/Illustration & Painting",
+    "prefix": "sleek retro-futurist industrial design illustration, clean functional geometry",
+    "suffix": "polished surfaces, advanced tech motifs, cinematic sci-fi scale",
+    "prompt": "a futuristic explorer standing on a megacity rooftop at sunset",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      41
+    ],
+    "key": "akira-inspired-neo-tokyo",
+    "name": {
+      "en": "Akira-Inspired Neo-Tokyo"
+    },
+    "category": "Anime/Movies",
+    "prefix": "cyberpunk neo-Tokyo aesthetic inspired by Akira, high energy, dense urban sprawl",
+    "suffix": "grungy texture, raw mechanical details, deep contrast, neon glow from street signs, kinetic composition.",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      142
+    ],
+    "key": "bubble-bobble-style",
+    "name": {
+      "en": "Bubble Bobble Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "Bubble Bobble style",
+    "suffix": "8-bit, cute, pixelated, fantasy, vibrant, reminiscent of Bubble Bobble game",
+    "prompt": "a cute dragon hero jumping between floating platforms",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      145
+    ],
+    "key": "gta-style",
+    "name": {
+      "en": "GTA Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "GTA-style artwork",
+    "suffix": "satirical, exaggerated, pop art style, vibrant colors, iconic characters, action-packed",
+    "prompt": "a group of stylish characters posing in a sunny city street",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      146
+    ],
+    "key": "super-mario-style",
+    "name": {
+      "en": "Super Mario Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "Super Mario style",
+    "suffix": "vibrant, cute, cartoony, fantasy, playful, reminiscent of Super Mario series",
+    "prompt": "a cheerful plumber hero jumping in a colorful world",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      147
+    ],
+    "key": "minecraft-style",
+    "name": {
+      "en": "Minecraft Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "Minecraft style",
+    "suffix": "blocky, pixelated, vibrant colors, recognizable characters and objects, game assets",
+    "prompt": "a blocky adventurer holding a pickaxe in a voxel landscape",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      148
+    ],
+    "key": "pokemon-style",
+    "name": {
+      "en": "Pokémon Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "Pokémon style",
+    "suffix": "vibrant, cute, anime, fantasy, reminiscent of Pokémon series",
+    "prompt": "a young trainer with a small electric creature companion",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      153
+    ],
+    "key": "street-fighter-style",
+    "name": {
+      "en": "Street Fighter Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "Street Fighter style",
+    "suffix": "vibrant, dynamic, arcade, 2D fighting game, highly detailed, reminiscent of Street Fighter series",
+    "prompt": "a martial artist in a gi throwing an energy blast",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      154
+    ],
+    "key": "zelda-style",
+    "name": {
+      "en": "Zelda Style"
+    },
+    "category": "Games/Classics",
+    "prefix": "Legend of Zelda style",
+    "suffix": "vibrant, fantasy, detailed, epic, heroic, reminiscent of The Legend of Zelda series",
+    "prompt": "a young elf hero with a sword overlooking a vast kingdom",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      194
+    ],
+    "key": "jujutsu-kaisen",
+    "name": {
+      "en": "Jujutsu Kaisen"
+    },
+    "category": "Anime/Series",
+    "prefix": "jujutsu kaisen style, dark atmosphere, dramatic lighting, cursed energy",
+    "suffix": "detailed background, high contrast, sharp lines, intricate details",
+    "prompt": "a cool young sorcerer with black hair standing in a city at night",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed artist handle.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      195
+    ],
+    "key": "demon-slayer",
+    "name": {
+      "en": "Demon Slayer"
+    },
+    "category": "Anime/Series",
+    "prefix": "demon slayer style, kimetsu no yaiba, ufotable, vibrant colors",
+    "suffix": "fluid motion, beautiful detailed background, dynamic lighting",
+    "prompt": "a demon slayer with long black hair using a water technique under moonlight",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      196
+    ],
+    "key": "attack-on-titan",
+    "name": {
+      "en": "Attack on Titan"
+    },
+    "category": "Anime/Series",
+    "prefix": "attack on titan style, shingeki no kyojin, epic scale, dark fantasy",
+    "suffix": "gritty atmosphere, dramatic shadows, detailed environment",
+    "prompt": "a soldier standing on a giant wall looking at the horizon",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      197
+    ],
+    "key": "spy-x-family",
+    "name": {
+      "en": "Spy x Family"
+    },
+    "category": "Anime/Series",
+    "prefix": "spy x family style, modern clean anime, cute and wholesome",
+    "suffix": "vibrant colors, clean lines, detailed expressions",
+    "prompt": "anya forger smiling happily",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      198
+    ],
+    "key": "chainsaw-man",
+    "name": {
+      "en": "Chainsaw Man"
+    },
+    "category": "Anime/Series",
+    "prefix": "chainsaw man style, chaotic energy, wild expressions",
+    "suffix": "high contrast, dynamic angles, gritty action without gore",
+    "prompt": "denji in his chainsaw form with an aggressive grin",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'bloody' and 'gore' (content policy).",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      199
+    ],
+    "key": "neon-genesis-evangelion",
+    "name": {
+      "en": "Neon Genesis Evangelion"
+    },
+    "category": "Anime/Series",
+    "prefix": "neon genesis evangelion style, psychological, dark, mecha",
+    "suffix": "dark tones, dramatic lighting, detailed machinery",
+    "prompt": "rei ayanami standing in front of eva unit 01 in a dark hangar",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      200
+    ],
+    "key": "one-piece",
+    "name": {
+      "en": "One Piece"
+    },
+    "category": "Anime/Series",
+    "prefix": "one piece style, pirate adventure, vibrant sea",
+    "suffix": "epic scale, detailed ships and islands, bright colors",
+    "prompt": "monkey d. luffy smiling in his straw hat on a sunny beach",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      201
+    ],
+    "key": "naruto",
+    "name": {
+      "en": "Naruto"
+    },
+    "category": "Anime/Series",
+    "prefix": "naruto style, ninja world, chakra effects",
+    "suffix": "dynamic action, energetic lighting, detailed clothing",
+    "prompt": "naruto uzumaki in sage mode with a powerful aura",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      202
+    ],
+    "key": "studio-ghibli",
+    "name": {
+      "en": "Studio Ghibli"
+    },
+    "category": "Anime/Movies",
+    "prefix": "studio ghibli style, hayao miyazaki, whimsical magical world",
+    "suffix": "lush nature, warm lighting, detailed background",
+    "prompt": "a young girl flying on a broom over green hills at sunset",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      203
+    ],
+    "key": "your-name",
+    "name": {
+      "en": "Your Name"
+    },
+    "category": "Anime/Movies",
+    "prefix": "makoto shinkai style, emotional sky, comet scene",
+    "suffix": "stunning backgrounds, beautiful lighting, detailed city",
+    "prompt": "a boy and a girl on a rooftop watching a giant comet cross the night sky",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      204
+    ],
+    "key": "akira",
+    "name": {
+      "en": "Akira"
+    },
+    "category": "Anime/Movies",
+    "prefix": "akira style, 1988 cyberpunk, neo tokyo",
+    "suffix": "gritty atmosphere, detailed bikes and city",
+    "prompt": "kaneda riding a red motorcycle through neon streets at night",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      205
+    ],
+    "key": "ghost-in-the-shell",
+    "name": {
+      "en": "Ghost in the Shell"
+    },
+    "category": "Anime/Movies",
+    "prefix": "ghost in the shell style, cyberpunk, neon future",
+    "suffix": "detailed tech, rainy city, atmospheric lighting",
+    "prompt": "major kusanagi in a long coat standing on a rooftop above a cyberpunk city",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      206
+    ],
+    "key": "violet-evergarden",
+    "name": {
+      "en": "Violet Evergarden"
+    },
+    "category": "Anime/Series",
+    "prefix": "violet evergarden style, emotional, beautiful detailed dress",
+    "suffix": "soft lighting, intricate background, cinematic",
+    "prompt": "violet writing a letter at a desk",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      207
+    ],
+    "key": "cyberpunk-edgerunners",
+    "name": {
+      "en": "Cyberpunk Edgerunners"
+    },
+    "category": "Anime/Series",
+    "prefix": "cyberpunk edgerunners style, night city, neon lights",
+    "suffix": "gritty, high contrast, futuristic details",
+    "prompt": "lucy with pink hair standing on a rooftop in night city",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      208
+    ],
+    "key": "fate-stay-night",
+    "name": {
+      "en": "Fate/Stay Night"
+    },
+    "category": "Anime/Series",
+    "prefix": "fate stay night style, grail war, magical energy",
+    "suffix": "epic lighting, detailed armor, dynamic action",
+    "prompt": "saber in armor holding a glowing sword",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      209
+    ],
+    "key": "death-note",
+    "name": {
+      "en": "Death Note"
+    },
+    "category": "Anime/Series",
+    "prefix": "death note style, psychological thriller, dark room",
+    "suffix": "high contrast, dramatic shadows, intense expressions",
+    "prompt": "light yagami sitting with a notebook and ryuk behind him",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      210
+    ],
+    "key": "fullmetal-alchemist",
+    "name": {
+      "en": "Fullmetal Alchemist"
+    },
+    "category": "Anime/Series",
+    "prefix": "fullmetal alchemist style, brotherhood, alchemy",
+    "suffix": "detailed machinery, epic scale, rich colors",
+    "prompt": "edward elric with his automail arm performing a transmutation",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      211
+    ],
+    "key": "hunter-x-hunter",
+    "name": {
+      "en": "Hunter x Hunter"
+    },
+    "category": "Anime/Series",
+    "prefix": "hunter x hunter style, nen aura, adventurous",
+    "suffix": "dynamic fights, detailed environments",
+    "prompt": "gon and killua running together with glowing auras",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      212
+    ],
+    "key": "sailor-moon",
+    "name": {
+      "en": "Sailor Moon"
+    },
+    "category": "Anime/Series",
+    "prefix": "sailor moon style, 90s magical girl, sparkles",
+    "suffix": "vibrant colors, cute aesthetic, classic anime",
+    "prompt": "sailor moon striking a heroic pose with a crescent moon behind her",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      213
+    ],
+    "key": "cowboy-bebop",
+    "name": {
+      "en": "Cowboy Bebop"
+    },
+    "category": "Anime/Series",
+    "prefix": "cowboy bebop style, 90s anime, space western",
+    "suffix": "retro future, detailed spaceships, moody lighting",
+    "prompt": "spike spiegel relaxing aboard his spaceship with a jazz atmosphere",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      214
+    ],
+    "key": "monogatari-series",
+    "name": {
+      "en": "Monogatari Series"
+    },
+    "category": "Anime/Series",
+    "prefix": "monogatari series style, shaft, stylized scenes",
+    "suffix": "unique angles, beautiful hair details, artistic",
+    "prompt": "senjougahara with purple hair and dramatic lighting",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      215
+    ],
+    "key": "spirited-away",
+    "name": {
+      "en": "Spirited Away"
+    },
+    "category": "Anime/Movies",
+    "prefix": "spirited away style, studio ghibli, spirit world",
+    "suffix": "magical atmosphere, lush details, warm colors",
+    "prompt": "chihiro walking through the spirit bathhouse",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      216
+    ],
+    "key": "weathering-with-you",
+    "name": {
+      "en": "Weathering With You"
+    },
+    "category": "Anime/Movies",
+    "prefix": "makoto shinkai style, emotional rain",
+    "suffix": "stunning sky, detailed city, cinematic lighting",
+    "prompt": "a boy and a girl running under the rain beneath a bright sky",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      217
+    ],
+    "key": "suzume",
+    "name": {
+      "en": "Suzume"
+    },
+    "category": "Anime/Movies",
+    "prefix": "makoto shinkai style, emotional adventure",
+    "suffix": "beautiful backgrounds, detailed, cinematic",
+    "prompt": "suzume sitting with a small chair in an abandoned town",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      218
+    ],
+    "key": "dragon-ball-z",
+    "name": {
+      "en": "Dragon Ball Z"
+    },
+    "category": "Anime/Series",
+    "prefix": "dragon ball z style, super saiyan, powerful aura",
+    "suffix": "dynamic fighting poses, energy effects",
+    "prompt": "goku as a super saiyan with a golden aura",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      219
+    ],
+    "key": "bleach",
+    "name": {
+      "en": "Bleach"
+    },
+    "category": "Anime/Series",
+    "prefix": "bleach style, soul reaper, bankai",
+    "suffix": "dark fantasy, detailed swords, high contrast",
+    "prompt": "ichigo in bankai form with his black sword",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      220
+    ],
+    "key": "tokyo-ghoul",
+    "name": {
+      "en": "Tokyo Ghoul"
+    },
+    "category": "Anime/Series",
+    "prefix": "tokyo ghoul style, dark urban fantasy",
+    "suffix": "dark atmosphere, red and black accents, intense mood",
+    "prompt": "kaneki with white hair in a dark city",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'horror' and 'bloody details'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      221
+    ],
+    "key": "my-hero-academia",
+    "name": {
+      "en": "My Hero Academia"
+    },
+    "category": "Anime/Series",
+    "prefix": "my hero academia style, hero society, one for all",
+    "suffix": "vibrant, dynamic action, heroic lighting",
+    "prompt": "deku powering up with green lightning",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      222
+    ],
+    "key": "death-parade",
+    "name": {
+      "en": "Death Parade"
+    },
+    "category": "Anime/Series",
+    "prefix": "death parade style, emotional, bar games",
+    "suffix": "dramatic lighting, detailed expressions",
+    "prompt": "decim the bartender in an empty bar",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      223
+    ],
+    "key": "ergo-proxy",
+    "name": {
+      "en": "Ergo Proxy"
+    },
+    "category": "Anime/Series",
+    "prefix": "ergo proxy style, dark sci-fi, philosophical",
+    "suffix": "moody atmosphere, detailed machinery",
+    "prompt": "re-l mayer with black hair in a futuristic dome city",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      224
+    ],
+    "key": "jojo-s-bizarre-adventure",
+    "name": {
+      "en": "JoJo's Bizarre Adventure"
+    },
+    "category": "Anime/Series",
+    "prefix": "jojo bizarre adventure style, flamboyant poses, dramatic lighting",
+    "suffix": "bold lines, vibrant colors, stylish atmosphere",
+    "prompt": "jotaro kujo with star platinum in an iconic pose",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      225
+    ],
+    "key": "one-punch-man",
+    "name": {
+      "en": "One Punch Man"
+    },
+    "category": "Anime/Series",
+    "prefix": "one punch man style, heroic, dynamic action",
+    "suffix": "clean lines, high contrast, powerful effects",
+    "prompt": "saitama in his yellow suit looking bored during a fight",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      226
+    ],
+    "key": "mob-psycho-100",
+    "name": {
+      "en": "Mob Psycho 100"
+    },
+    "category": "Anime/Series",
+    "prefix": "mob psycho 100 style, psychic powers, emotional",
+    "suffix": "dynamic energy, expressive faces, vibrant explosions",
+    "prompt": "shigeo kageyama with glowing white eyes unleashing his power",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      227
+    ],
+    "key": "vinland-saga",
+    "name": {
+      "en": "Vinland Saga"
+    },
+    "category": "Anime/Series",
+    "prefix": "vinland saga style, viking, dark medieval",
+    "suffix": "gritty, detailed armor, dramatic atmosphere",
+    "prompt": "thorfinn with blonde hair and an intense expression holding an axe",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      228
+    ],
+    "key": "berserk",
+    "name": {
+      "en": "Berserk"
+    },
+    "category": "Anime/Series",
+    "prefix": "berserk style, dark fantasy, grimdark",
+    "suffix": "dark tones, detailed armor, grim atmosphere",
+    "prompt": "guts with his huge sword in black armor",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'bloody atmosphere'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      229
+    ],
+    "key": "kaiju-no-8",
+    "name": {
+      "en": "Kaiju No. 8"
+    },
+    "category": "Anime/Series",
+    "prefix": "kaiju no 8 style, monster combat, modern action",
+    "suffix": "dynamic action, detailed kaiju, high contrast",
+    "prompt": "kafka hibino transformed into a kaiju",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      230
+    ],
+    "key": "solo-leveling",
+    "name": {
+      "en": "Solo Leveling"
+    },
+    "category": "Anime/Series",
+    "prefix": "solo leveling style, shadow monarch, system",
+    "suffix": "epic scale, dramatic shadows, dark fantasy",
+    "prompt": "sung jin-woo commanding his shadow army",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      231
+    ],
+    "key": "howl-s-moving-castle",
+    "name": {
+      "en": "Howl's Moving Castle"
+    },
+    "category": "Anime/Movies",
+    "prefix": "howl moving castle style, studio ghibli, magical steampunk",
+    "suffix": "whimsical, detailed castle, warm colors",
+    "prompt": "howl with blonde hair standing on the moving castle",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      232
+    ],
+    "key": "princess-mononoke",
+    "name": {
+      "en": "Princess Mononoke"
+    },
+    "category": "Anime/Movies",
+    "prefix": "princess mononoke style, studio ghibli, forest spirit",
+    "suffix": "lush nature, epic scale, detailed animals",
+    "prompt": "san riding a giant wolf in the ancient forest",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      233
+    ],
+    "key": "kaguya-sama-love-is-war",
+    "name": {
+      "en": "Kaguya-sama Love is War"
+    },
+    "category": "Anime/Series",
+    "prefix": "kaguya sama style, romantic comedy, elegant",
+    "suffix": "clean anime, detailed expressions, rich background",
+    "prompt": "kaguya shinomiya with long black hair in an elegant pose",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      234
+    ],
+    "key": "haikyuu",
+    "name": {
+      "en": "Haikyuu"
+    },
+    "category": "Anime/Series",
+    "prefix": "haikyuu style, volleyball, dynamic sports",
+    "suffix": "energetic, detailed motion, sweat and passion",
+    "prompt": "hinata shoyo jumping high to spike the volleyball",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      235
+    ],
+    "key": "parasyte",
+    "name": {
+      "en": "Parasyte"
+    },
+    "category": "Anime/Series",
+    "prefix": "parasyte style, sci-fi horror",
+    "suffix": "dark atmosphere, uncanny details, realistic anime",
+    "prompt": "shinichi with his parasite hand transforming",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'body horror' and 'grotesque'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      236
+    ],
+    "key": "black-clover",
+    "name": {
+      "en": "Black Clover"
+    },
+    "category": "Anime/Series",
+    "prefix": "black clover style, magic knights, shonen energy",
+    "suffix": "vibrant magic effects, dynamic action",
+    "prompt": "asta with his anti-magic sword and black bull robe",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      237
+    ],
+    "key": "wind-breaker",
+    "name": {
+      "en": "Wind Breaker"
+    },
+    "category": "Anime/Series",
+    "prefix": "wind breaker style, street fighting, school delinquents",
+    "suffix": "dynamic fights, detailed clothing, urban setting",
+    "prompt": "sakura haruka in a school uniform ready for a street fight",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      238
+    ],
+    "key": "fairy-tail",
+    "name": {
+      "en": "Fairy Tail"
+    },
+    "category": "Anime/Series",
+    "prefix": "fairy tail style, guild magic, adventurous",
+    "suffix": "bright colors, magical effects, epic scale",
+    "prompt": "natsu dragneel surrounded by fire magic",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      239
+    ],
+    "key": "the-disastrous-life-of-saiki-k",
+    "name": {
+      "en": "The Disastrous Life of Saiki K"
+    },
+    "category": "Anime/Series",
+    "prefix": "saiki k style, comedy, psychic powers",
+    "suffix": "clean lines, deadpan expressions, pastel colors",
+    "prompt": "kusuo saiki with pink hair and glasses looking unamused",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      240
+    ],
+    "key": "horimiya",
+    "name": {
+      "en": "Horimiya"
+    },
+    "category": "Anime/Series",
+    "prefix": "horimiya style, slice of life, romance",
+    "suffix": "warm lighting, detailed school life, cute expressions",
+    "prompt": "miyamura and hori together in a classroom",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      241
+    ],
+    "key": "grave-of-the-fireflies",
+    "name": {
+      "en": "Grave of the Fireflies"
+    },
+    "category": "Anime/Movies",
+    "prefix": "grave of the fireflies style, studio ghibli, emotional war",
+    "suffix": "realistic anime, warm tones, heartbreaking atmosphere",
+    "prompt": "setsuko and seita sitting together in the countryside",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      242
+    ],
+    "key": "paprika",
+    "name": {
+      "en": "Paprika"
+    },
+    "category": "Anime/Movies",
+    "prefix": "paprika style, surreal dream, psychedelic",
+    "suffix": "dreamlike, vibrant colors, intricate details",
+    "prompt": "paprika in a red dress running through a surreal dream world",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      243
+    ],
+    "key": "perfect-blue",
+    "name": {
+      "en": "Perfect Blue"
+    },
+    "category": "Anime/Movies",
+    "prefix": "perfect blue style, psychological thriller, 90s anime",
+    "suffix": "dark atmosphere, detailed expressions, cinematic",
+    "prompt": "mima kirigoe with an intense psychological expression",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      244
+    ],
+    "key": "blue-lock",
+    "name": {
+      "en": "Blue Lock"
+    },
+    "category": "Anime/Series",
+    "prefix": "blue lock style, intense soccer, competitive",
+    "suffix": "dynamic action, dramatic lighting, detailed eyes",
+    "prompt": "isagi yoichi with intense eyes about to shoot",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      245
+    ],
+    "key": "oshi-no-ko",
+    "name": {
+      "en": "Oshi no Ko"
+    },
+    "category": "Anime/Series",
+    "prefix": "oshi no ko style, idol, dramatic anime",
+    "suffix": "glitter effects, beautiful lighting, emotional",
+    "prompt": "ai hoshino with pink hair and star eyes performing on stage",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      246
+    ],
+    "key": "tower-of-god",
+    "name": {
+      "en": "Tower of God"
+    },
+    "category": "Anime/Series",
+    "prefix": "tower of god style, mysterious, vertical world",
+    "suffix": "detailed architecture, dramatic lighting",
+    "prompt": "bam with black hair and glowing blue eyes",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      247
+    ],
+    "key": "the-apothecary-diaries",
+    "name": {
+      "en": "The Apothecary Diaries"
+    },
+    "category": "Anime/Series",
+    "prefix": "apothecary diaries style, historical china, elegant",
+    "suffix": "detailed clothing, soft lighting, intricate patterns",
+    "prompt": "maomao with green eyes looking clever",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      248
+    ],
+    "key": "frieren-beyond-journey-s-end",
+    "name": {
+      "en": "Frieren Beyond Journey's End"
+    },
+    "category": "Anime/Series",
+    "prefix": "frieren style, fantasy, melancholic",
+    "suffix": "beautiful nature, soft colors, detailed background",
+    "prompt": "frieren the elf mage walking through a peaceful forest",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      249
+    ],
+    "key": "dan-da-dan",
+    "name": {
+      "en": "Dan Da Dan"
+    },
+    "category": "Anime/Series",
+    "prefix": "dan da dan style, chaotic supernatural, comedy horror",
+    "suffix": "dynamic angles, vibrant colors, funny expressions",
+    "prompt": "momo and okarun running from ghosts",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      250
+    ],
+    "key": "re-zero",
+    "name": {
+      "en": "Re:Zero"
+    },
+    "category": "Anime/Series",
+    "prefix": "re zero style, isekai, emotional",
+    "suffix": "detailed fantasy world, dramatic lighting, modest outfit",
+    "prompt": "rem with short blue hair in a modest maid uniform with a gentle smile, upper body",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      251
+    ],
+    "key": "overlord",
+    "name": {
+      "en": "Overlord"
+    },
+    "category": "Anime/Series",
+    "prefix": "overlord style, dark fantasy, supreme being",
+    "suffix": "epic scale, dark atmosphere, detailed armor",
+    "prompt": "ainz ooal gown sitting on his throne",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      252
+    ],
+    "key": "that-time-i-got-reincarnated-as-a-slime",
+    "name": {
+      "en": "That Time I Got Reincarnated as a Slime"
+    },
+    "category": "Anime/Series",
+    "prefix": "tensei slime style, isekai fantasy, cute slime",
+    "suffix": "vibrant colors, detailed monsters",
+    "prompt": "rimuru tempest in human form",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      253
+    ],
+    "key": "mushoku-tensei",
+    "name": {
+      "en": "Mushoku Tensei"
+    },
+    "category": "Anime/Series",
+    "prefix": "mushoku tensei style, isekai, detailed fantasy",
+    "suffix": "beautiful world, realistic proportions",
+    "prompt": "rudeus greyrat with his staff in a fantasy landscape",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      254
+    ],
+    "key": "konosuba",
+    "name": {
+      "en": "Konosuba"
+    },
+    "category": "Anime/Series",
+    "prefix": "konosuba style, comedy isekai, chaotic",
+    "suffix": "funny expressions, vibrant colors",
+    "prompt": "aqua the goddess looking useless",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      255
+    ],
+    "key": "sword-art-online",
+    "name": {
+      "en": "Sword Art Online"
+    },
+    "category": "Anime/Series",
+    "prefix": "sword art online style, virtual world, mmorpg",
+    "suffix": "detailed armor, fantasy lighting",
+    "prompt": "kirito in a black coat with dual swords",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      256
+    ],
+    "key": "steins-gate",
+    "name": {
+      "en": "Steins;Gate"
+    },
+    "category": "Anime/Series",
+    "prefix": "steins gate style, time travel, sci-fi",
+    "suffix": "dramatic lighting, detailed lab",
+    "prompt": "okabe rintaro in a mad scientist pose",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      257
+    ],
+    "key": "code-geass",
+    "name": {
+      "en": "Code Geass"
+    },
+    "category": "Anime/Series",
+    "prefix": "code geass style, mecha, strategic",
+    "suffix": "dramatic shadows, intense expressions",
+    "prompt": "lelouch vi britannia with his glowing geass eye",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      258
+    ],
+    "key": "gurren-lagann",
+    "name": {
+      "en": "Gurren Lagann"
+    },
+    "category": "Anime/Series",
+    "prefix": "gurren lagann style, mecha, fiery spirit",
+    "suffix": "explosive energy, bold lines",
+    "prompt": "kamina with his sunglasses and cape",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      259
+    ],
+    "key": "kill-la-kill",
+    "name": {
+      "en": "Kill la Kill"
+    },
+    "category": "Anime/Series",
+    "prefix": "kill la kill style, over the top fashion, action",
+    "suffix": "bold colors, dynamic poses",
+    "prompt": "ryuko matoi with her giant scissor blade in a school uniform, dynamic pose",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      260
+    ],
+    "key": "puella-magi-madoka-magica",
+    "name": {
+      "en": "Puella Magi Madoka Magica"
+    },
+    "category": "Anime/Series",
+    "prefix": "madoka magica style, dark magical girl",
+    "suffix": "beautiful yet eerie atmosphere",
+    "prompt": "homura akemi with long dark hair",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      261
+    ],
+    "key": "clannad",
+    "name": {
+      "en": "Clannad"
+    },
+    "category": "Anime/Series",
+    "prefix": "clannad style, emotional slice of life",
+    "suffix": "soft lighting, detailed backgrounds",
+    "prompt": "nagisa furukawa with an emotional expression",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      262
+    ],
+    "key": "angel-beats",
+    "name": {
+      "en": "Angel Beats"
+    },
+    "category": "Anime/Series",
+    "prefix": "angel beats style, afterlife school, emotional",
+    "suffix": "warm tones, dramatic scenes",
+    "prompt": "kanade tachibana playing the piano",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      263
+    ],
+    "key": "your-lie-in-april",
+    "name": {
+      "en": "Your Lie in April"
+    },
+    "category": "Anime/Series",
+    "prefix": "your lie in april style, musical, emotional",
+    "suffix": "beautiful piano scenes, cherry blossoms",
+    "prompt": "kaori miyazono playing the violin",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      264
+    ],
+    "key": "a-silent-voice",
+    "name": {
+      "en": "A Silent Voice"
+    },
+    "category": "Anime/Movies",
+    "prefix": "a silent voice style, emotional drama",
+    "suffix": "realistic anime, soft colors",
+    "prompt": "shoya ishida and shoko nishimiya on a bridge",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      265
+    ],
+    "key": "5-centimeters-per-second",
+    "name": {
+      "en": "5 Centimeters Per Second"
+    },
+    "category": "Anime/Movies",
+    "prefix": "5 centimeters per second style, makoto shinkai, realistic",
+    "suffix": "beautiful scenery, melancholic",
+    "prompt": "a train passing through falling cherry blossoms",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      266
+    ],
+    "key": "mirai-nikki",
+    "name": {
+      "en": "Mirai Nikki"
+    },
+    "category": "Anime/Series",
+    "prefix": "future diary style, psychological thriller",
+    "suffix": "dark atmosphere, intense expressions",
+    "prompt": "yuno gasai with pink hair and an unsettling smile",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      267
+    ],
+    "key": "elfen-lied",
+    "name": {
+      "en": "Elfen Lied"
+    },
+    "category": "Anime/Series",
+    "prefix": "elfen lied style, dark, emotional",
+    "suffix": "melancholic atmosphere, dramatic lighting",
+    "prompt": "lucy with small horns and pink hair standing in the rain in a long coat",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'violent' and 'bloody'. Preview was sexualized — regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      268
+    ],
+    "key": "tokyo-revengers",
+    "name": {
+      "en": "Tokyo Revengers"
+    },
+    "category": "Anime/Series",
+    "prefix": "tokyo revengers style, delinquents, time travel",
+    "suffix": "street fighting, detailed bikes",
+    "prompt": "takemichi with blonde hair and tears in his eyes",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      269
+    ],
+    "key": "jujutsu-kaisen-alt",
+    "name": {
+      "en": "Jujutsu Kaisen (Alt)"
+    },
+    "category": "Anime/Series",
+    "prefix": "jujutsu kaisen style, shibuya arc, intense battle",
+    "suffix": "dark, high detail, dynamic",
+    "prompt": "gojo satoru with glowing blue eyes",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      270
+    ],
+    "key": "demon-slayer-alt",
+    "name": {
+      "en": "Demon Slayer (Alt)"
+    },
+    "category": "Anime/Series",
+    "prefix": "demon slayer style, hashira, breathing techniques",
+    "suffix": "vibrant, fluid, epic",
+    "prompt": "rengoku kyojuro surrounded by flames",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      271
+    ],
+    "key": "chainsaw-man-alt",
+    "name": {
+      "en": "Chainsaw Man (Alt)"
+    },
+    "category": "Anime/Series",
+    "prefix": "chainsaw man style, devils, chaotic",
+    "suffix": "wild high energy, bold colors",
+    "prompt": "power with horns and a mischievous grin",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'gore' and blood from the example.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      272
+    ],
+    "key": "arcane-anime-version",
+    "name": {
+      "en": "Arcane (Anime Version)"
+    },
+    "category": "Anime/Series",
+    "prefix": "arcane style mixed with anime, steampunk fantasy",
+    "suffix": "detailed city, dramatic lighting",
+    "prompt": "jinx with blue braids and a wild expression",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      273
+    ],
+    "key": "marvel-comics",
+    "name": {
+      "en": "Marvel Comics"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "comic book style, marvel comics, dynamic posing, heroic",
+    "suffix": "bold lines, vibrant colors, detailed shading, comic panel art",
+    "prompt": "spider-man swinging through new york city at night",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      274
+    ],
+    "key": "dc-comics",
+    "name": {
+      "en": "DC Comics"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "comic book style, dc comics, dark heroic, dramatic lighting",
+    "suffix": "bold ink lines, strong shadows, epic composition",
+    "prompt": "batman standing on a gotham rooftop in the rain",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      276
+    ],
+    "key": "dark-knight-style",
+    "name": {
+      "en": "Dark Knight Style"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "dark comic book style, frank miller influence, gritty",
+    "suffix": "heavy shadows, high contrast, noir atmosphere",
+    "prompt": "the batman in shadows with dramatic lighting",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      277
+    ],
+    "key": "jim-lee-style",
+    "name": {
+      "en": "Jim Lee Style"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "jim lee comic style, highly detailed, dynamic anatomy",
+    "suffix": "sharp lines, heroic figures, cinematic angles",
+    "prompt": "superman pulling open his shirt to show the S emblem",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'dynamic anatomy' and 'revealing'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      278
+    ],
+    "key": "todd-mcfarlane-style",
+    "name": {
+      "en": "Todd McFarlane Style"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "todd mcfarlane style, extreme detail, dark fantasy",
+    "suffix": "intricate lines, gothic details, dynamic action",
+    "prompt": "spawn with chains and a flowing cape in a dramatic pose",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'grotesque'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      279
+    ],
+    "key": "image-comics",
+    "name": {
+      "en": "Image Comics"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "image comics style, independent comic, edgy",
+    "suffix": "bold art style, strong blacks, modern comic",
+    "prompt": "a superhero team in action",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      280
+    ],
+    "key": "sin-city-style",
+    "name": {
+      "en": "Sin City Style"
+    },
+    "category": "Comics/Graphic Novels",
+    "prefix": "sin city comic style, black and white, high contrast",
+    "suffix": "noir, stark blacks, limited red color accents",
+    "prompt": "marv in a trench coat standing in the rain",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed blood and smoking from the example.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      281
+    ],
+    "key": "watchmen-style",
+    "name": {
+      "en": "Watchmen Style"
+    },
+    "category": "Comics/Graphic Novels",
+    "prefix": "watchmen comic style, realistic comic, detailed",
+    "suffix": "rich colors, intricate panels, dark tone",
+    "prompt": "rorschach standing in an alley with his ink blot mask",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      282
+    ],
+    "key": "x-men-90s-style",
+    "name": {
+      "en": "X-Men 90s Style"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "90s x-men comic style, jim lee era",
+    "suffix": "dynamic team poses, detailed costumes",
+    "prompt": "wolverine with claws out in a classic pose",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      283
+    ],
+    "key": "spider-man-classic",
+    "name": {
+      "en": "Spider-Man Classic"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "classic spiderman comic style, bright and dynamic",
+    "suffix": "web effects, new york city background",
+    "prompt": "spider-man doing a flip between buildings",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      284
+    ],
+    "key": "batman-noir",
+    "name": {
+      "en": "Batman Noir"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "batman noir comic style, dark detective",
+    "suffix": "heavy shadows, rain, gothic architecture",
+    "prompt": "batman interrogating a suspect in a dark alley",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      285
+    ],
+    "key": "deadpool-comic",
+    "name": {
+      "en": "Deadpool Comic"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "deadpool comic style, meta, chaotic, humorous",
+    "suffix": "speech bubbles, breaking fourth wall",
+    "prompt": "deadpool pointing at the reader with his katanas",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      286
+    ],
+    "key": "hellboy-style",
+    "name": {
+      "en": "Hellboy Style"
+    },
+    "category": "Comics/Graphic Novels",
+    "prefix": "hellboy comic style, dark fantasy horror",
+    "suffix": "bold ink, warm colors, detailed textures",
+    "prompt": "hellboy with his big red stone hand",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      287
+    ],
+    "key": "saga-comic-style",
+    "name": {
+      "en": "Saga Comic Style"
+    },
+    "category": "Comics/Graphic Novels",
+    "prefix": "saga comic style, modern independent, epic sci-fi",
+    "suffix": "detailed characters, emotional expressions",
+    "prompt": "alana and marko with their child in space",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'masterpiece, best quality, score_7, safe' boilerplate.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      288
+    ],
+    "key": "invincible-style",
+    "name": {
+      "en": "Invincible Style"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "invincible comic style, superhero action",
+    "suffix": "bold colors, dynamic poses, cinematic energy",
+    "prompt": "invincible flying through the city sky",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'violent', 'brutal' and 'gore'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      289
+    ],
+    "key": "the-boys-comic",
+    "name": {
+      "en": "The Boys Comic"
+    },
+    "category": "Comics/Superheroes",
+    "prefix": "the boys comic style, dark superhero satire",
+    "suffix": "gritty, realistic proportions, tense mood",
+    "prompt": "butcher in a long coat with an angry expression",
+    "review": {
+      "status": "cleaned",
+      "note": "Removed 'violent' and the weapon from the example.",
+      "preview": "regen"
+    }
+  }
+]

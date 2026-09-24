@@ -163,16 +163,6 @@ function renderImagePicker(stepDef, el) {
   // reference image straight into this picker via loadUrlAsImage() (defined
   // below), instead of composing a prefix/suffix prompt string.
   if (stepDef.style_image_input) {
-    var stylesWrap = document.createElement('div');
-    stylesWrap.className = 'nsc-downscale-control';
-
-    var stylesHead = document.createElement('div');
-    stylesHead.className = 'nsc-downscale-head';
-    var stylesLbl = document.createElement('span');
-    stylesLbl.className = 'nsc-downscale-label';
-    stylesLbl.textContent = 'Styles';
-    stylesHead.appendChild(stylesLbl);
-
     var stylesBtn = document.createElement('button');
     stylesBtn.type = 'button';
     stylesBtn.className = 'nsc-history-btn nsc-options-trigger';
@@ -183,9 +173,65 @@ function renderImagePicker(stepDef, el) {
         '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/>' +
         '<path d="M12 2a10 10 0 1 0 10 10c0-1.1-.9-2-2-2h-2.3a2 2 0 0 1-2-2c0-.5.2-1 .5-1.3A2 2 0 0 0 14.7 3c-.9-.6-1.8-1-2.7-1z"/>' +
       '</svg>';
-    stylesHead.appendChild(stylesBtn);
-    stylesWrap.appendChild(stylesHead);
-    wrap.appendChild(stylesWrap);
+    // In the step's own header, next to its "⋯" button — not a separate
+    // "Styles" row under the drop zone.
+    if (stepLabelEl) {
+      var stylesChevron = stepLabelEl.querySelector('.nsc-step-chevron');
+      if (stylesChevron) stepLabelEl.insertBefore(stylesBtn, stylesChevron);
+      else stepLabelEl.appendChild(stylesBtn);
+    } else {
+      wrap.insertBefore(stylesBtn, wrap.firstChild);
+    }
+
+    // "Describe style" — for a reference image of the user's own (no catalog
+    // wording attached): the vision model reads its look and returns a
+    // style's prefix/suffix (same /api/styles/generate-from-image Build uses
+    // to create a style from a picture), which the composed prompt picks up
+    // like a catalog pick.
+    var describeBtn = document.createElement('button');
+    describeBtn.type = 'button';
+    describeBtn.className = 'nsc-history-btn ncf-describe-style-btn';
+    describeBtn.setAttribute('aria-label', 'Describe style');
+    describeBtn.title = 'Describe this image\'s style with the vision model';
+    var _describeIcon =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' +
+      '</svg>';
+    describeBtn.innerHTML = _describeIcon;
+    if (stylesBtn.parentNode) stylesBtn.parentNode.insertBefore(describeBtn, stylesBtn.nextSibling);
+    describeBtn.addEventListener('click', function () {
+      var dataUrl = getVal(stepDef.id, 'image_data_url');
+      if (!dataUrl) {
+        if (typeof showErrorToast === 'function') showErrorToast(tF('Pick a style reference image first.'));
+        return;
+      }
+      if (!window.openJourneyApi || typeof window.openJourneyApi.generateStyleFromImage !== 'function') return;
+      describeBtn.disabled = true;
+      describeBtn.classList.add('is-busy');
+      describeBtn.innerHTML =
+        '<svg class="nsc-ring nsc-ring--indeterminate" viewBox="0 0 44 44" aria-hidden="true" style="width:16px;height:16px">' +
+        '<circle class="nsc-ring-bg" cx="22" cy="22" r="18"/><circle class="nsc-ring-fill" cx="22" cy="22" r="18"/></svg>';
+      window.openJourneyApi.generateStyleFromImage({ imageDataUrl: dataUrl })
+        .then(function (data) {
+          var style = (data && data.style) || {};
+          setVal(stepDef.id, 'style_prefix', String(style.prefix || '').trim());
+          setVal(stepDef.id, 'style_suffix', String(style.suffix || '').trim());
+          setVal(stepDef.id, 'style_name', String(style.title || 'Your image').trim());
+          // Flows still on the Edit Prompt panel (Mix style flows) get the
+          // same pre-fill a catalog pick gives them.
+          setVal(stepDef.id, 'edit_prompt_prefix', String(style.prefix || '').trim());
+          setVal(stepDef.id, 'edit_prompt_suffix', String(style.suffix || '').trim());
+          document.dispatchEvent(new CustomEvent('ncf-style-changed', { detail: { stepId: stepDef.id } }));
+        })
+        .catch(function (err) {
+          if (typeof showErrorToast === 'function') showErrorToast(tF('Describe style') + ': ' + ((err && err.message) || 'failed'));
+        })
+        .then(function () {
+          describeBtn.disabled = false;
+          describeBtn.classList.remove('is-busy');
+          describeBtn.innerHTML = _describeIcon;
+        });
+    });
 
     stylesBtn.addEventListener('click', function () {
       _openStylePickerPanel(function (style) {
@@ -208,16 +254,13 @@ function renderImagePicker(stepDef, el) {
         // persistence is for the user's later hand-edits, not for this).
         setVal(stepDef.id, 'edit_prompt_prefix', pickedPrefix);
         setVal(stepDef.id, 'edit_prompt_suffix', pickedSuffix);
-
-        // Pop the Edit Prompt panel open right away, titled to make clear
-        // it's a follow-up to picking a style rather than the user reaching
-        // for the pencil icon themselves (window._ncfEditPromptOpeners is
-        // registered by whichever prompt-rendering file is active —
-        // flow-step-prompt-input.js for prompt_input steps,
-        // flow-step-workflow-params.js for the prompt_history field type).
-        if (window._ncfEditPromptOpeners && window._ncfEditPromptOpeners[stepDef.id]) {
-          window._ncfEditPromptOpeners[stepDef.id]('Edit Prompt from Style');
-        }
+        setVal(stepDef.id, 'style_name', (style && style.name) || '');
+        // A prompt_input with style_source pointing here (e.g. Style
+        // Reference's "Final prompt") rebuilds itself live — same event the
+        // Create style flows use.
+        // The prompt step applies it on its own (_bindStyleAutoApply,
+        // flow-step-prompt-input.js) — no panel to confirm.
+        document.dispatchEvent(new CustomEvent('ncf-style-changed', { detail: { stepId: stepDef.id } }));
       });
     });
   }
@@ -434,20 +477,19 @@ function renderImagePicker(stepDef, el) {
   // Opt-in via stepDef.style_image_input: any image landing in this picker
   // that *didn't* come from the Styles catalog (which already carries its
   // own prefix/suffix text, see _skipVisionOnNextLoad above) has no
-  // structural style text of its own — pop the Edit Prompt panel open
-  // (titled "from Vision") with Prefix cleared, so the user picks a vision
-  // model and hits "Get Style" in there themselves (see
-  // flow-step-prompt-input.js) instead of a description getting run blind,
-  // with no chance to notice/fix it guessing wrong for e.g. a photo.
+  // style text of its own: the previous style's wording is dropped from the
+  // prompt, and the user can read this one's with "Describe style" (header
+  // eye) or the Edit Prompt panel's Short/Detailed buttons.
   function _maybeOpenVisionEditPanel(dataUrl) {
     if (!stepDef.style_image_input || _skipVisionOnNextLoad) { _skipVisionOnNextLoad = false; return; }
     setVal(stepDef.id, 'style_prefix', '');
     setVal(stepDef.id, 'style_suffix', '');
     setVal(stepDef.id, 'edit_prompt_prefix', '');
     setVal(stepDef.id, 'edit_prompt_suffix', '');
-    if (window._ncfEditPromptOpeners && window._ncfEditPromptOpeners[stepDef.id]) {
-      window._ncfEditPromptOpeners[stepDef.id]('Edit Prompt from Vision');
-    }
+    setVal(stepDef.id, 'style_name', '');
+    // A previous catalog style's wording no longer belongs to this image —
+    // tell a composed "Final prompt" (style_source) to drop it.
+    document.dispatchEvent(new CustomEvent('ncf-style-changed', { detail: { stepId: stepDef.id } }));
   }
 
   function handleDataUrl(dataUrl) {
@@ -1425,35 +1467,17 @@ function renderImagePicker(stepDef, el) {
         '<line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>' +
         '<line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' +
         '<span>' + escHtml(_presetStepDef.presets_label || 'Presets') + '</span>';
-      var subjPresetMenu = document.createElement('div');
-      subjPresetMenu.className = 'nsc-preset-menu' + (_presetStepDef.presets.length > 6 ? ' nsc-preset-menu--scroll' : '');
-      subjPresetMenu.style.display = 'none';
-
-      _presetStepDef.presets.forEach(function (pr) {
-        var prLabel = typeof pr === 'object' ? (pr.label || pr.text || '') : String(pr);
-        var prText  = typeof pr === 'object' ? (pr.text || pr.label || '') : String(pr);
-        var prItem = document.createElement('button');
-        prItem.type = 'button';
-        prItem.className = 'nsc-preset-item';
-        prItem.textContent = prLabel;
-        prItem.title = prText;
-        prItem.addEventListener('click', function (e) {
-          e.stopPropagation();
-          subjPresetMenu.style.display = 'none';
-          var reg = window._ncfPromptPresetSteps && window._ncfPromptPresetSteps[_presetStepDef.id];
-          if (reg && reg.choose) reg.choose(pr);
-        });
-        subjPresetMenu.appendChild(prItem);
-      });
-
+      subjPresetBtn.classList.add('nsc-options-trigger');
       subjPresetBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        subjPresetMenu.style.display = (subjPresetMenu.style.display === 'none') ? 'flex' : 'none';
+        var reg = window._ncfPromptPresetSteps && window._ncfPromptPresetSteps[_presetStepDef.id];
+        if (!reg || !reg.choose) return;
+        var promptTa = document.getElementById('ncf-input-' + _presetStepDef.id);
+        _openPromptPresetsPanel(_presetStepDef.presets_label || 'Presets', _presetStepDef.presets, reg.choose,
+          promptTa ? promptTa.value : '');
       });
-      document.addEventListener('click', function () { subjPresetMenu.style.display = 'none'; });
 
       subjPresetWrap.appendChild(subjPresetBtn);
-      subjPresetWrap.appendChild(subjPresetMenu);
       subjectWrap.appendChild(subjPresetWrap);
     }
 
@@ -1469,6 +1493,51 @@ function renderImagePicker(stepDef, el) {
     if (_hasPoseSentence) subjectWrap.appendChild(_ncfBuildPoseButton(stepDef));
 
     wrap.appendChild(subjectWrap);
+  }
+
+  // Optional "zone color" select — rendered when zone_picker: true (only
+  // MultiComposer, mix.multi_composer). Says which colored rectangle
+  // (drawn on the flow's background via region_annotate's rectangle mode)
+  // this reference image fills — read by the zone_prompt_builder step to
+  // assemble "place the subject from <imageN> in the {color} area" text.
+  if (stepDef.zone_picker) {
+    var zoneWrap = document.createElement('div');
+    zoneWrap.className = 'ncf-subject-wrap';
+
+    var zoneLabel = document.createElement('label');
+    zoneLabel.className = 'nsc-field-label';
+    zoneLabel.setAttribute('for', 'ncf-img-zone-' + stepDef.id);
+    zoneLabel.textContent = 'Goes in zone color';
+    zoneWrap.appendChild(zoneLabel);
+
+    var zoneSelectWrap = document.createElement('div');
+    zoneSelectWrap.className = 'nsc-select-wrapper';
+    var zoneSelect = document.createElement('select');
+    zoneSelect.className = 'nsc-select';
+    zoneSelect.id = 'ncf-img-zone-' + stepDef.id;
+    var zoneNoneOpt = document.createElement('option');
+    zoneNoneOpt.value = '';
+    zoneNoneOpt.textContent = '— pick a color —';
+    zoneSelect.appendChild(zoneNoneOpt);
+    (stepDef.zone_colors || []).forEach(function (c) {
+      var opt = document.createElement('option');
+      opt.value = c.value;
+      opt.textContent = c.label || c.value;
+      zoneSelect.appendChild(opt);
+    });
+    var _savedZone = getVal(stepDef.id, 'zone_color') || '';
+    if (_savedZone) zoneSelect.value = _savedZone;
+    zoneSelect.addEventListener('change', function () {
+      setVal(stepDef.id, 'zone_color', zoneSelect.value);
+    });
+    var zoneChev = document.createElement('span');
+    zoneChev.className = 'nsc-select-chevron';
+    zoneChev.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+    zoneSelectWrap.appendChild(zoneSelect);
+    zoneSelectWrap.appendChild(zoneChev);
+    zoneWrap.appendChild(zoneSelectWrap);
+
+    wrap.appendChild(zoneWrap);
   }
 
   // Registry so a result card's "Use as input" button (flow-gallery.js

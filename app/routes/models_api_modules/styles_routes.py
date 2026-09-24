@@ -73,6 +73,156 @@ def _write_styles(styles: list[dict[str, Any]]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Styles contributed by packages (PACKAGE_FORMAT.md §10.3)
+# ---------------------------------------------------------------------------
+# A package's styles are copied into styles.json on install so Build > Styles,
+# the style pickers and per-model image generation treat them exactly like the
+# user's own. Each copy is tagged with `package` + `package_key`; that pair —
+# never the name — is what later installs match on, so a pack never touches
+# a user style that happens to share its name. Styles are text only and
+# independent of any model: images stay per model in model_images and are
+# never overwritten by a package.
+
+def _pkg_text(value: Any, lang: str) -> str:
+    if isinstance(value, dict):
+        return str(value.get(lang) or next(iter(value.values()), "") or "").strip()
+    return str(value or "").strip()
+
+
+def _user_model_images(style: dict[str, Any]) -> dict[str, Any]:
+    """model_images the user generated/uploaded — not the ones a package
+    brought along (those carry `package`)."""
+    images = style.get("model_images")
+    if not isinstance(images, dict):
+        return {}
+    return {k: v for k, v in images.items() if isinstance(v, dict) and v and not v.get("package")}
+
+
+def _style_is_kept_by_user(style: dict[str, Any]) -> bool:
+    """A package style the user edited or generated images for stays when the
+    package no longer provides it — it becomes one of the user's own."""
+    return bool(style.get("package_edited") or _user_model_images(style))
+
+
+def _detach_from_package(style: dict[str, Any]) -> None:
+    for key in ("package", "package_key", "package_edited"):
+        style.pop(key, None)
+    # Images served from the package folder vanish with it.
+    style["model_images"] = _user_model_images(style)
+
+
+def _apply_package_images(style: dict[str, Any], pkg_id: str, images: Any, version: str = "") -> None:
+    """Per-model previews a package ships (§10.3 `images`), served straight
+    from data/packages/<pkg>/. Never replaces an image the user made for
+    that model; drops package images the new version no longer carries."""
+    current = style.get("model_images")
+    if not isinstance(current, dict):
+        current = {}
+    merged = _user_model_images({"model_images": current})
+    for model_id, rel in (images or {}).items():
+        model_id = str(model_id)
+        if model_id in merged or not isinstance(rel, str) or not rel:
+            continue
+        merged[model_id] = {
+            "image_filename": "",
+            # ?v= busts the year-long immutable cache /packages/ files get
+            # when a new package version ships a different image.
+            "image_url": f"/packages/{quote(pkg_id)}/{quote(rel)}" + (f"?v={quote(version)}" if version else ""),
+            "package": pkg_id,
+        }
+    style["model_images"] = merged
+
+
+def sync_package_styles(pkg_id: str, pkg_dir: Path, manifest: dict[str, Any]) -> dict[str, int]:
+    """Merge a just-installed package's styles into styles.json: new keys are
+    added, untouched ones get the package's current text, keys the package
+    dropped are removed (or handed over to the user, see
+    _style_is_kept_by_user)."""
+    from app.services import package_service
+
+    default_lang = str(manifest.get("default_lang") or "en")
+    incoming = package_service.load_package_styles(pkg_dir, manifest)
+    # `replaces`: older packs whose styles moved into this one. Their styles
+    # are adopted by key — same id, same edits, same per-model images — so
+    # regrouping packs never duplicates a style or loses its images.
+    replaces = {str(p) for p in (manifest.get("replaces") or []) if str(p) and str(p) != pkg_id}
+    incoming_keys = {str(item.get("key", "")) for item in incoming}
+    added = updated = removed = 0
+    with _styles_lock:
+        styles = _load_styles()
+        for style in styles:
+            if style.get("package") in replaces and style.get("package_key") in incoming_keys:
+                style["package"] = pkg_id
+        by_key = {s.get("package_key"): s for s in styles if s.get("package") == pkg_id}
+        max_id = max((_coerce_int_scalar(s.get("id")) or 0 for s in styles), default=0)
+        seen: set[str] = set()
+        for item in incoming:
+            key = str(item.get("key", ""))
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            text = {
+                "name": _pkg_text(item.get("name"), default_lang),
+                "category": _pkg_text(item.get("category"), default_lang),
+                "prefix": str(item.get("prefix", "") or "").strip(),
+                "suffix": str(item.get("suffix", "") or "").strip(),
+                "prompt": str(item.get("prompt", "") or "").strip(),
+            }
+            existing = by_key.get(key)
+            if existing is None:
+                max_id += 1
+                existing = {
+                    **text,
+                    "image_filename": "",
+                    "image_url": "",
+                    "profile_images": {},
+                    "page_images": {},
+                    "model_images": {},
+                    "package": pkg_id,
+                    "package_key": key,
+                    "id": max_id,
+                }
+                styles.append(existing)
+                added += 1
+            elif not existing.get("package_edited"):
+                existing.update(text)
+                updated += 1
+            _apply_package_images(existing, pkg_id, item.get("images"), str(manifest.get("version") or ""))
+        kept: list[dict[str, Any]] = []
+        for style in styles:
+            if style.get("package") == pkg_id and style.get("package_key") not in seen:
+                if _style_is_kept_by_user(style):
+                    _detach_from_package(style)
+                else:
+                    removed += 1
+                    continue
+            kept.append(style)
+        _write_styles(kept)
+    return {"added": added, "updated": updated, "removed": removed}
+
+
+def remove_package_styles(pkg_id: str) -> dict[str, int]:
+    """Uninstall: drop the package's styles, except those the user edited or
+    generated images for — those stay as the user's own styles."""
+    removed = kept_count = 0
+    with _styles_lock:
+        styles = _load_styles()
+        kept: list[dict[str, Any]] = []
+        for style in styles:
+            if style.get("package") == pkg_id:
+                if _style_is_kept_by_user(style):
+                    _detach_from_package(style)
+                    kept_count += 1
+                else:
+                    removed += 1
+                    continue
+            kept.append(style)
+        if removed or kept_count:
+            _write_styles(kept)
+    return {"removed": removed, "kept": kept_count}
+
+
+# ---------------------------------------------------------------------------
 # Pages helpers
 # ---------------------------------------------------------------------------
 
@@ -506,6 +656,50 @@ def update_style_image(style_id: int):
     return jsonify({"ok": True, "style": updated})
 
 
+_SUBFOLDER_PART_RE = re.compile(r"^[A-Za-z0-9_-][A-Za-z0-9._-]*$")
+
+
+def _to_webp(image_bytes: bytes, quality: int = 85) -> bytes | None:
+    try:
+        from PIL import Image
+
+        with Image.open(io.BytesIO(image_bytes)) as im:
+            if im.mode not in ("RGB", "RGBA"):
+                im = im.convert("RGBA" if "A" in im.getbands() else "RGB")
+            buf = io.BytesIO()
+            im.save(buf, "WEBP", quality=quality, method=6)
+            return buf.getvalue()
+    except Exception:
+        logger.exception("WebP conversion failed")
+        return None
+
+
+def _safe_subfolder(value: Any) -> str | None:
+    """'' when not asked for, the cleaned relative path when valid, None when
+    it would escape the output folder or uses odd characters."""
+    raw = str(value or "").strip().replace("\\", "/").strip("/")
+    if not raw:
+        return ""
+    parts = [p for p in raw.split("/") if p]
+    if not parts or any(p in (".", "..") or not _SUBFOLDER_PART_RE.match(p) for p in parts):
+        return None
+    return "/".join(parts)
+
+
+def _safe_segment(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "-", str(value)).strip("-.") or "model"
+
+
+def _style_file_key(style: dict[str, Any]) -> str:
+    """Stable file name for a style's exported image: the package key when
+    the style comes from a style pack, otherwise a slug of its name."""
+    key = str(style.get("package_key") or "").strip()
+    if key:
+        return key
+    slug = re.sub(r"[^a-z0-9]+", "-", str(style.get("name", "")).lower()).strip("-")
+    return slug or f"style-{style.get('id')}"
+
+
 @models_api_bp.patch("/styles/<int:style_id>/model-image")
 def update_style_model_image(style_id: int):
     """Associate a generated/uploaded image with a specific imported model —
@@ -515,12 +709,16 @@ def update_style_model_image(style_id: int):
     image_filename = str(payload.get("imageFilename", "") or "").strip()
     image_url = str(payload.get("imageUrl", "") or "").strip()
     model_id = str(payload.get("modelId", "") or "").strip()
+    image_format = "webp" if str(payload.get("format", "") or "").strip().lower() == "webp" else "png"
     registry_data = _ensure_registry()
 
     if not model_id:
         return jsonify({"error": "modelId is required"}), 400
     if not image_filename and not image_url:
         return jsonify({"error": "imageFilename or imageUrl is required"}), 400
+    export_subfolder = _safe_subfolder(payload.get("exportSubfolder"))
+    if export_subfolder is None:
+        return jsonify({"error": "The output subfolder may only use letters, digits, '-', '_' and '/'"}), 400
 
     with _styles_lock:
         styles = _load_styles()
@@ -533,19 +731,45 @@ def update_style_model_image(style_id: int):
             return jsonify({"error": "Style image source not found"}), 400
 
         model_folder = f"model_{model_id}"
-        style_rel_path = f"{model_folder}/{style_id}.png"
         (STYLES_IMAGES_DIR / model_folder).mkdir(parents=True, exist_ok=True)
-        image_service.save_image(
-            str(STYLES_IMAGES_DIR),
-            style_rel_path,
-            source_bytes,
-            {
-                "source": "styles",
-                "style_id": str(style_id),
-                "model_id": model_id,
-                "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            },
-        )
+        if image_format == "webp":
+            webp_bytes = _to_webp(source_bytes)
+            if webp_bytes is None:
+                return jsonify({"error": "Could not convert the image to WebP"}), 400
+            style_rel_path = f"{model_folder}/{style_id}.webp"
+            (STYLES_IMAGES_DIR / style_rel_path).write_bytes(webp_bytes)
+        else:
+            style_rel_path = f"{model_folder}/{style_id}.png"
+            image_service.save_image(
+                str(STYLES_IMAGES_DIR),
+                style_rel_path,
+                source_bytes,
+                {
+                    "source": "styles",
+                    "style_id": str(style_id),
+                    "model_id": model_id,
+                    "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                },
+            )
+        # Switching format leaves the other one behind — drop it.
+        other = STYLES_IMAGES_DIR / f"{model_folder}/{style_id}.{'png' if image_format == 'webp' else 'webp'}"
+        if other.is_file():
+            try:
+                other.unlink()
+            except OSError:
+                pass
+
+        # Optional stable-named copy in the output folder, e.g.
+        # <output>/style-previews/<model>/<style-key>.webp — what a style
+        # pack's images are collected from (PACKAGE_FORMAT.md §10.3).
+        export_path = ""
+        if export_subfolder:
+            ext = style_rel_path.rsplit(".", 1)[-1]
+            export_dir = Path(_resolve_output_dir(registry_data)) / export_subfolder / _safe_segment(model_id)
+            export_dir.mkdir(parents=True, exist_ok=True)
+            dest = export_dir / f"{_style_file_key(target)}.{ext}"
+            dest.write_bytes((STYLES_IMAGES_DIR / style_rel_path).read_bytes())
+            export_path = str(dest)
 
         model_images = target.get("model_images")
         if not isinstance(model_images, dict):
@@ -562,6 +786,7 @@ def update_style_model_image(style_id: int):
         "id": style_id,
         "modelId": model_id,
         "image_url": target["model_images"][model_id]["image_url"],
+        "exportPath": export_path,
     })
 
 
@@ -917,6 +1142,9 @@ def update_style(style_id: int):
             return jsonify({"error": f"Style {style_id} not found"}), 404
         for k, v in updates.items():
             target[k] = v
+        # A package update must not overwrite the user's own wording.
+        if target.get("package"):
+            target["package_edited"] = True
         _write_styles(styles)
 
     return jsonify({"ok": True, "id": style_id, "updated": list(updates.keys())})

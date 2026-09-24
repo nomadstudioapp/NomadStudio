@@ -1,0 +1,245 @@
+[
+  {
+    "src": [2], "key": "medium-format-film",
+    "name": {"en": "Medium Format Film", "es": "Película de formato medio", "zh": "中画幅胶片", "ko": "중형 필름"},
+    "category": "Photography/Classic",
+    "prefix": "medium-format film photograph, movie-still aesthetic",
+    "suffix": "cinematic key light with soft rim light, shallow depth of field, fine film grain, warm natural portrait tones",
+    "prompt": "a traveler in an old European street",
+    "review": {"status": "cleaned", "note": "Removed brand 'Kodak Portra' and duplicated 'soft film grain'.", "preview": "ok"}
+  },
+  {
+    "src": [10], "key": "daguerreotype",
+    "name": {"en": "Daguerreotype", "es": "Daguerrotipo", "zh": "达盖尔银版照片", "ko": "다게레오타입"},
+    "category": "Photography/Classic",
+    "prefix": "1800s daguerreotype photographic plate",
+    "suffix": "sepia and silver tones, long-exposure stillness, soft focus falloff, tarnished edges, scratches and antique plate imperfections",
+    "prompt": "a traveler in an old European street",
+    "review": {"status": "cleaned", "note": "Was '1800s Photo'.", "preview": "ok"}
+  },
+  {
+    "src": [192], "key": "silhouette",
+    "name": {"en": "Silhouette", "es": "Silueta", "zh": "剪影", "ko": "실루엣"},
+    "category": "Photography/Classic",
+    "prefix": "silhouette photograph, subject in pure black against a bright background",
+    "suffix": "strong backlight, clean graphic outline, minimal detail in the shadows, high contrast, stark dramatic composition",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [91], "key": "cinematic-film-still",
+    "name": {"en": "Cinematic Film Still", "es": "Fotograma de cine", "zh": "电影剧照", "ko": "영화 스틸컷"},
+    "category": "Photography/Modern",
+    "prefix": "cinematic film still, anamorphic widescreen framing",
+    "suffix": "shallow depth of field, oval bokeh, moody motivated lighting, subtle film grain, high-budget production design",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {"status": "rewritten", "note": "Was 'Cinematic' in the 'Stability AI' category; removed trademark 'cinemascope'.", "preview": "ok"}
+  },
+  {
+    "src": [187], "key": "editorial-glamour",
+    "name": {"en": "Editorial Glamour", "es": "Glamour editorial", "zh": "杂志魅力写真", "ko": "에디토리얼 글래머"},
+    "category": "Photography/Modern",
+    "prefix": "high-fashion editorial photograph, elegant styling",
+    "suffix": "luxurious fully clothed wardrobe, confident pose, soft beauty lighting with glossy highlights, opulent setting, magazine cover polish",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "rewritten", "note": "Removed 'sensual'; subjects explicitly clothed (content policy ≤16).", "preview": "ok"}
+  },
+  {
+    "src": [188], "key": "hdr-photo",
+    "name": {"en": "HDR Photo", "es": "Foto HDR", "zh": "HDR 照片", "ko": "HDR 사진"},
+    "category": "Photography/Modern",
+    "prefix": "HDR photograph",
+    "suffix": "high dynamic range, detail held in deep shadows and bright highlights, vivid but natural color, crisp micro-contrast",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [189], "key": "smartphone-snapshot",
+    "name": {"en": "Smartphone Snapshot", "es": "Foto de móvil", "zh": "手机随拍", "ko": "스마트폰 스냅"},
+    "category": "Photography/Modern",
+    "prefix": "casual smartphone photo",
+    "suffix": "deep depth of field, computational HDR look, slightly wide lens, natural candid framing, everyday realism",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "rewritten", "note": "Was 'Photo Iphone Photographic'; removed trademark 'iPhone'.", "preview": "ok"}
+  },
+  {
+    "src": [190], "key": "long-exposure",
+    "name": {"en": "Long Exposure", "es": "Larga exposición", "zh": "长曝光", "ko": "장노출"},
+    "category": "Photography/Modern",
+    "prefix": "long exposure photograph, tripod-steady scene",
+    "suffix": "silky motion blur, light trails, ghosted moving figures, sharp static elements, dreamy surreal atmosphere",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [191], "key": "neon-noir",
+    "name": {"en": "Neon Noir", "es": "Neón noir", "zh": "霓虹黑色电影", "ko": "네온 누아르"},
+    "category": "Photography/Modern",
+    "prefix": "neon noir photograph",
+    "suffix": "rain-soaked streets, glowing neon signs, deep low-key shadows, saturated magenta and cyan reflections, high contrast",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [193], "key": "tilt-shift-miniature",
+    "name": {"en": "Tilt-Shift Miniature", "es": "Miniatura tilt-shift", "zh": "移轴微缩", "ko": "틸트시프트 미니어처"},
+    "category": "Photography/Modern",
+    "prefix": "tilt-shift photograph seen from above",
+    "suffix": "narrow band of selective focus, strong blur top and bottom, toy-like miniature effect, bright saturated color",
+    "prompt": "a busy town square seen from a high balcony",
+    "review": {"status": "rewritten", "note": "Example scene changed: a close portrait cannot show the miniature effect.", "preview": "regen"}
+  },
+  {
+    "src": [185], "key": "sci-fi-portrait",
+    "name": {"en": "Sci-Fi Portrait", "es": "Retrato de ciencia ficción", "zh": "科幻肖像", "ko": "SF 포트레이트"},
+    "category": "Photography/Modern",
+    "prefix": "cinematic sci-fi portrait photograph",
+    "suffix": "otherworldly atmosphere, subtle bioluminescent accents, cool alien color palette, shallow depth of field, mysterious mood",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {"status": "rewritten", "note": "Was 'Photo Alien'.", "preview": "ok"}
+  },
+  {
+    "src": [65], "key": "bleach-bypass",
+    "name": {"en": "Bleach Bypass", "es": "Bleach bypass", "zh": "留银处理", "ko": "블리치 바이패스"},
+    "category": "Film Looks/Color Process",
+    "prefix": "bleach bypass film look",
+    "suffix": "high contrast, very low saturation, metallic silver highlights, gritty desaturated color, harsh silver-retention grain",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed literal [SUBJECT] placeholder and parentheses.", "preview": "ok"}
+  },
+  {
+    "src": [66], "key": "teal-and-orange",
+    "name": {"en": "Teal & Orange", "es": "Teal y naranja", "zh": "青橙色调", "ko": "틸 & 오렌지"},
+    "category": "Film Looks/Color Process",
+    "prefix": "blockbuster teal and orange color grade",
+    "suffix": "cool teal shadows and background, warm orange skin tones and highlights, strong subject separation, cinematic contrast",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder and 'Keywords:' clutter.", "preview": "ok"}
+  },
+  {
+    "src": [67], "key": "cross-processing",
+    "name": {"en": "Cross Processing", "es": "Proceso cruzado", "zh": "交叉冲洗", "ko": "크로스 프로세싱"},
+    "category": "Film Looks/Color Process",
+    "prefix": "cross-processed film look",
+    "suffix": "unnatural color casts, green and cyan shadows, yellow and red highlights, extreme contrast, surreal tonal shifts",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [68], "key": "three-strip-color",
+    "name": {"en": "Three-Strip Color", "es": "Color tricromático", "zh": "三色印片法", "ko": "3색 컬러 필름"},
+    "category": "Film Looks/Color Process",
+    "prefix": "vintage three-strip color film look",
+    "suffix": "hyper-saturated reds and greens, creamy whites, painted-looking skin tones, lush saturated primaries, classic golden-age cinema richness",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "rewritten", "note": "Was 'echnicolor(2-Strip-3-Strip)' — typo and trademark (Technicolor) removed.", "preview": "ok"}
+  },
+  {
+    "src": [69], "key": "day-for-night",
+    "name": {"en": "Day for Night", "es": "Noche americana", "zh": "日拍夜景", "ko": "데이 포 나이트"},
+    "category": "Film Looks/Color Process",
+    "prefix": "day-for-night film look",
+    "suffix": "daylight scene graded deep blue, underexposed tones, darkened sky, crisp moonlight-like shadows, classic cinema night simulation",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [70], "key": "vintage-slide-film",
+    "name": {"en": "Vintage Slide Film", "es": "Diapositiva vintage", "zh": "复古反转片", "ko": "빈티지 슬라이드 필름"},
+    "category": "Film Looks/Color Process",
+    "prefix": "vintage color slide film look",
+    "suffix": "punchy contrast, vibrant reds and yellows, slightly cool shadows, fine grain, classic mid-century analog color",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "rewritten", "note": "Was 'Kodachrome-Look'; trademarks (Kodachrome, Kodak) removed.", "preview": "ok"}
+  },
+  {
+    "src": [76], "key": "light-leak",
+    "name": {"en": "Light Leak", "es": "Fuga de luz", "zh": "漏光", "ko": "라이트 릭"},
+    "category": "Film Looks/Color Process",
+    "prefix": "analog light leak film effect",
+    "suffix": "streaks of warm orange and magenta light bleeding across the frame, hazy glow, soft gradients, nostalgic dreamy imperfections",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [71], "key": "low-key",
+    "name": {"en": "Low Key", "es": "Clave baja", "zh": "低调光", "ko": "로우 키"},
+    "category": "Film Looks/Lighting",
+    "prefix": "low-key lighting",
+    "suffix": "deep dominant shadows, limited selective illumination on the subject, strong shadow shapes, moody mysterious atmosphere",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [72], "key": "high-key",
+    "name": {"en": "High Key", "es": "Clave alta", "zh": "高调光", "ko": "하이 키"},
+    "category": "Film Looks/Lighting",
+    "prefix": "high-key lighting",
+    "suffix": "bright light-filled scene, minimal soft shadows, even illumination, low contrast, airy clean tones",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder. Preview drifted to anime and showed placeholder text — regenerate.", "preview": "regen"}
+  },
+  {
+    "src": [73], "key": "chiaroscuro",
+    "name": {"en": "Chiaroscuro", "es": "Claroscuro", "zh": "明暗对照", "ko": "키아로스쿠로"},
+    "category": "Film Looks/Lighting",
+    "prefix": "chiaroscuro lighting",
+    "suffix": "strong interplay of light and shadow, highlights sharply sculpting form, painterly contrast, dramatic cinematic shadow patterns",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [74], "key": "neon-glow",
+    "name": {"en": "Neon Glow", "es": "Brillo de neón", "zh": "霓虹光晕", "ko": "네온 글로우"},
+    "category": "Film Looks/Lighting",
+    "prefix": "neon glow lighting",
+    "suffix": "vivid multi-colored light sources, saturated glowing reflections on wet surfaces, urban night atmosphere, colored rim light on the subject",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder — the model rendered it as a neon sign. Regenerate.", "preview": "regen"}
+  },
+  {
+    "src": [75], "key": "spotlight",
+    "name": {"en": "Spotlight", "es": "Foco", "zh": "聚光灯", "ko": "스포트라이트"},
+    "category": "Film Looks/Lighting",
+    "prefix": "theatrical spotlight lighting",
+    "suffix": "single hard-edged beam from above, subject isolated in a pool of light, darkness around, high contrast, dramatic center of attention",
+    "prompt": "a detective walking through a rainy night alley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [77], "key": "monochromatic",
+    "name": {"en": "Monochromatic", "es": "Monocromático", "zh": "单色调", "ko": "모노크로매틱"},
+    "category": "Color Grading",
+    "prefix": "monochromatic color palette",
+    "suffix": "the entire image in tints, tones and shades of a single hue, unified minimal palette, subtle tonal variation",
+    "prompt": "a fashion portrait in a modern studio setup",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [78], "key": "analogous-colors",
+    "name": {"en": "Analogous Colors", "es": "Colores análogos", "zh": "类似色", "ko": "유사색"},
+    "category": "Color Grading",
+    "prefix": "analogous color palette",
+    "suffix": "neighboring hues flowing from yellow to green, harmonious seamless color transitions, soft unified natural look",
+    "prompt": "a fashion portrait in a modern studio setup",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [79], "key": "complementary-colors",
+    "name": {"en": "Complementary Colors", "es": "Colores complementarios", "zh": "互补色", "ko": "보색"},
+    "category": "Color Grading",
+    "prefix": "complementary color palette",
+    "suffix": "opposite hues side by side, blue against orange, red against green, bold visual pop, dramatic color tension",
+    "prompt": "a fashion portrait in a modern studio setup",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder.", "preview": "ok"}
+  },
+  {
+    "src": [169], "key": "black-and-white",
+    "name": {"en": "Black & White", "es": "Blanco y negro", "zh": "黑白", "ko": "흑백"},
+    "category": "Color Grading",
+    "prefix": "black and white monochrome image",
+    "suffix": "rich tonal range from deep blacks to clean whites, strong contrast, emphasis on texture, shape and light",
+    "prompt": "a weathered wooden door in an old stone wall",
+    "review": {"status": "rewritten", "note": "Was 'Misc Monochrome'. Example scene set to match the existing preview.", "preview": "ok"}
+  }
+]

@@ -1,0 +1,214 @@
+[
+  {
+    "src": [
+      1,
+      102
+    ],
+    "key": "cinematic-photo",
+    "name": {
+      "en": "Cinematic Photo",
+      "es": "Foto cinematográfica",
+      "zh": "电影感照片",
+      "ko": "시네마틱 사진"
+    },
+    "category": "Photography/Classic",
+    "prefix": "cinematic photograph, natural motivated lighting",
+    "suffix": "35mm lens, shallow depth of field, soft bokeh, rich contrast, true-to-life color, sharp focus on the subject",
+    "prompt": "a traveler in an old European street",
+    "review": {
+      "status": "merged",
+      "note": "Photo (#1) + Photographic (#102, 'Stability AI' category) merged into one.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      3,
+      89
+    ],
+    "key": "analog-film",
+    "name": {
+      "en": "Analog Film",
+      "es": "Película analógica",
+      "zh": "胶片摄影",
+      "ko": "아날로그 필름"
+    },
+    "category": "Photography/Classic",
+    "prefix": "analog film photograph, visible film grain, soft contrast, warm tonal shifts",
+    "suffix": "shot on vintage color negative stock, faded highlights, lifted muted shadows, slight vignette, subtle chromatic aberration, organic light falloff",
+    "prompt": "a traveler in an old European street",
+    "review": {
+      "status": "merged",
+      "note": "Analog Photo (#3) + Analog Film (#89). Removed brand names (Kodachrome, Lomography) and 'found footage'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      186
+    ],
+    "key": "film-noir",
+    "name": {
+      "en": "Film Noir",
+      "es": "Cine negro",
+      "zh": "黑色电影",
+      "ko": "필름 누아르"
+    },
+    "category": "Photography/Classic",
+    "prefix": "1940s film noir still, black and white",
+    "suffix": "hard low-key lighting, deep shadows cut by venetian-blind light, wet streets, smoke and haze, high contrast, mysterious cinematic mood",
+    "prompt": "a cinematic street portrait at night with atmospheric light",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      16,
+      90
+    ],
+    "key": "anime",
+    "name": {
+      "en": "Anime",
+      "es": "Anime",
+      "zh": "动漫",
+      "ko": "애니메"
+    },
+    "category": "Anime & Manga/Anime",
+    "prefix": "anime key visual",
+    "suffix": "clean cel shading, crisp line art, vibrant color, luminous sky, detailed painted background, modern TV anime quality",
+    "prompt": "a young hero on a windy hill under a dramatic sky",
+    "review": {
+      "status": "merged",
+      "note": "Anime (#16) + Anime (#90, duplicate). #90 preview resembled a known character; using #16.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      14,
+      92
+    ],
+    "key": "comic-book",
+    "name": {
+      "en": "Comic Book",
+      "es": "Cómic",
+      "zh": "美式漫画",
+      "ko": "코믹북"
+    },
+    "category": "Comics/Western",
+    "prefix": "western comic book illustration, bold ink outlines",
+    "suffix": "halftone dot shading, vivid flat colors, dynamic heroic composition, dramatic panel framing, original character design, no logos, no text",
+    "prompt": "an original masked heroine in a teal and orange suit leaping between city rooftops at dusk",
+    "review": {
+      "status": "merged",
+      "note": "Comic Book (#14) + Comic Book (#92). Existing preview shows a trademarked superhero — regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      131
+    ],
+    "key": "watercolor",
+    "name": {
+      "en": "Watercolor",
+      "es": "Acuarela",
+      "zh": "水彩",
+      "ko": "수채화"
+    },
+    "category": "Fine Art/Painting Media",
+    "prefix": "watercolor painting on cold-press paper",
+    "suffix": "soft wet-on-wet washes, pigment blooms, loose brushwork, visible paper texture, luminous transparent color, white paper highlights",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      123
+    ],
+    "key": "impressionist",
+    "name": {
+      "en": "Impressionist",
+      "es": "Impresionismo",
+      "zh": "印象派",
+      "ko": "인상주의"
+    },
+    "category": "Fine Art/Modern Art",
+    "prefix": "impressionist oil painting",
+    "suffix": "loose broken brushstrokes, dappled natural light, vibrant complementary color, soft edges, captures the feeling of the moment over detail",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      20,
+      103
+    ],
+    "key": "pixel-art",
+    "name": {
+      "en": "Pixel Art",
+      "es": "Pixel art",
+      "zh": "像素画",
+      "ko": "픽셀 아트"
+    },
+    "category": "Games/Retro",
+    "prefix": "retro pixel art, crisp pixel grid",
+    "suffix": "limited 16-bit palette, clean dithering, no anti-aliasing, nostalgic video game look, no text",
+    "prompt": "a tiny knight exploring a torch-lit dungeon room",
+    "review": {
+      "status": "merged",
+      "note": "Pixel Art (#20) + Pixel Art (#103).",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      93
+    ],
+    "key": "claymation",
+    "name": {
+      "en": "Claymation",
+      "es": "Plastilina",
+      "zh": "黏土动画",
+      "ko": "클레이메이션"
+    },
+    "category": "Craft/Toy & Clay",
+    "prefix": "claymation stop-motion scene, handmade modeling clay figures",
+    "suffix": "visible fingerprints and tool marks, soft rounded shapes, miniature handcrafted set, warm studio lighting, shallow depth of field",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Craft Clay' in the 'Stability AI' category; removed trademark 'play-doh'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      100
+    ],
+    "key": "neonpunk",
+    "name": {
+      "en": "Neonpunk",
+      "es": "Neonpunk",
+      "zh": "霓虹朋克",
+      "ko": "네온펑크"
+    },
+    "category": "Sci-Fi/Cyberpunk",
+    "prefix": "neonpunk illustration",
+    "suffix": "cyberpunk and vaporwave fusion, magenta and cyan neon highlights, deep purple shadows, glossy wet reflections, high contrast, sleek ultramodern detail",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "rewritten",
+      "note": "Was in the 'Stability AI' category.",
+      "preview": "ok"
+    }
+  }
+]

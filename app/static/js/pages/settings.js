@@ -1874,16 +1874,16 @@ function t(key, fallback, vars) {
 // engines need LoRAs published nowhere else. The key never comes back from
 // the server: the field shows whether one is stored.
 // ---------------------------------------------------------------------------
-(function civitaiKeySection() {
-  const input = document.getElementById('civitai-key-input');
-  const saveBtn = document.getElementById('save-civitai-key-btn');
-  const statusEl = document.getElementById('civitai-key-status');
+// Hugging Face token: same pattern, for gated models (their license must be
+// accepted on Hugging Face by the account the token belongs to).
+function secretKeySection(opts) {
+  const input = document.getElementById(opts.input);
+  const saveBtn = document.getElementById(opts.save);
+  const statusEl = document.getElementById(opts.status);
   if (!input || !saveBtn) return;
 
   function show(saved, msg, isError) {
-    input.placeholder = saved
-      ? t('settings.comfy.civitaiSaved', 'A key is saved — type a new one to replace it')
-      : t('settings.comfy.civitaiEmpty', 'Paste your key here');
+    input.placeholder = saved ? t(opts.savedKey, opts.savedText) : t(opts.emptyKey, opts.emptyText);
     statusEl.textContent = msg || '';
     statusEl.classList.toggle('status-error', !!isError);
   }
@@ -1892,7 +1892,7 @@ function t(key, fallback, vars) {
     try {
       const res = await fetch('/api/models/settings', { cache: 'no-store' });
       const json = await res.json();
-      show(!!(json.settings && json.settings.civitaiApiKeySet));
+      show(!!(json.settings && json.settings[opts.flag]));
     } catch (_) { show(false); }
   }
 
@@ -1903,13 +1903,13 @@ function t(key, fallback, vars) {
       const res = await fetch('/api/models/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ civitaiApiKey: value }),
+        body: JSON.stringify({ [opts.field]: value }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || ('HTTP ' + res.status));
       input.value = '';
-      show(!!(json.settings && json.settings.civitaiApiKeySet),
-        value ? t('settings.common.saved', 'Saved.') : t('settings.comfy.civitaiCleared', 'Key removed.'));
+      show(!!(json.settings && json.settings[opts.flag]),
+        value ? t('settings.common.saved', 'Saved.') : t(opts.clearedKey, opts.clearedText));
     } catch (error) {
       show(false, error.message, true);
     }
@@ -1917,7 +1917,22 @@ function t(key, fallback, vars) {
 
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } });
   load();
-})();
+}
+
+secretKeySection({
+  input: 'civitai-key-input', save: 'save-civitai-key-btn', status: 'civitai-key-status',
+  field: 'civitaiApiKey', flag: 'civitaiApiKeySet',
+  savedKey: 'settings.comfy.civitaiSaved', savedText: 'A key is saved — type a new one to replace it',
+  emptyKey: 'settings.comfy.civitaiEmpty', emptyText: 'Paste your key here',
+  clearedKey: 'settings.comfy.civitaiCleared', clearedText: 'Key removed.',
+});
+secretKeySection({
+  input: 'hf-token-input', save: 'save-hf-token-btn', status: 'hf-token-status',
+  field: 'huggingfaceToken', flag: 'huggingfaceTokenSet',
+  savedKey: 'settings.comfy.hfSaved', savedText: 'A token is saved — type a new one to replace it',
+  emptyKey: 'settings.comfy.hfEmpty', emptyText: 'Paste your token here (hf_…)',
+  clearedKey: 'settings.comfy.hfCleared', clearedText: 'Token removed.',
+});
 
 // ---------------------------------------------------------------------------
 // Updates — from a release ZIP (app/services/update_service.py)

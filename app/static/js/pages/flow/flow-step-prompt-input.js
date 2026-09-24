@@ -146,6 +146,45 @@ function renderPromptInput(stepDef, el) {
     if (chevron) stepLabel.insertBefore(histBtn, chevron);
     else stepLabel.appendChild(histBtn);
 
+    // Style button — opt-in via stepDef.style_picker (Create's Styling
+    // flows). Same Build > Styles catalog panel as Refine's style_picker
+    // field (_openStylePickerPanel, flow-step-workflow-params.js); picking a
+    // style wraps whatever is in the box with its prefix and suffix, so the
+    // idea stays in the middle and the field stays freely editable.
+    if (stepDef.style_picker && typeof _openStylePickerPanel === 'function') {
+      var styleBtn = document.createElement('button');
+      styleBtn.type = 'button';
+      styleBtn.className = 'nsc-history-btn nsc-options-trigger';
+      styleBtn.setAttribute('aria-label', 'Choose a Style');
+      styleBtn.title = 'Choose a Style';
+      styleBtn.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/>' +
+          '<path d="M12 2a10 10 0 1 0 10 10c0-1.1-.9-2-2-2h-2.3a2 2 0 0 1-2-2c0-.5.2-1 .5-1.3A2 2 0 0 0 14.7 3c-.9-.6-1.8-1-2.7-1z"/>' +
+        '</svg>';
+      styleBtn.addEventListener('click', function () {
+        _openStylePickerPanel(function (style) {
+          // "separate": the idea box stays the idea — the style is kept on
+          // the side and a sibling style_compose_from box shows the result.
+          if (stepDef.style_picker === 'separate') {
+            _setPickedStyle(style);
+            return;
+          }
+          var composed = [style.prefix, ta.value.trim(), style.suffix]
+            .map(function (s) { return String(s || '').trim(); })
+            .filter(Boolean)
+            .join(', ');
+          ta.value = composed;
+          setVal(stepDef.id, 'prompt_text', composed);
+          setVal(stepDef.id, 'style_name', style.name || '');
+          ta.dispatchEvent(new Event('input'));
+          if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
+        });
+      });
+      if (chevron) stepLabel.insertBefore(styleBtn, chevron);
+      else stepLabel.appendChild(styleBtn);
+    }
+
     // "Edit Prompt" button — common to style prompts (opt-in via
     // stepDef.style_prompt_edit, set by flow_engine.py whenever the sibling
     // "image" step declares style_image_input): opens a small
@@ -175,15 +214,9 @@ function renderPromptInput(stepDef, el) {
       if (chevron) stepLabel.insertBefore(editBtn, chevron);
       else stepLabel.appendChild(editBtn);
 
-      // Registered so the sibling image step's "Choose a Style" pick
-      // (flow-step-image-picker.js) can pop this same panel open right away
-      // — titled differently ("Edit Prompt from Style") since it's an
-      // automatic follow-up to picking a style, not the user reaching for
-      // the pencil icon themselves.
-      window._ncfEditPromptOpeners = window._ncfEditPromptOpeners || {};
-      window._ncfEditPromptOpeners['image'] = function (title) {
-        _openEditPromptPanel('image', ta, _applyEditedPrompt, title);
-      };
+      // A style picked or described on the image step goes straight into
+      // this prompt — no panel, no Apply.
+      _bindStyleAutoApply('image', ta, _applyEditedPrompt);
     }
 
   }
@@ -294,6 +327,15 @@ function renderPromptInput(stepDef, el) {
     ta.value = _applyTemplate(prText);
     ta.dispatchEvent(new Event('input'));
     updateGenerateBtn();
+    // Style flows: the preset is the idea — keep the picked style's
+    // prefix/suffix wrapped around it instead of dropping them.
+    if (stepDef.style_prompt_edit) {
+      _applyStyleToPrompt('image', ta, function (composed) {
+        ta.dispatchEvent(new Event('input'));
+        setVal(stepDef.id, 'prompt_text', composed);
+        updateGenerateBtn();
+      }, ta.value);
+    }
 
     // Presets that pair a base prompt with its own "Describe reference"
     // instruction (e.g. Mix's Clothes flow: Simple / Detailed / Preserve
@@ -335,34 +377,13 @@ function renderPromptInput(stepDef, el) {
         '<line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>' +
         '<line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' +
         '<span>' + escHtml(stepDef.presets_label || 'Presets') + '</span>';
-      var piPresetMenu = document.createElement('div');
-      piPresetMenu.className = 'nsc-preset-menu' + (stepDef.presets.length > 6 ? ' nsc-preset-menu--scroll' : '');
-      piPresetMenu.style.display = 'none';
-
-      stepDef.presets.forEach(function (pr) {
-        var prLabel = typeof pr === 'object' ? (pr.label || pr.text || '') : String(pr);
-        var prText  = typeof pr === 'object' ? (pr.text || pr.label || '') : String(pr);
-        var prItem = document.createElement('button');
-        prItem.type = 'button';
-        prItem.className = 'nsc-preset-item';
-        prItem.textContent = prLabel;
-        prItem.title = prText;
-        prItem.addEventListener('click', function (e) {
-          e.stopPropagation();
-          piPresetMenu.style.display = 'none';
-          _choosePreset(pr);
-        });
-        piPresetMenu.appendChild(prItem);
-      });
-
+      piPresetBtn.classList.add('nsc-options-trigger');
       piPresetBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        piPresetMenu.style.display = (piPresetMenu.style.display === 'none') ? 'flex' : 'none';
+        _openPromptPresetsPanel(stepDef.presets_label || 'Presets', stepDef.presets, _choosePreset, ta.value);
       });
-      document.addEventListener('click', function () { piPresetMenu.style.display = 'none'; });
 
       piPresetWrap.appendChild(piPresetBtn);
-      piPresetWrap.appendChild(piPresetMenu);
       el.appendChild(piPresetWrap);
     }
   }
@@ -480,6 +501,119 @@ function renderPromptInput(stepDef, el) {
   ta.addEventListener('input', _syncOnConfirm);
   ta.addEventListener('change', _syncOnConfirm);
   ta.addEventListener('paste', function () { setTimeout(_syncOnConfirm, 0); });
+
+  // ── Style kept apart from the idea (style_picker: "separate") ────────────
+  // The picked style lives in this step's own values (style_prefix /
+  // style_suffix / style_name) and shows as a removable chip under the box;
+  // an "ncf-style-changed" event tells the compose box below to rebuild.
+  var _styleChip = null;
+  function _renderStyleChip() {
+    if (!_styleChip) return;
+    var name = getVal(stepDef.id, 'style_name') || '';
+    _styleChip.hidden = !name;
+    if (!name) { _styleChip.innerHTML = ''; return; }
+    _styleChip.innerHTML = '';
+    var lbl = document.createElement('span');
+    lbl.textContent = tF('Style') + ': ' + tF(name);
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'ncf-style-chip-clear';
+    x.setAttribute('aria-label', 'Remove style');
+    x.textContent = '×';
+    x.addEventListener('click', function () { _setPickedStyle(null); });
+    _styleChip.appendChild(lbl);
+    _styleChip.appendChild(x);
+  }
+  function _setPickedStyle(style) {
+    setVal(stepDef.id, 'style_prefix', style ? String(style.prefix || '').trim() : '');
+    setVal(stepDef.id, 'style_suffix', style ? String(style.suffix || '').trim() : '');
+    setVal(stepDef.id, 'style_name', style ? String(style.name || '') : '');
+    _renderStyleChip();
+    document.dispatchEvent(new CustomEvent('ncf-style-changed', { detail: { stepId: stepDef.id } }));
+    if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
+  }
+  if (stepDef.style_picker === 'separate') {
+    _styleChip = document.createElement('div');
+    _styleChip.className = 'ncf-style-chip';
+    _styleChip.hidden = true;
+    if (ta.nextSibling) el.insertBefore(_styleChip, ta.nextSibling);
+    else el.appendChild(_styleChip);
+    _renderStyleChip();
+  }
+
+  // ── Composed prompt (style_compose_from: "<idea step id>") ──────────────
+  // Live "prefix, idea, suffix" of the source step's text and picked style.
+  // Stays editable: a hand edit is kept while the idea changes, and only a
+  // new style pick (an explicit action) rebuilds over it.
+  // The idea comes from style_compose_from; the style's wording from
+  // style_source (defaults to the same step) — e.g. Refine's Style Reference
+  // takes it from the image step, whose Styles button loads a catalog
+  // style's picture AND its prefix/suffix.
+  if (stepDef.style_compose_from) {
+    var _srcId = stepDef.style_compose_from;
+    var _styleSrcId = stepDef.style_source || _srcId;
+    var _lastComposed = null;
+    function _compose() {
+      var srcTa = document.getElementById('ncf-input-' + _srcId);
+      var idea = srcTa ? srcTa.value.trim() : (getVal(_srcId, 'prompt_text') || '');
+      return [getVal(_styleSrcId, 'style_prefix'), idea, getVal(_styleSrcId, 'style_suffix')]
+        .map(function (s) { return String(s || '').trim(); })
+        .filter(Boolean)
+        .join(', ');
+    }
+    function _rebuildComposed(force) {
+      if (!force && _lastComposed !== null && ta.value !== _lastComposed) return; // hand-edited
+      var next = _compose();
+      ta.value = next;
+      _lastComposed = next;
+      _syncOnConfirm();
+      if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
+    }
+    // Style picked on a different step (the image): show which style's
+    // wording is mixed in here, with × to drop just the wording.
+    var _composeChip = null;
+    function _renderComposeChip() {
+      if (!_composeChip) return;
+      var name = getVal(_styleSrcId, 'style_name') || '';
+      var hasText = !!(getVal(_styleSrcId, 'style_prefix') || getVal(_styleSrcId, 'style_suffix'));
+      _composeChip.hidden = !(name && hasText);
+      _composeChip.innerHTML = '';
+      if (_composeChip.hidden) return;
+      var lbl = document.createElement('span');
+      lbl.textContent = tF('Style') + ': ' + tF(name);
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'ncf-style-chip-clear';
+      x.setAttribute('aria-label', 'Remove style wording');
+      x.title = 'Remove the style wording (keeps the reference image)';
+      x.textContent = '×';
+      x.addEventListener('click', function () {
+        setVal(_styleSrcId, 'style_prefix', '');
+        setVal(_styleSrcId, 'style_suffix', '');
+        _renderComposeChip();
+        _rebuildComposed(true);
+      });
+      _composeChip.appendChild(lbl);
+      _composeChip.appendChild(x);
+    }
+    if (_styleSrcId !== _srcId) {
+      _composeChip = document.createElement('div');
+      _composeChip.className = 'ncf-style-chip';
+      _composeChip.hidden = true;
+      if (ta.nextSibling) el.insertBefore(_composeChip, ta.nextSibling);
+      else el.appendChild(_composeChip);
+    }
+    var _srcTa = document.getElementById('ncf-input-' + _srcId);
+    if (_srcTa) _srcTa.addEventListener('input', function () { _rebuildComposed(false); });
+    document.addEventListener('ncf-style-changed', function (e) {
+      if (e.detail && e.detail.stepId === _styleSrcId) {
+        _renderComposeChip();
+        _rebuildComposed(true);
+      }
+    });
+    if (!ta.value.trim()) _rebuildComposed(true);
+    else _lastComposed = ta.value;
+  }
 
   // ── Drop an image → extract its embedded prompt (ComfyUI or A1111/CivitAI
   // metadata) and fill this textarea with it. The image's workflow doesn't
@@ -792,68 +926,181 @@ function renderPromptInput(stepDef, el) {
   }
 }
 
-// ── Edit Prompt panel (Prefix / Prompt idea / Suffix + Refine-with-LLM) ────
+// ── Prompt presets subpanel ─────────────────────────────────────────────────
+// Presets open in the side options panel (same place as Edit Prompt,
+// Downscale, Advanced…), not a floating dropdown over the prompt: each row
+// shows the preset's name and the start of its wording; the one matching the
+// current prompt is marked. Used by prompt_input's own Presets button and the
+// subject step's copy of it (flow-step-image-picker.js).
+function _openPromptPresetsPanel(title, presets, choose, currentText) {
+  var current = String(currentText || '').trim();
+  openOptionsPanel(tF(title || 'Presets'), function (body) {
+    var list = document.createElement('div');
+    list.className = 'nsc-quality-list ncf-preset-list';
+    list.setAttribute('role', 'radiogroup');
+    presets.forEach(function (pr) {
+      var prLabel = typeof pr === 'object' ? (pr.label || pr.text || '') : String(pr);
+      var prText  = typeof pr === 'object' ? (pr.text || pr.label || '') : String(pr);
+      var active = !!current && current.indexOf(prText.trim()) !== -1;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nsc-quality-btn' + (active ? ' is-active' : '');
+      btn.setAttribute('role', 'radio');
+      btn.setAttribute('aria-checked', active ? 'true' : 'false');
+      btn.innerHTML = '<span class="nsc-quality-dot"></span>' +
+        '<span class="nsc-quality-copy"><strong></strong><small></small></span>';
+      btn.querySelector('strong').textContent = tF(prLabel);
+      if (prText !== prLabel) btn.querySelector('small').textContent = prText;
+      btn.addEventListener('click', function () {
+        choose(pr);
+        closeOptionsPanel();
+      });
+      list.appendChild(btn);
+    });
+    body.appendChild(list);
+  });
+}
+
+// ── Edit Prompt panel (Prefix / Prompt idea / Suffix → Final prompt) ───────
 // Shared by prompt_input (this file) and the prompt_history field type
 // (flow-step-workflow-params.js) — both call this the same way.
 //
 // Persistence: Prefix/Idea/Suffix are stored independently under the image
-// step's namespace (setVal(imageStepId, 'edit_prompt_<field>', ...)) so
-// reopening the panel always restores the three separate clauses — never
-// re-derived from the target textarea's *composed* value (that was the bug:
-// reopening after Apply showed "prefix, idea, suffix" back in the Idea box,
-// and hitting Apply again duplicated Prefix/Suffix into it). Prefix/Suffix
-// only fall back to the sibling Styles button's pick
-// (style_prefix/style_suffix, flow-step-image-picker.js) the very first time
-// the panel is opened for this step, before the user has touched them.
+// step's namespace (setVal(imageStepId, 'edit_prompt_<field>', ...)) so the
+// three clauses are never re-derived from the target textarea's *composed*
+// value (reopening used to show "prefix, idea, suffix" back in the Idea box).
 //
-// "Final prompt" is a read-only preview of what Apply will actually write —
-// it live-updates from Prefix/Idea/Suffix on every keystroke, *and* is what
-// "Refine with LLM" (LM Studio, via the same /chat/studio-enhance endpoint
-// Create's enhance uses) overwrites with its result. Refine reads Idea as
-// its input but never writes back into it — the user's own wording stays
-// put in the Idea box so they can tweak it and re-refine, instead of the
-// LLM's rewrite silently replacing what they typed.
+// No Apply button: every change lands in the prompt right away. A style
+// picked or described on the image step is applied the same way without the
+// panel ever opening (_applyStyleToPrompt below) — the panel is only for
+// hand-tuning the wording.
+
+// "oil painting," + "a fox" + ", thick impasto" → "oil painting, a fox, thick
+// impasto": catalog prefixes end in a comma and suffixes start with one, so
+// joining them raw doubled the commas.
+function _editPromptJoin(prefix, idea, suffix) {
+  return [prefix, idea, suffix]
+    .map(function (s) { return String(s || '').replace(/^[\s,]+|[\s,]+$/g, ''); })
+    .filter(Boolean)
+    .join(', ');
+}
+
+// The idea clause for imageStepId. Once the panel or a style pick has stored
+// one it is the source of truth — unless the user has since typed straight
+// into the prompt box, in which case what they typed (minus the prefix/suffix
+// last composed around it) becomes the idea.
+function _editPromptIdea(imageStepId, ta) {
+  var stored = getVal(imageStepId, 'edit_prompt_idea');
+  var current = String(ta.value || '').trim();
+  var last = getVal(imageStepId, 'edit_prompt_last');
+  var hasStored = stored !== undefined && stored !== null;
+  // No composition on record: a session from before this existed (its box
+  // may hold an old composed prompt — trust the stored idea) or a first run.
+  if (!last) return hasStored ? stored : current;
+  if (current === '' || current === last) return hasStored ? stored : '';
+  var clean = function (s) { return String(s || '').replace(/^[\s,]+|[\s,]+$/g, ''); };
+  var oldPrefix = clean(getVal(imageStepId, 'edit_prompt_last_prefix'));
+  var oldSuffix = clean(getVal(imageStepId, 'edit_prompt_last_suffix'));
+  var idea = current;
+  if (oldPrefix && idea.indexOf(oldPrefix) === 0) idea = idea.slice(oldPrefix.length);
+  if (oldSuffix && idea.slice(-oldSuffix.length) === oldSuffix) idea = idea.slice(0, idea.length - oldSuffix.length);
+  return clean(idea);
+}
+
+// Writes `composed` into the prompt box and remembers what it was built from,
+// so the next style pick can swap the style wording without touching the idea.
+function _editPromptWrite(imageStepId, ta, onApply, composed, prefix, suffix) {
+  setVal(imageStepId, 'edit_prompt_last', composed);
+  setVal(imageStepId, 'edit_prompt_last_prefix', prefix || '');
+  setVal(imageStepId, 'edit_prompt_last_suffix', suffix || '');
+  ta.value = composed;
+  onApply(composed);
+}
+
+// A style picked from the catalog or described from the image: wrap the
+// current idea in its prefix/suffix and apply — no panel, no Apply click.
+function _applyStyleToPrompt(imageStepId, ta, onApply, ideaOverride) {
+  var prefix = getVal(imageStepId, 'edit_prompt_prefix');
+  if (prefix === undefined || prefix === null) prefix = getVal(imageStepId, 'style_prefix') || '';
+  var suffix = getVal(imageStepId, 'edit_prompt_suffix');
+  if (suffix === undefined || suffix === null) suffix = getVal(imageStepId, 'style_suffix') || '';
+  var idea = (ideaOverride !== undefined) ? ideaOverride : _editPromptIdea(imageStepId, ta);
+  setVal(imageStepId, 'edit_prompt_idea', idea);
+  _editPromptWrite(imageStepId, ta, onApply, _editPromptJoin(prefix, idea, suffix), prefix, suffix);
+}
+
+// Listens for the image step's style changes (catalog pick, Describe style,
+// a new image clearing the old style) and applies them to `ta`. Stops on its
+// own once `ta` leaves the page (flow switch / re-render).
+function _bindStyleAutoApply(imageStepId, ta, onApply) {
+  function onStyle(e) {
+    if (!ta.isConnected) { document.removeEventListener('ncf-style-changed', onStyle); return; }
+    if (!e.detail || e.detail.stepId !== imageStepId) return;
+    _applyStyleToPrompt(imageStepId, ta, onApply);
+  }
+  document.addEventListener('ncf-style-changed', onStyle);
+}
+
 function _openEditPromptPanel(imageStepId, ta, onApply, title) {
   var storeId = imageStepId;
 
-  openOptionsPanel(title || 'Edit Prompt', function (body) {
+  openOptionsPanel(tF(title || 'Edit Prompt'), function (body) {
     function _stored(key, fallback) {
       var v = getVal(storeId, key);
       return (v !== undefined && v !== null) ? v : fallback;
     }
     var initialPrefix = _stored('edit_prompt_prefix', getVal(imageStepId, 'style_prefix') || '');
     var initialSuffix = _stored('edit_prompt_suffix', getVal(imageStepId, 'style_suffix') || '');
-    var initialIdea = _stored('edit_prompt_idea', ta.value || '');
+    var initialIdea = _editPromptIdea(imageStepId, ta);
 
-    function _field(labelText, value, rows, readOnly) {
+    // label (+ optional action on the right) and its input, same look as the
+    // rest of the options panel.
+    function _field(labelText, value, rows, action) {
       var row = document.createElement('div');
       row.className = 'nsc-field-row nsc-field-row--compose';
+      var head = document.createElement('div');
+      head.className = 'nsc-field-header ncf-ep-head';
       var lbl = document.createElement('label');
       lbl.className = 'nsc-param-title';
-      lbl.textContent = labelText;
-      row.appendChild(lbl);
+      lbl.textContent = tF(labelText);
+      head.appendChild(lbl);
+      if (action) head.appendChild(action);
+      row.appendChild(head);
       var input = document.createElement(rows > 1 ? 'textarea' : 'input');
       input.className = 'nsc-input' + (rows > 1 ? ' nsc-textarea' : '');
       if (rows > 1) input.rows = rows;
       else input.type = 'text';
       input.value = value || '';
-      if (readOnly) {
-        input.readOnly = true;
-        input.tabIndex = -1;
-        input.style.opacity = '0.65';
-      }
       row.appendChild(input);
       body.appendChild(row);
       return input;
     }
 
-    // ── Get Style / Detailed Vision (vision) row — only meaningful when this
-    // panel was opened for a style reference image (image_data_url present
-    // on imageStepId). Manual trigger only: the vision call used to fire
-    // automatically on every image drop, which silently mislabeled photos as
-    // illustrations (no "is this a photo?" branch) and skewed generation
-    // toward a painted look. Now the user picks the vision model and asks
-    // for it explicitly — and picks how much detail they want back.
+    function _pillBtn(label, iconSvg, extraClass) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ncf-ep-pill' + (extraClass ? ' ' + extraClass : '');
+      b.innerHTML = iconSvg + '<span></span>';
+      b.querySelector('span').textContent = tF(label);
+      return b;
+    }
+    function _setBusy(btn, busyLabel) {
+      var span = btn.querySelector('span');
+      var orig = span.textContent;
+      btn.disabled = true;
+      btn.classList.add('is-busy');
+      span.textContent = tF(busyLabel);
+      return function () {
+        btn.disabled = false;
+        btn.classList.remove('is-busy');
+        span.textContent = orig;
+      };
+    }
+
+    // ── Style from image (vision) — only when the image step holds a style
+    // reference. Manual trigger only: the user picks the vision model and
+    // how much detail they want back (auto-running it used to label photos
+    // as illustrations and skew generation toward a painted look).
     var styleImageUrl = getVal(imageStepId, 'image_data_url') || '';
     // Shared classification preamble both vision prompts open with — decide
     // the image's broad kind FIRST, then describe only with vocabulary that
@@ -866,39 +1113,33 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
       'stylized art), "illustration_painting" (painterly illustration, concept art, digital or ' +
       'traditional painting, comic/graphic-novel art), or "3d_render" (3D-rendered CGI, ' +
       'video-game render, or product render). ';
+    var prefixInput, ideaInput, suffixInput, finalInput;
+
     if (styleImageUrl && typeof makeVisionModelBtn === 'function') {
-      var getStyleRow = document.createElement('div');
-      getStyleRow.className = 'ncf-edit-prompt-btn-row';
-      getStyleRow.style.marginTop = '0';
+      var visionTitle = document.createElement('p');
+      visionTitle.className = 'nsc-param-title';
+      visionTitle.textContent = tF('Style from image');
+      body.appendChild(visionTitle);
 
-      var getStyleBtn = document.createElement('button');
-      getStyleBtn.type = 'button';
-      getStyleBtn.className = 'nsc-generate-btn nsc-generate-btn--ghost ncf-edit-prompt-get-style';
-      getStyleBtn.textContent = 'Get style';
-
-      var detailedVisionBtn = document.createElement('button');
-      detailedVisionBtn.type = 'button';
-      detailedVisionBtn.className = 'nsc-generate-btn nsc-generate-btn--ghost ncf-edit-prompt-detailed-vision';
-      detailedVisionBtn.textContent = 'Detailed vision';
-
+      var visionRow = document.createElement('div');
+      visionRow.className = 'ncf-ep-vision-row';
+      var eyeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+      var listIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>';
+      var getStyleBtn = _pillBtn('Short', eyeIcon);
+      getStyleBtn.title = tF('Short style tags into Prefix');
+      var detailedVisionBtn = _pillBtn('Detailed', listIcon);
+      detailedVisionBtn.title = tF('Full style breakdown into Prompt idea');
       var visionBtn = makeVisionModelBtn();
-      visionBtn.classList.add('ncf-edit-prompt-vision-btn');
+      visionBtn.classList.add('ncf-ep-vision-model');
+      visionRow.appendChild(getStyleBtn);
+      visionRow.appendChild(detailedVisionBtn);
+      visionRow.appendChild(visionBtn);
+      body.appendChild(visionRow);
 
-      var getStyleInner = document.createElement('div');
-      getStyleInner.style.cssText = 'display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;';
-      getStyleInner.appendChild(getStyleBtn);
-      getStyleInner.appendChild(detailedVisionBtn);
-      getStyleInner.appendChild(visionBtn);
-      getStyleRow.appendChild(getStyleInner);
-      body.appendChild(getStyleRow);
-
-      // Shared runner: POSTs describe-image with the given systemPrompt,
-      // toggles the clicked button's label/disabled state, and hands the
-      // trimmed description to onDone(desc) on success.
+      // POSTs describe-image with the given systemPrompt and hands the
+      // trimmed description to onDone(desc).
       function _runVisionDescribe(btn, busyLabel, systemPrompt, onDone) {
-        btn.disabled = true;
-        var origLabel = btn.textContent;
-        btn.textContent = busyLabel;
+        var done = _setBusy(btn, busyLabel);
         fetch('/api/models/chat/describe-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -920,10 +1161,7 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
           .catch(function (err) {
             if (typeof showErrorToast === 'function') showErrorToast('Vision describe failed: ' + err.message);
           })
-          .finally(function () {
-            btn.disabled = false;
-            btn.textContent = origLabel;
-          });
+          .finally(done);
       }
 
       getStyleBtn.addEventListener('click', function () {
@@ -944,18 +1182,14 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
         function (desc) {
           prefixInput.value = desc;
           setVal(storeId, 'edit_prompt_prefix', desc);
-          _refreshFinal();
+          _recompose();
         });
       });
 
-      // Detailed Vision — the long, numbered-headers technical breakdown
-      // (image type / tonal values / lighting / shadow / palette / color
-      // grading / texture / depth / medium signatures / mood), same
-      // photo-vs-illustration-vs-anime-vs-render branch as Get Style so the
-      // vocabulary in each section actually fits the kind, instead of
-      // defaulting to painting terms ("chiaroscuro", "brushwork") on a real
-      // photo. Written into Prompt idea (the multi-line box), not Prefix —
-      // it's a full report, not a short tag list.
+      // Detailed — the long, numbered-headers technical breakdown, same
+      // photo-vs-illustration-vs-anime-vs-render branch as Short so the
+      // vocabulary fits the kind. Written into Prompt idea (the multi-line
+      // box), not Prefix — it's a full report, not a short tag list.
       detailedVisionBtn.addEventListener('click', function () {
         _runVisionDescribe(detailedVisionBtn, 'Analyzing…', _VISION_KIND_PREAMBLE +
           'Start section 1 by stating that kind as the Image Type. Then, using ONLY vocabulary that fits ' +
@@ -978,58 +1212,49 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
         function (desc) {
           ideaInput.value = desc;
           setVal(storeId, 'edit_prompt_idea', desc);
-          _refreshFinal();
+          _recompose();
         });
       });
     }
 
-    var prefixInput = _field('Prefix', initialPrefix, 1, false);
-    var ideaInput   = _field('Prompt idea', initialIdea, 4, false);
-    var suffixInput = _field('Suffix', initialSuffix, 1, false);
-    var finalInput  = _field('Final prompt', '', 3, true);
+    var sparkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+    var refineBtn = _pillBtn('Refine with LLM', sparkIcon, 'ncf-ep-pill--small');
 
-    function _composed() {
-      return [prefixInput.value.trim(), ideaInput.value.trim(), suffixInput.value.trim()]
-        .filter(Boolean).join(', ');
+    prefixInput = _field('Prefix', initialPrefix, 1);
+    ideaInput   = _field('Prompt idea', initialIdea, 4);
+    suffixInput = _field('Suffix', initialSuffix, 1);
+    finalInput  = _field('Final prompt', '', 4, refineBtn);
+    finalInput.classList.add('ncf-ep-final');
+
+    var hint = document.createElement('p');
+    hint.className = 'ncf-ep-hint';
+    hint.textContent = tF('Changes apply to the prompt as you type.');
+    body.appendChild(hint);
+
+    function _apply(composed) {
+      _editPromptWrite(imageStepId, ta, onApply, composed, prefixInput.value.trim(), suffixInput.value.trim());
     }
-    // Editing Prefix/Idea/Suffix always resets Final prompt back to the
-    // plain composition — a Refine result is only "sticky" until the source
-    // fields change again, same as any derived preview.
-    function _refreshFinal() { finalInput.value = _composed(); }
-    _refreshFinal();
+    // Editing Prefix/Idea/Suffix rebuilds Final prompt (dropping any Refine
+    // result or hand edit on it) and applies it.
+    function _recompose() {
+      finalInput.value = _editPromptJoin(prefixInput.value, ideaInput.value, suffixInput.value);
+      _apply(finalInput.value);
+    }
+    finalInput.value = _editPromptJoin(initialPrefix, initialIdea, initialSuffix);
+    setVal(storeId, 'edit_prompt_idea', initialIdea);
 
-    prefixInput.addEventListener('input', function () { setVal(storeId, 'edit_prompt_prefix', prefixInput.value); _refreshFinal(); });
-    ideaInput.addEventListener('input',   function () { setVal(storeId, 'edit_prompt_idea',   ideaInput.value);   _refreshFinal(); });
-    suffixInput.addEventListener('input', function () { setVal(storeId, 'edit_prompt_suffix', suffixInput.value); _refreshFinal(); });
+    prefixInput.addEventListener('input', function () { setVal(storeId, 'edit_prompt_prefix', prefixInput.value); _recompose(); });
+    ideaInput.addEventListener('input',   function () { setVal(storeId, 'edit_prompt_idea',   ideaInput.value);   _recompose(); });
+    suffixInput.addEventListener('input', function () { setVal(storeId, 'edit_prompt_suffix', suffixInput.value); _recompose(); });
+    finalInput.addEventListener('input',  function () { _apply(finalInput.value.trim()); });
 
-    var btnRow = document.createElement('div');
-    btnRow.className = 'ncf-edit-prompt-btn-row';
-
-    // Refine sits above Apply — it never touches ideaInput (the user's own
-    // wording stays put so they can re-refine or hand-edit it later); its
-    // result only overwrites the read-only Final prompt preview. Both
-    // buttons use the app's own Generate-button look (ghost = secondary,
-    // solid = primary).
-    var refineBtn = document.createElement('button');
-    refineBtn.type = 'button';
-    refineBtn.className = 'nsc-generate-btn nsc-generate-btn--ghost ncf-edit-prompt-refine';
-    refineBtn.textContent = 'Refine with LLM';
-    btnRow.appendChild(refineBtn);
-
-    var applyBtn = document.createElement('button');
-    applyBtn.type = 'button';
-    applyBtn.className = 'nsc-generate-btn ncf-edit-prompt-apply';
-    applyBtn.textContent = 'Apply';
-    btnRow.appendChild(applyBtn);
-
-    body.appendChild(btnRow);
-
+    // Refine reads Idea but never writes back into it — the user's own
+    // wording stays put so they can tweak it and re-refine; only Final
+    // prompt (and so the prompt itself) gets the LLM's rewrite.
     refineBtn.addEventListener('click', function () {
       var current = ideaInput.value.trim();
       if (!current) return;
-      refineBtn.disabled = true;
-      var origLabel = refineBtn.textContent;
-      refineBtn.textContent = 'Refining…';
+      var done = _setBusy(refineBtn, 'Refining…');
       fetch('/api/models/chat/studio-enhance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1038,8 +1263,7 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
           level: 'quick',
           flair: 0,
           // Own systemPrompt (not the shared "studioQuick" default) so we can
-          // pin the output language regardless of what the idea was typed in
-          // — Create's default prompt makes no promise about that.
+          // pin the output language regardless of what the idea was typed in.
           systemPrompt: 'You are a prompt refinement assistant for AI image generation. ' +
             'Improve the given prompt clause with vivid, concrete visual detail while keeping its original meaning and intent. ' +
             'Keep the same format (comma-separated tags or a short flowing phrase, matching the input). ' +
@@ -1051,29 +1275,14 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
         .then(function (res) {
           if (!res.ok || res.data.error) throw new Error(res.data.error || 'Refine error');
           if (res.data.enhancedPrompt) {
-            // Compose with the current Prefix/Suffix around the refined idea
-            // — ideaInput itself is untouched, only Final prompt gets this.
-            var refinedIdea = res.data.enhancedPrompt.trim();
-            finalInput.value = [prefixInput.value.trim(), refinedIdea, suffixInput.value.trim()]
-              .filter(Boolean).join(', ');
+            finalInput.value = _editPromptJoin(prefixInput.value, res.data.enhancedPrompt.trim(), suffixInput.value);
+            _apply(finalInput.value);
           }
         })
         .catch(function (err) {
           if (typeof showErrorToast === 'function') showErrorToast('Refine failed: ' + err.message);
         })
-        .finally(function () {
-          refineBtn.disabled = false;
-          refineBtn.textContent = origLabel;
-        });
-    });
-
-    applyBtn.addEventListener('click', function () {
-      // Whatever Final prompt currently shows — the plain composition, or a
-      // Refine result sitting on top of it.
-      var composed = finalInput.value.trim();
-      ta.value = composed;
-      onApply(composed);
-      closeOptionsPanel();
+        .finally(done);
     });
   });
 }

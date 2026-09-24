@@ -1,0 +1,768 @@
+[
+  {
+    "src": [
+      132
+    ],
+    "key": "biomechanical",
+    "name": {
+      "en": "Biomechanical",
+      "es": "Biomecánico",
+      "zh": "生物机械",
+      "ko": "바이오메카니컬"
+    },
+    "category": "Sci-Fi/Cyberpunk",
+    "prefix": "biomechanical sci-fi art",
+    "suffix": "seamless fusion of organic forms and machinery, ribbed metallic structures, cables and sinew-like pipes, intricate detail, cool dark palette",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      133
+    ],
+    "key": "biomech-cyberpunk",
+    "name": {
+      "en": "Biomech Cyberpunk",
+      "es": "Cyberpunk biomecánico",
+      "zh": "生物机械赛博朋克",
+      "ko": "바이오메크 사이버펑크"
+    },
+    "category": "Sci-Fi/Cyberpunk",
+    "prefix": "dark biomechanical cyberpunk",
+    "suffix": "human-machine fusion, dystopian neon city, organic meets artificial, deep shadows with cyan and magenta light",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      136
+    ],
+    "key": "cyberpunk-city",
+    "name": {
+      "en": "Cyberpunk City",
+      "es": "Ciudad cyberpunk",
+      "zh": "赛博朋克城市",
+      "ko": "사이버펑크 시티"
+    },
+    "category": "Sci-Fi/Cyberpunk",
+    "prefix": "cyberpunk cityscape",
+    "suffix": "towering skyscrapers, dense neon signage, dark rain-slick alleys, holographic ads, high contrast vibrant night colors",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      138
+    ],
+    "key": "synthwave",
+    "name": {
+      "en": "Synthwave",
+      "es": "Synthwave",
+      "zh": "合成器浪潮",
+      "ko": "신스웨이브"
+    },
+    "category": "Sci-Fi/Cyberpunk",
+    "prefix": "1980s synthwave retro cyberpunk",
+    "suffix": "neon grid horizon, magenta and cyan glow, chrome highlights, sunset gradient sky, nostalgic retro-futurism",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Futuristic Retro Cyberpunk'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      141
+    ],
+    "key": "vaporwave",
+    "name": {
+      "en": "Vaporwave",
+      "es": "Vaporwave",
+      "zh": "蒸汽波",
+      "ko": "베이퍼웨이브"
+    },
+    "category": "Sci-Fi/Cyberpunk",
+    "prefix": "vaporwave aesthetic",
+    "suffix": "pastel pink and teal neon, retro 80s and 90s computer graphics, marble statues and palm motifs, dreamy nostalgic glow",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      134
+    ],
+    "key": "cybernetic",
+    "name": {
+      "en": "Cybernetic",
+      "es": "Cibernético",
+      "zh": "赛博格",
+      "ko": "사이버네틱"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "cybernetic sci-fi illustration",
+    "suffix": "sleek cybernetic enhancements, glowing interface details, advanced robotics, clean futuristic technology",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      135
+    ],
+    "key": "android-robot",
+    "name": {
+      "en": "Android Robot",
+      "es": "Robot androide",
+      "zh": "仿生机器人",
+      "ko": "안드로이드 로봇"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "sci-fi android robot design",
+    "suffix": "polished white and metal plating, exposed joints and wires, glowing sensor eyes, highly detailed mechanical construction",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Futuristic Cybernetic Robot'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      137
+    ],
+    "key": "sleek-future",
+    "name": {
+      "en": "Sleek Future",
+      "es": "Futuro elegante",
+      "zh": "流线未来",
+      "ko": "슬릭 퓨처"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "sleek futuristic design",
+    "suffix": "smooth ultramodern surfaces, minimal high-tech forms, white and chrome with soft accent light, clean optimistic future",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Futuristic Futuristic'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      139
+    ],
+    "key": "retro-futurism",
+    "name": {
+      "en": "Retro Futurism",
+      "es": "Retrofuturismo",
+      "zh": "复古未来主义",
+      "ko": "레트로 퓨처리즘"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "1950s retro-futuristic illustration",
+    "suffix": "atomic age optimism, rounded chrome rockets and fins, pastel and candy colors, vintage pulp sci-fi print texture",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      140
+    ],
+    "key": "sci-fi",
+    "name": {
+      "en": "Sci-Fi",
+      "es": "Ciencia ficción",
+      "zh": "科幻",
+      "ko": "SF"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "science fiction concept illustration",
+    "suffix": "advanced civilization, alien worlds and space themes, glowing technology, vast cinematic scale",
+    "prompt": "a cybernetic character crossing a neon avenue",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      27
+    ],
+    "key": "epic-concept-art",
+    "name": {
+      "en": "Epic Concept Art",
+      "es": "Arte conceptual épico",
+      "zh": "史诗概念艺术",
+      "ko": "에픽 콘셉트 아트"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "cinematic AAA concept art, sweeping vistas",
+    "suffix": "detailed monumental structures, heroic composition, atmospheric depth, ultra-polished rendering",
+    "prompt": "a futuristic explorer standing on a megacity rooftop at sunset",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      28
+    ],
+    "key": "hard-surface-sci-fi",
+    "name": {
+      "en": "Hard-Surface Sci-Fi",
+      "es": "Ciencia ficción hard-surface",
+      "zh": "硬表面科幻",
+      "ko": "하드서피스 SF"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "sleek hard-surface sci-fi illustration, advanced materials",
+    "suffix": "polished metallic panels and bevels, precise industrial futuristic design, clean specular highlights",
+    "prompt": "a futuristic explorer standing on a megacity rooftop at sunset",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      43
+    ],
+    "key": "mecha",
+    "name": {
+      "en": "Mecha",
+      "es": "Mecha",
+      "zh": "机甲",
+      "ko": "메카"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "epic mecha design, highly detailed mechanical structure",
+    "suffix": "polished armor plating, hydraulic joints, dramatic scale, industrial sci-fi lighting",
+    "prompt": "a futuristic explorer standing on a megacity rooftop at sunset",
+    "review": {
+      "status": "cleaned",
+      "note": "Was 'Mecha Industrial'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      37
+    ],
+    "key": "retro-space-opera",
+    "name": {
+      "en": "Retro Space Opera",
+      "es": "Space opera retro",
+      "zh": "复古太空歌剧",
+      "ko": "레트로 스페이스 오페라"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "retro space-opera pulp illustration",
+    "suffix": "vibrant pulp sci-fi colors, heroic cosmic scene, planets and starships, vintage futurism, painted texture, no text, no title lettering",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "cleaned",
+      "preview": "regen",
+      "note": "Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated."
+    }
+  },
+  {
+    "src": [
+      171
+    ],
+    "key": "deep-space",
+    "name": {
+      "en": "Deep Space",
+      "es": "Espacio profundo",
+      "zh": "深空",
+      "ko": "딥 스페이스"
+    },
+    "category": "Sci-Fi/Future",
+    "prefix": "deep space astronomical art",
+    "suffix": "swirling galaxies and nebulae, glowing stars, planets and moons, rich cosmic color, sense of vast scale",
+    "prompt": "a spiral galaxy seen beyond a ringed planet",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Space'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      35
+    ],
+    "key": "post-apocalyptic",
+    "name": {
+      "en": "Post-Apocalyptic",
+      "es": "Postapocalíptico",
+      "zh": "末日废土",
+      "ko": "포스트 아포칼립스"
+    },
+    "category": "Sci-Fi/Dystopia",
+    "prefix": "post-apocalyptic wasteland, ruined structures",
+    "suffix": "scavenged gear, broken machinery, dusty muted colors, survival-worn textures, bleak atmospheric haze",
+    "prompt": "a lone survivor walking through a ruined city",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      158
+    ],
+    "key": "dystopian",
+    "name": {
+      "en": "Dystopian",
+      "es": "Distópico",
+      "zh": "反乌托邦",
+      "ko": "디스토피아"
+    },
+    "category": "Sci-Fi/Dystopia",
+    "prefix": "dystopian world",
+    "suffix": "oppressive monolithic architecture, overcast gray sky, decaying infrastructure, somber desaturated palette, dramatic scale",
+    "prompt": "a dark city of towers under stormy clouds",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Dystopian'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      167
+    ],
+    "key": "metropolis",
+    "name": {
+      "en": "Metropolis",
+      "es": "Metrópolis",
+      "zh": "大都会",
+      "ko": "메트로폴리스"
+    },
+    "category": "Sci-Fi/Dystopia",
+    "prefix": "sprawling modern metropolis",
+    "suffix": "soaring skyscrapers, dense urban grid, glass and steel, hazy daylight, epic aerial perspective",
+    "prompt": "a skyline of giant towers seen from above",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Metropolis'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      26
+    ],
+    "key": "dark-fantasy-painting",
+    "name": {
+      "en": "Dark Fantasy Painting",
+      "es": "Pintura de fantasía oscura",
+      "zh": "暗黑奇幻绘画",
+      "ko": "다크 판타지 페인팅"
+    },
+    "category": "Fantasy/Epic",
+    "prefix": "dark high-fantasy digital painting, brooding atmosphere",
+    "suffix": "dramatic shadows, mystical lighting, epic scale, richly rendered environments",
+    "prompt": "a lone warrior facing an ancient dragon above ruined towers",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      305
+    ],
+    "key": "moonlit-fantasy-oil",
+    "name": {
+      "en": "Moonlit Fantasy Oil",
+      "es": "Óleo fantástico nocturno",
+      "zh": "月夜奇幻油画",
+      "ko": "달빛 판타지 유화"
+    },
+    "category": "Fantasy/Epic",
+    "prefix": "epic fantasy painting with rich oil-like texture, twilight atmosphere",
+    "suffix": "strong chiaroscuro between warm firelight and cool moonlight, indigo, violet, orange and gold palette, volumetric mist, visible brushwork",
+    "prompt": "a knight in plate armor resting by a campfire under a full moon",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Epic Moonlit Fantasy'; scene-specific tags moved to the example prompt.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      296
+    ],
+    "key": "gothic-moonlit-castle",
+    "name": {
+      "en": "Gothic Night Fantasy",
+      "es": "Fantasía gótica nocturna",
+      "zh": "哥特夜幕奇幻",
+      "ko": "고딕 나이트 판타지"
+    },
+    "category": "Fantasy/Epic",
+    "prefix": "dark gothic fantasy art, cinematic lighting",
+    "suffix": "enormous glowing moon, swirling indigo and fiery orange sky, high contrast between cool blues and warm highlights, sharp detailed textures",
+    "prompt": "a towering gothic castle on a volcanic island under a giant blue moon",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Gothic Moonlit Castle'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      309
+    ],
+    "key": "ethereal-epic",
+    "name": {
+      "en": "Ethereal Epic",
+      "es": "Épica etérea",
+      "zh": "空灵史诗",
+      "ko": "에테리얼 에픽"
+    },
+    "category": "Fantasy/Epic",
+    "prefix": "epic fantasy cinematic render, ethereal cloud environment",
+    "suffix": "soft diffused light, cool blues and warm golds, volumetric clouds, photoreal textures, monumental dreamlike scale",
+    "prompt": "a giant ornate elephant walking through the clouds at twilight",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Cloud Elephant Epic'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      96
+    ],
+    "key": "ethereal-fantasy-art",
+    "name": {
+      "en": "Ethereal Fantasy Art",
+      "es": "Arte fantástico etéreo",
+      "zh": "空灵奇幻艺术",
+      "ko": "에테리얼 판타지 아트"
+    },
+    "category": "Fantasy/Epic",
+    "prefix": "ethereal fantasy concept art",
+    "suffix": "celestial glowing light, painterly brushwork, majestic magical atmosphere, dreamy cover-art composition",
+    "prompt": "a robed sorceress standing on a cliff under a starry sky",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Fantasy Art' in the 'Stability AI' category. Preview figure was a glowing near-bare silhouette — regenerate with a clothed subject.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      157
+    ],
+    "key": "dreamscape",
+    "name": {
+      "en": "Dreamscape",
+      "es": "Paisaje onírico",
+      "zh": "梦境",
+      "ko": "드림스케이프"
+    },
+    "category": "Fantasy/Epic",
+    "prefix": "surreal dreamscape",
+    "suffix": "ethereal soft light, drifting mist, impossible organic shapes, muted pastel greens, mysterious calm atmosphere",
+    "prompt": "a misty enchanted forest path",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Dreamscape'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      34,
+      128
+    ],
+    "key": "steampunk",
+    "name": {
+      "en": "Steampunk",
+      "es": "Steampunk",
+      "zh": "蒸汽朋克",
+      "ko": "스팀펑크"
+    },
+    "category": "Fantasy/Steampunk",
+    "prefix": "steampunk style",
+    "suffix": "brass and copper machinery, gears, rivets and pressure gauges, Victorian industrial design, warm antique tones, intricate detail",
+    "prompt": "an inventor pilot inside a brass airship cockpit",
+    "review": {
+      "status": "merged",
+      "note": "Steampunk (#34) + Artstyle Steampunk (#128) — identical text.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      29
+    ],
+    "key": "steampunk-painting",
+    "name": {
+      "en": "Steampunk Painting",
+      "es": "Pintura steampunk",
+      "zh": "蒸汽朋克绘画",
+      "ko": "스팀펑크 페인팅"
+    },
+    "category": "Fantasy/Steampunk",
+    "prefix": "painterly steampunk fantasy illustration",
+    "suffix": "brass airships and machinery, Victorian industrial mood, cogs and rivets, warm golden light, visible brushwork",
+    "prompt": "an inventor pilot inside a brass airship cockpit",
+    "review": {
+      "status": "cleaned",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      88
+    ],
+    "key": "3d-render",
+    "name": {
+      "en": "3D Render",
+      "es": "Render 3D",
+      "zh": "3D 渲染",
+      "ko": "3D 렌더"
+    },
+    "category": "Games/3D",
+    "prefix": "professional 3D render",
+    "suffix": "physically based materials, global illumination, volumetric light, dramatic studio lighting, crisp high detail",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "rewritten",
+      "note": "Was '3D Model' in the 'Stability AI' category; removed software name 'octane'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      97
+    ],
+    "key": "isometric",
+    "name": {
+      "en": "Isometric",
+      "es": "Isométrico",
+      "zh": "等距视角",
+      "ko": "아이소메트릭"
+    },
+    "category": "Games/3D",
+    "prefix": "isometric 3D diorama",
+    "suffix": "clean isometric angle, tiny detailed world on a floating base, crisp vibrant colors, soft shadows",
+    "prompt": "a cozy futuristic street corner",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene changed: a street diorama shows the isometric view. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      99
+    ],
+    "key": "low-poly",
+    "name": {
+      "en": "Low Poly",
+      "es": "Low poly",
+      "zh": "低多边形",
+      "ko": "로우 폴리"
+    },
+    "category": "Games/3D",
+    "prefix": "low-poly 3D art",
+    "suffix": "visible flat-shaded polygon facets, simple geometric forms, clean gradient background, stylized game art",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      149
+    ],
+    "key": "retro-arcade",
+    "name": {
+      "en": "Retro Arcade",
+      "es": "Arcade retro",
+      "zh": "复古街机",
+      "ko": "레트로 아케이드"
+    },
+    "category": "Games/Retro",
+    "prefix": "1980s arcade game art",
+    "suffix": "8-bit pixel graphics, bold saturated colors, CRT glow, classic old-school gaming feel, no text, no logos",
+    "prompt": "an original little robot hero jumping across floating platforms",
+    "review": {
+      "status": "rewritten",
+      "note": "Preview had garbled title text. Regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      150
+    ],
+    "key": "16-bit-game",
+    "name": {
+      "en": "16-bit Game",
+      "es": "Juego de 16 bits",
+      "zh": "16 位游戏",
+      "ko": "16비트 게임"
+    },
+    "category": "Games/Retro",
+    "prefix": "16-bit console game art",
+    "suffix": "detailed pixel sprites, rich limited palette, parallax background layers, charming nostalgic feel, no text, no logos",
+    "prompt": "an original hero character exploring a fantasy forest",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Game Retro Game'. Preview had garbled title text. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      143
+    ],
+    "key": "cyberpunk-game",
+    "name": {
+      "en": "Cyberpunk Game",
+      "es": "Videojuego cyberpunk",
+      "zh": "赛博朋克游戏",
+      "ko": "사이버펑크 게임"
+    },
+    "category": "Games/Genres",
+    "prefix": "neon dystopian action video game character art",
+    "suffix": "neon dystopian city, high-tech gear, dramatic rim lighting, high contrast, polished game promo render, no text, no logos",
+    "prompt": "a single original street runner with a glowing visor standing in a rainy neon alley",
+    "review": {
+      "status": "rewritten",
+      "note": "Preview rendered a logo. Regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      144
+    ],
+    "key": "fighting-game",
+    "name": {
+      "en": "Fighting Game",
+      "es": "Juego de lucha",
+      "zh": "格斗游戏",
+      "ko": "격투 게임"
+    },
+    "category": "Games/Genres",
+    "prefix": "fighting game character art",
+    "suffix": "dynamic action pose, energy effects, vibrant colors, bold cel shading, detailed original character design, no text, no logos",
+    "prompt": "an original martial artist in a dramatic fighting stance",
+    "review": {
+      "status": "rewritten",
+      "note": "Preview resembled a known character. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      151
+    ],
+    "key": "rpg-fantasy-game",
+    "name": {
+      "en": "RPG Fantasy Game",
+      "es": "Juego RPG de fantasía",
+      "zh": "奇幻 RPG 游戏",
+      "ko": "판타지 RPG 게임"
+    },
+    "category": "Games/Genres",
+    "prefix": "high-fantasy role-playing game art",
+    "suffix": "detailed armor and costume design, magical effects, immersive painted environment, epic heroic mood, no text, no logos",
+    "prompt": "an original adventurer with a sword in a fantasy landscape",
+    "review": {
+      "status": "rewritten",
+      "note": "Preview had garbled title text. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      152
+    ],
+    "key": "strategy-game",
+    "name": {
+      "en": "Strategy Game",
+      "es": "Juego de estrategia",
+      "zh": "策略游戏",
+      "ko": "전략 게임"
+    },
+    "category": "Games/Genres",
+    "prefix": "real-time strategy game view",
+    "suffix": "overhead three-quarter camera, detailed terrain map, small units and buildings, clear readable layout, no text, no interface",
+    "prompt": "two armies facing each other across a river valley",
+    "review": {
+      "status": "rewritten",
+      "note": "Preview had garbled title text. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      9,
+      162
+    ],
+    "key": "gothic-horror",
+    "name": {
+      "en": "Gothic Horror",
+      "es": "Terror gótico",
+      "zh": "哥特恐怖",
+      "ko": "고딕 호러"
+    },
+    "category": "Mood/Horror",
+    "prefix": "gothic horror, dramatic chiaroscuro lighting",
+    "suffix": "heavy shadows, eerie unsettling atmosphere, suspenseful dark cinematic tone, dread without gore",
+    "prompt": "an abandoned chapel corridor with a ghostly silhouette",
+    "review": {
+      "status": "merged",
+      "note": "Horror (#9) + Misc Horror (#162). Content kept atmospheric (≤16).",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      164
+    ],
+    "key": "cosmic-horror",
+    "name": {
+      "en": "Cosmic Horror",
+      "es": "Terror cósmico",
+      "zh": "宇宙恐怖",
+      "ko": "코즈믹 호러"
+    },
+    "category": "Mood/Horror",
+    "prefix": "cosmic horror art",
+    "suffix": "eldritch unknowable presence, surreal impossible geometry, fog and sickly green light, mysterious dread without gore",
+    "prompt": "a colossal shape rising from a foggy sea",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Lovecraftian' (author name removed from the name and text).",
+      "preview": "ok"
+    }
+  }
+]

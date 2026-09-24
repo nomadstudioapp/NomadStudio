@@ -414,6 +414,74 @@ def _neutral_placeholder_png() -> bytes:
     return _PLACEHOLDER_PNG_CACHE
 
 
+@models_api_bp.post("/models/flows/requirements")
+def flow_requirements():
+    """Model files and custom nodes a flow's graphs need that ComfyUI does not
+    have (app/services/flow_requirements.py). Body: {workflowFiles: [...],
+    refresh: bool} — refresh skips the short object_info cache ("Check
+    again" after a download)."""
+    from app.services import flow_requirements as reqs
+    from app.services.setup_service import is_local_url
+    from .imports_routes import (
+        _extract_downloads_from_workflow,
+        _parse_workflow_config_node,
+        _resolve_comfy_models_folder,
+    )
+
+    payload = request.get_json(silent=True) or {}
+    files = [str(f).strip() for f in (payload.get("workflowFiles") or []) if str(f or "").strip()]
+    workflows = []
+    for rel in dict.fromkeys(files):
+        try:
+            workflows.append(_load_workflow_file(rel))
+        except (ValueError, OSError, json.JSONDecodeError):
+            continue  # a flow pointing at a graph that is gone is a different problem
+    if not workflows:
+        return jsonify({"ok": True, "checked": 0})
+
+    data = _ensure_registry()
+    comfy_api_url = str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip() or DEFAULT_COMFY_URL
+    try:
+        comfy_api_url = _safe_comfy_url(comfy_api_url)
+        info = reqs.object_info(comfy_api_url, force=bool(payload.get("refresh")))
+    except Exception as exc:  # noqa: BLE001 — ComfyUI down is its own notice
+        return jsonify({"ok": False, "comfyUnreachable": True, "error": str(exc)[:200]})
+    try:
+        folders = http_json(f"{comfy_api_url}/models", timeout=8)
+    except Exception:  # noqa: BLE001
+        folders = []
+    # What the packages behind these graphs declare about each model file
+    # (requires.models: identity + fallback address) — the graph path starts
+    # with the package id ("nomad.refine-styling/workflows/…").
+    declared: dict = {}
+    for rel in dict.fromkeys(files):
+        pkg_id = Path(rel).as_posix().split("/", 1)[0]
+        manifest_path = PACKAGES_DIR / pkg_id / "manifest.json"
+        if ".." in pkg_id or not manifest_path.is_file():
+            continue
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for m in ((manifest.get("requires") or {}).get("models") or []):
+            if isinstance(m, dict) and str(m.get("file", "")).strip():
+                declared.setdefault(str(m["file"]).strip().lower(), m)
+    from app.services import models_catalog
+    catalog = models_catalog.load(str(data.get("settings", {}).get("modelsCatalogUrl", "") or "").strip(),
+                                  force=bool(payload.get("refresh")))
+
+    result = reqs.check(workflows, info, _parse_workflow_config_node, _extract_downloads_from_workflow,
+                        [f for f in folders if isinstance(f, str)] if isinstance(folders, list) else [],
+                        declared=declared, catalog=catalog)
+    result.update({
+        "catalogSource": models_catalog.source(),
+        "checked": len(workflows),
+        "modelsFolderSet": bool(_resolve_comfy_models_folder()),
+        "comfyIsLocal": is_local_url(comfy_api_url),
+    })
+    return jsonify(result)
+
+
 @models_api_bp.post("/models/mix/prepare")
 def prepare_mix_workflow():
     """Prepare a mix workflow (2+ image inputs) for direct JS submission to ComfyUI.

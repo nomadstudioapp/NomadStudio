@@ -15,6 +15,9 @@ var _optionsPanelTitleEl  = null;
 var _optionsPanelBodyEl   = null;
 var _optionsPanelActionEl = null;
 var _optionsPanelInited   = false;
+// opts.persistent: the panel only closes with its × (or Escape) — not on a
+// click elsewhere. For panels that run long work, e.g. model downloads.
+var _optionsPanelPersistent = false;
 
 var _nestedPanelEl      = null;
 var _nestedPanelTitleEl = null;
@@ -111,6 +114,7 @@ function openOptionsPanel(title, fillFn, opts) {
   if (!_optionsPanelEl) return;
   if (_optionsPanelTitleEl) _optionsPanelTitleEl.textContent = title;
   setOptionsPanelAction(null);
+  _optionsPanelPersistent = !!(opts && opts.persistent);
   var wideOpt = opts && opts.wide;
   _optionsPanelEl.classList.toggle('nsc-options-panel--wide', !!wideOpt && wideOpt !== 'xl');
   _optionsPanelEl.classList.toggle('nsc-options-panel--xwide', wideOpt === 'xl');
@@ -124,6 +128,7 @@ function openOptionsPanel(title, fillFn, opts) {
 
 function closeOptionsPanel() {
   if (_optionsPanelEl) _optionsPanelEl.hidden = true;
+  _optionsPanelPersistent = false;
   closeNestedOptionsPanel();
 }
 
@@ -139,6 +144,7 @@ document.addEventListener('mousedown', function (e) {
     closeNestedOptionsPanel();
   }
   if (!_optionsPanelEl || _optionsPanelEl.hidden) return;
+  if (_optionsPanelPersistent) return;
   if (_optionsPanelEl.contains(e.target)) return;
   if (e.target.closest && e.target.closest('.nsc-options-trigger')) return;
   if (e.target.closest && e.target.closest('.nsc-options-exempt')) return;

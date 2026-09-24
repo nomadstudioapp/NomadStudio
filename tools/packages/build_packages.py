@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -315,10 +316,132 @@ def flow_from_path(source: Path, rel_file: str) -> dict:
     return json.loads((source / "app" / "instructions" / rel_file).read_text(encoding="utf-8"))
 
 
+# ── requires.models / requires.comfy_nodes (PACKAGE_FORMAT.md §8, D15) ──────
+# The package says WHICH files and nodes its graphs need; WHERE a model is
+# downloaded lives in the models catalog (app/static/data/models_catalog.json,
+# live copy in the Nomad Studio Packs repo), so a dead link is fixed in one
+# place without republishing packages. The graphs themselves are not touched.
+# Both lists are derived here from the graphs a package ships (workflows/*,
+# engines/*.workflow) — nobody writes them by hand.
+MODELS_CATALOG_PATH = REPO / "app" / "static" / "data" / "models_catalog.json"
+NODE_PACKS_PATH = REPO / "app" / "static" / "data" / "custom_node_packs.json"
+_MODEL_FILE_SUFFIXES_ALL = (".safetensors", ".gguf", ".pth", ".pt", ".bin", ".ckpt", ".sft", ".onnx")
+# Loader class → ComfyUI folder, for a file the catalog doesn't know.
+_LOADER_FOLDERS = {
+    "UNETLoader": "diffusion_models", "UnetLoaderGGUF": "diffusion_models",
+    "CLIPLoader": "text_encoders", "DualCLIPLoader": "text_encoders", "TripleCLIPLoader": "text_encoders",
+    "VAELoader": "vae", "LoraLoader": "loras", "LoraLoaderModelOnly": "loras",
+    "CheckpointLoaderSimple": "checkpoints", "CLIPVisionLoader": "clip_vision",
+    "UpscaleModelLoader": "upscale_models", "ModelPatchLoader": "model_patches",
+    "StyleModelLoader": "style_models", "ControlNetLoader": "controlnet",
+}
+_INPUT_FOLDERS = {"unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae",
+                  "lora_name": "loras", "ckpt_name": "checkpoints", "model_name": "upscale_models"}
+_catalog_cache: dict | None = None
+_node_packs_cache: dict | None = None
+
+
+def _models_catalog() -> dict:
+    global _catalog_cache
+    if _catalog_cache is None:
+        _catalog_cache = json.loads(MODELS_CATALOG_PATH.read_text(encoding="utf-8"))
+    return _catalog_cache
+
+
+def _node_packs() -> dict:
+    global _node_packs_cache
+    if _node_packs_cache is None:
+        _node_packs_cache = json.loads(NODE_PACKS_PATH.read_text(encoding="utf-8")) if NODE_PACKS_PATH.is_file() else {}
+    return _node_packs_cache
+
+
+def _graph_model_refs(graph: dict) -> list[tuple[str, str, str]]:
+    """(file name, subfolder in the graph, folder guess) for every model file
+    the graph loads: loader inputs plus the `config` node's quantization
+    variants. Text nodes (a "Downloads" list) are not loaders."""
+    refs: list[tuple[str, str, str]] = []
+    input_class: dict[str, str] = {}
+    for node in graph.values():
+        if not isinstance(node, dict) or node.get("class_type") == "PrimitiveStringMultiline":
+            continue
+        for key, value in (node.get("inputs") or {}).items():
+            if isinstance(value, str) and value.lower().endswith(_MODEL_FILE_SUFFIXES_ALL):
+                parts = [p for p in re.split(r"[\\/]", value) if p]
+                cls = str(node.get("class_type", ""))
+                input_class.setdefault(key, cls)
+                refs.append((parts[-1], "/".join(parts[:-1]), _LOADER_FOLDERS.get(cls) or _INPUT_FOLDERS.get(key, "")))
+    config_node = graph.get("config")
+    if isinstance(config_node, dict) and config_node.get("class_type") == "PrimitiveStringMultiline":
+        try:
+            config = json.loads(str((config_node.get("inputs") or {}).get("value") or ""))
+        except ValueError:
+            config = {}
+        for raw in ((config or {}).get("quantization") or {}).values():
+            pairs = [("unet_name", raw)] if isinstance(raw, str) else list(raw.items()) if isinstance(raw, dict) else []
+            for key, value in pairs:
+                if isinstance(value, str) and value.lower().endswith(_MODEL_FILE_SUFFIXES_ALL):
+                    parts = [p for p in re.split(r"[\\/]", value) if p]
+                    cls = input_class.get(key, "")
+                    refs.append((parts[-1], "/".join(parts[:-1]),
+                                 _LOADER_FOLDERS.get(cls) or _INPUT_FOLDERS.get(key, "")))
+    return refs
+
+
+def requirements_for(graphs: list[dict]) -> tuple[list[dict], list[dict], list[str]]:
+    """(requires.models, requires.comfy_nodes, files the catalog doesn't know)."""
+    catalog = _models_catalog().get("models", [])
+    by_name = {n.lower(): m for m in catalog for n in m.get("names", [])}
+    models: dict[str, dict] = {}
+    unknown: list[str] = []
+    classes: set[str] = set()
+    for graph in graphs:
+        classes |= {str(n.get("class_type")) for n in graph.values() if isinstance(n, dict) and n.get("class_type")}
+        for name, sub, guess in _graph_model_refs(graph):
+            if name.lower() in models:
+                continue
+            entry = by_name.get(name.lower())
+            item = {"file": name,
+                    "folder": entry["folder"] if entry else "/".join(p for p in (guess, sub) if p) or guess}
+            if entry:
+                item.update(size=entry["size"], sha256=entry["sha256"])
+            else:
+                unknown.append(name)
+            models[name.lower()] = item
+    packs = _node_packs()
+    nodes: dict[str, dict] = {}
+    for cls in sorted(classes):
+        pack_id = (packs.get("classes") or {}).get(cls)
+        if not pack_id:
+            continue
+        pack = (packs.get("packs") or {}).get(pack_id) or {}
+        nodes.setdefault(pack_id, {"id": pack_id, "repo": pack.get("repo") or "", "classes": []})["classes"].append(cls)
+    return sorted(models.values(), key=lambda m: m["file"].lower()), list(nodes.values()), sorted(set(unknown))
+
+
+def _add_requirements(name: str, files: dict[str, object]) -> None:
+    manifest = files.get("manifest.json")
+    if not isinstance(manifest, dict):
+        return
+    graphs = [c for rel, c in files.items() if rel.startswith("workflows/") and isinstance(c, dict)]
+    graphs += [c["workflow"] for rel, c in files.items()
+               if rel.startswith("engines/") and isinstance(c, dict) and isinstance(c.get("workflow"), dict)]
+    if not graphs:
+        return
+    models, nodes, unknown = requirements_for(graphs)
+    requires = manifest.setdefault("requires", {})
+    if models:
+        requires["models"] = models
+    if nodes:
+        requires["comfy_nodes"] = nodes
+    if unknown:
+        print(f"  {name}: not in the models catalog (no download address): {', '.join(unknown)}")
+
+
 def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{name}.zip"
     path.unlink(missing_ok=True)
+    _add_requirements(name, files)
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for rel, content in files.items():
             if isinstance(content, (str, bytes)):
@@ -695,6 +818,188 @@ def _local_edit_qwen2_flow() -> dict:
     }
 
 
+# ── Text Editor in Image — same region_annotate + flatten-then-edit pattern
+# as Local Editing above, just defaulted to rectangle mode (text sits in
+# rectangular blocks, not blobs a freehand loop suits) and with a preset
+# aimed at text replacement instead of a generic region edit. Marking the
+# rectangle IS the "which text" input — no separate "old text" field needed,
+# unlike the original template idea, so the prompt only needs the new text
+# filled into the bracket. Two engine variants, same as Background Swap, so
+# they can be compared directly.
+TEXT_EDITOR_PRESETS = [
+    {
+        "label": "Replace text",
+        "text": "Replace the text inside the red rectangle with \"[NEW TEXT]\". Keep font style, color, size, "
+                "and placement consistent with the original.",
+    },
+    {
+        "label": "Add text",
+        "text": "Add the text \"[NEW TEXT]\" inside the red rectangle, where there is no text yet. Style it to "
+                "naturally match the scene — matching perspective, lighting, and the surface it sits on.",
+    },
+]
+
+
+def _text_editor_qwen2_flow() -> dict:
+    return {
+        "id": "refine.text_editor_qwen2",
+        "label": "Text Editor in Image — Qwen 2.1",
+        "_i18n_overrides": {
+            "label": {
+                "en": "Text Editor in Image — Qwen 2.1", "es": "Editor de texto en imagen — Qwen 2.1",
+                "zh": "图像文字编辑 — Qwen 2.1", "ko": "이미지 텍스트 편집 — Qwen 2.1",
+            },
+            "desc": {
+                "en": "Mark the text with a rectangle and replace it, keeping the original font, color and placement.",
+                "es": "Marca el texto con un rectángulo y reemplázalo, conservando fuente, color y posición.",
+                "zh": "用矩形标记文字并替换，保留原有字体、颜色和位置。",
+                "ko": "사각형으로 텍스트를 표시하고 교체 — 원래 글꼴, 색상, 배치는 유지합니다.",
+            },
+        },
+        "category": "refine",
+        "group": "photo-editing",
+        "description": "Mark the text you want to change with a rectangle, then replace it — keeping font, "
+                        "color, size and placement — using Qwen Image 2.1.",
+        "card_desc": "Mark the text with a rectangle and replace it, keeping the original font, color and placement.",
+        "card_tags": ["Qwen", "2.1", "Text", "Edit"],
+        "card_css_modifier": "edit-qwen-2511",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "annotate",
+                "type": "region_annotate",
+                "label": "Mark the text",
+                "image_step": "image",
+                "shape_mode": "rectangle",
+                "hint": "Draw a rectangle around the text you want to replace.",
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "13.prompt",
+                        "label": "Edit prompt",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Fill in the bracketed part with the new text, or write your own instruction.",
+                        "default": TEXT_EDITOR_PRESETS[0]["text"],
+                        "presets": TEXT_EDITOR_PRESETS,
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.annotate.output.annotated_image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
+def _text_editor_klein9b_flow() -> dict:
+    return {
+        "id": "refine.text_editor_klein9b",
+        "label": "Text Editor in Image — Klein 9B",
+        "_i18n_overrides": {
+            "label": {
+                "en": "Text Editor in Image — Klein 9B", "es": "Editor de texto en imagen — Klein 9B",
+                "zh": "图像文字编辑 — Klein 9B", "ko": "이미지 텍스트 편집 — Klein 9B",
+            },
+            "desc": {
+                "en": "Mark the text with a rectangle and replace it, keeping the original font, color and placement.",
+                "es": "Marca el texto con un rectángulo y reemplázalo, conservando fuente, color y posición.",
+                "zh": "用矩形标记文字并替换，保留原有字体、颜色和位置。",
+                "ko": "사각형으로 텍스트를 표시하고 교체 — 원래 글꼴, 색상, 배치는 유지합니다.",
+            },
+        },
+        "category": "refine",
+        "group": "photo-editing",
+        "description": "Mark the text you want to change with a rectangle, then replace it — keeping font, "
+                        "color, size and placement — using Flux 2 Klein 9B.",
+        "card_desc": "Mark the text with a rectangle and replace it, keeping the original font, color and placement.",
+        "card_tags": ["Klein", "9B", "Text", "Edit"],
+        "card_css_modifier": "edit-fluxklein",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "annotate",
+                "type": "region_annotate",
+                "label": "Mark the text",
+                "image_step": "image",
+                "shape_mode": "rectangle",
+                "hint": "Draw a rectangle around the text you want to replace.",
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": "workflows/refine/refine_flux2_klein_9b.json",
+                "image_node": "76",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "139.text",
+                        "label": "Edit prompt",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Fill in the bracketed part with the new text, or write your own instruction.",
+                        "default": TEXT_EDITOR_PRESETS[0]["text"],
+                        "presets": TEXT_EDITOR_PRESETS,
+                    },
+                    {
+                        "id": "steps", "adv_key": "132.steps", "label": "Steps", "type": "number",
+                        "default": 4, "min": 1, "max": 40, "step": 1, "quick_options": [4, 8], "advanced": True,
+                    },
+                    {
+                        "id": "cfg", "adv_key": "133.cfg", "label": "CFG", "type": "number",
+                        "default": 1, "min": 0, "max": 10, "step": 0.5, "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "136.noise_seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.annotate.output.annotated_image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Flux 2 Klein",
+    }
+
+
 def _qwen_image_21_edit_workflow() -> dict:
     return {
         "2": {
@@ -759,6 +1064,658 @@ def _qwen_image_21_edit_workflow() -> dict:
             "_meta": {"title": "Empty Latent Image"},
         },
     }
+
+
+# ── Multi-Reference Compose (Mix, Qwen 2.1) — new graph, no OPENHIKER
+# source. Same loaders/sampler/decode as the single-image Edit graph above,
+# but TextEncodeQwenImage21 gets up to 4 "images.image_N" Autogrow keys
+# instead of 1 — its multi-image conditioning is confirmed to work this way
+# from real generated-PNG metadata (see _qwen_image_21_edit_workflow's
+# comment), just never exercised past a single slot until now. Node 7
+# stays the primary/subject reference; 8/9/10 are the secondary/tertiary/
+# quaternary references. Unfilled optional slots (3rd/4th) get a neutral
+# gray placeholder uploaded by prepare_mix_workflow's
+# _neutral_placeholder_png() — same mechanism already used for Clothes
+# Mix's optional reference photo, so an unused slot here is a
+# known-working no-op rather than new risk.
+#
+# Output canvas: unlike single-image Edit flows (where GetImageSize(source)
+# -> EmptyLatentImage makes sense — you're editing THAT image), combining
+# 2-4 references with different aspect ratios has no one "right" source to
+# inherit size from. Node 25 gets a literal default (1024x1024, same
+# default the base engine already uses) instead of GetImageSize(7) — the
+# flow's own `aspect_ratio` field (see _multi_reference_compose_flow)
+# always overrides it via advancedValues at generation time; the literal
+# default only matters as a fallback if that field somehow doesn't fire.
+MIX_MULTI_REFERENCE_WORKFLOW_REL = "workflows/mix/multi_reference_compose_qwen21.json"
+
+
+def _qwen_image_21_multi_reference_workflow() -> dict:
+    graph = _qwen_image_21_edit_workflow()
+    for node_id, filename in (("8", "oj-mix-placeholder-2.png"),
+                               ("9", "oj-mix-placeholder-3.png"),
+                               ("10", "oj-mix-placeholder-4.png")):
+        graph[node_id] = {
+            "inputs": {"image": filename},
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"},
+        }
+    graph["13"]["inputs"]["images.image_2"] = ["8", 0]
+    graph["13"]["inputs"]["images.image_3"] = ["9", 0]
+    graph["13"]["inputs"]["images.image_4"] = ["10", 0]
+    graph["21"]["inputs"]["filename_prefix"] = "qwen-image-2.1-multi-ref"
+    del graph["24"]  # GetImageSize — no longer referenced, see comment above
+    graph["25"]["inputs"] = {"width": 1024, "height": 1024, "batch_size": 1}
+    return graph
+
+
+# Prompt wording supplied verbatim by the user — each already frames the
+# <image1>/<image2>/... role convention TextEncodeQwenImage21 expects, so
+# no rewriting needed, only picking a default and giving each a short label.
+MULTI_REFERENCE_COMPOSE_PRESETS = [
+    {
+        "label": "General composition",
+        "text": "Use <image1> as the main subject reference and <image2> as the secondary reference. "
+                "Combine the important visual information from both images into one coherent final image. "
+                "Preserve the recognizable identity and key details of the subject from <image1> while "
+                "integrating the relevant elements from <image2> naturally. Match perspective, scale, "
+                "lighting, color harmony, and scene coherence.",
+    },
+    {
+        "label": "Structured role-based mix",
+        "text": "Use <image1> as the subject reference. Use <image2> as the style, object, clothing, or "
+                "environment reference. Create a single unified image that preserves the subject identity "
+                "from <image1> while incorporating the requested features from <image2>. Avoid a collage "
+                "look and ensure the final scene feels naturally constructed.",
+    },
+    {
+        "label": "Extendable multi-input",
+        "text": "Use <image1> as the primary subject reference. Use <image2> as the secondary reference. "
+                "If additional images are provided, use them as supporting references for style, objects, "
+                "clothing, environment, or composition. Blend all references into one coherent final image "
+                "with consistent lighting, scale, perspective, and visual logic.",
+    },
+]
+
+
+# Shared vision system prompt for the per-image "What's in this image?"
+# optional field (subject_input + subject_vision_assist, same mechanism
+# Photo Session uses) — one short sentence, phrased generically since any
+# of the 4 slots could end up holding a subject, a style reference, an
+# object, or an environment shot.
+_MULTI_REF_VISION_SYSTEM_PROMPT = (
+    "Describe this reference image in one concise sentence — what it shows and any visual "
+    "details (subject, colors, clothing, style, objects, setting) that would matter for "
+    "combining it with other images into one final composition. Output only the sentence."
+)
+
+# System prompt for the "idea -> full composition prompt" AI-assist step.
+# Style is deliberately terse/anchored (matched to the user's own reference
+# examples: "The girl in Image 1 wears the necklace from Image 2 and
+# carries the bag from Image 3") rather than the long descriptive
+# paragraphs Create's Assist produces — a multi-reference prompt needs to
+# stay unambiguous about which image plays which role, not evocative.
+MULTI_REF_COMPOSE_SYSTEM_PROMPT = (
+    "You are a prompt writer for an AI image model that combines 2-4 reference images into one "
+    "final image. The user will give you a rough idea of what they want, and optionally short "
+    "descriptions of what each reference image shows (labeled 'Image 1:', 'Image 2:', etc. — only "
+    "as many as were provided).\n\n"
+    "Write a short, concrete instruction that assigns each image mentioned in the idea a clear "
+    "role, referring to it as Image 1, Image 2, Image 3, Image 4 (matching the image numbers "
+    "given, written as two plain words — the word \"Image\", a space, then the digit — no brackets, "
+    "no punctuation between them). Follow this exact style — short declarative sentences anchored "
+    "to an image number, e.g. \"The subject in Image 1 wears the jacket from Image 2 and stands in "
+    "the setting from Image 3.\" or \"Use Image 1 as the main subject and Image 2 as the style "
+    "reference.\"\n\n"
+    "Rules:\n"
+    "- EVERY reference image mentioned MUST carry its \"Image N\" label exactly as described above "
+    "— never replace it with just \"the circle\"/\"the image\"/\"it\", never drop it, never "
+    "paraphrase it away. This is the single most important rule.\n"
+    "- Only reference image numbers that were actually mentioned or described — never invent a "
+    "5th image or reference one that has no idea/description behind it.\n"
+    "- Keep it to 1-3 sentences. No preamble, no explanation, no quotes — output only the "
+    "instruction itself.\n"
+    "- If the idea is vague about a role, infer the most sensible one from the image descriptions."
+)
+
+
+def _multi_ref_image_step(step_id: str, label: str, required: bool, hint: str | None = None,
+                           vision: bool = True) -> dict:
+    """Shared image_picker builder for all 3 multi-reference flows. `vision=True`
+    adds the "what's in this image?" text field + inline vision-assist button
+    (Multi-Reference Compose only — the Quick and MultiComposer flows don't
+    need it, they don't have an AI prompt-composer step to feed context to)."""
+    step: dict = {"id": step_id, "type": "image_picker", "label": label, "required": required}
+    if vision:
+        step["subject_input"] = True
+        step["subject_label"] = "What's in this image? (optional)"
+        step["subject_placeholder"] = "e.g. woman in a red coat, gold necklace, beach at sunset…"
+        step["subject_vision_assist"] = {"system_prompt": _MULTI_REF_VISION_SYSTEM_PROMPT}
+    if not required:
+        step["optional"] = True
+    if hint:
+        step["hint"] = hint
+    return step
+
+
+def _multi_reference_compose_flow() -> dict:
+    _ref_image_step = _multi_ref_image_step
+    return {
+        "id": "mix.multi_reference_compose",
+        "label": "Multi-Reference Compose",
+        "category": "mix",
+        "description": "Combine 2-4 reference images into one coherent final image, assigning each a clear "
+                        "role (subject, style, object, clothing, environment) with Qwen Image 2.1.",
+        "card_desc": "Combine multiple references — subject, style, object, environment — into one coherent image.",
+        "card_tags": ["Qwen", "2.1", "Mix", "Compose"],
+        "card_css_modifier": "mix-compose",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            _ref_image_step(
+                "image", "Background (optional)", False,
+                "Optional — leave empty to compose purely from the reference images and your prompt, or add "
+                "a real background photo to place them into.",
+            ),
+            _ref_image_step("image_2", "Main subject reference", True),
+            _ref_image_step(
+                "image_3", "Additional reference (optional)", False,
+                "Optional — add a 3rd reference (style, object, environment) if the prompt needs it.",
+            ),
+            _ref_image_step(
+                "image_4", "Additional reference (optional)", False,
+                "Optional — add a 4th reference if the prompt needs it.",
+            ),
+            {
+                "id": "idea",
+                "type": "prompt_input",
+                "label": "Your idea (optional)",
+                "required": False,
+                "placeholder": "A rough idea is enough — e.g. \"put the person from image 1 in the jacket "
+                               "from image 2\". Combine with the image descriptions above for best results.",
+                "rows": 3,
+            },
+            {
+                "id": "compose",
+                "type": "llm_transform",
+                "label": "Compose prompt with AI",
+                "calls": "llm.studio_enhance",
+                "input_from": "steps.idea.output.prompt_text",
+                "context_from": {
+                    "reference_prompt": [
+                        {"label": "Image 1", "ref": "steps.image.output.subject"},
+                        {"label": "Image 2", "ref": "steps.image_2.output.subject"},
+                        {"label": "Image 3", "ref": "steps.image_3.output.subject"},
+                        {"label": "Image 4", "ref": "steps.image_4.output.subject"},
+                    ],
+                },
+                # Fixed single "level" (not a user-facing quick/style/scene/master
+                # choice like Create's Assist) — just what studio-enhance needs to
+                # pick our system_prompts["scene"] entry below.
+                "params": {"level": {"type": "user_choice", "options": ["scene"], "default": "scene"}},
+                "system_prompts": {"scene": MULTI_REF_COMPOSE_SYSTEM_PROMPT},
+                "output_to": "prompt",
+                # This local LLM (small models especially) reliably drops or mangles literal
+                # "<image1>"-style angle-bracket tags in its output (observed live: Gemma treats
+                # them like a control-token pattern and silently strips them) — so the system
+                # prompt above asks it for the plain words "Image 1"/"Image 2" instead, and this
+                # flag tells runLLM's llm.studio_enhance branch to deterministically convert
+                # "Image N" -> "<imageN>" afterwards, client-side, before it reaches the prompt
+                # box. Far more reliable than hoping a small model preserves exact punctuation.
+                "tag_image_refs": True,
+            },
+            {
+                "id": "prompt",
+                "type": "prompt_input",
+                "label": "Composition prompt",
+                "placeholder": "Reference each image as <image1>, <image2>, <image3>, <image4> and describe "
+                               "its role — pick a template, use the AI composer above, or write your own.",
+                "default": MULTI_REFERENCE_COMPOSE_PRESETS[0]["text"],
+                "presets": MULTI_REFERENCE_COMPOSE_PRESETS,
+                "rows": 5,
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": MIX_MULTI_REFERENCE_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "aspect_ratio",
+                        "type": "aspect_ratio",
+                        "label": "Output aspect ratio",
+                        "default": "r1x1",
+                        "resolution": "md",
+                        "adv_keys": {"width": "25.width", "height": "25.height"},
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_mix",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "images": [
+                        {"dataUrl": "steps.image.output.image_data_url", "nodeId": "7", "optional": True},
+                        {"dataUrl": "steps.image_2.output.image_data_url", "nodeId": "8"},
+                        {"dataUrl": "steps.image_3.output.image_data_url", "nodeId": "9", "optional": True},
+                        {"dataUrl": "steps.image_4.output.image_data_url", "nodeId": "10", "optional": True},
+                    ],
+                    "advancedValues": "steps.params.output.adv_values",
+                    "promptKey": "13.prompt",
+                    "promptValue": "steps.prompt.output.prompt_text",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Mix",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
+# ── Multi-Reference Compose (Quick) — same graph/engine as the flow above,
+# no AI: just the deterministic role-picker (Part 3 of that flow's original
+# design, split out here so the main flow isn't overloaded with 3 different
+# ways to build the same prompt). No vision, no LM Studio dependency.
+def _multi_reference_compose_quick_flow() -> dict:
+    _ref_image_step = _multi_ref_image_step
+    return {
+        "id": "mix.multi_reference_compose_quick",
+        "label": "Multi-Reference Compose (Quick)",
+        "category": "mix",
+        "description": "Combine 2-4 reference images into one coherent final image using a quick role picker "
+                        "— no AI, no typing, with Qwen Image 2.1.",
+        "card_desc": "Combine multiple references fast — pick each image's role from a dropdown, no AI needed.",
+        "card_tags": ["Qwen", "2.1", "Mix", "Quick"],
+        "card_css_modifier": "mix-compose",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            _ref_image_step(
+                "image", "Background (optional)", False,
+                "Optional — leave empty to compose purely from the reference images and your prompt, or add "
+                "a real background photo to place them into.",
+                vision=False,
+            ),
+            _ref_image_step("image_2", "Main subject reference", True, vision=False),
+            _ref_image_step(
+                "image_3", "Additional reference (optional)", False,
+                "Optional — add a 3rd reference (style, object, environment) if the prompt needs it.",
+                vision=False,
+            ),
+            _ref_image_step(
+                "image_4", "Additional reference (optional)", False,
+                "Optional — add a 4th reference if the prompt needs it.",
+                vision=False,
+            ),
+            {
+                "id": "prompt",
+                "type": "prompt_input",
+                "label": "Composition prompt",
+                "placeholder": "Reference each image as <image1>, <image2>, <image3>, <image4> and describe "
+                               "its role — pick a template, use the role picker below, or write your own.",
+                "default": MULTI_REFERENCE_COMPOSE_PRESETS[0]["text"],
+                "presets": MULTI_REFERENCE_COMPOSE_PRESETS,
+                "rows": 5,
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": MIX_MULTI_REFERENCE_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "aspect_ratio",
+                        "type": "aspect_ratio",
+                        "label": "Output aspect ratio",
+                        "default": "r1x1",
+                        "resolution": "md",
+                        "adv_keys": {"width": "25.width", "height": "25.height"},
+                    },
+                    {
+                        "id": "role_picker",
+                        "type": "compose",
+                        "label": "Quick role picker (optional — fills the prompt above instead of typing)",
+                        "separator": " ",
+                        "groups": [
+                            {"id": "image1_role", "label": "Image 1", "template": "Use <image1> as {value}.",
+                             "options": ["the background", "the main subject", "the style reference",
+                                         "the pose reference"]},
+                            {"id": "image2_role", "label": "Image 2", "template": "Use <image2> as {value}.",
+                             "options": ["the main subject", "the secondary reference", "the style reference",
+                                         "the clothing/object reference", "the environment/background reference"]},
+                            {"id": "image3_role", "label": "Image 3", "template": "Use <image3> as {value}.",
+                             "options": ["an additional style reference", "the clothing/object reference",
+                                         "the environment/background reference", "the pose reference"]},
+                            {"id": "image4_role", "label": "Image 4", "template": "Use <image4> as {value}.",
+                             "options": ["an additional style reference", "the clothing/object reference",
+                                         "the environment/background reference", "the pose reference"]},
+                        ],
+                    },
+                    {
+                        "id": "role_picker_preview",
+                        "type": "compose_preview",
+                        "label": "Picker preview",
+                        "target_step": "prompt",
+                        "rows": 3,
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_mix",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "images": [
+                        {"dataUrl": "steps.image.output.image_data_url", "nodeId": "7", "optional": True},
+                        {"dataUrl": "steps.image_2.output.image_data_url", "nodeId": "8"},
+                        {"dataUrl": "steps.image_3.output.image_data_url", "nodeId": "9", "optional": True},
+                        {"dataUrl": "steps.image_4.output.image_data_url", "nodeId": "10", "optional": True},
+                    ],
+                    "advancedValues": "steps.params.output.adv_values",
+                    "promptKey": "13.prompt",
+                    "promptValue": "steps.prompt.output.prompt_text",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Mix",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
+# ── MultiComposer — position-aware compose: a background image gets colored
+# RECTANGLE-OUTLINE regions marked on it (region_annotate's new rectangle
+# mode), and each additional reference image is assigned one of those colors
+# (image_picker's new zone_picker select) — "put the subject from image_2 in
+# the red-outlined area". Same free `aspect_ratio` field as the other two
+# multi-reference flows (not GetImageSize(background) — tried that first,
+# but the model's positioning from the rectangles is already guided/semantic
+# rather than an exact pixel mask, so there's no real reason to force the
+# output canvas to match the background's own size; every input here,
+# background included, is just another reference).
+MIX_MULTI_COMPOSER_WORKFLOW_REL = "workflows/mix/multi_composer_qwen21.json"
+
+_ZONE_COLORS = [
+    {"value": "red", "label": "Red"}, {"value": "green", "label": "Green"},
+    {"value": "blue", "label": "Blue"}, {"value": "yellow", "label": "Yellow"},
+    {"value": "purple", "label": "Purple"}, {"value": "orange", "label": "Orange"},
+]
+
+
+def _qwen_image_21_multi_composer_workflow() -> dict:
+    graph = _qwen_image_21_multi_reference_workflow()
+    graph["21"]["inputs"]["filename_prefix"] = "qwen-image-2.1-multi-composer"
+    return graph
+
+
+# Starting-point templates for use cases the zone/color builder doesn't
+# cover well (it only handles "place reference N in the color-N rectangle"
+# — these are richer, more specific compositing jobs). {{bracketed}} tokens
+# are left for the user to hand-edit — e.g. {{image_list}} becomes
+# "<image2>, <image3> and <image4>" once they know how many references
+# they actually picked, {{subject_description}} becomes whatever they want
+# redrawn in the style. Picking one fills the Composition prompt textarea
+# below, same as a regular preset; <imageN> tags used throughout (not the
+# word-form "ImageN") to match what the ComfyUI graph actually keys off.
+MULTI_COMPOSER_TEMPLATES = [
+    {
+        "label": "Swap Face",
+        "text": "Edit <image1>. Replace the face with the face from <image2>. Preserve <image1>'s hairstyle, "
+                "body, pose, clothing, lighting, and background exactly. Match skin tone and lighting to <image1>.",
+    },
+    {
+        "label": "Group Photo Composer",
+        "text": "Use the people from {{image_list}}. Combine them into one natural group photo, same scene and "
+                "lighting. Preserve each person's face, expression, and proportions exactly.",
+    },
+    {
+        "label": "Outfit Builder",
+        "text": "Dress the person from <image1> using {{clothing_items_from_images}}. Preserve <image1>'s face, "
+                "pose, and body. Match fabric lighting and scale to the scene.",
+    },
+    {
+        "label": "Product Scene Placer",
+        "text": "Use the product from <image1> and the scene from <image2>. Place the product from <image1> "
+                "naturally into <image2>, matching scale, lighting, and shadows. Preserve the product's label, "
+                "texture, and shape exactly.",
+    },
+    {
+        "label": "Interior/Scene Composer",
+        "text": "Use the pieces from {{image_list}}. Arrange them into one coherent interior scene with "
+                "consistent lighting and perspective.",
+    },
+    {
+        "label": "Style Transfer",
+        "text": "Using the visual style from <image1>, redraw {{subject_description}}. Preserve the color "
+                "palette, texture, and rendering technique of <image1>. Do not use <image1>'s content, only "
+                "its style.",
+    },
+]
+
+
+def _multi_composer_flow() -> dict:
+    def _zone_image_step(step_id: str, label: str, required: bool, hint: str | None = None) -> dict:
+        step: dict = {
+            "id": step_id, "type": "image_picker", "label": label, "required": required,
+            "zone_picker": True, "zone_colors": _ZONE_COLORS,
+            # Manual description (+ optional vision-assist), same mechanism
+            # Multi-Reference Compose uses — was missing here, no way to
+            # note "the woman in the blue coat" etc. by hand before compose.
+            "subject_input": True,
+            "subject_label": "What's in this image? (optional)",
+            "subject_placeholder": "e.g. woman in a blue suit, gold necklace…",
+            "subject_vision_assist": {"system_prompt": _MULTI_REF_VISION_SYSTEM_PROMPT},
+        }
+        if not required:
+            step["optional"] = True
+        if hint:
+            step["hint"] = hint
+        return step
+
+    return {
+        "id": "mix.multi_composer",
+        "label": "MultiComposer",
+        "category": "mix",
+        "description": "Mark colored rectangle zones on a background image, assign a reference image to each "
+                        "color, and compose them into that exact spot — with Qwen Image 2.1.",
+        "card_desc": "Mark colored zones on a background, drop a reference image into each one.",
+        "card_tags": ["Qwen", "2.1", "Mix", "Compose", "Position"],
+        "card_css_modifier": "mix-compose",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "background", "type": "image_picker", "label": "Background", "required": True},
+            {
+                "id": "annotate",
+                "type": "region_annotate",
+                "label": "Mark zones",
+                "image_step": "background",
+                "shape_mode": "rectangle",
+                "hint": "Draw a rectangle outline for each spot you want to fill, one color per reference image.",
+            },
+            _zone_image_step("image_2", "Reference for zone 1", True),
+            _zone_image_step("image_3", "Reference for zone 2 (optional)", False,
+                              "Optional — add another reference if you marked a 2nd zone."),
+            _zone_image_step("image_4", "Reference for zone 3 (optional)", False,
+                              "Optional — add another reference if you marked a 3rd zone."),
+            {
+                "id": "template_picker",
+                "type": "compose_template_picker",
+                "label": "Start from a template",
+                "target_step": "prompt",
+                "templates": MULTI_COMPOSER_TEMPLATES,
+            },
+            {
+                "id": "zone_builder",
+                "type": "zone_prompt_builder",
+                "label": "Build prompt from zones",
+                "target_step": "prompt",
+                "source_steps": ["image_2", "image_3", "image_4"],
+                "background_ref": "<image1>",
+            },
+            {
+                "id": "prompt",
+                "type": "prompt_input",
+                "label": "Composition prompt",
+                "placeholder": "Reference the background as <image1> and each reference as <image2>, <image3>, "
+                               "<image4> — or use \"Build prompt from zones\" above.",
+                "default": "",
+                "rows": 4,
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": MIX_MULTI_COMPOSER_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "aspect_ratio",
+                        "type": "aspect_ratio",
+                        "label": "Output aspect ratio",
+                        "default": "r1x1",
+                        "resolution": "md",
+                        "adv_keys": {"width": "25.width", "height": "25.height"},
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_mix",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "images": [
+                        {
+                            "dataUrl": "steps.annotate.output.annotated_image_data_url || "
+                                       "steps.background.output.image_data_url",
+                            "nodeId": "7",
+                        },
+                        {"dataUrl": "steps.image_2.output.image_data_url", "nodeId": "8"},
+                        {"dataUrl": "steps.image_3.output.image_data_url", "nodeId": "9", "optional": True},
+                        {"dataUrl": "steps.image_4.output.image_data_url", "nodeId": "10", "optional": True},
+                    ],
+                    "advancedValues": "steps.params.output.adv_values",
+                    "promptKey": "13.prompt",
+                    "promptValue": "steps.prompt.output.prompt_text",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Mix",
+        "entry_model": "Qwen 2.1 Edit",
+    }
+
+
+def build_mix_multi_reference(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    files: dict[str, object] = {}
+    workflow_refs: set[str] = set()
+
+    flow1 = add_card_texts(_multi_reference_compose_flow(), table)
+    flow1["card"]["label"] = {
+        "en": "Multi-Reference Compose", "es": "Composición multi-referencia",
+        "zh": "多参考图合成", "ko": "다중 참조 합성",
+    }
+    flow1["card"]["desc"] = {
+        "en": "Combine multiple references — subject, style, object, environment — into one coherent image.",
+        "es": "Combina varias referencias — sujeto, estilo, objeto, entorno — en una sola imagen coherente.",
+        "zh": "将主体、风格、物体、环境等多个参考图合成为一张连贯的图像。",
+        "ko": "피사체, 스타일, 오브젝트, 환경 등 여러 참조 이미지를 하나의 일관된 이미지로 합성합니다.",
+    }
+
+    flow2 = add_card_texts(_multi_reference_compose_quick_flow(), table)
+    flow2["card"]["label"] = {
+        "en": "Multi-Reference Compose (Quick)", "es": "Composición multi-referencia (rápida)",
+        "zh": "多参考图合成（快速）", "ko": "다중 참조 합성 (빠른)",
+    }
+    flow2["card"]["desc"] = {
+        "en": "Combine multiple references fast — pick each image's role from a dropdown, no AI needed.",
+        "es": "Combina varias referencias rápido — elige el rol de cada imagen en un desplegable, sin IA.",
+        "zh": "快速合成多个参考图——从下拉菜单为每张图选择角色，无需 AI。",
+        "ko": "빠르게 여러 참조 이미지를 합성 — 드롭다운에서 각 이미지의 역할을 선택, AI 불필요.",
+    }
+
+    flow3 = add_card_texts(_multi_composer_flow(), table)
+    flow3["card"]["label"] = {
+        "en": "MultiComposer", "es": "MultiComposer", "zh": "MultiComposer", "ko": "MultiComposer",
+    }
+    flow3["card"]["desc"] = {
+        "en": "Mark colored zones on a background, drop a reference image into each one.",
+        "es": "Marca zonas de color en un fondo y coloca una imagen de referencia en cada una.",
+        "zh": "在背景图上标记彩色区域，为每个区域放入一张参考图。",
+        "ko": "배경에 색상 구역을 표시하고 각 구역에 참조 이미지를 넣습니다.",
+    }
+
+    flows = [flow1, flow2, flow3]
+    for flow in flows:
+        _upgrade_seed_fields_to_similarity(flow)
+        files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+
+    for ref in sorted(workflow_refs):
+        graph = _load_workflow_ref(source, ref)
+        _strip_foreign_flow_data(graph)
+        files[ref] = graph
+
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.mix-multi-reference",
+        "version": version,
+        "default_lang": "en",
+        "name": {"en": "Multi-Reference Compose", "es": "Composición multi-referencia",
+                  "zh": "多参考图合成", "ko": "다중 참조 합성"},
+        "summary": {
+            "en": "Combine 2-4 reference images into one coherent final image — write an idea and let AI "
+                  "compose the prompt, pick each image's role from a quick dropdown, or mark colored zones "
+                  "on a background and drop a reference into each one. Qwen Image 2.1.",
+            "es": "Combina de 2 a 4 imágenes de referencia en una sola imagen final — escribe una idea y deja "
+                  "que la IA componga el prompt, elige el rol de cada imagen en un desplegable rápido, o marca "
+                  "zonas de color en un fondo y coloca una referencia en cada una. Qwen Image 2.1.",
+            "zh": "将 2 到 4 张参考图合成为一张连贯的最终图像——写下想法让 AI 生成提示词，从下拉菜单快速选择"
+                  "每张图的角色，或在背景上标记彩色区域并放入参考图。由 Qwen Image 2.1 驱动。",
+            "ko": "2~4장의 참조 이미지를 하나의 최종 이미지로 합성 — 아이디어를 적으면 AI가 프롬프트를 작성하거나, "
+                  "드롭다운에서 각 이미지의 역할을 빠르게 선택하거나, 배경에 색상 구역을 표시하고 참조 이미지를 "
+                  "넣습니다. Qwen Image 2.1 기반.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "compose", "label": {"en": "Compose"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "flows": [f"flows/{flow['id'].split('.', 1)[1]}.json" for flow in flows],
+            "workflows": sorted(workflow_refs),
+        },
+    }
+    print(f"  mix-multi-reference texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.mix-multi-reference", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                                     **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
 
 
 # ── Qwen 2.1 Outpaint (replaces outpaint_qwen_2511.json, one of Outpaint's
@@ -1297,10 +2254,46 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
         return _qwen_image_21_edit_workflow()
     if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
         return _qwen_image_21_outpaint_workflow()
+    if ref == MIX_MULTI_REFERENCE_WORKFLOW_REL:
+        return _qwen_image_21_multi_reference_workflow()
+    if ref == MIX_MULTI_COMPOSER_WORKFLOW_REL:
+        return _qwen_image_21_multi_composer_workflow()
+    if ref == STYLE_TRANSFER_QWEN21_WORKFLOW_REL:
+        return _qwen_image_21_style_transfer_workflow()
+    if ref == ANIMA_STYLE_WORKFLOW_REL:
+        return _anima_style_workflow(source)
+    if ref == STYLE_REFERENCE_KLEIN_4B_WORKFLOW_REL:
+        return _klein_style_reference_workflow(source, "4b")
+    if ref == STYLE_REFERENCE_KLEIN_9B_WORKFLOW_REL:
+        return _klein_style_reference_workflow(source, "9b")
+    if ref in STYLE_REFERENCE_QWEN_2511_WORKFLOWS:
+        return _rf_style_reference_workflow(source, STYLE_REFERENCE_QWEN_2511_WORKFLOWS[ref])
     src_path = source / "app" / ref
     if not src_path.is_file():
         raise SystemExit(f"referenced workflow_file not found: {src_path}")
-    return json.loads(src_path.read_text(encoding="utf-8"))
+    return _repair_model_paths(json.loads(src_path.read_text(encoding="utf-8")))
+
+
+# A Windows path typed into a graph with one backslash, e.g. "flux2_klein\flux-...",
+# is valid JSON where "\f" means a form feed, so the file name ComfyUI receives
+# is "flux2_klein<FF>lux-..." (outpaint_flux2_klein_4b/9b.json in OPENHIKER).
+# Only file-name values are repaired; prompts keep their characters.
+_JSON_CONTROL_ESCAPES = {"\f": "f", "\b": "b", "\t": "t", "\n": "n", "\r": "r"}
+_MODEL_FILE_SUFFIXES = (".safetensors", ".gguf", ".pth", ".pt", ".bin", ".ckpt", ".sft")
+
+
+def _repair_model_paths(graph: dict) -> dict:
+    for node in graph.values():
+        inputs = node.get("inputs") if isinstance(node, dict) else None
+        if not isinstance(inputs, dict):
+            continue
+        for key, value in inputs.items():
+            if not (isinstance(value, str) and value.lower().endswith(_MODEL_FILE_SUFFIXES)):
+                continue
+            for ch, letter in _JSON_CONTROL_ESCAPES.items():
+                value = value.replace(ch, "\\" + letter)
+            inputs[key] = value
+    return graph
 
 
 def _strip_foreign_flow_data(graph: dict) -> None:
@@ -1344,6 +2337,7 @@ def build_refine_static_group(
     hand_authored: list[dict] | None = None,
     extra_files: dict[str, object] | None = None,
     extra_contributes: dict | None = None,
+    extra_texts: dict[str, dict[str, str]] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -1370,6 +2364,10 @@ def build_refine_static_group(
     see build_styling) — merged straight into the files dict and the
     manifest's contributes respectively, no other effect on this function."""
     table = load_translations(source)
+    # Hand translations for UI strings the OPENHIKER table doesn't carry yet
+    # (e.g. the style flows' step labels) — only fills gaps.
+    for text, langs in (extra_texts or {}).items():
+        table.setdefault(text, {}).update({k: v for k, v in langs.items() if k not in table.get(text, {})})
     files: dict[str, object] = {}
     flows = []
     workflow_refs: set[str] = set()
@@ -1509,7 +2507,9 @@ SKIN_DETAILER_GROUP_OVERRIDES = {fid: "upscale" for fid in SKIN_DETAILER_FLOWS}
 # (70+ curated style presets) are both "restyle the whole image" tools —
 # last 3 of the original 13 core-tagged leftovers, rounding out the Refine
 # packaging work.
-STYLING_FLOWS = ["refine.style_transfer_klein_4b", "refine.style_transfer_klein_9b", "refine.pixel_art_klein_9b"]
+# Style Transfer Klein 4B/9B are rebuilt by hand (_style_transfer_text_flows) —
+# their OPENHIKER flow.json targets nodes the source graph no longer has.
+STYLING_FLOWS = ["refine.pixel_art_klein_9b"]
 STYLING_GROUP_OVERRIDES = {fid: "styling" for fid in STYLING_FLOWS}
 REFINE_GROUPS_VERSION = "0.1.0"
 
@@ -1519,10 +2519,13 @@ def build_photo_editing(source: Path, version: str) -> Path:
         source, version, "nomad.refine-photo-editing", "photo-editing",
         name={"en": "Photo Editing", "es": "Edición de fotos", "zh": "照片编辑", "ko": "사진 편집"},
         summary={
-            "en": "Color grading, cinematic looks, restoration, watermark/glare removal and camera-angle changes.",
-            "es": "Gradación de color, looks cinematográficos, restauración, quitar marcas de agua/brillos y cambio de ángulo de cámara.",
-            "zh": "调色、电影感风格、修复、去除水印/眩光以及机位角度调整。",
-            "ko": "컬러 그레이딩, 시네마틱 룩, 복원, 워터마크/글레어 제거, 카메라 앵글 변경.",
+            "en": "Color grading, cinematic looks, restoration, watermark/glare removal, camera-angle changes, "
+                  "region-based local editing and in-image text replacement.",
+            "es": "Gradación de color, looks cinematográficos, restauración, quitar marcas de agua/brillos, "
+                  "cambio de ángulo de cámara, edición local por región y sustitución de texto en la imagen.",
+            "zh": "调色、电影感风格、修复、去除水印/眩光、机位角度调整、基于区域的局部编辑以及图像内文字替换。",
+            "ko": "컬러 그레이딩, 시네마틱 룩, 복원, 워터마크/글레어 제거, 카메라 앵글 변경, 영역 기반 로컬 편집, "
+                  "이미지 내 텍스트 교체.",
         },
         flow_ids=PHOTO_EDITING_FLOWS,
         unregistered=PHOTO_EDITING_UNREGISTERED,
@@ -1533,7 +2536,7 @@ def build_photo_editing(source: Path, version: str) -> Path:
         # _load_workflow_ref: no more override for this ref), so id/label/
         # steps stay whatever the source itself declares (fixed 4-step
         # Lightning LoRA setup, no exposed Steps field).
-        hand_authored=[_local_edit_qwen2_flow()],
+        hand_authored=[_local_edit_qwen2_flow(), _text_editor_qwen2_flow(), _text_editor_klein9b_flow()],
     )
 
 
@@ -1565,18 +2568,190 @@ def build_creator_pack(source: Path, version: str) -> Path:
     )
 
 
+# ── Background Swap — new flows, no OPENHIKER source (the 2 candidates from
+# the "Refine (single image input)" template list that weren't already
+# covered by an existing flow — see build_background_tools's summary for the
+# rest, already redundant with Remove Background/Extract/Portrait Fix/Local
+# Editing). Two engine variants so they can be compared directly: Qwen Image
+# 2.1 (shared edit graph, same as every other Qwen-engine single-image flow)
+# and Flux 2 Klein 9B (referenced straight from OPENHIKER's own
+# refine_flux2_klein_9b.json — no hand-authored graph override needed here,
+# unlike Qwen 2.1, since Klein's source graph works as-is; image_node "76"
+# and its RandomNoise/CFGGuider/SamplerCustomAdvanced "advanced sampling"
+# node ids come straight from that source flow).
+BG_SWAP_PRESETS = [
+    {
+        "label": "Describe the new background",
+        "text": "Keep the subject, pose, and lighting on the subject unchanged. Replace only the background "
+                "with [NEW BACKGROUND DESCRIPTION]. Match the new background's light direction and color "
+                "temperature to the subject so it looks naturally photographed there.",
+    },
+]
+
+
+def _bg_swap_qwen2_flow() -> dict:
+    return {
+        "id": "refine.bg_swap_qwen2",
+        "label": "Background Swap — Qwen 2.1",
+        "category": "refine",
+        "group": "background-tools",
+        "description": "Replace the background of a photo with a new one you describe, keeping the subject, "
+                        "pose and lighting untouched, using Qwen Image 2.1.",
+        "card_desc": "Swap the background for one you describe, keeping the subject and its lighting untouched.",
+        "card_tags": ["Qwen", "2.1", "Background", "Swap"],
+        "card_css_modifier": "edit-qwen-2511",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "13.prompt",
+                        "label": "New background",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Describe the new background — pick the template and fill in the bracketed "
+                                   "part, or write your own.",
+                        "default": BG_SWAP_PRESETS[0]["text"],
+                        "presets": BG_SWAP_PRESETS,
+                    },
+                    {
+                        "id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+                        "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Qwen 2.1 Edit",
+        "_i18n_overrides": {
+            "label": {
+                "en": "Background Swap — Qwen 2.1", "es": "Cambio de fondo — Qwen 2.1",
+                "zh": "背景替换 — Qwen 2.1", "ko": "배경 교체 — Qwen 2.1",
+            },
+            "desc": {
+                "en": "Swap the background for one you describe, keeping the subject and its lighting untouched.",
+                "es": "Cambia el fondo por uno que describas, sin tocar el sujeto ni su iluminación.",
+                "zh": "将背景替换为你描述的新背景，主体及其光照保持不变。",
+                "ko": "묘사한 새 배경으로 교체 — 피사체와 조명은 그대로 유지합니다.",
+            },
+        },
+    }
+
+
+def _bg_swap_klein9b_flow() -> dict:
+    return {
+        "id": "refine.bg_swap_klein9b",
+        "label": "Background Swap — Klein 9B",
+        "category": "refine",
+        "group": "background-tools",
+        "description": "Replace the background of a photo with a new one you describe, keeping the subject, "
+                        "pose and lighting untouched, using Flux 2 Klein 9B.",
+        "card_desc": "Swap the background for one you describe, keeping the subject and its lighting untouched.",
+        "card_tags": ["Klein", "9B", "Background", "Swap"],
+        "card_css_modifier": "edit-fluxklein",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": "workflows/refine/refine_flux2_klein_9b.json",
+                "image_node": "76",
+                "fields": [
+                    {
+                        "id": "prompt",
+                        "adv_key": "139.text",
+                        "label": "New background",
+                        "type": "textarea",
+                        "rows": 4,
+                        "block": True,
+                        "tooltip": "Describe the new background — pick the template and fill in the bracketed "
+                                   "part, or write your own.",
+                        "default": BG_SWAP_PRESETS[0]["text"],
+                        "presets": BG_SWAP_PRESETS,
+                    },
+                    {
+                        "id": "steps", "adv_key": "132.steps", "label": "Steps", "type": "number",
+                        "default": 4, "min": 1, "max": 40, "step": 1, "quick_options": [4, 8], "advanced": True,
+                    },
+                    {
+                        "id": "cfg", "adv_key": "133.cfg", "label": "CFG", "type": "number",
+                        "default": 1, "min": 0, "max": 10, "step": 0.5, "advanced": True,
+                    },
+                    {"id": "seed", "adv_key": "136.noise_seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Flux 2 Klein",
+        "_i18n_overrides": {
+            "label": {
+                "en": "Background Swap — Klein 9B", "es": "Cambio de fondo — Klein 9B",
+                "zh": "背景替换 — Klein 9B", "ko": "배경 교체 — Klein 9B",
+            },
+            "desc": {
+                "en": "Swap the background for one you describe, keeping the subject and its lighting untouched.",
+                "es": "Cambia el fondo por uno que describas, sin tocar el sujeto ni su iluminación.",
+                "zh": "将背景替换为你描述的新背景，主体及其光照保持不变。",
+                "ko": "묘사한 새 배경으로 교체 — 피사체와 조명은 그대로 유지합니다.",
+            },
+        },
+    }
+
+
 def build_background_tools(source: Path, version: str) -> Path:
     return build_refine_static_group(
         source, version, "nomad.refine-background-tools", "background-tools",
         name={"en": "Background Tools", "es": "Herramientas de fondo", "zh": "背景工具", "ko": "배경 도구"},
         summary={
-            "en": "Remove or extract the background — BiRefNet, multi-subject, simple, and edit-model variants.",
-            "es": "Quita o extrae el fondo — BiRefNet, multi-sujeto, simple y variantes por modelo de edición.",
-            "zh": "去除或提取背景 —— BiRefNet、多主体、简易及编辑模型变体。",
-            "ko": "배경 제거 또는 추출 — BiRefNet, 다중 피사체, 심플, 편집 모델 변형.",
+            "en": "Remove or extract the background — BiRefNet, multi-subject, simple, and edit-model variants. "
+                  "Plus Background Swap: replace it with one you describe, on Qwen 2.1 or Flux 2 Klein 9B.",
+            "es": "Quita o extrae el fondo — BiRefNet, multi-sujeto, simple y variantes por modelo de edición. "
+                  "Y Cambio de fondo: sustitúyelo por uno que describas, con Qwen 2.1 o Flux 2 Klein 9B.",
+            "zh": "去除或提取背景 —— BiRefNet、多主体、简易及编辑模型变体。还有背景替换：用 Qwen 2.1 或 "
+                  "Flux 2 Klein 9B 替换为你描述的新背景。",
+            "ko": "배경 제거 또는 추출 — BiRefNet, 다중 피사체, 심플, 편집 모델 변형. 그리고 배경 교체: "
+                  "Qwen 2.1 또는 Flux 2 Klein 9B로 묘사한 배경으로 교체.",
         },
         flow_ids=BACKGROUND_TOOLS_FLOWS,
         group_overrides=BACKGROUND_TOOLS_GROUP_OVERRIDES,
+        hand_authored=[_bg_swap_qwen2_flow(), _bg_swap_klein9b_flow()],
     )
 
 
@@ -1664,22 +2839,781 @@ def _pixel_matcher_addon_contribution(source: Path) -> tuple[dict[str, str], dic
     return files, {"addon": {"entry": "addon/__init__.py"}}
 
 
+# ── Style Transfer across Create / Refine / Mix ──────────────────────────────
+# One idea, three inputs (user's framing, 2026-09-23):
+#   Create — style as TEXT (Build > Styles prefix/suffix, create flows' own
+#            style picker; nothing to package here).
+#   Refine — one image + a style, either as TEXT (style_picker, below:
+#            Klein 9B/4B + Qwen 2.1 on each engine's plain edit graph) or as
+#            an IMAGE reference (Anima / USO / Z-Image — describe a scene,
+#            borrow the look of a reference picture).
+#   Mix    — image + image: content photo + style reference (Klein RF
+#            Inversion, Qwen 2511, Klein Styler, Klein Migration, USO
+#            Style+Subject, and a new Qwen Image 2.1 one).
+#
+# The OPENHIKER Refine/Mix style flows only exist as `flow_data` nodes inside
+# their ComfyUI graphs. They're turned into static flow.json files HERE, at
+# build time, with the app's own converters (flow_engine._build_*_flow_
+# definition — the same code package_service would run at install), so they
+# can carry hand-translated card texts like every other packaged flow; the
+# embedded flow_data is then stripped (_strip_foreign_flow_data).
+#
+# The two old "Style Transfer · Klein 4B/9B" Refine flows pointed at nodes
+# 76/165/159/154 of an older single-image graph; OPENHIKER later rewrote that
+# same file as two-image RF Inversion (629/612/607), leaving both flows
+# broken there too. They're rebuilt below on Klein's plain edit graph,
+# keeping their ids so existing installs update in place.
+STYLE_TRANSFER_QWEN21_WORKFLOW_REL = "workflows/mix/style_transfer_qwen21.json"
+ANIMA_STYLE_WORKFLOW_REL = "workflows/refine/refine_style_transfer_anima.json"
+
+# Model files as this install's ComfyUI actually has them (checked against
+# /object_info 2026-09-23): the Anima graph asks for "Anima\\…" and turbo
+# LoRA v0.2, the machine has the UNET at the root and LoRA v0.1 only.
+ANIMA_MODEL_FIXES = {
+    "623": {"unet_name": "anima_baseV10.safetensors"},
+    "636": {"lora_name": "anima-turbo-lora-v0.1.safetensors"},
+}
+
+
+def _qwen_image_21_style_transfer_workflow() -> dict:
+    """Qwen Image 2.1 two-image style transfer: node 8 = the style
+    reference (<image1>, the flow's first picker), node 7 = the photo to
+    restyle (<image2>, second picker; still sizes the output via
+    GetImageSize). Image numbers follow the pickers' order on screen so the
+    prompt's <image1>/<image2> read the way the user sees them. Same
+    loaders/sampler as the Edit graph."""
+    graph = _qwen_image_21_edit_workflow()
+    graph["8"] = {
+        "inputs": {"image": "oj-mix-placeholder-2.png"},
+        "class_type": "LoadImage",
+        "_meta": {"title": "Load Image (style reference)"},
+    }
+    graph["7"]["_meta"]["title"] = "Load Image (image to restyle)"
+    graph["13"]["inputs"]["images.image_1"] = ["8", 0]
+    graph["13"]["inputs"]["images.image_2"] = ["7", 0]
+    graph["21"]["inputs"]["filename_prefix"] = "qwen-image-2.1-style-transfer"
+    return graph
+
+
+# Style Reference on Flux 2 Klein: the Mix Klein graph is exactly the
+# Z-Image Style Reference graph plus the content photo (629 LoadImage, 630
+# its scale, 631 ConditioningAddImageReference). Dropping those three and
+# wiring the prompt (607) straight into the guider and RF Inversion — with the
+# style image's own scale (265) sizing the empty latent (282), as in Z-Image —
+# turns it into "one style image + a described scene". Everything else
+# (RF Inversion 603, Untwisting RoPE 623, Unofficial Extensions 637, sampler,
+# the `config` node's quantization options) stays as in the source.
+STYLE_REFERENCE_KLEIN_4B_WORKFLOW_REL = "workflows/refine/refine_style_reference_klein_4b.json"
+STYLE_REFERENCE_KLEIN_9B_WORKFLOW_REL = "workflows/refine/refine_style_reference_klein_9b.json"
+# Qwen Image Edit 2511 (+ Lightning LoRA, node 635) — the Qwen-Image family
+# Untwisting RoPE supports. Qwen Image 2.1 is NOT: its single-stream
+# transformer (QwenImage21) has no adapter in the node.
+STYLE_REFERENCE_QWEN_2511_WORKFLOWS = {
+    "workflows/refine/refine_style_reference_qwen_2511.json": "workflows/refine/refine_style_transfer_qwen_2511.json",
+    "workflows/refine/refine_style_reference_qwen_2511_turbo.json":
+        "workflows/refine/refine_style_transfer_qwen_2511_turbo.json",
+}
+
+
+def _klein_style_reference_workflow(source: Path, variant: str) -> dict:
+    return _rf_style_reference_workflow(source, f"workflows/refine/refine_style_transfer_klein_{variant}.json")
+
+
+def _rf_style_reference_workflow(source: Path, mix_rel: str) -> dict:
+    """Any two-image RF Inversion Mix graph (Klein, Qwen Edit 2511) → the
+    one-image Style Reference graph — same node surgery for all of them."""
+    variant = mix_rel
+    graph = json.loads((source / "app" / mix_rel).read_text(encoding="utf-8"))
+    graph.pop("flow_data", None)
+    for node_id in ("629", "630", "631"):
+        graph.pop(node_id, None)
+    graph["559"]["inputs"]["positive"] = ["607", 0]
+    graph["603"]["inputs"]["ref_conditioning"] = ["607", 0]
+    for key in ("width", "height"):
+        graph["265"]["inputs"].pop(key, None)
+    graph["265"]["inputs"]["megapixels"] = 1
+    graph["265"]["_meta"]["title"] = "Scale Image to Total Pixels Adv"
+    graph["282"]["inputs"]["width"] = ["265", 1]
+    graph["282"]["inputs"]["height"] = ["265", 2]
+    graph["607"]["_meta"]["title"] = "CLIP Text Encode (Prompt)"
+    graph["612"]["_meta"]["title"] = "Load Image (style reference)"
+    dangling = [(nid, k) for nid, n in graph.items() if isinstance(n, dict)
+                for k, v in (n.get("inputs") or {}).items()
+                if isinstance(v, list) and v and str(v[0]) not in graph]
+    if dangling:
+        raise SystemExit(f"style reference graph from {variant} has dangling links: {dangling}")
+    return graph
+
+
+def _anima_style_workflow(source: Path) -> dict:
+    graph = json.loads((source / "app" / ANIMA_STYLE_WORKFLOW_REL).read_text(encoding="utf-8"))
+    for node_id, inputs in ANIMA_MODEL_FIXES.items():
+        graph[node_id]["inputs"].update(inputs)
+    return graph
+
+
+def _flow_from_embedded_flow_data(source: Path, rel: str, group: str) -> dict:
+    """Static flow.json from an OPENHIKER graph's flow_data node, built by the
+    app's own converter (see the section comment)."""
+    from app.services.flow_engine import (
+        _build_mix_flow_definition,
+        _build_refine_flow_definition,
+        _extract_flow_data_node,
+    )
+
+    meta = _extract_flow_data_node(json.loads((source / "app" / rel).read_text(encoding="utf-8")))
+    if not meta or not meta.get("id"):
+        raise SystemExit(f"no flow_data with an id in {rel}")
+    is_mix = str(meta.get("category", "")) == "mix" or str(meta["id"]).startswith("mix.")
+    flow = (_build_mix_flow_definition if is_mix else _build_refine_flow_definition)(meta, rel)
+    flow["group"] = group
+    for key in ("entry_category", "entry_model"):
+        if meta.get(key):
+            flow[key] = meta[key]
+    return flow
+
+
+STYLE_TRANSFER_KEEP_LAYOUT = ("Restyle this image, keeping its exact composition, subjects, poses and layout")
+
+
+def _style_transfer_text_flow(flow_id: str, engine_label: str, workflow_file: str, image_node: str,
+                              prompt_key: str, param_fields: list[dict], css: str, entry_model: str,
+                              i18n: dict) -> dict:
+    """Refine: one image + a style as TEXT. The style_picker wraps the
+    'keep the layout' instruction with the chosen Style's prefix/suffix."""
+    return {
+        "id": flow_id,
+        "label": f"Style Transfer — {engine_label}",
+        "category": "refine",
+        "group": "styling",
+        "description": _ST_TEXT_DESC["en"],
+        "card_desc": "Restyle a photo with one of your saved Styles, keeping its composition.",
+        "card_tags": [engine_label.split()[0], "Style", "Text"],
+        "card_css_modifier": css,
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True, "multiple": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": workflow_file,
+                "image_node": image_node,
+                "fields": [
+                    {
+                        "id": "style", "adv_key": prompt_key, "label": "Style", "type": "style_picker",
+                        "rows": 4, "default": STYLE_TRANSFER_KEEP_LAYOUT,
+                        "placeholder": "Choose a style — it wraps this instruction with the style's wording.",
+                    },
+                    *param_fields,
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                    "cardPrompt": "steps.params.output.field_style",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Style",
+        "entry_model": entry_model,
+        "_i18n_overrides": i18n,
+    }
+
+
+_ST_TEXT_DESC = {
+    "en": "Restyle a photo with one of your saved Styles, keeping its composition.",
+    "es": "Reestiliza una foto con uno de tus Estilos guardados, manteniendo su composición.",
+    "zh": "用你保存的风格重新演绎照片，保留原有构图。",
+    "ko": "저장된 스타일로 사진을 재스타일링하고 구도는 그대로 유지합니다.",
+}
+
+
+def _style_transfer_text_flows() -> list[dict]:
+    klein_fields = [
+        {"id": "steps", "adv_key": "132.steps", "label": "Steps", "type": "number",
+         "default": 4, "min": 1, "max": 40, "step": 1, "quick_options": [4, 8], "advanced": True},
+        {"id": "cfg", "adv_key": "133.cfg", "label": "CFG", "type": "number",
+         "default": 1, "min": 0, "max": 10, "step": 0.5, "advanced": True},
+        {"id": "seed", "adv_key": "136.noise_seed", "label": "Seed", "type": "seed", "advanced": True},
+    ]
+    qwen_fields = [
+        {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number",
+         "default": 25, "min": 1, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True},
+        {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+    ]
+
+    def names(engine: str) -> dict:
+        return {"label": {"en": f"Style Transfer — {engine}", "es": f"Transferencia de estilo — {engine}",
+                          "zh": f"风格迁移 — {engine}", "ko": f"스타일 전이 — {engine}"},
+                "desc": _ST_TEXT_DESC}
+
+    return [
+        _style_transfer_text_flow("refine.style_transfer_klein_9b", "Klein 9B",
+                                  "workflows/refine/refine_flux2_klein_9b.json", "76", "139.text",
+                                  klein_fields, "edit-fluxklein", "Flux 2 Klein", names("Klein 9B")),
+        _style_transfer_text_flow("refine.style_transfer_klein_4b", "Klein 4B",
+                                  "workflows/refine/refine_flux2_klein_4b.json", "76", "139.text",
+                                  klein_fields, "edit-fluxklein", "Flux 2 Klein", names("Klein 4B")),
+        _style_transfer_text_flow("refine.style_transfer_qwen2", "Qwen 2.1", QWEN_2511_EDIT_WORKFLOW_REL,
+                                  "7", "13.prompt", qwen_fields, "edit-qwen-2511", "Qwen 2.1 Edit",
+                                  names("Qwen 2.1")),
+    ]
+
+
+# Create: style as TEXT. Shipped in the Styling package too (its manifest
+# group "styling" gives them their own "Styling" group in the Create hub).
+# `style_picker` on a prompt_input (flow-step-prompt-input.js) opens the
+# Build > Styles catalog and wraps the box's text with the style's
+# prefix/suffix. OPENHIKER only ever had create.style as a "planned" index
+# entry with no flow file — both flows are new.
+STYLE_BLEND_SYSTEM_PROMPT = (
+    "You write prompts for AI image generation. You get the user's idea and a Style: a list of visual "
+    "keywords (medium, technique, palette, lighting, texture).\n"
+    "Write ONE image prompt that shows the idea's subject and scene rendered in that style.\n"
+    "Rules:\n"
+    "- Keep every concrete element of the idea; do not add new subjects.\n"
+    "- Weave the style's visual keywords into the description naturally instead of pasting them as a list.\n"
+    "- No text, captions, signatures or logos in the image unless the idea asks for them.\n"
+    "- Suitable for a general audience.\n"
+    "- Under 90 words. Reply with the prompt only: no quotes, no preamble."
+)
+
+_CREATE_PARAMS_STEP = {"id": "params", "type": "param_group", "label": "Parameters",
+                       "fields": ["seed", "steps", "cfg", "num_images"], "collapsed_by_default": True}
+
+
+def _create_style_flows() -> list[dict]:
+    direct = {
+        "id": "create.style",
+        "label": "Style",
+        "category": "create",
+        "group": "styling",
+        "description": "Write your idea and wrap it in one of your saved Styles, then generate.",
+        "card_desc": "Write your idea, pick a style from your catalog, generate. No AI needed.",
+        "card_tags": ["Style", "No LLM", "Fast"],
+        "card_css_modifier": "style",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "workflow", "type": "workflow_picker", "label": "Choose engine", "required": True,
+             "auto_select_if_single": True},
+            # The idea box stays the idea; the picked style is kept apart
+            # (style_picker "separate") and the box below shows — and sends —
+            # "prefix, idea, suffix", still editable by hand.
+            {"id": "idea", "type": "prompt_input", "label": "Your idea", "required": True, "rows": 3,
+             "style_picker": "separate", "drop_image_prompt": True,
+             "placeholder": "Describe what you want, then pick a style with the palette button."},
+            {"id": "prompt", "type": "prompt_input", "label": "Final prompt", "rows": 5,
+             "style_compose_from": "idea",
+             "placeholder": "Your idea wrapped in the style's wording — edit it if you like."},
+            _CREATE_PARAMS_STEP,
+            {"id": "generate", "type": "action", "label": "Generate Image", "calls": "generation.submit_queue",
+             "input_map": {"basicValues.positive": "steps.prompt.output.prompt_text || steps.idea.output.prompt_text",
+                           "basicValues.seed": "steps.params.output.basic_values.seed",
+                           "numImages": "steps.params.output.basic_values.num_images"}},
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Style",
+        "entry_model": "Local",
+        "complexity": 1,
+        "_i18n_overrides": {
+            "label": {"en": "Style", "es": "Estilo", "zh": "风格", "ko": "스타일"},
+            "desc": {"en": "Write your idea, pick a style from your catalog, generate. No AI needed.",
+                     "es": "Escribe tu idea, elige un estilo de tu catálogo y genera. Sin IA de texto.",
+                     "zh": "写下你的想法，从风格库中选择一种风格，然后生成。无需 AI。",
+                     "ko": "아이디어를 쓰고 카탈로그에서 스타일을 골라 생성합니다. AI 불필요."},
+        },
+    }
+    blend = {
+        "id": "create.style_ai",
+        "label": "Style + AI",
+        "category": "create",
+        "group": "styling",
+        "description": "The local AI blends your idea with one of your saved Styles into a single, well-written prompt.",
+        "card_desc": "Pick a style from your catalog — the AI blends it with your idea into a single prompt.",
+        "card_tags": ["Style", "Assist", "Blend"],
+        "card_css_modifier": "style",
+        "llm_required": True,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "workflow", "type": "workflow_picker", "label": "Choose engine", "required": True,
+             "auto_select_if_single": True},
+            {"id": "idea", "type": "prompt_input", "label": "Your idea", "required": True, "rows": 3,
+             "drop_image_prompt": True, "placeholder": "A rough idea is enough — the AI will blend it with the style…"},
+            {"id": "style", "type": "prompt_input", "label": "Style", "required": False, "rows": 3,
+             "style_picker": True, "placeholder": "Pick a style from your catalog, or describe one…"},
+            {
+                "id": "blend",
+                "type": "llm_transform",
+                "label": "Blend with AI",
+                "calls": "llm.studio_enhance",
+                "input_from": "steps.idea.output.prompt_text",
+                "context_from": {"reference_prompt": [{"label": "Style", "ref": "steps.style.output.prompt_text"}]},
+                "params": {"level": {"type": "user_choice", "options": ["style"], "default": "style"}},
+                "system_prompts": {"style": STYLE_BLEND_SYSTEM_PROMPT},
+                "output_to": "prompt",
+                "editable_output": True,
+            },
+            {"id": "prompt", "type": "prompt_input", "label": "Final prompt", "rows": 5,
+             "prefill_from": "steps.blend.output.transformed_text", "drop_image_prompt": True,
+             "placeholder": "You can edit this later"},
+            _CREATE_PARAMS_STEP,
+            {"id": "generate", "type": "action", "label": "Generate Image", "calls": "generation.submit_queue",
+             "input_map": {"basicValues.positive": "steps.prompt.output.prompt_text || steps.idea.output.prompt_text",
+                           "basicValues.seed": "steps.params.output.basic_values.seed",
+                           "numImages": "steps.params.output.basic_values.num_images"}},
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Style",
+        "entry_model": "Local",
+        "complexity": 1,
+        "_i18n_overrides": {
+            "label": {"en": "Style + AI", "es": "Estilo + IA", "zh": "风格 + AI", "ko": "스타일 + AI"},
+            "desc": {"en": "Pick a style from your catalog — the AI blends it with your idea into a single prompt.",
+                     "es": "Elige un estilo de tu catálogo: la IA lo funde con tu idea en un único prompt.",
+                     "zh": "从风格库中选择一种风格——AI 会将它与你的想法融合成一条提示词。",
+                     "ko": "카탈로그에서 스타일을 고르면 AI가 아이디어와 합쳐 하나의 프롬프트로 만듭니다."},
+        },
+    }
+    return [direct, blend]
+
+
+# Refine: image style reference + a described scene. ONE flow, engine picker
+# — the OPENHIKER sources were three separate flow_data flows (Anima, USO,
+# Z-Image), two of them the same RF Inversion + Untwisting RoPE technique on
+# a different model, which read as three unrelated tools. All three graphs
+# take the prompt on node 607; image/steps/seed nodes differ per engine and
+# are remapped by engine_select (flow-step-workflow-params.js esApplyEngine).
+# Same fluid prompt as Create's Style flow: the scene is typed once, the
+# "Final prompt" below composes it live with the wording of a catalog style
+# picked from the image header (the style IMAGE is what drives the look; the
+# wording only reinforces it, so it's removable with the chip's ×).
+_ST_REF_DESC = {
+    "en": "Describe a scene and render it in the look of a reference image.",
+    "es": "Describe una escena y píntala con el look de una imagen de referencia.",
+    "zh": "描述一个场景，并以参考图像的风格呈现。",
+    "ko": "장면을 묘사하면 참조 이미지의 룩으로 렌더링합니다.",
+}
+STYLE_REFERENCE_ENGINES = [
+    {"id": "zimage", "label": "Z-Image Turbo", "workflow_file": "workflows/refine/refine_style_transfer_zimage.json",
+     "image_node": "612", "steps_key": "31.steps", "seed_key": "167.noise_seed",
+     "steps_default": 12, "steps_quick_options": [8, 12, 16]},
+    {"id": "klein_9b", "label": "Flux 2 Klein 9B", "workflow_file": STYLE_REFERENCE_KLEIN_9B_WORKFLOW_REL,
+     "image_node": "612", "steps_key": "31.steps", "seed_key": "167.noise_seed",
+     "steps_default": 8, "steps_quick_options": [4, 8, 12]},
+    {"id": "klein_4b", "label": "Flux 2 Klein 4B", "workflow_file": STYLE_REFERENCE_KLEIN_4B_WORKFLOW_REL,
+     "image_node": "612", "steps_key": "31.steps", "seed_key": "167.noise_seed",
+     "steps_default": 8, "steps_quick_options": [4, 8, 12]},
+    {"id": "qwen_2511", "label": "Qwen Edit 2511", "workflow_file": "workflows/refine/refine_style_reference_qwen_2511.json",
+     "image_node": "612", "steps_key": "31.steps", "seed_key": "167.noise_seed",
+     "steps_default": 8, "steps_quick_options": [8, 12]},
+    {"id": "qwen_2511_turbo", "label": "Qwen Edit 2511 Turbo",
+     "workflow_file": "workflows/refine/refine_style_reference_qwen_2511_turbo.json",
+     "image_node": "612", "steps_key": "31.steps", "seed_key": "167.noise_seed",
+     "steps_default": 4, "steps_quick_options": [4, 6]},
+    {"id": "uso", "label": "USO (Flux.1)", "workflow_file": "workflows/refine/refine_style_transfer_uso.json",
+     "image_node": "612", "steps_key": "622.steps", "seed_key": "622.seed",
+     "steps_default": 20, "steps_quick_options": [20, 30]},
+    {"id": "anima", "label": "Anima — anime & illustration", "workflow_file": ANIMA_STYLE_WORKFLOW_REL,
+     "image_node": "632", "steps_key": "31.steps", "seed_key": "167.noise_seed",
+     "steps_default": 12, "steps_quick_options": [12, 35]},
+]
+
+
+def _style_reference_refine_flows(source: Path) -> list[dict]:
+    first = STYLE_REFERENCE_ENGINES[0]
+    flow = {
+        "id": "refine.style_reference",
+        "label": "Style Reference",
+        "category": "refine",
+        "group": "styling",
+        "description": _ST_REF_DESC["en"],
+        "card_desc": _ST_REF_DESC["en"],
+        "card_tags": ["Style", "Image", "RF Inversion"],
+        "card_css_modifier": "edit-fluxklein",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Choose engine",
+                "show_label": True,
+                "workflow_file": first["workflow_file"],
+                "image_node": first["image_node"],
+                "fields": [
+                    {"id": "engine", "type": "engine_select", "default": first["id"],
+                     "engines": STYLE_REFERENCE_ENGINES},
+                    {"id": "steps", "adv_key": first["steps_key"], "label": "Steps", "type": "number",
+                     "default": first["steps_default"], "min": 1, "max": 40, "step": 1,
+                     "quick_options": first["steps_quick_options"], "advanced": True},
+                    {"id": "seed", "adv_key": first["seed_key"], "label": "Visual similarity", "type": "seed",
+                     "seed_mode": "similarity", "advanced": True},
+                ],
+            },
+            {"id": "image", "type": "image_picker", "label": "Style reference image", "required": True,
+             "style_image_input": True},
+            {"id": "idea", "type": "prompt_input", "label": "Describe the scene", "required": True, "rows": 3,
+             "placeholder": "What should be painted in that style? e.g. a lighthouse on a cliff at dusk"},
+            {"id": "prompt", "type": "prompt_input", "label": "Final prompt", "rows": 4,
+             "style_compose_from": "idea", "style_source": "image",
+             "placeholder": "Your scene, plus the wording of the style you pick — edit it if you like."},
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                    "promptKey": "607.text",
+                    "promptValue": "steps.prompt.output.prompt_text || steps.idea.output.prompt_text",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Style",
+        "entry_model": "Multi",
+        "_i18n_overrides": {
+            "label": {"en": "Style Reference", "es": "Referencia de estilo", "zh": "风格参考", "ko": "스타일 참조"},
+            "desc": _ST_REF_DESC,
+        },
+    }
+    return [flow]
+
+
+# Mix: content photo + style reference image.
+STYLE_TRANSFER_MIX_SOURCES = [
+    ("workflows/refine/refine_style_transfer_klein_9b.json", "Flux 2 Klein"),
+    ("workflows/refine/refine_style_transfer_qwen_2511.json", "Qwen 2511"),
+    ("workflows/refine/refine_klein_styler_9b.json", None),
+    ("workflows/refine/refine_style_migration_klein_9b.json", None),
+    ("workflows/refine/refine_style_subject_uso.json", None),
+]
+STYLE_TRANSFER_MIX_TEXTS = {
+    "mix.style_transfer_flux_klein": {
+        "label": {"en": "Style Transfer — Flux 2 Klein", "es": "Transferencia de estilo — Flux 2 Klein",
+                  "zh": "风格迁移 — Flux 2 Klein", "ko": "스타일 전이 — Flux 2 Klein"},
+        "desc": {"en": "Edit a photo and apply the look of a separate reference image (Klein 9B/4B).",
+                 "es": "Edita una foto y aplícale el look de otra imagen de referencia (Klein 9B/4B).",
+                 "zh": "编辑照片并套用另一张参考图的风格（Klein 9B/4B）。",
+                 "ko": "사진을 편집하고 별도 참조 이미지의 룩을 적용합니다 (Klein 9B/4B)."},
+    },
+    "mix.style_transfer_qwen_2511": {
+        "label": {"en": "Style Transfer — Qwen 2511", "es": "Transferencia de estilo — Qwen 2511",
+                  "zh": "风格迁移 — Qwen 2511", "ko": "스타일 전이 — Qwen 2511"},
+        "desc": {"en": "Edit a photo and apply the look of a separate reference image, on Qwen Image Edit 2511.",
+                 "es": "Edita una foto y aplícale el look de otra imagen de referencia, con Qwen Image Edit 2511.",
+                 "zh": "编辑照片并套用另一张参考图的风格，基于 Qwen Image Edit 2511。",
+                 "ko": "사진을 편집하고 별도 참조 이미지의 룩을 적용합니다 — Qwen Image Edit 2511."},
+    },
+    "mix.klein_styler": {
+        "label": {"en": "Klein Styler", "es": "Klein Styler", "zh": "Klein Styler", "ko": "Klein Styler"},
+        "desc": {"en": "Combine a style reference and a subject photo on Flux 2 Klein 9B.",
+                 "es": "Combina una referencia de estilo y una foto del sujeto con Flux 2 Klein 9B.",
+                 "zh": "在 Flux 2 Klein 9B 上结合风格参考图与主体照片。",
+                 "ko": "Flux 2 Klein 9B에서 스타일 참조와 피사체 사진을 결합합니다."},
+    },
+    "mix.style_migration_klein_9b": {
+        "label": {"en": "Style Migration — Klein 9B", "es": "Migración de estilo — Klein 9B",
+                  "zh": "风格迁移（Migration）— Klein 9B", "ko": "스타일 마이그레이션 — Klein 9B"},
+        "desc": {"en": "Move the painting style of one image onto another with the Klein Migration LoRA.",
+                 "es": "Lleva el estilo pictórico de una imagen a otra con la LoRA Klein Migration.",
+                 "zh": "用 Klein Migration LoRA 将一张图的绘画风格迁移到另一张图。",
+                 "ko": "Klein Migration LoRA로 한 이미지의 화풍을 다른 이미지로 옮깁니다."},
+    },
+    "mix.style_subject_uso": {
+        "label": {"en": "Style + Subject — USO", "es": "Estilo + sujeto — USO",
+                  "zh": "风格 + 主体 — USO", "ko": "스타일 + 피사체 — USO"},
+        "desc": {"en": "Keep a subject's identity while applying a reference style, with ByteDance USO.",
+                 "es": "Conserva la identidad del sujeto aplicando un estilo de referencia, con ByteDance USO.",
+                 "zh": "保留主体身份的同时套用参考风格，基于字节跳动 USO。",
+                 "ko": "피사체의 정체성은 유지하면서 참조 스타일을 적용합니다 — ByteDance USO."},
+    },
+    "mix.style_transfer_qwen2": {
+        "label": {"en": "Style Transfer — Qwen 2.1", "es": "Transferencia de estilo — Qwen 2.1",
+                  "zh": "风格迁移 — Qwen 2.1", "ko": "스타일 전이 — Qwen 2.1"},
+        "desc": {"en": "Restyle a photo with the look of a reference image, on Qwen Image 2.1.",
+                 "es": "Reestiliza una foto con el look de una imagen de referencia, con Qwen Image 2.1.",
+                 "zh": "以参考图的风格重新演绎照片，基于 Qwen Image 2.1。",
+                 "ko": "참조 이미지의 룩으로 사진을 재스타일링합니다 — Qwen Image 2.1."},
+    },
+}
+
+# Prompt templates for the new Qwen 2.1 mix flow. <image1> = the photo to
+# restyle, <image2> = the style reference (TextEncodeQwenImage21 order).
+STYLE_TRANSFER_QWEN21_PRESETS = [
+    {
+        "label": "Full style",
+        "text": "Redraw <image2> in the visual style of <image1>. Transfer its color palette, lighting mood, "
+                "texture and rendering technique. Keep the composition, subjects, poses and layout of <image2> "
+                "unchanged, and do not copy any objects or content from <image1>.",
+    },
+    {
+        "label": "Colors and light only",
+        "text": "Keep <image2> exactly as it is — same subjects, details and medium — and only recolor it with "
+                "the color palette, contrast and lighting mood of <image1>.",
+    },
+    {
+        "label": "Medium and texture",
+        "text": "Re-render <image2> using the artistic medium and texture of <image1> — its brushwork, line "
+                "quality, grain and surface. Keep the composition and subjects of <image2>; ignore the "
+                "content of <image1>.",
+    },
+]
+
+
+def _style_transfer_qwen21_mix_flow() -> dict:
+    """New Mix flow: built through the same converter as the OPENHIKER mix
+    flows (flow_engine._build_mix_flow_definition) so it behaves the same:
+    first picker = style reference (with the Build > Styles image button),
+    second = the photo to restyle."""
+    from app.services.flow_engine import _build_mix_flow_definition
+
+    meta = {
+        "id": "mix.style_transfer_qwen2",
+        "category": "mix",
+        "label": "Style Transfer — Qwen 2.1",
+        "description": "Restyle a photo (<image2>) with the look of a separate reference image (<image1>) — "
+                       "Qwen Image 2.1's native multi-image editing, no LoRA or inversion needed.",
+        "card_desc": STYLE_TRANSFER_MIX_TEXTS["mix.style_transfer_qwen2"]["desc"]["en"],
+        "card_tags": ["Qwen", "2.1", "Style", "Mix"],
+        "card_css_modifier": "edit-qwen-2511",
+        "image_node": "8",
+        "image_node_2": "7",
+        "no_subject_input": True,
+        "style_image_input": True,
+        "image_label": "Style reference (image 1)",
+        "image_2_label": "Image to restyle (image 2)",
+        "prompt_presets": STYLE_TRANSFER_QWEN21_PRESETS,
+        "params": [
+            {"id": "prompt", "key": "13.prompt", "label": "Style prompt", "type": "text",
+             "default": STYLE_TRANSFER_QWEN21_PRESETS[0]["text"]},
+            {"id": "steps", "key": "15.steps", "label": "Steps", "type": "number", "default": 25, "min": 1,
+             "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True},
+            {"id": "seed", "key": "15.seed", "label": "Visual similarity", "type": "seed",
+             "seed_mode": "similarity", "advanced": True},
+        ],
+    }
+    flow = _build_mix_flow_definition(meta, STYLE_TRANSFER_QWEN21_WORKFLOW_REL)
+    flow["entry_category"] = "Style"
+    flow["entry_model"] = "Qwen 2.1 Edit"
+    return flow
+
+
+def build_mix_style_transfer(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    for text, langs in STYLE_TRANSFER_UI_TEXTS.items():  # only fills gaps
+        table.setdefault(text, {}).update({k: v for k, v in langs.items() if k not in table.get(text, {})})
+    files: dict[str, object] = {}
+    workflow_refs: set[str] = set()
+    flows = []
+    for rel, _ in STYLE_TRANSFER_MIX_SOURCES:
+        flows.append(_flow_from_embedded_flow_data(source, rel, "style-transfer"))
+    # mix.style_transfer_qwen2 (Qwen Image 2.1) is left out: tested by the
+    # user 2026-09-23 with many combinations and the results were poor.
+    # _style_transfer_qwen21_mix_flow() stays for a later retry.
+    for i, flow in enumerate(flows):
+        flow["group"] = "style-transfer"
+        texts = STYLE_TRANSFER_MIX_TEXTS[flow["id"]]
+        flow["label"] = texts["label"]["en"]
+        flow["card_desc"] = texts["desc"]["en"]
+        flow["description"] = texts["desc"]["en"]
+        table.setdefault(texts["desc"]["en"], {}).update({k: v for k, v in texts["desc"].items() if k != "en"})
+        flow = add_card_texts(flow, table)
+        flow["card"]["label"] = texts["label"]
+        flow["card"]["desc"] = texts["desc"]
+        _upgrade_seed_fields_to_similarity(flow)
+        flows[i] = flow
+        files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
+        workflow_refs |= _collect_workflow_file_refs(flow)
+    for ref in sorted(workflow_refs):
+        graph = _load_workflow_ref(source, ref)
+        _strip_foreign_flow_data(graph)
+        files[ref] = graph
+
+    i18n, counts = flow_i18n(flows, table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.mix-style-transfer",
+        "version": version,
+        "default_lang": "en",
+        "name": {"en": "Style Transfer (Mix)", "es": "Transferencia de estilo (Mix)",
+                 "zh": "风格迁移（Mix）", "ko": "스타일 전이 (Mix)"},
+        "summary": {
+            "en": "Image + image: restyle a photo with the look of a separate reference picture — five engines "
+                  "and techniques (Qwen 2511, Flux 2 Klein RF Inversion, Klein Styler, Klein "
+                  "Migration, USO Style + Subject).",
+            "es": "Imagen + imagen: reestiliza una foto con el look de otra imagen de referencia — cinco motores "
+                  "y técnicas (Qwen 2511, Flux 2 Klein RF Inversion, Klein Styler, Klein "
+                  "Migration, USO Estilo + sujeto).",
+            "zh": "图像 + 图像：以另一张参考图的风格重新演绎照片——五种引擎与技术（Qwen 2511、"
+                  "Flux 2 Klein RF Inversion、Klein Styler、Klein Migration、USO 风格 + 主体）。",
+            "ko": "이미지 + 이미지: 별도 참조 이미지의 룩으로 사진을 재스타일링 — 5가지 엔진과 기법 ("
+                  "Qwen 2511, Flux 2 Klein RF Inversion, Klein Styler, Klein Migration, USO 스타일 + 피사체).",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "style-transfer", "label": {"en": "Style Transfer", "es": "Transferencia de estilo",
+                                                    "zh": "风格迁移", "ko": "스타일 전이"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "flows": [f"flows/{flow['id'].split('.', 1)[1]}.json" for flow in flows],
+            "workflows": sorted(workflow_refs),
+        },
+    }
+    print(f"  mix-style-transfer texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.mix-style-transfer", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                                    **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                      dest=DIST_OPTIONAL)
+
+
+# UI strings of the style flows that OPENHIKER's translation table doesn't
+# carry yet (merged into it before flow_i18n) — keeps every step label in
+# EN/ES/ZH/KO.
+STYLE_TRANSFER_UI_TEXTS = {
+    "Style reference image": {"es": "Imagen de referencia de estilo", "zh": "风格参考图", "ko": "스타일 참조 이미지"},
+    "Image to edit": {"es": "Imagen a editar", "zh": "要编辑的图像", "ko": "편집할 이미지"},
+    "Image to restyle": {"es": "Imagen a reestilizar", "zh": "要重新风格化的图像", "ko": "재스타일링할 이미지"},
+    "Image to restyle (image 2)": {"es": "Imagen a reestilizar (imagen 2)", "zh": "要重新风格化的图像（图 2）",
+                                   "ko": "재스타일링할 이미지 (이미지 2)"},
+    "Style prompt": {"es": "Prompt de estilo", "zh": "风格提示词", "ko": "스타일 프롬프트"},
+    "Edit prompt": {"es": "Prompt de edición", "zh": "编辑提示词", "ko": "편집 프롬프트"},
+    "Target prompt": {"es": "Prompt de la escena", "zh": "目标场景提示词", "ko": "대상 장면 프롬프트"},
+    "Migration prompt": {"es": "Prompt de migración", "zh": "迁移提示词", "ko": "마이그레이션 프롬프트"},
+    "Prompt": {"es": "Prompt", "zh": "提示词", "ko": "프롬프트"},
+    "Style": {"es": "Estilo", "zh": "风格", "ko": "스타일"},
+    "Source image": {"es": "Imagen de origen", "zh": "源图像", "ko": "원본 이미지"},
+    "Style reference (image 1)": {"es": "Referencia de estilo (imagen 1)", "zh": "风格参考（图 1）", "ko": "스타일 참조 (이미지 1)"},
+    "Subject to edit (image 2)": {"es": "Sujeto a editar (imagen 2)", "zh": "要编辑的主体（图 2）", "ko": "편집할 피사체 (이미지 2)"},
+    "Style reference image (image 2)": {"es": "Imagen de referencia de estilo (imagen 2)", "zh": "风格参考图（图 2）", "ko": "스타일 참조 이미지 (이미지 2)"},
+    "Image to edit (image 1)": {"es": "Imagen a editar (imagen 1)", "zh": "要编辑的图像（图 1）", "ko": "편집할 이미지 (이미지 1)"},
+    "Subject / content reference": {"es": "Referencia de sujeto / contenido", "zh": "主体 / 内容参考", "ko": "피사체 / 콘텐츠 참조"},
+    "Choose engine": {"es": "Elige el motor", "zh": "选择引擎", "ko": "엔진 선택"},
+    "Parameters": {"es": "Parámetros", "zh": "参数", "ko": "매개변수"},
+    "Steps": {"es": "Pasos", "zh": "步数", "ko": "스텝"},
+    "Seed": {"es": "Semilla", "zh": "种子", "ko": "시드"},
+    "Visual similarity": {"es": "Similitud visual", "zh": "视觉相似度", "ko": "시각적 유사도"},
+    "LoRA strength": {"es": "Fuerza de la LoRA", "zh": "LoRA 强度", "ko": "LoRA 강도"},
+    "Turbo LoRA": {"es": "LoRA Turbo", "zh": "Turbo LoRA", "ko": "터보 LoRA"},
+    "Generate": {"es": "Generar", "zh": "生成", "ko": "생성"},
+    "Refine": {"es": "Refinar", "zh": "精修", "ko": "리파인"},
+    "Result": {"es": "Resultado", "zh": "结果", "ko": "결과"},
+    "Full style": {"es": "Estilo completo", "zh": "完整风格", "ko": "전체 스타일"},
+    "Your idea": {"es": "Tu idea", "zh": "你的想法", "ko": "아이디어"},
+    "Describe the scene": {"es": "Describe la escena", "zh": "描述场景", "ko": "장면 설명"},
+    "What should be painted in that style? e.g. a lighthouse on a cliff at dusk": {
+        "es": "¿Qué quieres pintar con ese estilo? p. ej. un faro en un acantilado al atardecer",
+        "zh": "想用这种风格画什么？例如：黄昏时悬崖上的灯塔",
+        "ko": "그 스타일로 무엇을 그릴까요? 예: 해질녘 절벽 위의 등대",
+    },
+    "Your scene, plus the wording of the style you pick — edit it if you like.": {
+        "es": "Tu escena más el texto del estilo que elijas; puedes editarlo.",
+        "zh": "你的场景加上所选风格的描述——可以自行编辑。",
+        "ko": "장면에 고른 스타일의 문구가 더해집니다. 원하면 수정하세요.",
+    },
+    "Final prompt": {"es": "Prompt final", "zh": "最终提示词", "ko": "최종 프롬프트"},
+    "Blend with AI": {"es": "Fusionar con IA", "zh": "用 AI 融合", "ko": "AI로 합치기"},
+    "Generate Image": {"es": "Generar imagen", "zh": "生成图像", "ko": "이미지 생성"},
+    "You can edit this later": {"es": "Puedes editarlo después", "zh": "之后可以编辑", "ko": "나중에 수정할 수 있습니다"},
+    "Describe what you want, then pick a style with the palette button.": {
+        "es": "Describe lo que quieres y elige un estilo con el botón de la paleta.",
+        "zh": "描述你想要的内容，然后用调色板按钮选择一种风格。",
+        "ko": "원하는 것을 적은 뒤 팔레트 버튼으로 스타일을 고르세요.",
+    },
+    "Your idea wrapped in the style's wording — edit it if you like.": {
+        "es": "Tu idea envuelta con el texto del estilo; puedes editarla.",
+        "zh": "用风格描述包裹后的想法——可以自行编辑。",
+        "ko": "스타일 문구로 감싼 아이디어입니다. 원하면 수정하세요.",
+    },
+    "A rough idea is enough — the AI will blend it with the style…": {
+        "es": "Basta con una idea aproximada: la IA la fundirá con el estilo…",
+        "zh": "粗略的想法就够了——AI 会把它与风格融合…",
+        "ko": "대략적인 아이디어면 충분합니다. AI가 스타일과 합쳐 줍니다…",
+    },
+    "Pick a style from your catalog, or describe one…": {
+        "es": "Elige un estilo de tu catálogo o describe uno…",
+        "zh": "从风格库中选择一种风格，或自己描述…",
+        "ko": "카탈로그에서 스타일을 고르거나 직접 설명하세요…",
+    },
+    "Write your idea and wrap it in one of your saved Styles, then generate.": {
+        "es": "Escribe tu idea, envuélvela en uno de tus Estilos guardados y genera.",
+        "zh": "写下你的想法，用你保存的风格包裹它，然后生成。",
+        "ko": "아이디어를 적고 저장된 스타일로 감싼 뒤 생성합니다.",
+    },
+    "The local AI blends your idea with one of your saved Styles into a single, well-written prompt.": {
+        "es": "La IA local funde tu idea con uno de tus Estilos guardados en un único prompt bien escrito.",
+        "zh": "本地 AI 将你的想法与你保存的风格融合成一条精心撰写的提示词。",
+        "ko": "로컬 AI가 아이디어와 저장된 스타일을 하나의 잘 다듬어진 프롬프트로 합칩니다.",
+    },
+    "CFG": {"es": "CFG", "zh": "CFG", "ko": "CFG"},
+    "Flux guidance": {"es": "Guía de Flux", "zh": "Flux 引导强度", "ko": "Flux 가이던스"},
+    "Prompt preview": {"es": "Vista previa del prompt", "zh": "提示词预览", "ko": "프롬프트 미리보기"},
+    _ST_TEXT_DESC["en"]: {k: v for k, v in _ST_TEXT_DESC.items() if k != "en"},
+    _ST_REF_DESC["en"]: {k: v for k, v in _ST_REF_DESC.items() if k != "en"},
+    "Apply a curated visual style to your image using Flux 2 Klein 9B. 70+ styles in 10 groups.": {
+        "es": "Aplica a tu imagen un estilo visual curado con Flux 2 Klein 9B. Más de 70 estilos en 10 grupos.",
+        "zh": "使用 Flux 2 Klein 9B 为图像套用精选视觉风格。10 组共 70 多种风格。",
+        "ko": "Flux 2 Klein 9B로 이미지에 엄선된 비주얼 스타일을 적용합니다. 10개 그룹, 70개 이상의 스타일.",
+    },
+    "Apply a curated pixel-art visual style to your image using Qwen Image 2.1. 70+ styles in 10 groups.": {
+        "es": "Aplica a tu imagen un estilo de pixel art curado con Qwen Image 2.1. Más de 70 estilos en 10 grupos.",
+        "zh": "使用 Qwen Image 2.1 为图像套用精选像素艺术风格。10 组共 70 多种风格。",
+        "ko": "Qwen Image 2.1로 이미지에 엄선된 픽셀 아트 스타일을 적용합니다. 10개 그룹, 70개 이상의 스타일.",
+    },
+    "Colors and light only": {"es": "Solo colores y luz", "zh": "仅颜色与光线", "ko": "색과 빛만"},
+    "Medium and texture": {"es": "Técnica y textura", "zh": "媒介与质感", "ko": "매체와 질감"},
+    STYLE_TRANSFER_KEEP_LAYOUT: {
+        "es": "Reestiliza esta imagen manteniendo exactamente su composición, sujetos, poses y distribución",
+        "zh": "重新风格化这张图像，完全保留其构图、主体、姿势和布局",
+        "ko": "이 이미지의 구도, 피사체, 포즈, 레이아웃은 그대로 유지하면서 재스타일링",
+    },
+    "Choose a style — it wraps this instruction with the style's wording.": {
+        "es": "Elige un estilo: envolverá esta instrucción con el texto del estilo.",
+        "zh": "选择一种风格——它会用该风格的描述包裹这条指令。",
+        "ko": "스타일을 고르면 이 지시문을 스타일 문구로 감쌉니다.",
+    },
+}
+
+
 def build_styling(source: Path, version: str) -> Path:
     addon_files, addon_contributes = _pixel_matcher_addon_contribution(source)
     return build_refine_static_group(
         source, version, "nomad.refine-styling", "styling",
         name={"en": "Styling", "es": "Estilizado", "zh": "风格化", "ko": "스타일링"},
         summary={
-            "en": "Restyle the whole image — re-render in a saved Style's visual language, apply one of 70+ curated pixel-art presets on Klein 9B or Qwen Image 2.1, or convert to pixel art locally (no AI) with Pixel Matcher.",
-            "es": "Reestiliza toda la imagen — re-renderiza en el lenguaje visual de un Estilo guardado, aplica uno de más de 70 presets curados de pixel art en Klein 9B o Qwen Image 2.1, o conviértela a pixel art localmente (sin IA) con Pixel Matcher.",
-            "zh": "重新设计整张图像的风格——以已保存风格的视觉语言重新渲染，在 Klein 9B 或 Qwen Image 2.1 上应用 70 多种精选像素艺术预设之一，或用 Pixel Matcher 在本地（无 AI）转换为像素艺术。",
-            "ko": "이미지 전체를 재스타일링 — 저장된 스타일의 비주얼 언어로 다시 렌더링하거나, Klein 9B 또는 Qwen Image 2.1에서 70개 이상의 엄선된 픽셀 아트 프리셋 중 하나를 적용하거나, Pixel Matcher로 로컬(AI 없이)에서 픽셀 아트로 변환합니다.",
+            "en": "Everything style — in Create, write an idea and wrap it in one of your saved Styles (directly or blended by the AI); in Refine, restyle the whole image with one of your saved Styles as text (Klein 9B/4B, Qwen 2.1), "
+                  "with a reference image as the style (Anima, USO, Z-Image), with one of 70+ curated pixel-art "
+                  "presets (Klein 9B, Qwen Image 2.1), or convert to pixel art locally (no AI) with Pixel Matcher.",
+            "es": "Todo lo de estilo — en Create, escribe una idea y envuélvela en uno de tus Estilos guardados (directo o fundido por la IA); en Refine, reestiliza toda la imagen con uno de tus Estilos guardados como texto (Klein 9B/4B, Qwen 2.1), "
+                  "con una imagen de referencia como estilo (Anima, USO, Z-Image), con uno de más de 70 presets "
+                  "curados de pixel art (Klein 9B, Qwen Image 2.1), o conviértela a pixel art localmente (sin IA) "
+                  "con Pixel Matcher.",
+            "zh": "风格相关的一切——在 Create 中写下想法并用已保存的风格包裹（直接或由 AI 融合）；在 Refine 中重新设计整张图像的风格——以已保存的风格作为文本（Klein 9B/4B、Qwen 2.1），以参考图作为风格"
+                  "（Anima、USO、Z-Image），套用 70 多种精选像素艺术预设之一（Klein 9B、Qwen Image 2.1），"
+                  "或用 Pixel Matcher 在本地（无 AI）转换为像素艺术。",
+            "ko": "스타일의 모든 것 — Create에서는 아이디어를 저장된 스타일로 감싸고(직접 또는 AI로 융합), Refine에서는 이미지 전체를 재스타일링 — 저장된 스타일을 텍스트로(Klein 9B/4B, Qwen 2.1), 참조 이미지를 스타일로"
+                  "(Anima, USO, Z-Image), 70개 이상의 엄선된 픽셀 아트 프리셋으로(Klein 9B, Qwen Image 2.1) 적용하거나, "
+                  "Pixel Matcher로 로컬(AI 없이)에서 픽셀 아트로 변환합니다.",
         },
         flow_ids=STYLING_FLOWS,
         group_overrides=STYLING_GROUP_OVERRIDES,
-        hand_authored=[_pixel_art_qwen2_flow(source)],
+        hand_authored=[*_create_style_flows(), *_style_transfer_text_flows(), *_style_reference_refine_flows(source),
+                       _pixel_art_qwen2_flow(source)],
         extra_files=addon_files,
         extra_contributes=addon_contributes,
+        extra_texts=STYLE_TRANSFER_UI_TEXTS,
     )
 
 
@@ -1778,11 +3712,37 @@ EXTRACT_SOURCE_FLOWS = ["refine.smart_selection", "refine.smart_selection_fill"]
 EXTRACT_GROUP_OVERRIDES = {fid: "extract" for fid in EXTRACT_SOURCE_FLOWS}
 
 
+# Chroma Key (contributes.addon, same PACKAGE_FORMAT.md §9 minimal slice as
+# Pixel Matcher — see _pixel_matcher_addon_contribution): local, no-AI
+# chrominance-space background removal, the natural companion to Extract's
+# AI cutout flows for flat/studio backgrounds. Only __init__.py/routes.py/
+# service.py ship — chroma_key_source*.py in the source addon folder are
+# superseded drafts (v1/v2/v3), never imported by service.py, so they're
+# left out of the zip. Bundled straight into Extract's zip under addon/,
+# flow.json's group overridden to "extract" (source says "core"). Installing
+# this package extracts addon/ to data/packages/<pkg>/addon/;
+# app/services/addon_loader.py picks it up from there on the NEXT app start
+# (no hot-load, same restart Pixel Matcher already needed).
+def _chroma_key_addon_contribution(source: Path) -> tuple[dict[str, str], dict]:
+    addon_dir = source / "addons" / "chroma_key"
+    files = {
+        f"addon/{name}": (addon_dir / name).read_text(encoding="utf-8")
+        for name in ("__init__.py", "routes.py", "service.py")
+    }
+    flow = json.loads((addon_dir / "flow.json").read_text(encoding="utf-8"))
+    flow["group"] = "extract"
+    files["addon/flow.json"] = json.dumps(flow, indent=2, ensure_ascii=False)
+    return files, {"addon": {"entry": "addon/__init__.py"}}
+
+
 def build_extract_pack(source: Path, version: str) -> Path:
     table = load_translations(source)
     files: dict[str, object] = {}
     flows: list[dict] = []
     workflow_refs: set[str] = set()
+
+    addon_files, addon_contributes = _chroma_key_addon_contribution(source)
+    files.update(addon_files)
 
     for flow_id in EXTRACT_SOURCE_FLOWS:
         flow = add_card_texts(flow_from_source(source, flow_id), table)
@@ -1832,10 +3792,10 @@ def build_extract_pack(source: Path, version: str) -> Path:
         "default_lang": "en",
         "name": {"en": "Extract", "es": "Extraer", "zh": "提取", "ko": "추출"},
         "summary": {
-            "en": "Pull a subject, product, character or object out of a photo as a clean transparent cutout — SAM3 text-prompted selection or Qwen Image 2.1's native RGBA extraction — then edit that RGBA asset without losing its alpha.",
-            "es": "Saca un sujeto, producto, personaje u objeto de una foto como recorte transparente limpio — selección por texto con SAM3 o extracción nativa RGBA de Qwen Image 2.1 — y edita ese asset RGBA sin perder su alfa.",
-            "zh": "从照片中提取主体、产品、角色或物体，生成干净的透明抠图——SAM3 文本提示选择或 Qwen Image 2.1 原生 RGBA 提取——然后在不丢失 alpha 的情况下编辑该 RGBA 素材。",
-            "ko": "사진에서 피사체, 제품, 캐릭터, 객체를 깔끔한 투명 컷아웃으로 추출 — SAM3 텍스트 기반 선택 또는 Qwen Image 2.1의 네이티브 RGBA 추출 — 한 뒤 알파를 유지한 채 해당 RGBA 에셋을 편집합니다.",
+            "en": "Pull a subject, product, character or object out of a photo as a clean transparent cutout — SAM3 text-prompted selection, Qwen Image 2.1's native RGBA extraction, or local no-AI Chroma Key for flat/studio backgrounds — then edit that RGBA asset without losing its alpha.",
+            "es": "Saca un sujeto, producto, personaje u objeto de una foto como recorte transparente limpio — selección por texto con SAM3, extracción nativa RGBA de Qwen Image 2.1, o Chroma Key local sin IA para fondos planos de estudio — y edita ese asset RGBA sin perder su alfa.",
+            "zh": "从照片中提取主体、产品、角色或物体，生成干净的透明抠图——SAM3 文本提示选择、Qwen Image 2.1 原生 RGBA 提取，或用于纯色/影棚背景的本地无 AI Chroma Key——然后在不丢失 alpha 的情况下编辑该 RGBA 素材。",
+            "ko": "사진에서 피사체, 제품, 캐릭터, 객체를 깔끔한 투명 컷아웃으로 추출 — SAM3 텍스트 기반 선택, Qwen Image 2.1의 네이티브 RGBA 추출, 또는 단색/스튜디오 배경을 위한 로컬 무AI Chroma Key — 한 뒤 알파를 유지한 채 해당 RGBA 에셋을 편집합니다.",
         },
         "author": AUTHOR,
         "license": "proprietary",
@@ -1845,6 +3805,7 @@ def build_extract_pack(source: Path, version: str) -> Path:
         "contributes": {
             "flows": [f"flows/{f['id'].split('.', 1)[1]}.json" for f in flows],
             "workflows": sorted(workflow_refs),
+            **addon_contributes,
         },
     }
     print(f"  extract-pack texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
@@ -1932,6 +3893,99 @@ def build_refine_pilot(source: Path, version: str) -> Path:
                       dest=DIST_OPTIONAL)
 
 
+STYLE_IMAGE_EXTS = (".webp", ".png", ".jpg", ".jpeg")
+
+
+def _collect_style_images(images_dir: Path | None) -> dict[str, dict[str, Path]]:
+    """{style key: {engine id: file}} from the folder Build > Styles copies
+    generated previews into ("Also save to output subfolder"):
+    <images_dir>/<engine id>/<style key>.<ext> — or the app data folder.
+    Style keys are unique across every pack, so one folder feeds them all."""
+    found: dict[str, dict[str, Path]] = {}
+    if not images_dir:
+        return found
+    if not images_dir.is_dir():
+        raise SystemExit(f"--style-images: not a folder: {images_dir}")
+    # The app's own data folder (has styles.json): take the images the user
+    # generated for each pack style straight from Build's store
+    # (<data>/images/styles/<model_images[..].image_filename>), matched by
+    # package_key — works whether or not an output subfolder was set.
+    if (images_dir / "styles.json").is_file():
+        store = images_dir / "images" / "styles"
+        for style in json.loads((images_dir / "styles.json").read_text(encoding="utf-8")):
+            key = style.get("package_key") if isinstance(style, dict) else None
+            if not key:
+                continue
+            for model_id, img in (style.get("model_images") or {}).items():
+                if not isinstance(img, dict) or img.get("package"):
+                    continue
+                f = store / str(img.get("image_filename") or "")
+                if img.get("image_filename") and f.is_file() and f.suffix.lower() in STYLE_IMAGE_EXTS:
+                    found.setdefault(key, {})[model_id] = f
+        return found
+    for model_dir in sorted(p for p in images_dir.iterdir() if p.is_dir()):
+        for f in sorted(model_dir.iterdir()):
+            if f.suffix.lower() in STYLE_IMAGE_EXTS:
+                found.setdefault(f.stem, {})[model_dir.name] = f
+    return found
+
+
+def build_style_packs(version: str, images_dir: Path | None = None) -> list[Path]:
+    """Style packs (contributes.styles, PACKAGE_FORMAT.md §10.3) from the
+    curated catalog in styles_catalog/ — see styles_catalog.py, which also
+    validates it. Styles are independent of any model; with *images_dir*
+    (Build's output subfolder) each style also carries the per-model
+    previews generated for it, as images/<engine id>/<key>.<ext>."""
+    import styles_catalog as sc
+
+    catalog = sc.load_catalog()
+    errors, _ = sc.check(catalog, None)
+    if errors:
+        raise SystemExit("styles catalog has errors — run styles_catalog.py --check:\n  " + "\n  ".join(errors))
+    images = _collect_style_images(images_dir)
+    known = {e["key"] for p in catalog["packs"] for e in p["styles"]}
+    stray = sorted(set(images) - known)
+    if stray:
+        print(f"  ignoring {len(stray)} image(s) with no matching style key: {', '.join(stray[:8])}")
+    out = []
+    for pack in catalog["packs"]:
+        styles = []
+        image_files: dict[str, bytes] = {}
+        for e in pack["styles"]:
+            style = {
+                "key": e["key"],
+                "name": {lang: e["name"][lang] for lang in sc.LANGS if e["name"].get(lang)},
+                "category": sc.category_texts(e["category"], catalog["categories"]),
+                "prefix": e["prefix"],
+                "suffix": e["suffix"],
+                "prompt": e["prompt"],
+            }
+            for model_id, f in sorted(images.get(e["key"], {}).items()):
+                rel = f"images/{model_id}/{e['key']}{f.suffix.lower()}"
+                image_files[rel] = f.read_bytes()
+                style.setdefault("images", {})[model_id] = rel
+            styles.append(style)
+        with_images = sum(1 for s in styles if s.get("images"))
+        print(f"  {pack['id']}: {len(styles)} styles, {with_images} with images ({len(image_files)} files)")
+        manifest = {
+            "schema_version": 1,
+            "id": pack["id"],
+            "version": version,
+            "default_lang": "en",
+            "name": pack["name"],
+            "summary": pack["summary"],
+            "author": AUTHOR,
+            "license": "proprietary",
+            "languages": list(sc.LANGS),
+            "contributes": {"styles": ["data/styles.json"]},
+        }
+        if pack.get("replaces"):
+            manifest["replaces"] = pack["replaces"]
+        out.append(write_zip(pack["id"], {"manifest.json": manifest, "data/styles.json": styles,
+                                          **image_files, "LICENSE": LICENSE_TEXT}, dest=DIST_OPTIONAL))
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path(r"D:\OPENHIKER"))
@@ -1942,7 +3996,27 @@ def main() -> None:
     ap.add_argument("--optional", action="store_true")
     ap.add_argument("--refine-pilot", action="store_true")
     ap.add_argument("--refine-groups", action="store_true")
+    # Style packs only (they don't depend on the rest): skips engines/flows.
+    ap.add_argument("--style-packs", action="store_true")
+    # Just the Styling (Refine) + Style Transfer (Mix) packages.
+    ap.add_argument("--style-transfer", action="store_true")
+    # Folder Build > Styles saved previews into (<dir>/<engine id>/<key>.webp),
+    # e.g. "C:\Users\<you>\Nomad Studio\style-previews" — or the app data
+    # folder itself (e.g. "data"), whose styles.json knows every image.
+    ap.add_argument("--style-images", type=Path)
     args = ap.parse_args()
+    if args.style_transfer:
+        for path in (build_styling(args.source, args.version), build_mix_style_transfer(args.source, args.version)):
+            summary = validate(path)
+            print(f"{path.name:40} {path.stat().st_size / 1024:5.0f} KB · {summary['id']} {summary['version']}"
+                  f" · flows={[f['id'] for f in summary['flows']]}")
+        return
+    if args.style_packs:
+        for path in build_style_packs(args.version, args.style_images):
+            summary = validate(path)
+            print(f"{path.name:40} {path.stat().st_size / 1024:5.0f} KB · {summary['id']} {summary['version']}"
+                  f" · styles={summary['styles']}")
+        return
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
         build_qwen_image_21_engine(args.version),
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
@@ -1958,7 +4032,9 @@ def main() -> None:
                   build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version),
                   build_extract_pack(args.source, args.version), build_styling(args.source, args.version),
                   build_presets_core(args.source, args.version), build_presets_open_air(args.source, args.version),
-                  build_presets_film_shadow(args.source, args.version)]
+                  build_presets_film_shadow(args.source, args.version),
+                  build_mix_multi_reference(args.source, args.version),
+                  build_mix_style_transfer(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

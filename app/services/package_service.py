@@ -52,7 +52,8 @@ MAX_RATIO = 100
 MAX_PATH_CHARS = 180  # relative path inside the package (Windows 260-char limit, §12.1)
 IGNORED = ("__MACOSX/", ".DS_Store", "Thumbs.db", "__pycache__/")
 
-SUPPORTED_CONTRIBUTIONS = {"engines", "flows", "workflows", "addon"}
+SUPPORTED_CONTRIBUTIONS = {"engines", "flows", "workflows", "addon", "styles"}
+STYLE_KEY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 TOKEN_TTL_S = 3600
 
 
@@ -243,6 +244,50 @@ def validate_manifest(manifest: dict[str, Any], files: set[str]) -> list[str]:
         )
     if "LICENSE" not in files:
         warnings.append("no-license")
+    warnings.extend(validate_required_models(manifest))
+    return warnings
+
+
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def validate_required_models(manifest: dict[str, Any]) -> list[str]:
+    """requires.models / requires.comfy_nodes (PACKAGE_FORMAT.md §8.2): what
+    each entry must look like. Problems are warnings, not rejections — a
+    package with a malformed entry still installs; the "Missing files" panel
+    just can't identify that one file."""
+    requires = manifest.get("requires") if isinstance(manifest.get("requires"), dict) else {}
+    warnings: list[str] = []
+    models = requires.get("models")
+    if models is not None:
+        if not isinstance(models, list):
+            return ["requires.models must be a list"]
+        for i, m in enumerate(models):
+            where = f"requires.models[{i}]"
+            if not isinstance(m, dict):
+                warnings.append(f"{where}: must be an object")
+                continue
+            if not str(m.get("file", "")).strip() or "/" in str(m.get("file")) or "\\" in str(m.get("file")):
+                warnings.append(f"{where}: \"file\" must be a plain file name")
+            if not str(m.get("folder", "")).strip():
+                warnings.append(f"{where}: \"folder\" is required")
+            if m.get("sha256") is not None and not _SHA256_RE.match(str(m["sha256"])):
+                warnings.append(f"{where}: \"sha256\" must be 64 lowercase hex characters")
+            if m.get("size") is not None and not (isinstance(m["size"], int) and m["size"] > 0):
+                warnings.append(f"{where}: \"size\" must be a positive integer")
+            if m.get("url") is not None and not str(m["url"]).startswith("https://"):
+                warnings.append(f"{where}: \"url\" must start with https://")
+    nodes = requires.get("comfy_nodes")
+    if nodes is not None:
+        if not isinstance(nodes, list):
+            warnings.append("requires.comfy_nodes must be a list")
+        else:
+            for i, n in enumerate(nodes):
+                # Old form: a bare pack id string — still accepted.
+                if isinstance(n, str):
+                    continue
+                if not isinstance(n, dict) or not str(n.get("id", "")).strip():
+                    warnings.append(f"requires.comfy_nodes[{i}]: needs an \"id\"")
     return warnings
 
 
@@ -283,6 +328,57 @@ def validate_flow(flow: Any, rel: str, files: set[str]) -> None:
         wf = step.get("workflow_file") if isinstance(step, dict) else None
         if wf and wf not in files:
             raise PackageError(f"{rel}: workflow_file not in the package: {wf}")
+
+
+def validate_styles(styles: Any, rel: str, default_lang: str, files: set[str] | None = None) -> None:
+    """contributes.styles file: a list of styles (§10.3). Styles are text
+    only — prefix/suffix wrapped around the user's prompt — and independent
+    of any model; `key` identifies each one inside its package."""
+    if not isinstance(styles, list) or not styles:
+        raise PackageError(f"{rel}: must be a non-empty list of styles")
+    keys: set[str] = set()
+    for i, style in enumerate(styles):
+        where = f"{rel}[{i}]"
+        if not isinstance(style, dict):
+            raise PackageError(f"{where}: a style must be a JSON object")
+        key = str(style.get("key", ""))
+        if not STYLE_KEY_RE.match(key):
+            raise PackageError(f"{where}: key must be a lowercase slug like 'golden-hour'")
+        if key in keys:
+            raise PackageError(f"{where}: duplicate key {key!r}")
+        keys.add(key)
+        if not text_for(style.get("name"), default_lang, default_lang):
+            raise PackageError(f"{where}: name needs a text in default_lang ({default_lang})")
+        for field in ("prefix", "suffix", "prompt"):
+            if not isinstance(style.get(field, ""), str):
+                raise PackageError(f"{where}: {field} must be a string")
+        if not (str(style.get("prefix", "")).strip() or str(style.get("suffix", "")).strip()):
+            raise PackageError(f"{where}: a style needs a prefix or a suffix")
+        category = style.get("category", "")
+        if not isinstance(category, (str, dict)):
+            raise PackageError(f"{where}: category must be a text or a language object")
+        # Optional per-model preview images: {engine id: path in the package}.
+        images = style.get("images", {})
+        if not isinstance(images, dict):
+            raise PackageError(f"{where}: images must be an object of engine id → image path")
+        for engine_id, path in images.items():
+            if not isinstance(path, str) or not path.lower().endswith((".webp", ".png", ".jpg", ".jpeg")):
+                raise PackageError(f"{where}: images.{engine_id} must be a .webp/.png/.jpg path")
+            if files is not None and path not in files:
+                raise PackageError(f"{where}: images.{engine_id} not in the package: {path}")
+
+
+def load_package_styles(pkg_dir: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    """Every style an installed package contributes, in file order."""
+    out: list[dict[str, Any]] = []
+    for rel in (manifest.get("contributes") or {}).get("styles", []) or []:
+        try:
+            data = json.loads((pkg_dir / rel).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, list):
+            out.extend(s for s in data if isinstance(s, dict))
+    return out
 
 
 def _workflow_derived_flows(
@@ -436,6 +532,25 @@ def texts_for(data_dir: Path, lang: str) -> dict[str, str]:
                 value = card.get(field)
                 if isinstance(value, dict) and value.get(lang) and value.get(default_lang):
                     out[str(value[default_lang])] = str(value[lang])
+        # Style names and categories (§10.3). Build > Styles splits a
+        # category on "/" and shows each segment on its own, so segments are
+        # translated one by one as well as the full "Group/Sub" string.
+        try:
+            manifest = json.loads((base / pkg_id / "manifest.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            manifest = {}
+        for style in load_package_styles(base / pkg_id, manifest):
+            name = style.get("name")
+            if isinstance(name, dict) and name.get(lang) and name.get(default_lang):
+                out[str(name[default_lang])] = str(name[lang])
+            category = style.get("category")
+            if isinstance(category, dict) and category.get(lang) and category.get(default_lang):
+                src, dst = str(category[default_lang]), str(category[lang])
+                out[src] = dst
+                src_parts, dst_parts = src.split("/"), dst.split("/")
+                if len(src_parts) == len(dst_parts):
+                    for s, d in zip(src_parts, dst_parts):
+                        out.setdefault(s, d)
         try:
             translations = json.loads((base / pkg_id / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -492,6 +607,16 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
                 raise PackageError(f"Flow id already in use: {flow['id']}")
             card = card_fields(flow, lang, default_lang)
             flows.append({"id": flow["id"], "category": flow["category"], "label": card["label"], "desc": card["desc"]})
+        style_count = 0
+        style_keys: set[str] = set()
+        for rel in contributes.get("styles", []):
+            styles = _load_json_member(zf, rel)
+            validate_styles(styles, rel, default_lang, files)
+            dupes = style_keys & {s["key"] for s in styles}
+            if dupes:
+                raise PackageError(f"{rel}: style key already used in this package: {sorted(dupes)[0]}")
+            style_keys |= {s["key"] for s in styles}
+            style_count += len(styles)
 
     installed = index.get("packages", {}).get(pkg_id)
     operation = "install"
@@ -512,6 +637,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
         "signature": "unsigned",
         "engines": engines,
         "flows": flows,
+        "styles": style_count,
         "requiresMissing": missing,
         "warnings": warnings,
         "sizeBytes": zip_path.stat().st_size,
@@ -677,6 +803,7 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         "group": manifest.get("group"),
         "flows": [f["id"] for f in flows],
         "engines": [pkg_id] if engine else [],
+        "styles": summary["styles"],
         "has_code": bool(manifest["contributes"].get("addon")),
         "bundled": was_bundled,
     }

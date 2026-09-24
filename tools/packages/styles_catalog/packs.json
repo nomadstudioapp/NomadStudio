@@ -1,0 +1,55 @@
+{
+  "_doc": "Style packs built from styles_catalog/. A pack takes its styles from one or more theme files (`files`, in order). `replaces` lists older pack ids whose styles moved into this pack — see styles_catalog.py.",
+  "packs": [
+    {
+      "id": "nomad.styles-free",
+      "files": ["free.json"],
+      "tier": "free",
+      "name": {"en": "Styles Starter", "es": "Estilos básicos", "zh": "入门风格包", "ko": "스타일 스타터"},
+      "summary": {
+        "en": "Ten ready-to-use looks — cinematic photo, analog film, noir, anime, comic, watercolor, impressionist, pixel art, claymation and neonpunk.",
+        "es": "Diez looks listos para usar: foto cinematográfica, película analógica, noir, anime, cómic, acuarela, impresionismo, pixel art, plastilina y neonpunk.",
+        "zh": "十种开箱即用的风格：电影感照片、胶片、黑色电影、动漫、漫画、水彩、印象派、像素画、黏土动画和霓虹朋克。",
+        "ko": "바로 쓰는 10가지 룩: 시네마틱 사진, 아날로그 필름, 누아르, 애니메, 코믹, 수채화, 인상주의, 픽셀 아트, 클레이메이션, 네온펑크."
+      }
+    },
+    {
+      "id": "nomad.styles-pro-photography",
+      "files": ["photo_cinema.json", "light_atmosphere.json", "commercial.json"],
+      "replaces": ["nomad.styles-photo-cinema", "nomad.styles-light-atmosphere", "nomad.styles-commercial"],
+      "tier": "paid",
+      "name": {"en": "Pro Photography & Commercial", "es": "Pro Fotografía y Publicidad", "zh": "专业摄影与商业", "ko": "프로 포토그래피 & 커머셜"},
+      "summary": {
+        "en": "Everything for real-world photography and film: classic and modern photo looks, film-lab color processes, cinematic lighting and grading, natural light phenomena, CGI lighting, lens and sensor effects, and advertising, product, food, fashion and interior styles.",
+        "es": "Todo para foto real y cine: looks de foto clásica y moderna, procesos de color de laboratorio, iluminación y etalonaje de cine, fenómenos de luz natural, iluminación CGI, efectos de lente y sensor, y estilos de publicidad, producto, comida, moda e interiores.",
+        "zh": "面向真实摄影与电影的一切：经典与现代照片风格、冲洗色彩工艺、电影布光与调色、自然光现象、CGI 光效、镜头与传感器效果，以及广告、产品、美食、时尚与室内风格。",
+        "ko": "실제 사진과 영화를 위한 모든 것: 클래식·모던 사진 룩, 현상소 컬러 프로세스, 시네마틱 조명과 그레이딩, 자연광 현상, CGI 조명, 렌즈·센서 효과, 그리고 광고·제품·푸드·패션·인테리어 스타일."
+      }
+    },
+    {
+      "id": "nomad.styles-pro-creative",
+      "files": ["illustration_anime.json", "fine_art_craft.json", "worlds.json"],
+      "replaces": ["nomad.styles-illustration-anime", "nomad.styles-fine-art-craft", "nomad.styles-worlds"],
+      "tier": "paid",
+      "name": {"en": "Pro Creative & Genre", "es": "Pro Creativo y Géneros", "zh": "专业创意与题材", "ko": "프로 크리에이티브 & 장르"},
+      "summary": {
+        "en": "Everything artistic: anime eras and manga, western comics, storybook and digital illustration, art movements and classical painting, paper and craft, plus sci-fi, cyberpunk, fantasy, steampunk and game art.",
+        "es": "Todo lo artístico: épocas del anime y manga, cómic occidental, cuento ilustrado e ilustración digital, movimientos artísticos y pintura clásica, papel y manualidades, además de ciencia ficción, cyberpunk, fantasía, steampunk y arte de videojuego.",
+        "zh": "一切艺术风格：各时代动漫与漫画、美式漫画、绘本与数字插画、艺术流派与古典绘画、纸艺与手工，以及科幻、赛博朋克、奇幻、蒸汽朋克和游戏美术。",
+        "ko": "예술의 모든 것: 시대별 애니메와 만화, 서양 코믹, 동화책·디지털 일러스트, 미술 사조와 고전 회화, 종이·공예, 그리고 SF, 사이버펑크, 판타지, 스팀펑크, 게임 아트."
+      }
+    },
+    {
+      "id": "nomad.styles-fan-collection",
+      "files": ["fan_collection.json"],
+      "tier": "free-civitai",
+      "name": {"en": "Fan Styles Collection", "es": "Colección de estilos fan", "zh": "同人风格合集", "ko": "팬 스타일 컬렉션"},
+      "summary": {
+        "en": "Free fan collection of styles inspired by well-known anime, films, comics, games and artists. Not affiliated with or endorsed by any rights holder; for personal, non-commercial use.",
+        "es": "Colección fan gratuita de estilos inspirados en anime, películas, cómics, juegos y artistas conocidos. Sin relación ni aval de ningún titular de derechos; para uso personal y no comercial.",
+        "zh": "免费同人合集，风格灵感来自知名动漫、电影、漫画、游戏与艺术家。与任何版权方无关联、未获其认可；仅供个人非商业使用。",
+        "ko": "유명 애니메, 영화, 코믹, 게임, 아티스트에서 영감을 받은 무료 팬 컬렉션. 어떤 권리자와도 무관하며 승인받지 않았습니다. 개인적·비상업적 용도로만 사용하세요."
+      }
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+[
+  {
+    "src": [53], "key": "god-rays",
+    "name": {"en": "God Rays", "es": "Rayos crepusculares", "zh": "耶稣光", "ko": "갓 레이"},
+    "category": "Natural Light",
+    "prefix": "dramatic god rays",
+    "suffix": "parallel sunbeams streaming through clouds and trees, dust-lit volumetric shafts, radiant crepuscular light columns, atmospheric haze",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder and parentheses/semicolon lists.", "preview": "ok"}
+  },
+  {
+    "src": [54], "key": "light-beam",
+    "name": {"en": "Light Beam", "es": "Haz de luz", "zh": "光束", "ko": "빛줄기"},
+    "category": "Natural Light",
+    "prefix": "a single sharp beam of light",
+    "suffix": "a direct narrow shaft of light falling on the subject, glowing line of light cutting the scene, soft ambient darkness around",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [55], "key": "sun-dogs",
+    "name": {"en": "Sun Dogs", "es": "Parhelios", "zh": "幻日", "ko": "환일"},
+    "category": "Natural Light",
+    "prefix": "sun dogs halo phenomenon in the sky",
+    "suffix": "22-degree halo ring, two glowing mock suns on either side of the sun, icy atmospheric refraction, cold crisp air",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [56], "key": "golden-hour",
+    "name": {"en": "Golden Hour", "es": "Hora dorada", "zh": "黄金时刻", "ko": "골든 아워"},
+    "category": "Natural Light",
+    "prefix": "golden hour light",
+    "suffix": "warm low sun, rich amber glow, long soft shadows, glowing rim light, warm atmospheric haze, cinematic sunset illumination",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [57], "key": "blue-hour",
+    "name": {"en": "Blue Hour", "es": "Hora azul", "zh": "蓝调时刻", "ko": "블루 아워"},
+    "category": "Natural Light",
+    "prefix": "blue hour twilight",
+    "suffix": "deep cool cobalt ambience, soft shadowless light, serene low contrast, dusk-toned gradients in the sky",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [58], "key": "alpenglow",
+    "name": {"en": "Alpenglow", "es": "Alpenglow", "zh": "高山辉", "ko": "알펜글로우"},
+    "category": "Natural Light",
+    "prefix": "alpenglow on the mountains",
+    "suffix": "rosy pink and magenta light on distant peaks, indirect horizon glow, soft pastel radiance, ethereal high-altitude calm",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [59], "key": "brocken-spectre",
+    "name": {"en": "Brocken Spectre", "es": "Espectro de Brocken", "zh": "布罗肯幽灵", "ko": "브로켄 현상"},
+    "category": "Natural Light",
+    "prefix": "brocken spectre phenomenon",
+    "suffix": "enlarged shadow of the figure projected onto mist, circular rainbow glory halo around the shadow's head, mountain fog",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [60], "key": "dew-halo",
+    "name": {"en": "Dew Halo", "es": "Halo de rocío", "zh": "露珠光环", "ko": "이슬 헤일로"},
+    "category": "Natural Light",
+    "prefix": "heiligenschein dew halo effect",
+    "suffix": "bright glowing halo in the dewy grass around the head of the subject's shadow, retroreflective sparkle, low morning sun behind the viewer",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "rewritten", "note": "Was 'Heiligenschein-Style'. Preview put a white glow on the head itself — regenerate.", "preview": "regen"}
+  },
+  {
+    "src": [61], "key": "subsurface-glow",
+    "name": {"en": "Subsurface Glow", "es": "Luz translúcida", "zh": "次表面散射", "ko": "서브서피스 글로우"},
+    "category": "Natural Light",
+    "prefix": "strong backlight through translucent materials",
+    "suffix": "subsurface scattering, warm red glow at the edges of ears, fabric and leaves, soft internal light bleed, organic softness",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [62], "key": "volumetric-fog",
+    "name": {"en": "Volumetric Fog", "es": "Niebla volumétrica", "zh": "体积雾", "ko": "볼류메트릭 포그"},
+    "category": "Natural Light",
+    "prefix": "volumetric fog",
+    "suffix": "diffused light shafts through mist, glowing haze around the subject, soft atmospheric depth, dreamy immersive light",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [63], "key": "prismatic-rainbow",
+    "name": {"en": "Prismatic Rainbow", "es": "Arcoíris prismático", "zh": "棱镜彩虹", "ko": "프리즘 레인보우"},
+    "category": "Natural Light",
+    "prefix": "prismatic rainbow light",
+    "suffix": "light refracted through water droplets and crystal, soft spectrum fringes around edges, dreamy ethereal glow on the subject",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [64], "key": "lightning-flash",
+    "name": {"en": "Lightning Flash", "es": "Destello de relámpago", "zh": "闪电瞬光", "ko": "번개 섬광"},
+    "category": "Natural Light",
+    "prefix": "a sudden lightning flash illuminating the scene",
+    "suffix": "momentary intense cold light, stark high-contrast highlights and shadows, stormy sky, electric atmosphere",
+    "prompt": "a hiker standing in a misty mountain valley",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [48], "key": "caustics",
+    "name": {"en": "Caustics", "es": "Cáusticas", "zh": "焦散", "ko": "커스틱"},
+    "category": "CGI Lighting",
+    "prefix": "caustic light patterns",
+    "suffix": "dancing refracted light webs from water and glass, bright rippling clusters, liquid-light geometry shimmering across surfaces",
+    "prompt": "a chrome astronaut statue on a wet reflective street",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [49], "key": "ambient-occlusion",
+    "name": {"en": "Ambient Occlusion", "es": "Oclusión ambiental", "zh": "环境光遮蔽", "ko": "앰비언트 오클루전"},
+    "category": "CGI Lighting",
+    "prefix": "soft ambient occlusion rendering",
+    "suffix": "gentle contact shadows in corners and crevices, grounded weight, subtle depth shading, photorealistic surface grounding",
+    "prompt": "a chrome astronaut statue on a wet reflective street",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [50], "key": "color-bleeding",
+    "name": {"en": "Color Bleeding", "es": "Rebote de color", "zh": "颜色溢出", "ko": "컬러 블리딩"},
+    "category": "CGI Lighting",
+    "prefix": "radiosity color bleeding",
+    "suffix": "colored bounce light spilling from nearby surfaces, soft indirect tint, warm red glow reflected onto the subject",
+    "prompt": "a chrome astronaut statue on a wet reflective street",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [51], "key": "photometric-light",
+    "name": {"en": "Photometric Light", "es": "Luz fotométrica", "zh": "光域网灯光", "ko": "포토메트릭 조명"},
+    "category": "CGI Lighting",
+    "prefix": "photometric IES light profiles",
+    "suffix": "realistic lamp projection shapes on walls and floor, textured non-uniform beam patterns, patterned cones of light",
+    "prompt": "a chrome astronaut statue on a wet reflective street",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [52], "key": "prismatic-refraction",
+    "name": {"en": "Prismatic Refraction", "es": "Refracción prismática", "zh": "棱镜折射", "ko": "프리즘 굴절"},
+    "category": "CGI Lighting",
+    "prefix": "prismatic refraction",
+    "suffix": "light passing through glass and crystal, dispersed spectrum highlights, chromatic splitting, refracted volumetric glow on the subject",
+    "prompt": "a chrome astronaut statue on a wet reflective street",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [80], "key": "sensor-blooming",
+    "name": {"en": "Sensor Blooming", "es": "Blooming del sensor", "zh": "传感器溢光", "ko": "센서 블루밍"},
+    "category": "Lens & Sensor",
+    "prefix": "digital sensor blooming",
+    "suffix": "bright lights overflowing into neighboring pixels, bleeding highlights, glowing washed-out light sources losing their shape",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder — the model rendered it on a billboard. Regenerate.", "preview": "regen"}
+  },
+  {
+    "src": [81], "key": "ccd-smear",
+    "name": {"en": "CCD Smear", "es": "Smear CCD", "zh": "CCD 拖影", "ko": "CCD 스미어"},
+    "category": "Lens & Sensor",
+    "prefix": "CCD sensor smear artifact",
+    "suffix": "bright vertical streaks running straight up and down from each strong light source, column smear trails",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "note": "Removed [SUBJECT] placeholder — rendered as sign text. Regenerate.", "preview": "regen"}
+  },
+  {
+    "src": [82], "key": "moire",
+    "name": {"en": "Moiré", "es": "Moiré", "zh": "摩尔纹", "ko": "모아레"},
+    "category": "Lens & Sensor",
+    "prefix": "moiré interference pattern",
+    "suffix": "wavy iridescent rainbow ripples over fine-grid textures, spectral micro-pattern distortion across the image",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [83], "key": "hot-pixels",
+    "name": {"en": "Hot Pixels", "es": "Píxeles calientes", "zh": "热像素", "ko": "핫 픽셀"},
+    "category": "Lens & Sensor",
+    "prefix": "sensor noise with hot pixels",
+    "suffix": "tiny random red, green and blue dots, bright speckles, long-exposure sensor defects",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [84], "key": "posterized-banding",
+    "name": {"en": "Posterized Banding", "es": "Bandas posterizadas", "zh": "色调分离色带", "ko": "포스터라이즈 밴딩"},
+    "category": "Lens & Sensor",
+    "prefix": "posterized color banding",
+    "suffix": "stepped gradients, discrete color bands in the sky and shadows, low-bit tonal plateaus",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [85], "key": "film-grain",
+    "name": {"en": "Film Grain", "es": "Grano de película", "zh": "胶片颗粒", "ko": "필름 그레인"},
+    "category": "Lens & Sensor",
+    "prefix": "heavy analog film grain",
+    "suffix": "textured organic noise across the whole image, retro photographic feel, soft tonal variation",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [86], "key": "hdr-tone-mapping",
+    "name": {"en": "HDR Tone Mapping", "es": "Mapeo tonal HDR", "zh": "HDR 色调映射", "ko": "HDR 톤 매핑"},
+    "category": "Lens & Sensor",
+    "prefix": "strong HDR tone mapping",
+    "suffix": "enhanced detail in highlights and shadows, local contrast halos, vibrant yet balanced color, hyper-clear depth",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [87], "key": "vignette",
+    "name": {"en": "Vignette", "es": "Viñeta", "zh": "暗角", "ko": "비네팅"},
+    "category": "Lens & Sensor",
+    "prefix": "strong lens vignette",
+    "suffix": "darkened corners, soft gradient falloff toward the edges, attention drawn to the center, classic cinematic framing",
+    "prompt": "a nighttime city scene with reflective puddles and signage",
+    "review": {"status": "cleaned", "preview": "ok"}
+  }
+]

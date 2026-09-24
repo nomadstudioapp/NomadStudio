@@ -44,7 +44,15 @@ function updateCardProgress(card, value, max) {
 }
 
 async function waitForImage(comfyUrl, clientId, promptId, card, readyLabel) {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve, rejectJob) {
+    // A job ComfyUI failed must not leave its card spinning: the direct
+    // (non-queued) runners only report the error in the status line, and the
+    // next job overwrites that — the card stayed "generating" forever and the
+    // failure was invisible.
+    function reject(err) {
+      _markCardError(card, err && err.message);
+      rejectJob(err);
+    }
     if (activeES) { try { activeES.close(); } catch (_) {} activeES = null; }
     var params = new URLSearchParams({ comfyApiUrl: comfyUrl, clientId: clientId });
     activeES = new EventSource('/api/images/comfy/progress-stream?' + params);
@@ -371,13 +379,19 @@ function _markCardGenerating(card) {
 // Same "error" flip _processQueue's own catch block already used inline —
 // shared with the chat queue (flow-gallery.js) so a failed chat send looks
 // the same as any other failed queued job.
-function _markCardError(card) {
+function _markCardError(card, message) {
   if (!card) return;
   card.setAttribute('data-status', 'error');
   var dot = card.querySelector('.nss-card-status-dot');
   var lbl = card.querySelector('.nss-card-status-label');
   if (dot) dot.setAttribute('data-status', 'error');
   if (lbl) lbl.textContent = 'error';
+  // The spinner ring would otherwise keep turning on a job that is over.
+  var imgWrap = card.querySelector('.nss-card-img-wrap');
+  if (imgWrap && imgWrap.querySelector('.nsc-ring')) {
+    imgWrap.innerHTML = '<span class="nss-card-error-msg"></span>';
+    imgWrap.firstChild.textContent = message || 'Generation failed';
+  }
 }
 
 async function _processQueue() {
@@ -404,7 +418,7 @@ async function _processQueue() {
       if (typeof saveSessionSnapshot === 'function') saveSessionSnapshot();
     }
   } catch (err) {
-    _markCardError(card);
+    _markCardError(card, err && err.message);
     if (generateStatus) generateStatus.textContent = '✗ ' + (err.message || 'Generation failed');
     console.error('[FlowEngine] queued job failed:', err);
   } finally {
@@ -697,7 +711,7 @@ async function _generateOneCard(card, ta, statusDot, statusLabel, queueBtn) {
       body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
     });
     var submitData = await submitRes.json();
-    if (!submitRes.ok || submitData.error) throw new Error('Queue rejected');
+    if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
     if (!submitData.prompt_id) throw new Error('No prompt_id');
 
     var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, card, 'Generating…');

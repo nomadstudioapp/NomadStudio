@@ -20,7 +20,7 @@
   var valuesPanelHint = document.getElementById('lib-template-values-panel-hint');
   var valuesPanelBody = document.getElementById('lib-template-values-panel-body');
   var valuesPanelClose = document.getElementById('lib-template-values-panel-close');
-  var templatesSearch = document.getElementById('lib-templates-search');
+  var searchInput = document.getElementById('lib-search');
   var templatesCount = document.getElementById('lib-templates-count');
   var depotToolbar = document.getElementById('lib-depot-toolbar');
   var depotDetailEl = document.getElementById('lib-depot-detail');
@@ -109,6 +109,48 @@
       });
     });
   });
+
+  /* ── Image format + output copy ──────────────────────────────────────────
+     Every image saved for a style (Generate images, or an uploaded one) is
+     stored per model in PNG or WebP. With an output subfolder set, a copy is
+     also written to <output>/<subfolder>/<model>/<style-key>.<ext> — stable
+     names a style pack's images can be collected from (styles_routes.py
+     update_style_model_image). Remembered per browser. */
+  var FORMAT_KEY = 'nomad-build-style-image-format';
+  var EXPORT_KEY = 'nomad-build-style-export-subfolder';
+  var formatBtns = document.querySelectorAll('#lib-format-btns .nsc-res-btn');
+  var exportInput = document.getElementById('lib-export-subfolder');
+  var selectedFormat = 'png';
+  try { selectedFormat = localStorage.getItem(FORMAT_KEY) === 'webp' ? 'webp' : 'png'; } catch (_) {}
+  try { if (exportInput) exportInput.value = localStorage.getItem(EXPORT_KEY) || ''; } catch (_) {}
+
+  function syncFormatBtns() {
+    formatBtns.forEach(function (b) {
+      var a = b.dataset.format === selectedFormat;
+      b.classList.toggle('is-active', a);
+      b.setAttribute('aria-pressed', a ? 'true' : 'false');
+    });
+  }
+  syncFormatBtns();
+  formatBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      selectedFormat = btn.dataset.format === 'webp' ? 'webp' : 'png';
+      try { localStorage.setItem(FORMAT_KEY, selectedFormat); } catch (_) {}
+      syncFormatBtns();
+    });
+  });
+  if (exportInput) {
+    exportInput.addEventListener('input', function () {
+      try { localStorage.setItem(EXPORT_KEY, exportInput.value.trim()); } catch (_) {}
+    });
+  }
+
+  function imageSaveOptions() {
+    return {
+      format: selectedFormat,
+      exportSubfolder: exportInput ? exportInput.value.trim() : '',
+    };
+  }
 
   function renderQuantizationOptions(quant) {
     var options = (quant && Array.isArray(quant.options)) ? quant.options : [];
@@ -306,7 +348,10 @@
   // practice theme names are flat. Selecting a theme filters the grid to
   // that theme's templates (cards); clicking a card opens Edit Template.
   var templateThemeTree = { flatNames: [], groups: [] };
-  var templateSearchQuery = '';
+  // Build-wide search (#lib-search) — applies to whichever category is
+  // open, on top of the Styles category / Templates theme selection.
+  var searchQuery = '';
+  var activeItems = []; // every item of the open category, unfiltered
   var selectedTemplateTheme = ''; // '' = All; a group name; or a full "Group/Sub" string
   var expandedTemplateThemeGroups = {};
   // Same click-to-close accordion behavior as stylesTreeOpen above.
@@ -388,26 +433,56 @@
           return c === selTheme || c.indexOf(selTheme + '/') === 0;
         });
       }
-      var q = templateSearchQuery.trim().toLowerCase();
-      if (q) {
-        out = out.filter(function (it) {
-          return [it.name, it.theme, it.pack, it.template]
-            .join(' ').toLowerCase().indexOf(q) !== -1;
-        });
-      }
-      return out;
+      return filterBySearch(id, out);
     }
-    return items;
+    return filterBySearch(id, items);
   }
 
-  // Typing re-filters the already-loaded catalogue in place; nothing is
-  // re-fetched. Cheap enough at 2274 items to run on every keystroke.
-  if (templatesSearch) {
-    templatesSearch.addEventListener('input', function () {
-      templateSearchQuery = templatesSearch.value || '';
-      var cat = CATEGORIES.find(function (c) { return c.id === 'templates'; });
-      if (cat && activeId === 'templates') {
-        renderGrid(cat, filterItemsForDisplay('templates', allTemplateItems));
+  // Text a card can be found by: its own name/description plus whatever
+  // prompt-ish fields the category carries, in English AND as shown on
+  // screen (style-pack names/categories translate via tField) — same
+  // "either language works" rule as the hubs' .cs-flow-search.
+  var SEARCH_FIELDS = ['keyword', 'name', 'label', 'type', 'description', 'category', 'theme', 'pack',
+                       'template', 'prompt', 'prefix', 'suffix'];
+  function searchTextFor(id, it) {
+    var cat = CATEGORIES.find(function (c) { return c.id === id; });
+    var parts = SEARCH_FIELDS.map(function (k) { return typeof it[k] === 'string' ? it[k] : ''; });
+    if (cat && cat.name) parts.push(cat.name(it));
+    if (cat && cat.note) parts.push(cat.note(it));
+    var tf = window.NomadI18n && window.NomadI18n.tField;
+    if (tf) {
+      if (it.name) parts.push(tf(it.name));
+      if (it.category) {
+        parts.push(tf(it.category));
+        it.category.split('/').forEach(function (seg) { parts.push(tf(seg)); });
+      }
+    }
+    return parts.join(' ').toLowerCase();
+  }
+
+  // Every word must match somewhere ("anime retro" finds "Retro VHS Anime").
+  function filterBySearch(id, items) {
+    var words = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return items;
+    return items.filter(function (it) {
+      var hay = searchTextFor(id, it);
+      return words.every(function (w) { return hay.indexOf(w) !== -1; });
+    });
+  }
+
+  // Typing re-filters the already-loaded list in place; nothing is
+  // re-fetched. Cheap enough (2274 templates, a few hundred styles) to run
+  // on every keystroke.
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      searchQuery = searchInput.value || '';
+      var cat = CATEGORIES.find(function (c) { return c.id === activeId; });
+      if (cat && !depotDetailId) renderGrid(cat, filterItemsForDisplay(activeId, activeItems));
+    });
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && searchInput.value) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
       }
     });
   }
@@ -431,18 +506,18 @@
         chip += '<div class="lib-style-cat-tree" role="group" aria-label="Style categories">' +
           '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === '' ? ' is-active' : '') + '" data-style-cat="">All</button>' +
           styleCategoryTree.flatNames.map(function (name) {
-            return '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === name ? ' is-active' : '') + '" data-style-cat="' + escHtml(name) + '">' + escHtml(name) + '</button>';
+            return '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === name ? ' is-active' : '') + '" data-style-cat="' + escHtml(name) + '">' + trLit(name) + '</button>';
           }).join('') +
           styleCategoryTree.groups.map(function (g) {
             var expanded = !!expandedStyleGroups[g.name];
             return '<div class="lib-style-cat-group' + (expanded ? ' is-expanded' : '') + '">' +
               '<button type="button" class="lib-style-cat-group-toggle' + (selectedStyleCategory === g.name ? ' is-active' : '') + '" data-style-group="' + escHtml(g.name) + '">' +
                 '<svg class="lib-style-cat-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' +
-                '<span>' + escHtml(g.name) + '</span>' +
+                trLit(g.name) +
               '</button>' +
               (expanded ? '<div class="lib-style-cat-group-children">' +
                 g.subs.map(function (s) {
-                  return '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === s.full ? ' is-active' : '') + '" data-style-cat="' + escHtml(s.full) + '">' + escHtml(s.label) + '</button>';
+                  return '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === s.full ? ' is-active' : '') + '" data-style-cat="' + escHtml(s.full) + '">' + trLit(s.label) + '</button>';
                 }).join('') +
               '</div>' : '') +
             '</div>';
@@ -482,6 +557,19 @@
   // see the CSS comment above .lib-style-card-outer in nomad_studio.css for
   // why some old class names (.lib-style-card-img-wrap etc.) are kept
   // alongside the new .rp-card* ones (existing JS queries by those names).
+  // Style names and categories that come from an installed style pack are
+  // translated by the package's own texts (package_service.texts_for →
+  // flowLabels). data-i18n-literal keeps the English original so a later
+  // language switch (i18n.js applyStrings) re-translates in place.
+  function tr(key, fallback) {
+    return (window.NomadI18n && window.NomadI18n.t) ? window.NomadI18n.t(key, fallback) : fallback;
+  }
+
+  function trLit(text) {
+    var shown = (window.NomadI18n && window.NomadI18n.tField) ? window.NomadI18n.tField(text) : text;
+    return '<span data-i18n-literal="' + escHtml(text) + '">' + escHtml(shown) + '</span>';
+  }
+
   function styleCardHtml(item) {
     var img = item.has_image ? styleThumbUrl(item.image_url) : '';
     var name = item.name || 'Untitled';
@@ -498,8 +586,8 @@
             '<i data-lucide="palette" class="lib-style-card-fallback-icon" aria-hidden="true"></i>' +
           '</div>' +
           '<div class="rp-card-body">' +
-            '<p class="rp-card-name">' + escHtml(name) + '</p>' +
-            (category ? '<p class="lib-style-card-category">' + escHtml(category) + '</p>' : '') +
+            '<p class="rp-card-name">' + trLit(name) + '</p>' +
+            (category ? '<p class="lib-style-card-category">' + trLit(category) + '</p>' : '') +
             (prompt ? '<p class="rp-card-desc">' + escHtml(prompt) + '</p>' : '') +
           '</div>' +
         '</div>' +
@@ -664,8 +752,8 @@
     if (!items.length) {
       grid.style.display = 'none';
       empty.hidden = false;
-      empty.textContent = templateSearchQuery && cat.id === 'templates'
-        ? 'No templates match "' + templateSearchQuery + '".'
+      empty.textContent = searchQuery.trim()
+        ? tr('build.noMatch', 'Nothing matches your search.')
         : 'No ' + cat.label.toLowerCase() + ' saved yet.';
       return;
     }
@@ -778,6 +866,10 @@
     if (toolbar) toolbar.hidden = id !== 'styles';
     if (templatesToolbar) templatesToolbar.hidden = id !== 'templates';
     if (templatesCount && id !== 'templates') templatesCount.textContent = '';
+    // A new category starts unfiltered — the query was about the old one.
+    searchQuery = '';
+    activeItems = [];
+    if (searchInput) { searchInput.value = ''; searchInput.hidden = false; }
     if (depotToolbar) depotToolbar.hidden = id !== 'depot';
     // Every category grid renders .rp-card photo cards now (see photoCardHtml)
     // except Templates, whose grid isn't even shown (sidebar tree picker
@@ -795,6 +887,7 @@
 
     fetchItems(cat).then(function (items) {
       if (activeId !== id) return;
+      activeItems = items;
       if (id === 'styles') { allStyleItems = items; renderGrid(cat, filterItemsForDisplay(id, items)); return; }
       if (id === 'templates') { allTemplateItems = items; renderGrid(cat, filterItemsForDisplay(id, items)); return; }
       renderGrid(cat, filterItemsForDisplay(id, items));
@@ -896,6 +989,17 @@
   };
   var editingStyleId = null;
   var editMode = 'edit'; // 'edit' | 'create'
+
+  // Any edit-panel preview (Style / Template / Item) whose file fails to
+  // load falls back to the icon instead of a broken-image box. Image error
+  // events don't bubble, hence the capture phase.
+  document.addEventListener('error', function (e) {
+    var img = e.target;
+    if (!img || img.tagName !== 'IMG' || !img.classList.contains('lib-style-edit-image')) return;
+    img.hidden = true;
+    var wrap = img.closest('.lib-style-edit-image-wrap');
+    if (wrap) wrap.classList.add('lib-style-edit-image-wrap--fallback');
+  }, true);
 
   function setEditImage(url) {
     if (!editImageWrap || !editImageEl) return;
@@ -1035,7 +1139,7 @@
         fetch('/api/styles/' + encodeURIComponent(editingStyleId) + '/model-image', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modelId: selectedModelId, imageUrl: reader.result }),
+          body: JSON.stringify(Object.assign({ modelId: selectedModelId, imageUrl: reader.result }, imageSaveOptions())),
         }).then(function (r) {
           if (!r.ok) throw new Error('Image upload failed (' + r.status + ')');
           return r.json();
@@ -1587,7 +1691,7 @@
     editingDepotId = null;
     if (depotEditTitle) depotEditTitle.textContent = 'Create Depot';
     if (depotEditDelBtn) depotEditDelBtn.hidden = true;
-    if (depotEditSaveBtn) depotEditSaveBtn.textContent = 'Create';
+    if (depotEditSaveBtn) depotEditSaveBtn.querySelector('.lib-btn-label').textContent = 'Create';
     depotEditName.value = '';
     depotEditDesc.value = '';
     depotEditStatus.textContent = '';
@@ -1607,7 +1711,7 @@
       editingDepotId = depotId;
       if (depotEditTitle) depotEditTitle.textContent = 'Edit Depot';
       if (depotEditDelBtn) depotEditDelBtn.hidden = false;
-      if (depotEditSaveBtn) depotEditSaveBtn.textContent = 'Save';
+      if (depotEditSaveBtn) depotEditSaveBtn.querySelector('.lib-btn-label').textContent = 'Save';
       depotEditName.value = item.name || '';
       depotEditDesc.value = item.description || '';
       depotEditStatus.textContent = '';
@@ -2078,6 +2182,7 @@
   function showDepotDetail(depotId) {
     depotDetailId = depotId;
     if (depotToolbar) depotToolbar.hidden = true;
+    if (searchInput) searchInput.hidden = true;  // the detail view isn't a grid
     Promise.all([
       fetch('/api/depots/' + encodeURIComponent(depotId)).then(function (r) { return r.json(); }),
       fetch('/api/depots/active').then(function (r) { return r.json(); }),
@@ -2195,14 +2300,60 @@
     if (!wrap) return;
     if (on) {
       if (wrap.dataset.savedHtml === undefined) wrap.dataset.savedHtml = wrap.innerHTML;
-      wrap.innerHTML = RING_SVG;
+      // Same ring + ETA / % / steps slots as Create's generating card
+      // (flow-generation.js _markCardGenerating), filled by
+      // updateStyleCardProgress from the ComfyUI progress stream.
+      wrap.innerHTML = RING_SVG +
+        '<span class="nsc-ring-pct"></span><span class="nsc-ring-steps">' +
+        escHtml(tr('build.queued', 'Queued…')) + '</span><span class="nsc-ring-eta"></span>';
       wrap.classList.add('lib-style-card-img-wrap--generating');
+      wrap._genStartTime = Date.now();
     } else {
+      if (wrap._etaInterval) { clearInterval(wrap._etaInterval); wrap._etaInterval = null; }
       wrap.classList.remove('lib-style-card-img-wrap--generating');
       if (wrap.dataset.savedHtml !== undefined) {
         wrap.innerHTML = wrap.dataset.savedHtml;
         delete wrap.dataset.savedHtml;
       }
+    }
+  }
+
+  var RING_CIRC = 113.1; // 2π × r=18, same ring as flow-generation.js
+
+  function fmtEta(secs) {
+    if (secs <= 0) return '';
+    if (secs < 60) return secs + 's';
+    return Math.floor(secs / 60) + ':' + String(Math.round(secs % 60)).padStart(2, '0');
+  }
+
+  // Mirrors flow-generation.js updateCardProgress for a Build style card:
+  // determinate ring, "NN%", "step / steps" and a live ETA countdown
+  // estimated from the time elapsed so far.
+  function updateStyleCardProgress(styleId, value, max) {
+    if (!max || max <= 0) return;
+    var card = findStyleCard(styleId);
+    var wrap = card && card.querySelector('.lib-style-card-img-wrap');
+    if (!wrap || !wrap.classList.contains('lib-style-card-img-wrap--generating')) return;
+    var pct = Math.min(100, Math.round((value / max) * 100));
+    var ring = wrap.querySelector('.nsc-ring');
+    var fill = wrap.querySelector('.nsc-ring-fill');
+    var pctEl = wrap.querySelector('.nsc-ring-pct');
+    var stepsEl = wrap.querySelector('.nsc-ring-steps');
+    var etaEl = wrap.querySelector('.nsc-ring-eta');
+    if (ring) ring.classList.remove('nsc-ring--indeterminate');
+    if (fill) fill.style.strokeDashoffset = RING_CIRC * (1 - pct / 100);
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (stepsEl) stepsEl.textContent = value + ' / ' + max;
+    if (wrap._etaInterval) { clearInterval(wrap._etaInterval); wrap._etaInterval = null; }
+    if (etaEl && wrap._genStartTime && pct > 0 && pct < 100) {
+      var remaining = Math.round(((Date.now() - wrap._genStartTime) / 1000) * (100 - pct) / pct);
+      etaEl.textContent = fmtEta(remaining);
+      wrap._etaInterval = setInterval(function () {
+        remaining = Math.max(0, remaining - 1);
+        etaEl.textContent = fmtEta(remaining);
+      }, 1000);
+    } else if (etaEl) {
+      etaEl.textContent = '';
     }
   }
 
@@ -2229,7 +2380,7 @@
   // API directly, same as flow-generation.js's pollComfy.
   async function pollComfyHistory(promptId, comfyUrl) {
     var failures = 0;
-    for (var i = 0; i < 60; i++) {
+    for (var i = 0; i < 600; i++) {
       var res, data;
       try {
         res = await fetch(comfyUrl + '/history/' + promptId, { cache: 'no-store' });
@@ -2278,7 +2429,7 @@
   // /history endpoint directly is reliable regardless of that race, so it
   // runs immediately and unconditionally; the SSE stream is raced alongside
   // it purely as a (usually faster) shortcut, not a required signal.
-  function waitForComfyImage(comfyUrl, clientId, promptId) {
+  function waitForComfyImage(comfyUrl, clientId, promptId, onProgress) {
     return new Promise(function (resolve, reject) {
       var settled = false;
       var es = null;
@@ -2301,6 +2452,8 @@
             var msg = JSON.parse(e.data);
             var t = String(msg.type || '').toLowerCase();
             if (t === 'image_ready') imgUrl = msg.url || msg.image_url;
+            else if (t === 'progress' && msg.max > 0 && onProgress) onProgress(msg.value, msg.max);
+            else if (t === 'executing' && onProgress) onProgress(0, 0);
             else if (t === 'done' && imgUrl) settle(resolve, imgUrl);
           } catch (_) {}
         };
@@ -2344,7 +2497,14 @@
     if (!submitRes.ok || submitData.error) throw new Error('ComfyUI queue rejected the job');
     if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
 
-    var rawUrl = await waitForComfyImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id);
+    var rawUrl = await waitForComfyImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id,
+      function (value, max) {
+        if (max > 0) { updateStyleCardProgress(style.id, value, max); return; }
+        // First "executing" event: our prompt left the queue.
+        var card = findStyleCard(style.id);
+        var stepsEl = card && card.querySelector('.lib-style-card-img-wrap--generating .nsc-ring-steps');
+        if (stepsEl && !/\//.test(stepsEl.textContent)) stepsEl.textContent = tr('build.starting', 'Starting…');
+      });
     if (!rawUrl) throw new Error('No image returned');
 
     var u = new URL(rawUrl);
@@ -2365,9 +2525,12 @@
     var patchRes = await fetch('/api/styles/' + encodeURIComponent(style.id) + '/model-image', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ modelId: modelId, imageUrl: imageUrl }),
+      body: JSON.stringify(Object.assign({ modelId: modelId, imageUrl: imageUrl }, imageSaveOptions())),
     });
-    if (!patchRes.ok) throw new Error('Failed to associate the image with the style');
+    if (!patchRes.ok) {
+      var patchErr = await patchRes.json().catch(function () { return {}; });
+      throw new Error(patchErr.error || 'Failed to associate the image with the style');
+    }
     return imageUrl;
   }
 
@@ -2393,7 +2556,7 @@
       var missing = currentItems.filter(function (it) { return !it.has_image; });
       if (!missing.length) {
         labelSpan.textContent = 'Nothing missing';
-        setTimeout(function () { labelSpan.textContent = 'Generate images'; }, 1500);
+        setTimeout(function () { labelSpan.textContent = tr('build.generate', 'Generate'); }, 1500);
         return;
       }
 
@@ -2413,8 +2576,8 @@
         generateBtn.classList.remove('lib-toolbar-generate-btn--stop');
         if (generateBtnIcon) generateBtnIcon.innerHTML = generateBtnIdleIcon;
         if (currentStyleId != null) setCardGenerating(currentStyleId, false);
-        labelSpan.textContent = stopped ? 'Stopped' : (failed ? (failed + '/' + total + ' failed') : 'Generate images');
-        if (stopped || failed) setTimeout(function () { labelSpan.textContent = 'Generate images'; }, 2500);
+        labelSpan.textContent = stopped ? 'Stopped' : (failed ? (failed + '/' + total + ' failed') : tr('build.generate', 'Generate'));
+        if (stopped || failed) setTimeout(function () { labelSpan.textContent = tr('build.generate', 'Generate'); }, 2500);
       }
 
       function next() {

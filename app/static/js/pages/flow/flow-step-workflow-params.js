@@ -110,17 +110,48 @@ function renderWorkflowParams(stepDef, el, stepNum) {
       });
     });
 
-    if (_quantEligibleRW) {
-      fetch('/api/models/workflow-file/analysis?file=' + encodeURIComponent(stepDef.workflow_file))
+    // Only the newest request may fill the list: an engine switch (below)
+    // can fire while the first analysis fetch is still in flight.
+    var _quantLoadSeqRW = 0;
+    var _loadQuantRW = function (file) {
+      var seq = ++_quantLoadSeqRW;
+      fetch('/api/models/workflow-file/analysis?file=' + encodeURIComponent(file))
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
+          if (seq !== _quantLoadSeqRW) return;
           var analysis = res && res.analysis;
           var record = analysis ? { analysis: analysis } : null;
           buildQuantizationList(record, quantListElRW, buildAdv);
           var hasQuant = !!selectedQuantizationValues;
-          if (hasQuant) { advRowRW.style.display = ''; buildAdv(); }
+          if (hasQuant) advRowRW.style.display = '';
+          buildAdv();
         })
         .catch(function () {});
+    };
+    if (_quantEligibleRW) _loadQuantRW(stepDef.workflow_file);
+
+    // A "Choose engine" step split out of this one (Mix/Refine flow_data
+    // flows, see _build_mix_flow_definition) swaps the graph, but the
+    // Quantization list here was built from the step's original file: picking
+    // Klein 4B still sent the 9B UNET (with the 4B text encoder — ComfyUI
+    // failed on the shape mismatch). Follow the engine: same file, same node
+    // ids, quantization options re-read from the new graph.
+    if (_quantEligibleRW && !fields.some(function (f) { return f.type === 'engine_select'; })) {
+      var _onEngineChangedRW = function (ev) {
+        if (!el.isConnected) { document.removeEventListener('ncf-engine-changed', _onEngineChangedRW); return; }
+        var eng = ev.detail && ev.detail.engine;
+        if (!eng || !eng.workflow_file || ev.detail.stepId === stepDef.id) return;
+        stepDef.workflow_file = eng.workflow_file;
+        if (eng.image_node) stepDef.image_node = eng.image_node;
+        setVal(stepDef.id, 'workflow_file', eng.workflow_file);
+        fields.forEach(function (other) {
+          if (other.id === 'steps' && eng.steps_key) other.adv_key = eng.steps_key;
+          if (other.id === 'seed'  && eng.seed_key)  other.adv_key = eng.seed_key;
+          if (other.id === 'cfg'   && eng.cfg_key)   other.adv_key = eng.cfg_key;
+        });
+        _loadQuantRW(eng.workflow_file);
+      };
+      document.addEventListener('ncf-engine-changed', _onEngineChangedRW);
     }
   }
 
@@ -158,7 +189,13 @@ function renderWorkflowParams(stepDef, el, stepNum) {
       if (f.type === 'compose' && Array.isArray(f.groups)) {
         if (previewedKeys[f.adv_key]) return;
         var parts = f.groups.map(function (g) {
-          return String(getVal(stepDef.id, 'compose_' + f.id + '_' + g.id) || '');
+          var raw = String(getVal(stepDef.id, 'compose_' + f.id + '_' + g.id) || '').trim();
+          if (!raw) return '';
+          // g.template: e.g. "Use <image1> as {value}." — each group can pin
+          // its picked option to a fixed slot (an image number, a role name…)
+          // instead of the plain value being concatenated as-is. Groups with
+          // no template behave exactly as before (raw value only).
+          return g.template ? g.template.replace(/\{value\}/g, raw) : raw;
         }).filter(function (v) { return v.trim() !== ''; });
         if (parts.length && f.adv_key) advVals[f.adv_key] = (f.prefix || '') + parts.join(f.separator || ', ');
       } else if (f.type === 'compose_preview') {
@@ -168,7 +205,12 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var _arPSet = (f.presets_id && ASPECT_PRESET_SETS[f.presets_id]) ? ASPECT_PRESET_SETS[f.presets_id] : ASPECT_PRESETS;
         var aspectKey = getVal(stepDef.id, 'field_' + f.id) || f.default || _arPSet[Math.floor(_arPSet.length / 2)].key;
         var preset = _arPSet.filter(function (p) { return p.key === aspectKey; })[0] || _arPSet[Math.floor(_arPSet.length / 2)];
-        var dims = preset[f.resolution || 'md'] || preset.md;
+        // Custom width/height (typed in the Resolution panel) wins over the
+        // preset's sd/md/hd/uhd pair — same precedence as Create's own
+        // guided aspect+resolution controls (renderParamGroup).
+        var _arCustom = getVal(stepDef.id, 'field_' + f.id + '_custom');
+        var _arTier = getVal(stepDef.id, 'field_' + f.id + '_tier') || f.resolution || 'md';
+        var dims = _arCustom || preset[_arTier] || preset.md;
         if (f.adv_keys) {
           if (f.adv_keys.width)  advVals[f.adv_keys.width]  = dims.w;
           if (f.adv_keys.height) advVals[f.adv_keys.height] = dims.h;
@@ -312,13 +354,18 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           esSelect.appendChild(opt);
         });
 
-        function esApplyEngine(engineId) {
+        function esApplyEngine(engineId, isUserChange) {
           var eng = esEngines.filter(function (e) { return e.id === engineId; })[0] || esEngines[0];
           setVal(stepDef.id, 'field_' + f.id, eng.id);
           esSelect.value = eng.id;
           stepDef.workflow_file = eng.workflow_file;
           stepDef.image_node = eng.image_node;
           setVal(stepDef.id, 'workflow_file', eng.workflow_file);
+          // Tell a separate Parameters step (whose Quantization list belongs
+          // to the graph) — deferred on first render, it isn't built yet.
+          var _esDetail = { stepId: stepDef.id, engine: eng };
+          var _esNotify = function () { document.dispatchEvent(new CustomEvent('ncf-engine-changed', { detail: _esDetail })); };
+          if (isUserChange) _esNotify(); else setTimeout(_esNotify, 0);
 
           fields.forEach(function (other) {
             if (other.id === 'prompt'   && eng.prompt_key) other.adv_key = eng.prompt_key;
@@ -326,7 +373,29 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             if (other.id === 'steps'    && eng.steps_key)  other.adv_key = eng.steps_key;
             if (other.id === 'cfg'      && eng.cfg_key)    other.adv_key = eng.cfg_key;
             if (other.id === 'seed'     && eng.seed_key)   other.adv_key = eng.seed_key;
+            // Different engines run best at different step counts (Qwen
+            // 2.1: 8/16/25, no fast LoRA confirmed yet; Klein/Boogu: 4/8
+            // with their Lightning-style LoRAs) — the quick-pick pills
+            // follow whichever engine is selected instead of showing one
+            // fixed set that's wrong for 3 out of 4 engines.
+            if (other.id === 'steps' && Array.isArray(eng.steps_quick_options)) {
+              other.quick_options = eng.steps_quick_options;
+            }
+            if (other.id === 'steps' && eng.steps_default != null) {
+              other.default = eng.steps_default;
+            }
           });
+
+          // A pills set built for the PREVIOUS engine is now stale — only
+          // the fields themselves were mutated above, nothing re-rendered
+          // the DOM yet. The initial call (isUserChange falsy) is already
+          // mid-render via renderFields()'s own fields.forEach, so a nested
+          // renderFields() here would recurse; only the user's own engine
+          // switch needs the rebuild.
+          if (isUserChange) {
+            renderFields();
+            return;
+          }
 
           if (quantListElRW) {
             fetch('/api/models/workflow-file/analysis?file=' + encodeURIComponent(eng.workflow_file))
@@ -345,7 +414,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           }
         }
 
-        esSelect.addEventListener('change', function () { esApplyEngine(esSelect.value); });
+        esSelect.addEventListener('change', function () { esApplyEngine(esSelect.value, true); });
 
         // Apply the initially-selected engine's node mapping right away, so
         // the very first buildAdv() call (and image_node used for preview /
@@ -411,13 +480,9 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             phEditBtnRef.addEventListener('click', function () {
               _openEditPromptPanel('image', phTaRef, _applyEditedPromptPh, 'Edit Prompt');
             });
-            // Same cross-step registry prompt_input uses (flow-step-prompt-input.js)
-            // — lets the sibling image step's "Choose a Style" pick pop this
-            // panel open right away, titled "Edit Prompt from Style".
-            window._ncfEditPromptOpeners = window._ncfEditPromptOpeners || {};
-            window._ncfEditPromptOpeners['image'] = function (title) {
-              _openEditPromptPanel('image', phTaRef, _applyEditedPromptPh, title);
-            };
+            // Same auto-apply prompt_input uses (flow-step-prompt-input.js):
+            // a style picked on the image step lands in this prompt directly.
+            _bindStyleAutoApply('image', phTaRef, _applyEditedPromptPh);
           })(phEditBtn, phTa, f.id);
         }
 
@@ -506,62 +571,94 @@ function renderWorkflowParams(stepDef, el, stepNum) {
       }
 
       // ── aspect_ratio ──────────────────────────────────────────────────────
+      // Same "icon button → side panel" pattern Create's guided params use
+      // (renderParamGroup, openAspectRatioPanel/openResolutionPanel below) —
+      // a compact label+value row here, the full 15-ratio slider and the
+      // SD/MD/HD/UHD tier picker live in the shared side panel. State is
+      // scoped to this field (stepValues[stepDef.id]), not Create's global
+      // session params, so several flows can each have their own.
       if (f.type === 'aspect_ratio') {
-        var arPresets  = (f.presets_id && ASPECT_PRESET_SETS[f.presets_id]) ? ASPECT_PRESET_SETS[f.presets_id] : ASPECT_PRESETS;
-        var arMid      = Math.floor(arPresets.length / 2);
+        var arPresets = (f.presets_id && ASPECT_PRESET_SETS[f.presets_id]) ? ASPECT_PRESET_SETS[f.presets_id] : ASPECT_PRESETS;
+        var arMid = Math.floor(arPresets.length / 2);
+        var arDefaultIdx = arMid;
+        arPresets.forEach(function (p, i) { if (p.key === f.default) arDefaultIdx = i; });
 
-        var arRow = document.createElement('div');
-        arRow.className = 'nsc-field-row nsc-field-row--compose';
-        var arLbl = document.createElement('label');
-        arLbl.className = 'nsc-field-label';
-        arLbl.textContent = f.label || 'Aspect ratio';
-        arRow.appendChild(arLbl);
+        var storedArKey = getVal(stepDef.id, 'field_' + f.id);
+        var arIdx = arDefaultIdx;
+        if (storedArKey) arPresets.forEach(function (p, i) { if (p.key === storedArKey) arIdx = i; });
+        var arTier = getVal(stepDef.id, 'field_' + f.id + '_tier') || f.resolution || 'md';
+        var arCustomDims = getVal(stepDef.id, 'field_' + f.id + '_custom') || null;
 
-        var storedAr  = getVal(stepDef.id, 'field_' + f.id);
-        var initArKey = (storedAr != null && storedAr !== '') ? storedAr : (f.default || arPresets[arMid].key);
-        var initArIdx = arMid;
-        arPresets.forEach(function (p, i) { if (p.key === initArKey) initArIdx = i; });
+        var arFieldId = 'ncf-ar-' + stepDef.id + '-' + f.id;
+        var arBlock = document.createElement('div');
+        arBlock.className = 'nsc-param-block';
+        arBlock.innerHTML =
+          '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(f.label || 'Aspect ratio') +
+            ' <span class="nsc-param-value" id="' + arFieldId + '-label">' + escHtml(arPresets[arIdx].label) + '</span>' +
+            '<button type="button" class="nsc-history-btn nsc-options-trigger" id="' + arFieldId + '-btn" aria-label="Choose aspect ratio">' +
+              '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="15" height="15" rx="2"/></svg>' +
+            '</button>' +
+          '</p>';
+        fieldsWrap.appendChild(arBlock);
 
-        var iconsHtml = arPresets.map(function (p, i) {
-          var ic  = p.icon || { vw: 18, vh: 18, rw: 16.5, rh: 16.5 };
-          var tip = p.hint ? ' title="' + p.hint + '"' : '';
-          return '<div class="nsc-aspect-icon-item" data-idx="' + i + '"' + tip + '>' +
-            '<svg viewBox="0 0 ' + ic.vw + ' ' + ic.vh + '" width="' + ic.vw + '" height="' + ic.vh + '">' +
-            '<rect x=".75" y=".75" width="' + ic.rw + '" height="' + ic.rh + '" rx="1.5"/></svg></div>';
-        }).join('');
+        var arResBlock = document.createElement('div');
+        arResBlock.className = 'nsc-param-block';
+        arResBlock.innerHTML =
+          '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="' + arFieldId + '-res-label">—</span>' +
+            '<button type="button" class="nsc-history-btn nsc-options-trigger" id="' + arFieldId + '-res-btn" aria-label="Choose resolution">' +
+              '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
+            '</button>' +
+          '</p>';
+        fieldsWrap.appendChild(arResBlock);
 
-        var ticksHtml = arPresets.map(function (p) {
-          var tip = p.hint ? ' title="' + p.hint + '"' : '';
-          return '<span' + tip + '>' + p.label + '</span>';
-        }).join('');
+        var arLabelEl = arBlock.querySelector('#' + arFieldId + '-label');
+        var arBtn     = arBlock.querySelector('#' + arFieldId + '-btn');
+        var arResLabelEl = arResBlock.querySelector('#' + arFieldId + '-res-label');
+        var arResBtn      = arResBlock.querySelector('#' + arFieldId + '-res-btn');
 
-        var arWidget = document.createElement('div');
-        arWidget.className = 'nsc-aspect-slider-wrap';
-        arWidget.innerHTML =
-          '<div class="nsc-aspect-icons' + (arPresets.length > 5 ? ' nsc-aspect-icons--wide' : '') + '" aria-hidden="true">' + iconsHtml + '</div>' +
-          '<input class="nsc-aspect-slider" type="range" min="0" max="' + (arPresets.length - 1) + '" step="1" value="' + initArIdx + '" aria-label="Aspect ratio">' +
-          '<div class="nsc-aspect-ticks">' + ticksHtml + '</div>';
-        arRow.appendChild(arWidget);
-        fieldsWrap.appendChild(arRow);
+        function _arUpdateResLabel() {
+          var preset = arPresets[arIdx];
+          var dims = arCustomDims || (preset && preset[arTier]);
+          if (arResLabelEl) arResLabelEl.textContent = arCustomDims
+            ? (arCustomDims.w + '×' + arCustomDims.h)
+            : (arTier || 'md').toUpperCase() + (dims ? ' · ' + dims.w + '×' + dims.h : '');
+        }
+        _arUpdateResLabel();
 
-        var arSlider    = arWidget.querySelector('.nsc-aspect-slider');
-        var arIconItems = arWidget.querySelectorAll('.nsc-aspect-icon-item');
-        var arTickSpans = arWidget.querySelectorAll('.nsc-aspect-ticks span');
-
-        (function (fid, presets) {
-          function setArAspect(idx) {
-            arSlider.value = idx;
-            arIconItems.forEach(function (ic, i) { ic.classList.toggle('is-active', i === idx); });
-            arTickSpans.forEach(function (t, i)  { t.classList.toggle('is-active', i === idx); });
-            setVal(stepDef.id, 'field_' + fid, presets[idx].key);
+        arBtn.addEventListener('click', function () {
+          openAspectRatioPanel(arIdx, function (idx) {
+            arIdx = idx;
+            arCustomDims = null;
+            setVal(stepDef.id, 'field_' + f.id, arPresets[idx].key);
+            setVal(stepDef.id, 'field_' + f.id + '_custom', null);
+            if (arLabelEl) arLabelEl.textContent = arPresets[idx].label;
+            _arUpdateResLabel();
             buildAdv();
             triggerPreviewUpdate();
-          }
-          arSlider.addEventListener('input', function () { setArAspect(+arSlider.value); });
-          arTickSpans.forEach(function (t, i) { t.addEventListener('click', function () { setArAspect(i); }); });
-          arIconItems.forEach(function (ic, i) { ic.addEventListener('click', function () { setArAspect(i); }); });
-          setArAspect(initArIdx);
-        }(f.id, arPresets));
+          });
+        });
+        arResBtn.addEventListener('click', function () {
+          openResolutionPanel(arIdx, arTier, function (tier) {
+            arTier = tier;
+            arCustomDims = null;
+            setVal(stepDef.id, 'field_' + f.id + '_tier', tier);
+            setVal(stepDef.id, 'field_' + f.id + '_custom', null);
+            _arUpdateResLabel();
+            buildAdv();
+            triggerPreviewUpdate();
+          }, {
+            customDims: arCustomDims,
+            onCustomChange: function (dims) {
+              arCustomDims = dims;
+              setVal(stepDef.id, 'field_' + f.id + '_custom', dims);
+              _arUpdateResLabel();
+              buildAdv();
+              triggerPreviewUpdate();
+            },
+          });
+        });
+
+        setVal(stepDef.id, 'field_' + f.id, arPresets[arIdx].key);
         return;
       }
 
@@ -1435,9 +1532,25 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           function getComposedText() {
             if (!cf || !Array.isArray(cf.groups)) return '';
             var parts = cf.groups.map(function (g) {
-              return String(getVal(stepDef.id, 'compose_' + cf.id + '_' + g.id) || '');
+              var raw = String(getVal(stepDef.id, 'compose_' + cf.id + '_' + g.id) || '').trim();
+              if (!raw) return '';
+              return g.template ? g.template.replace(/\{value\}/g, raw) : raw;
             }).filter(function (v) { return v.trim() !== ''; });
             return (cf.prefix || '') + parts.join(cf.separator || ', ');
+          }
+          // field.target_step: push the composed text into another top-level
+          // step's own textarea/value instead of (or as well as) this field's
+          // own adv_key — e.g. Multi-Reference Compose's phrase picker and its
+          // "idea + AI" chain both feed the SAME final prompt_input step
+          // ("prompt"), last one touched wins, same as editing it by hand.
+          function _pushToTargetStep(text) {
+            if (!field.target_step) return;
+            setVal(field.target_step, 'prompt_text', text);
+            var targetTa = document.getElementById('ncf-input-' + field.target_step);
+            if (targetTa) {
+              targetTa.value = text;
+              targetTa.dispatchEvent(new Event('input', { bubbles: true }));
+            }
           }
           var pInit = (pStored != null && pStored !== '') ? pStored : getComposedText();
           ta.value = pInit;
@@ -1446,10 +1559,12 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             var v = getComposedText();
             ta.value = v;
             setVal(stepDef.id, 'field_' + field.id, v);
+            _pushToTargetStep(v);
             buildAdv();
           };
           ta.addEventListener('input', function () {
             setVal(stepDef.id, 'field_' + field.id, ta.value);
+            _pushToTargetStep(ta.value);
             buildAdv();
           });
         }(f, pTa, previewCompose));
@@ -2097,7 +2212,7 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
       });
       var submitData = await submitRes.json();
       if (myToken !== _runToken) return;
-      if (!submitRes.ok || submitData.error) throw new Error('Queue rejected');
+      if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
       if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
 
       var imgUrl = await waitForImageLocal(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, null, function (note) {
@@ -2735,8 +2850,8 @@ function _stylePickerCardHtml(s) {
           '<i data-lucide="palette" class="lib-style-card-fallback-icon" aria-hidden="true"></i>' +
         '</div>' +
         '<div class="rp-card-body">' +
-          '<p class="rp-card-name">' + escHtml(s.name || 'Untitled') + '</p>' +
-          (s.category ? '<p class="lib-style-card-category">' + escHtml(s.category) + '</p>' : '') +
+          '<p class="rp-card-name">' + escHtml(tF(s.name || 'Untitled')) + '</p>' +
+          (s.category ? '<p class="lib-style-card-category">' + escHtml(tF(s.category)) + '</p>' : '') +
           (snippet ? '<p class="rp-card-desc">' + escHtml(snippet) + '</p>' : '') +
         '</div>' +
       '</button>' +
@@ -2767,18 +2882,18 @@ function _openStylePickerPanel(onPick) {
     function renderTree() {
       var items = '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === '' ? ' is-active' : '') + '" data-cat="">All</button>';
       items += tree.flatNames.map(function (name) {
-        return '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === name ? ' is-active' : '') + '" data-cat="' + escHtml(name) + '">' + escHtml(name) + '</button>';
+        return '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === name ? ' is-active' : '') + '" data-cat="' + escHtml(name) + '">' + escHtml(tF(name)) + '</button>';
       }).join('');
       items += tree.groups.map(function (g) {
         var expanded = !!expandedGroups[g.name];
         return '<div class="lib-style-cat-group' + (expanded ? ' is-expanded' : '') + '">' +
           '<button type="button" class="lib-style-cat-group-toggle' + (selectedCategory === g.name ? ' is-active' : '') + '" data-cat-group="' + escHtml(g.name) + '">' +
             '<svg class="lib-style-cat-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' +
-            '<span>' + escHtml(g.name) + '</span>' +
+            '<span>' + escHtml(tF(g.name)) + '</span>' +
           '</button>' +
           (expanded ? '<div class="lib-style-cat-group-children">' +
             g.subs.map(function (s) {
-              return '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === s.full ? ' is-active' : '') + '" data-cat="' + escHtml(s.full) + '">' + escHtml(s.label) + '</button>';
+              return '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === s.full ? ' is-active' : '') + '" data-cat="' + escHtml(s.full) + '">' + escHtml(tF(s.label)) + '</button>';
             }).join('') +
           '</div>' : '') +
         '</div>';
@@ -2794,7 +2909,7 @@ function _openStylePickerPanel(onPick) {
           if (c !== selectedCategory && c.indexOf(selectedCategory + '/') !== 0) return false;
         }
         if (q) {
-          var hay = [s.name, s.category, s.prefix, s.prompt, s.suffix].join(' ').toLowerCase();
+          var hay = [s.name, tF(s.name), s.category, tF(s.category), s.prefix, s.prompt, s.suffix].join(' ').toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
         return true;

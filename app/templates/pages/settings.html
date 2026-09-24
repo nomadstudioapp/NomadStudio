@@ -116,6 +116,16 @@
       </div>
 
       <div class="settings-field-block">
+        <label class="settings-field-label" for="hf-token-input" data-i18n="settings.comfy.hfLabel">Hugging Face token</label>
+        <p class="settings-field-hint" data-i18n="settings.comfy.hfHint">Some models (e.g. FLUX.2 Klein 9B) only download after you accept their license on Hugging Face. Accept it on the model's page, then create a read token in your Hugging Face account (Settings → Access Tokens) and paste it here.</p>
+        <div class="settings-folder-row">
+          <input type="password" id="hf-token-input" class="settings-input" autocomplete="off" spellcheck="false" />
+          <button type="button" class="btn settings-btn-secondary" id="save-hf-token-btn" data-i18n="settings.common.save">Save</button>
+        </div>
+        <div class="settings-inline-status" id="hf-token-status"></div>
+      </div>
+
+      <div class="settings-field-block">
         <p class="settings-field-label" data-i18n="settings.common.status">Status</p>
         <div class="settings-status-row" id="comfy-models-folder-status-row">
           <span class="settings-status-dot" id="comfy-models-folder-status-dot" aria-hidden="true"></span>

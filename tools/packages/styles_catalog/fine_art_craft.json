@@ -1,0 +1,317 @@
+[
+  {
+    "src": [114], "key": "abstract",
+    "name": {"en": "Abstract", "es": "Abstracto", "zh": "抽象", "ko": "추상"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "abstract painting",
+    "suffix": "non-representational interplay of color and shape, expressive gestures, balanced composition, textured canvas",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "note": "Was 'Artstyle Abstract'.", "preview": "ok"}
+  },
+  {
+    "src": [115], "key": "abstract-expressionism",
+    "name": {"en": "Abstract Expressionism", "es": "Expresionismo abstracto", "zh": "抽象表现主义", "ko": "추상표현주의"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "abstract expressionist painting",
+    "suffix": "energetic gestural brushwork, bold saturated color fields, drips and layered paint, raw emotional energy",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [118], "key": "constructivist",
+    "name": {"en": "Constructivist", "es": "Constructivismo", "zh": "构成主义", "ko": "구성주의"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "constructivist poster art",
+    "suffix": "bold geometric shapes, diagonal dynamic composition, limited red, black and cream palette, flat printed texture",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [119], "key": "cubist",
+    "name": {"en": "Cubist", "es": "Cubismo", "zh": "立体主义", "ko": "입체주의"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "cubist painting",
+    "suffix": "fragmented geometric planes, multiple viewpoints at once, faceted forms, muted earthy palette with bold accents",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [120], "key": "expressionist",
+    "name": {"en": "Expressionist", "es": "Expresionismo", "zh": "表现主义", "ko": "표현주의"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "expressionist painting",
+    "suffix": "raw emotional distortion, vivid unnatural colors, thick energetic brushstrokes, dramatic mood",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [124], "key": "pointillism",
+    "name": {"en": "Pointillism", "es": "Puntillismo", "zh": "点彩画", "ko": "점묘법"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "pointillist painting",
+    "suffix": "composed entirely of small distinct dots of pure color, optical color mixing, luminous vibrant light",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [125], "key": "pop-art",
+    "name": {"en": "Pop Art", "es": "Pop art", "zh": "波普艺术", "ko": "팝 아트"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "pop art print",
+    "suffix": "bright flat primary colors, bold black outlines, halftone dots, playful ironic graphic feel",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [126], "key": "psychedelic",
+    "name": {"en": "Psychedelic", "es": "Psicodélico", "zh": "迷幻", "ko": "사이키델릭"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "psychedelic art",
+    "suffix": "swirling flowing patterns, vibrant clashing colors, melting organic forms, 1960s poster energy",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "note": "Removed 'trippy'.", "preview": "ok"}
+  },
+  {
+    "src": [129], "key": "surrealist",
+    "name": {"en": "Surrealist", "es": "Surrealismo", "zh": "超现实主义", "ko": "초현실주의"},
+    "category": "Fine Art/Modern Art",
+    "prefix": "surrealist painting",
+    "suffix": "dreamlike impossible scene, mysterious symbolic objects, smooth academic rendering, long soft shadows",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "note": "Removed 'provocative' (content policy).", "preview": "ok"}
+  },
+  {
+    "src": [127], "key": "renaissance",
+    "name": {"en": "Renaissance", "es": "Renacimiento", "zh": "文艺复兴", "ko": "르네상스"},
+    "category": "Fine Art/Classical",
+    "prefix": "Renaissance oil painting",
+    "suffix": "balanced linear perspective, soft sfumato modeling, harmonious warm palette, classical composition, fine glazing detail",
+    "prompt": "a noble court scene with rich garments and ornate interiors",
+    "review": {"status": "rewritten", "note": "Example scene changed so the preview shows the style better.", "preview": "regen"}
+  },
+  {
+    "src": [38], "key": "baroque",
+    "name": {"en": "Baroque", "es": "Barroco", "zh": "巴洛克", "ko": "바로크"},
+    "category": "Fine Art/Classical",
+    "prefix": "dramatic Baroque oil painting",
+    "suffix": "intense chiaroscuro, deep contrast, rich ornamental detail, grand expressive composition, warm golden glazes",
+    "prompt": "a noble court scene with rich garments and ornate interiors",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [116], "key": "art-deco",
+    "name": {"en": "Art Deco", "es": "Art déco", "zh": "装饰艺术", "ko": "아르데코"},
+    "category": "Fine Art/Classical",
+    "prefix": "Art Deco illustration",
+    "suffix": "bold symmetrical geometry, sunbursts and stepped forms, gold and black with jewel tones, elegant luxurious ornament",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [117], "key": "art-nouveau",
+    "name": {"en": "Art Nouveau", "es": "Art nouveau", "zh": "新艺术运动", "ko": "아르누보"},
+    "category": "Fine Art/Classical",
+    "prefix": "Art Nouveau illustration",
+    "suffix": "flowing curvilinear lines, organic floral ornament, decorative frame, soft muted palette with gold accents",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [8], "key": "dark-painterly-portrait",
+    "name": {"en": "Dark Painterly Portrait", "es": "Retrato pictórico oscuro", "zh": "暗调绘画肖像", "ko": "다크 페인터리 초상"},
+    "category": "Fine Art/Classical",
+    "prefix": "moody painterly portrait, dramatic chiaroscuro lighting, softly blended tones",
+    "suffix": "atmospheric vignette falling into darkness, sculpted light on the face, rich tonal contrast, refined fine-art mood",
+    "prompt": "a close-up portrait of a mysterious noblewoman",
+    "review": {"status": "cleaned", "preview": "ok"}
+  },
+  {
+    "src": [11, 160, 165], "key": "gothic",
+    "name": {"en": "Gothic", "es": "Gótico", "zh": "哥特", "ko": "고딕"},
+    "category": "Fine Art/Classical",
+    "prefix": "moody gothic atmosphere, muted desaturated colors, soft dramatic lighting",
+    "suffix": "aged stone and weathered surfaces, ornate arches, baroque gloom, subtle shadows, atmospheric depth without heavy darkness",
+    "prompt": "an abandoned chapel corridor with a ghostly silhouette",
+    "review": {"status": "merged", "note": "Gothic (#11) + Misc Gothic (#160) + Misc Macabre (#165).", "preview": "ok"}
+  },
+  {
+    "src": [39], "key": "dark-engraving",
+    "name": {"en": "Dark Engraving", "es": "Grabado oscuro", "zh": "暗黑版画", "ko": "다크 판화"},
+    "category": "Fine Art/Classical",
+    "prefix": "dark gothic fantasy engraving, scratchy ink textures",
+    "suffix": "cluttered baroque detail, medieval surreal symbolism, bleak palette, chaotic linework, antique occult atmosphere",
+    "prompt": "an abandoned chapel corridor with a ghostly silhouette",
+    "review": {"status": "rewritten", "note": "Was 'Grim Baroque Engraving'; removed 'brutal'.", "preview": "ok"}
+  },
+  {
+    "src": [122], "key": "hyperrealism",
+    "name": {"en": "Hyperrealism", "es": "Hiperrealismo", "zh": "超写实主义", "ko": "극사실주의"},
+    "category": "Fine Art/Painting Media",
+    "prefix": "hyperrealistic painting",
+    "suffix": "photographic precision, extremely fine texture, crisp reflections, subtle painterly edges on close inspection",
+    "prompt": "a still life of fruit and glass vases in a garden",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [121], "key": "graffiti",
+    "name": {"en": "Graffiti", "es": "Grafiti", "zh": "涂鸦", "ko": "그래피티"},
+    "category": "Fine Art/Painting Media",
+    "prefix": "graffiti street art mural",
+    "suffix": "spray paint on a concrete wall, bold outlines, drips and overspray, vibrant urban colors, no readable tags",
+    "prompt": "a symbolic city-garden composition with expressive forms",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [130], "key": "typographic-art",
+    "name": {"en": "Typographic Art", "es": "Arte tipográfico", "zh": "字体艺术", "ko": "타이포그래피 아트"},
+    "category": "Fine Art/Painting Media",
+    "prefix": "typographic art composition",
+    "suffix": "shapes built from decorative letterforms and ornaments, black ink on cream paper, intricate calligraphic flourishes",
+    "prompt": "a tree and a town skyline built from letters",
+    "review": {"status": "rewritten", "note": "Text in images is unreliable; the look relies on letterform shapes rather than legible words.", "preview": "ok"}
+  },
+  {
+    "src": [36, 161], "key": "grunge",
+    "name": {"en": "Grunge", "es": "Grunge", "zh": "垃圾摇滚风", "ko": "그런지"},
+    "category": "Fine Art/Painting Media",
+    "prefix": "grunge aesthetic, dirty distressed textures",
+    "suffix": "raw scratched materials, gritty urban decay, muted faded palette, rough handmade visual noise, punk edge",
+    "prompt": "a sunlit corner of an old peeling wall",
+    "review": {"status": "merged", "note": "Grunge (#36) + Misc Grunge (#161).", "preview": "ok"}
+  },
+  {
+    "src": [170], "key": "nautical",
+    "name": {"en": "Nautical", "es": "Náutico", "zh": "航海风", "ko": "노티컬"},
+    "category": "Fine Art/Painting Media",
+    "prefix": "nautical illustration",
+    "suffix": "tall ships and ocean waves, marine life, navy, cream and brass palette, vintage maritime painting detail",
+    "prompt": "two sailing ships above a coral reef",
+    "review": {"status": "rewritten", "note": "Was 'Misc Nautical'.", "preview": "ok"}
+  },
+  {
+    "src": [176], "key": "paper-collage",
+    "name": {"en": "Paper Collage", "es": "Collage de papel", "zh": "纸张拼贴", "ko": "페이퍼 콜라주"},
+    "category": "Craft/Paper",
+    "prefix": "mixed-media paper collage",
+    "suffix": "layered torn paper and printed scraps, visible textures and edges, handcrafted artistic feel",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "note": "Was 'Papercraft Collage'.", "preview": "ok"}
+  },
+  {
+    "src": [177], "key": "flat-papercut",
+    "name": {"en": "Flat Papercut", "es": "Papel recortado plano", "zh": "平面剪纸", "ko": "플랫 페이퍼컷"},
+    "category": "Craft/Paper",
+    "prefix": "flat papercut art",
+    "suffix": "clean sharp silhouette cuts, solid color blocks, minimalist layered paper, soft shadow edges",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [178], "key": "kirigami",
+    "name": {"en": "Kirigami", "es": "Kirigami", "zh": "立体剪纸", "ko": "키리가미"},
+    "category": "Craft/Paper",
+    "prefix": "kirigami paper sculpture",
+    "suffix": "precise cut and folded paper, symmetrical 3D pop-up structure, clean lines, delicate intricate detail",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [179], "key": "paper-mache",
+    "name": {"en": "Paper Mâché", "es": "Papel maché", "zh": "纸浆雕塑", "ko": "종이 반죽 공예"},
+    "category": "Craft/Paper",
+    "prefix": "papier-mâché sculpture",
+    "suffix": "handmade sculpted form, visible paper strips and texture, painted vibrant colors, playful craft feel",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [180], "key": "paper-quilling",
+    "name": {"en": "Paper Quilling", "es": "Filigrana de papel", "zh": "衍纸", "ko": "페이퍼 퀼링"},
+    "category": "Craft/Paper",
+    "prefix": "paper quilling art",
+    "suffix": "intricate rolled and coiled paper strips, delicate loops and curls, dimensional ornamental detail",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [181], "key": "papercut-collage",
+    "name": {"en": "Papercut Collage", "es": "Collage de papel recortado", "zh": "剪纸拼贴", "ko": "페이퍼컷 콜라주"},
+    "category": "Craft/Paper",
+    "prefix": "papercut collage",
+    "suffix": "overlapping textured paper shapes, asymmetric abstract pieces, vibrant contrasting colors",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [182], "key": "papercut-shadow-box",
+    "name": {"en": "Papercut Shadow Box", "es": "Caja de sombras de papel", "zh": "剪纸光影盒", "ko": "페이퍼컷 섀도박스"},
+    "category": "Craft/Paper",
+    "prefix": "3D papercut shadow box",
+    "suffix": "stacked layered silhouettes, backlit depth, soft cast shadows between layers, handmade high-contrast look",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [183], "key": "stacked-papercut",
+    "name": {"en": "Stacked Papercut", "es": "Papel recortado apilado", "zh": "叠层剪纸", "ko": "적층 페이퍼컷"},
+    "category": "Craft/Paper",
+    "prefix": "stacked papercut art",
+    "suffix": "precision-cut paper layers, deep dimensional depth, crisp edges, high contrast between layers",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [184], "key": "thick-layered-papercut",
+    "name": {"en": "Thick Layered Papercut", "es": "Papel recortado grueso", "zh": "厚层剪纸", "ko": "두꺼운 레이어 페이퍼컷"},
+    "category": "Craft/Paper",
+    "prefix": "thick layered papercut art",
+    "suffix": "heavy card stock layers, deep volumetric stacking, tangible paper texture, warm natural tones",
+    "prompt": "an owl perched on a branch",
+    "review": {"status": "rewritten", "preview": "ok"}
+  },
+  {
+    "src": [101], "key": "origami",
+    "name": {"en": "Origami", "es": "Origami", "zh": "折纸", "ko": "종이접기"},
+    "category": "Craft/Paper",
+    "prefix": "origami paper model",
+    "suffix": "crisp folded paper facets and pleats, clean geometric creases, soft studio lighting, centered composition",
+    "prompt": "a cybernetic protagonist in a neon-soaked future city",
+    "review": {"status": "rewritten", "note": "Was in the 'Stability AI' category.", "preview": "ok"}
+  },
+  {
+    "src": [172], "key": "stained-glass",
+    "name": {"en": "Stained Glass", "es": "Vitral", "zh": "彩色玻璃", "ko": "스테인드글라스"},
+    "category": "Craft/Decorative",
+    "prefix": "stained glass window",
+    "suffix": "jewel-toned translucent glass pieces, dark lead lines, glowing backlight, intricate decorative pattern",
+    "prompt": "a river valley at sunset framed by trees",
+    "review": {"status": "rewritten", "note": "Was 'Misc Stained Glass'.", "preview": "ok"}
+  },
+  {
+    "src": [175], "key": "zentangle",
+    "name": {"en": "Zentangle", "es": "Zentangle", "zh": "禅绕画", "ko": "젠탱글"},
+    "category": "Craft/Decorative",
+    "prefix": "zentangle ink drawing",
+    "suffix": "intricate repetitive black-and-white patterns, meditative detailed linework, structured decorative sections",
+    "prompt": "a spiral of flowing patterned bands",
+    "review": {"status": "rewritten", "note": "Was 'Misc Zentangle'.", "preview": "ok"}
+  },
+  {
+    "src": [174], "key": "folk-pattern",
+    "name": {"en": "Folk Pattern", "es": "Patrón folk", "zh": "民俗图案", "ko": "포크 패턴"},
+    "category": "Craft/Decorative",
+    "prefix": "traditional folk pattern design",
+    "suffix": "bold repeating geometric motifs, earthy natural pigments, woven textile texture, handmade decorative rhythm",
+    "prompt": "a woven textile with geometric bands",
+    "review": {"status": "rewritten", "note": "Was 'Misc Tribal'; removed 'tribal/ethnic/indigenous' wording.", "preview": "ok"}
+  },
+  {
+    "src": [304], "key": "blind-box-toy",
+    "name": {"en": "Blind Box Toy", "es": "Figura blind box", "zh": "盲盒手办", "ko": "블라인드 박스 토이"},
+    "category": "Craft/Toy & Clay",
+    "prefix": "soft-focus 3D render of a chibi collectible vinyl toy",
+    "suffix": "pastel color palette, glossy toy finish, oversized round head and short stubby limbs, fabric and knit textures, soft studio lighting, bokeh background",
+    "prompt": "a chibi girl with curly red hair, a polka-dot beret and a patchwork coat on a city street",
+    "review": {"status": "rewritten", "note": "Was 'Blind Box Chibi'.", "preview": "ok"}
+  }
+]

@@ -28,6 +28,7 @@
 | D12 | **Firma dentro del ZIP** (`SIGNATURE.json`, modelo Firefox/Java/Android): se firma la lista de hashes del contenido, no los bytes del ZIP. Opcional para cualquier paquete; obligatoria para los packs oficiales que traigan código (addon de Python o bloques de interfaz con JS). Un paquete es **oficial o no oficial**, sin claves de terceros: los no oficiales se instalan igual (D2) con el aviso "instálalo solo si confías en la fuente" (§11.4). |
 | D13 | Un paquete PUEDE aportar **bloques de interfaz nuevos** (tipos de paso) con su propio JS y CSS, registrados con una API estable. Los bloques de la app se registran por el mismo mecanismo. Es código de terceros en el navegador: mismo aviso y misma firma que el Python (§9.8). |
 | D14 | Cada pack tiene su **ficha en el repo público Nomad Studio Packs**, y su manifest la referencia en `info_url`. La ficha contiene el enlace de compra (Ko-fi). Las Sessions guardan de qué pack viene cada flow; si al abrir una falta un pack, un modal enlaza a su ficha oficial (§13.4, §13.5). |
+| D15 | **El paquete dice qué modelo necesita; el catálogo dice dónde se descarga.** El manifest identifica cada modelo por nombre, carpeta, tamaño y SHA-256 (`requires.models`). Las direcciones de descarga viven en un **catálogo de modelos** aparte (`models.json` en Nomad Studio Packs, con copia en la app), que se corrige en un solo sitio sin republicar paquetes. Los grafos de ComfyUI no se modifican para esto. Toda descarga se verifica contra el tamaño y el SHA-256 (§8.2). |
 
 **Abiertas**: ver §14.
 
@@ -170,6 +171,7 @@ Se ignoran `__MACOSX/`, `.DS_Store`, `Thumbs.db` y `__pycache__/`.
 | `addon` | Código Python (§9). |
 | `template_packs` | Datos de plantillas con placeholders (§10.1). |
 | `presets` | Looks de un solo clic (§10.2). |
+| `styles` | Estilos de Build > Styles, solo texto (§10.3). |
 | `tags` | Etiquetas nuevas con sus traducciones (§7.3). |
 | `i18n` | Carpeta con los textos de pasos por idioma (§7.2). |
 | `step_types` | Bloques de interfaz nuevos con su JS y CSS (§9.8). |
@@ -387,10 +389,13 @@ Por paquete: `languages` (idiomas con textos presentes) y `translation_status` p
   "packages": [{ "id": "nomad.edge-defringe", "version": ">=1.0.0" }],
   "capabilities": ["edge-defringe"],
   "models": [
-    { "folder": "diffusion_models", "file": "qwen_image_edit_2511_fp8.safetensors",
-      "size": 20430000000, "sha256": "…", "url": "https://…" }
+    { "file": "qwen_image_edit_2511_fp8mixed.safetensors", "folder": "diffusion_models/qwen_image",
+      "size": 20533762817, "sha256": "…", "url": "https://…" }
   ],
-  "comfy_nodes": ["comfyui-birefnet"],
+  "comfy_nodes": [
+    { "id": "untwistingrope", "repo": "https://github.com/BigStationW/ComfyUi-Untwisting-RoPE",
+      "classes": ["RFInversion", "UntwistingRoPE"] }
+  ],
   "python": ">=3.13",
   "python_packages": ["scipy>=1.17,<2", "numpy>=2.4,<3"],
   "wheels": ["wheels/mi_libreria-1.0.0-py3-none-any.whl"],
@@ -407,8 +412,8 @@ Por paquete: `languages` (idiomas con textos presentes) y `translation_status` p
 | `engines` | Motor por categoría o por id de paquete | Instala y marca `missing_requirements` |
 | `packages` | Otro paquete con rango de versión | Instala y marca `missing_requirements` |
 | `capabilities` | Capacidad que aporta algún addon (§9.2) | Instala y marca `missing_requirements` |
-| `models` | Ficheros de modelo de ComfyUI | Comprueba en la carpeta de modelos configurada; ofrece descarga si hay `url` |
-| `comfy_nodes` | Nodos personalizados de ComfyUI | Avisa (si ComfyUI responde, comprueba con `/object_info`) |
+| `models` | Ficheros de modelo de ComfyUI (§8.2) | Instala. Al abrir un flow, la app compara con ComfyUI y ofrece descargar lo que falte (dirección: catálogo, §8.2.2) |
+| `comfy_nodes` | Packs de nodos personalizados de ComfyUI: `id`, `repo` y `classes` que aporta | Instala. Al abrir un flow, si ComfyUI no conoce una clase, enseña el pack con su repo y el comando de instalación |
 | `python` | Versión de Python de la app | **Rechaza** si no cumple |
 | `python_packages` | Nivel 1: librerías de la base de la app (§9.5) | **Rechaza** si la app no las tiene en versión compatible |
 | `wheels` | Nivel 2: wheels dentro del ZIP (§9.5) | **Rechaza** si no hay wheel para la plataforma |
@@ -423,7 +428,81 @@ Un motor es un paquete con `contributes.engines`. El fichero contiene lo que hoy
 
 ### 8.2 Modelos
 
-`size` y `sha256` DEBERÍAN estar para poder verificar descargas. El importador NO DEBE descargar modelos sin confirmación del usuario.
+Principio (D15): **el paquete identifica el modelo; el catálogo sabe dónde está.** Una dirección de descarga caduca (repos que se mueven, modelos que pasan a ser privados), y un paquete ya distribuido —sobre todo uno de pago— no se puede republicar cada vez. El nombre, el tamaño y el SHA-256 de un fichero no cambian nunca.
+
+#### 8.2.1 `requires.models` en el manifest
+
+| Campo | Obligatorio | Significado |
+|---|---|---|
+| `file` | Sí | Nombre con el que lo carga el grafo (`qwen_image_vae.safetensors`). Si el grafo usa subcarpeta (`flux2_klein\x.safetensors`), `file` es solo el nombre y la subcarpeta va en `folder`. |
+| `folder` | Sí | Carpeta de ComfyUI donde va, con subcarpeta si la hay: `diffusion_models/flux2_klein`, `loras/qwen_2511`, `vae`… |
+| `size` | DEBERÍA | Bytes exactos. |
+| `sha256` | DEBERÍA | Hash del fichero. Es la **identidad** del modelo: con él la app busca la dirección en el catálogo y verifica la descarga. |
+| `url` | PUEDE | Dirección de respaldo, por si el catálogo no conoce el modelo (paquetes de terceros con modelos propios). |
+
+Reglas:
+- El manifest DEBE listar **todo** modelo que carguen sus grafos, incluidas todas las variantes de cuantización del nodo `config`. El importador avisa (no rechaza) si un grafo carga un fichero que no está en la lista.
+- Un mismo fichero con otro nombre en el grafo (el VAE de Z-Image como `z_vae.safetensors`) se declara con el nombre del grafo y el `sha256` del fichero real: la descarga se guarda con el nombre del grafo.
+- Qué falta se decide siempre **comparando con ComfyUI** (`/object_info`: el valor no está entre las opciones del cargador), no con la lista. La lista aporta identidad y direcciones.
+- La herramienta `build` genera `requires.models` a partir de los grafos y del catálogo; los grafos NO se modifican.
+
+#### 8.2.2 Catálogo de modelos
+
+Un fichero `models.json` en el repo público **Nomad Studio Packs** (§13.5), con copia dentro de la app (`app/static/data/models_catalog.json`) para funcionar sin conexión.
+
+```json
+{
+  "schema_version": 1,
+  "updated": "2026-09-24",
+  "models": [
+    {
+      "sha256": "…",
+      "size": 253806246,
+      "names": ["qwen_image_vae.safetensors"],
+      "folder": "vae",
+      "sources": [
+        { "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors",
+          "host": "huggingface" }
+      ]
+    },
+    {
+      "sha256": "…",
+      "size": 9433061528,
+      "names": ["flux-2-klein-9b-fp8.safetensors"],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        { "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8/resolve/main/flux-2-klein-9b-fp8.safetensors",
+          "host": "huggingface", "gated": true,
+          "license_url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8" }
+      ]
+    }
+  ]
+}
+```
+
+- **Revisiones**: los publicadores vuelven a subir un fichero con el mismo nombre y otro contenido (Comfy-Org revisó varios en 2026). La entrada guarda el hash actual en `sha256` y los anteriores en `previous_sha256: ["…"]`; la búsqueda por hash mira los dos, así que un paquete que declaró una revisión antigua sigue encontrando su modelo, y se descarga la actual.
+- `sources` en orden de preferencia; la app prueba la siguiente si una falla. `host` (`huggingface`, `civitai`, `other`) decide qué credencial se envía: token de Hugging Face o clave de CivitAI (Ajustes). `gated: true` significa que hay que aceptar una licencia en `license_url` con la cuenta del token.
+- Solo entran en el catálogo direcciones comprobadas: el fichero servido tiene exactamente `size` bytes y, cuando se descarga, el mismo `sha256`.
+- La app descarga el catálogo remoto como mucho una vez al día y al pulsar "Comprobar de nuevo", lo guarda en `<data>/cache/models_catalog.json` y, si no hay red o no es válido, usa la última copia buena o la de la app.
+- Una GitHub Action del repo valida cada cambio: JSON correcto, `sha256` de 64 hex, `size` > 0, `https://`, sin duplicados.
+
+#### 8.2.3 Resolución de la dirección
+
+Para cada fichero que ComfyUI no tiene, en este orden:
+1. Catálogo por `sha256` (el del manifest).
+2. Catálogo por nombre y, si el manifest lo trae, tamaño igual.
+3. `url` de `requires.models` del paquete.
+4. Lista `downloads` del nodo `config` del grafo (formato antiguo; se sigue leyendo).
+5. Sin dirección: la app ofrece buscarlo (Hugging Face) y dice que no hay descarga conocida.
+
+#### 8.2.4 Descarga
+
+- La app NO DEBE descargar modelos sin que el usuario lo pida (botón Descargar en el panel "Faltan archivos").
+- Se descarga a `<nombre>.part` y, al terminar, se comprueban `size` y `sha256`: **los de la entrada del catálogo** (la revisión actual) cuando la hay; los del manifest solo si el catálogo no conoce el fichero. **Si no coinciden, se borra el fichero y se informa.** El manifest identifica el modelo; no fija una revisión, porque eso rompería para siempre las descargas de los paquetes ya distribuidos en cuanto el publicador revisara el fichero.
+- Qué está instalado se decide por nombre (lo que ComfyUI ve), nunca por hash: una revisión anterior que el usuario ya tiene cuenta como instalada y no obliga a descargar otra vez.
+- Mantenimiento: `check_models_catalog.py --online` detecta cuando una dirección pasa a servir otro fichero y, con `--update`, mueve el hash anterior a `previous_sha256` y guarda el nuevo. La GitHub Action del repo lo ejecuta a diario.
+- Si falta `sha256` en ambos, se instala igualmente y el panel lo marca como "no verificado".
+- Un fichero `gated` sin token, o con 401/403, muestra la página de licencia y el aviso de Ajustes; no se reintenta.
 
 ### 8.3 Plataformas
 
@@ -672,6 +751,30 @@ Hoy `flow-render-all.js` elige el bloque con un `switch` fijo. Pasa a un **regis
 ### 10.2 Presets
 
 Cada look es un flow con `preset_meta` (formato actual: `pack_id`, `pack_name`, `card_title`, `card_description`, `cover_image`). `cover_image` es relativo al paquete. Los looks se muestran en su galería (hoy Photo Packs), no como cards sueltas en el hub.
+
+### 10.3 Estilos
+
+`contributes.styles`: lista de ficheros JSON (normalmente `["data/styles.json"]`). Cada fichero es una lista de estilos:
+
+```json
+{
+  "key": "golden-hour",
+  "name": {"en": "Golden Hour", "es": "Hora dorada", "zh": "黄金时刻", "ko": "골든 아워"},
+  "category": {"en": "Natural Light", "es": "Luz natural", "zh": "自然光", "ko": "자연광"},
+  "prefix": "golden hour light",
+  "suffix": "warm low sun, rich amber glow, long soft shadows",
+  "prompt": "a hiker standing in a misty mountain valley"
+}
+```
+
+- Un estilo es **solo texto**: `prefix` y `suffix` envuelven el prompt del usuario (el picker los une con ", "), y `prompt` es la escena de ejemplo con la que Build genera las imágenes. DEBE tener `prefix` o `suffix`. No depende de ningún modelo.
+- `key` es un slug único dentro del paquete. Es lo que identifica el estilo entre versiones (nunca el nombre).
+- `name` y `category` son textos (§7.1). `category` usa `Grupo/Sub`; la traducción de cada segmento sale de la categoría traducida completa, así que ambas DEBEN tener el mismo número de segmentos.
+- Al instalar, los estilos se copian a `styles.json` (Build > Styles) marcados con `package` + `package_key`. Actualizar el paquete añade los nuevos, actualiza el texto de los que el usuario no ha editado y quita los que ya no vienen.
+- Un estilo que el usuario **editó** o para el que **generó imágenes** no se pisa nunca: si el paquete lo quita o se desinstala, se queda como estilo del usuario.
+- Las imágenes son por modelo (`model_images`) y se generan en Build > Styles, que puede guardarlas en WebP y dejar una copia con nombre estable en `<output>/<subcarpeta>/<modelo>/<key>.webp`.
+- Un estilo PUEDE llevar sus previews dentro del paquete: `"images": {"<id de motor>": "images/<id de motor>/<key>.webp"}`. Al instalar se sirven desde la carpeta del paquete para ese modelo, pero nunca sustituyen una imagen que el usuario haya generado para ese mismo modelo. Si el estilo pasa a ser del usuario (editado, o el paquete lo quita), esas imágenes del paquete se descartan.
+- `replaces` (en el manifest): ids de paquetes antiguos cuyos estilos pasan a este. Al instalarlo, sus estilos se adoptan por `key` (mismo id, mismas ediciones e imágenes), de modo que reagrupar packs no duplica nada. Después se desinstalan los antiguos.
 
 ---
 
@@ -1039,6 +1142,8 @@ NomadStudioPacks/
 │       ├── cover.webp
 │       └── screenshots/
 ├── catalog.json             ← todas las fichas, generado
+├── models.json              ← catálogo de modelos: sha256 → direcciones de descarga (§8.2.2)
+├── comfy_nodes.json         ← packs de nodos: clase → repo (mismo papel para comfy_nodes)
 └── trusted_keys.json        ← claves públicas oficiales (§11.4), para consulta
 ```
 

@@ -75,18 +75,35 @@ function _measureImageDims(dataUrl, cb) {
   img.src = dataUrl;
 }
 
+// A flow whose own workflow_params step declares an `aspect_ratio` field
+// (e.g. Multi-Reference Compose) picks its own output size — the "source
+// resolution" readout below would show a now-disconnected number (some
+// input image's size, no longer the actual output size) and mislead more
+// than it helps. Upscale output stays reachable either way.
+function _hasOwnAspectField() {
+  var paramsStep = Array.isArray(allSteps) && allSteps.find(function (s) { return s.type === 'workflow_params'; });
+  return !!(paramsStep && Array.isArray(paramsStep.fields) &&
+    paramsStep.fields.some(function (f) { return f.type === 'aspect_ratio'; }));
+}
+
 // Refine/Mix: single button opening a single panel — a read-only resolution
 // readout on top (nothing to pick, the image already exists), the same
 // Upscale Output grid right below it.
 function _renderFixedResUpscaleControl(el) {
+  var ownAspect = _hasOwnAspectField();
   var wrap = document.createElement('div');
   wrap.className = 'nsc-param-block';
-  wrap.innerHTML =
-    '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="ncf-fixed-res-label">—</span>' +
-      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="Resolution and upscale output">' +
-        '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
-      '</button>' +
-    '</p>';
+  wrap.innerHTML = ownAspect
+    ? '<p class="nsc-param-title nsc-param-title--flex">Upscale output' +
+        '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="Upscale output">' +
+          '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
+        '</button>' +
+      '</p>'
+    : '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="ncf-fixed-res-label">—</span>' +
+        '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="Resolution and upscale output">' +
+          '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
+        '</button>' +
+      '</p>';
   el.appendChild(wrap);
   var labelEl = wrap.querySelector('#ncf-fixed-res-label');
   var pickerBtn = wrap.querySelector('#ncf-fixed-res-picker-btn');
@@ -104,17 +121,19 @@ function _renderFixedResUpscaleControl(el) {
 
   pickerBtn.addEventListener('click', function () {
     openOptionsPanel('Resolution', function (body) {
-      var resBlock = document.createElement('div');
-      resBlock.className = 'nsc-param-block ncf-fixed-res-readout';
-      var url = _resolveFixedSourceImageUrl();
-      resBlock.innerHTML = '<p class="nsc-param-title">Source resolution</p>' +
-        '<p class="ncf-fixed-res-value">' + (url ? '' : 'No image picked yet') + '</p>';
-      body.appendChild(resBlock);
-      var valueEl = resBlock.querySelector('.ncf-fixed-res-value');
-      if (url) {
-        _measureImageDims(url, function (dims) {
-          if (valueEl) valueEl.textContent = dims ? (dims.w + '×' + dims.h) : 'Unknown';
-        });
+      if (!ownAspect) {
+        var resBlock = document.createElement('div');
+        resBlock.className = 'nsc-param-block ncf-fixed-res-readout';
+        var url = _resolveFixedSourceImageUrl();
+        resBlock.innerHTML = '<p class="nsc-param-title">Source resolution</p>' +
+          '<p class="ncf-fixed-res-value">' + (url ? '' : 'No image picked yet') + '</p>';
+        body.appendChild(resBlock);
+        var valueEl = resBlock.querySelector('.ncf-fixed-res-value');
+        if (url) {
+          _measureImageDims(url, function (dims) {
+            if (valueEl) valueEl.textContent = dims ? (dims.w + '×' + dims.h) : 'Unknown';
+          });
+        }
       }
 
       var upBlock = document.createElement('div');
@@ -223,6 +242,7 @@ function renderAllSteps() {
     // prefills from another step's output (e.g. Assist's "Enhanced prompt")
     // reads as a continuation of that step, not a new heading of its own.
     var skipLabel = stepDef.type === 'action' || stepDef.type === 'param_group' ||
+      stepDef.type === 'zone_prompt_builder' ||
       (stepDef.type === 'workflow_params' && !stepDef.show_label) ||
       (stepDef.type === 'prompt_input' && !!stepDef.prefill_from);
     if (!skipLabel) wrap.appendChild(lbl);
@@ -253,6 +273,14 @@ function renderAllSteps() {
       case 'region_annotate':
         try { renderRegionAnnotate(stepDef, contentEl); }
         catch (e) { console.error('[FlowEngine] region_annotate:', e); }
+        break;
+      case 'zone_prompt_builder':
+        try { renderZonePromptBuilder(stepDef, contentEl); }
+        catch (e) { console.error('[FlowEngine] zone_prompt_builder:', e); }
+        break;
+      case 'compose_template_picker':
+        try { renderComposeTemplatePicker(stepDef, contentEl); }
+        catch (e) { console.error('[FlowEngine] compose_template_picker:', e); }
         break;
       case 'action':              renderAction(stepDef, wrap);                break;
     }
@@ -290,6 +318,10 @@ function renderAllSteps() {
 
   // Post-render: resolve output_to references so LLM writes directly into target textarea
   resolveOutputTo();
+
+  // Model files / custom nodes this flow's graphs need that ComfyUI lacks —
+  // a notice at the top of the steps (flow-requirements.js).
+  if (typeof NcfRequirements !== 'undefined') NcfRequirements.check();
 
   // Simple mode: hide the workflow_picker and param_group/workflow_params
   // steps entirely — Simple reuses whatever workflow/quality/quantization
@@ -453,8 +485,49 @@ function _watchGpuQueue(label, statusEl) {
   return function () { stopped = true; };
 }
 
+// Empties every prompt box an llm_transform is about to write into — its own
+// output_to target and any prompt_input prefilled from it — so a fresh run
+// is visibly fresh instead of the old text sitting there until the new one
+// lands. Returns a restore() for the error path: a failed call shouldn't
+// cost the user the prompt they already had.
+function _clearLLMTargets(stepDef, outputTa) {
+  if (stepDef.output_mode === 'prompt_cards') return function () {};
+  var saved = [];
+  function clear(ta, targetStepId) {
+    if (!ta || saved.some(function (s) { return s.ta === ta; })) return;
+    saved.push({ ta: ta, stepId: targetStepId, value: ta.value });
+    ta.value = '';
+    if (targetStepId) setVal(targetStepId, 'prompt_text', '');
+  }
+  if (outputTa) clear(outputTa, stepDef.output_to || null);
+  if (stepDef.output_to) {
+    var outStep = allSteps.find(function (s) { return s.id === stepDef.output_to; });
+    if (!outStep || outStep.type !== 'ideogram_composer') {
+      clear(document.getElementById('ncf-input-' + stepDef.output_to), stepDef.output_to);
+    }
+  }
+  var prefix = 'steps.' + stepDef.id + '.';
+  allSteps.forEach(function (s) {
+    if (s.type === 'prompt_input' && typeof s.prefill_from === 'string' && s.prefill_from.indexOf(prefix) === 0) {
+      clear(document.getElementById('ncf-input-' + s.id), s.id);
+    }
+  });
+  if (saved.length) {
+    setVal(stepDef.id, 'transformed_text', '');
+    if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
+  }
+  return function restore() {
+    saved.forEach(function (s) {
+      s.ta.value = s.value;
+      if (s.stepId) setVal(s.stepId, 'prompt_text', s.value.trim());
+    });
+    if (typeof updateGenerateBtn === 'function') updateGenerateBtn();
+  };
+}
+
 async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
   isWritingScene = true;
+  var _restoreTargets = _clearLLMTargets(stepDef, outputTa);
   writeBtn.disabled = true;
   writeBtn.classList.add('is-composing');
   if (writeLbl) writeLbl.textContent = 'Composing…';
@@ -561,9 +634,28 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
         (enhType && (stepDef.system_prompts[enhType + '_' + selectedLevel] ||
                      stepDef.system_prompts[enhType])) ||
         stepDef.system_prompts[selectedLevel])) || undefined;
-      var enhRefPrompt = stepDef.context_from && stepDef.context_from.reference_prompt
-        ? (resolveRef(stepDef.context_from.reference_prompt) || undefined)
-        : undefined;
+      // reference_prompt is usually a single ref, but a flow that needs to
+      // hand the LLM several independent bits of context at once (e.g.
+      // Multi-Reference Compose's per-image descriptions) can pass an array
+      // of refs instead — each resolved and joined into one block, empty
+      // ones skipped, so a partially-filled set of optional refs degrades
+      // gracefully instead of leaving gaps.
+      var enhRefPromptSrc = stepDef.context_from && stepDef.context_from.reference_prompt;
+      var enhRefPrompt;
+      if (Array.isArray(enhRefPromptSrc)) {
+        // Each entry is either a plain ref string, or {label, ref} to prefix
+        // the resolved text (e.g. "Image 1: a woman in a red coat") — lets
+        // the LLM tell which description belongs to which reference image.
+        var enhRefParts = enhRefPromptSrc.map(function (entry) {
+          var isObj = entry && typeof entry === 'object';
+          var v = resolveRef(isObj ? entry.ref : entry);
+          if (v === undefined || v === null || String(v).trim() === '') return '';
+          return isObj && entry.label ? (entry.label + ': ' + v) : String(v);
+        }).filter(function (v) { return v.trim() !== ''; });
+        enhRefPrompt = enhRefParts.length ? enhRefParts.join('\n') : undefined;
+      } else {
+        enhRefPrompt = enhRefPromptSrc ? (resolveRef(enhRefPromptSrc) || undefined) : undefined;
+      }
       var enhRes = await fetch('/api/models/chat/studio-enhance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -573,6 +665,18 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       var enhData = await enhRes.json();
       if (!enhRes.ok || enhData.error) throw new Error(enhData.error || 'Enhance error');
       result = enhData.enhancedPrompt || '';
+      // stepDef.tag_image_refs: local LLMs (small ones especially) reliably
+      // drop or mangle literal "<image1>"-style angle-bracket tags in their
+      // output — observed live with a Gemma model treating them like a
+      // control-token pattern and silently stripping them. Flows that need
+      // that exact tag (e.g. Multi-Reference Compose, whose ComfyUI graph
+      // identifies each reference image only by its <imageN> tag) ask the
+      // system prompt for the plain words "Image 1"/"Image 2" instead, and
+      // this deterministically converts them back afterwards — far more
+      // reliable than hoping the model preserves exact punctuation.
+      if (stepDef.tag_image_refs && result) {
+        result = result.replace(/\bimage\s*(\d)\b/gi, '<image$1>');
+      }
 
     } else if (stepDef.calls === 'llm.edit_prompt') {
       // Rewrites an existing base prompt (context_from.current_prompt) using
@@ -969,11 +1073,22 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       if (outputTa) outputTa.value = result;
       setVal(stepDef.id, 'transformed_text', result);
       syncPrefillTargets(stepDef.id, 'transformed_text', result);
+      // stepDef.output_to targets another step's OWN textarea directly (no
+      // separate raw-output box rendered for this transform step, unlike
+      // Create's Assist chain — see renderLLMTransform's outputTa branch).
+      // syncPrefillTargets only updates steps that declare a matching
+      // `prefill_from`; a target reached purely via `output_to` never had
+      // its own stepValues written, so resolveRef('steps.<target>.output.
+      // prompt_text') kept returning the OLD/default value at Generate
+      // time even though the textarea looked updated on screen. Write it
+      // directly into the target step's own namespace too.
+      if (stepDef.output_to) setVal(stepDef.output_to, 'prompt_text', result);
       if (statusEl) statusEl.textContent = '✓ Done — edit if needed';
     }
     updateGenerateBtn();
 
   } catch (err) {
+    _restoreTargets();
     if (statusEl) statusEl.textContent = '✗ ' + (err.message || 'LLM error');
     showErrorToast(tF(stepDef.label || 'AI step') + ': ' + (err.message || 'something went wrong'));
     console.error('[FlowEngine] runLLM:', err);
@@ -1085,7 +1200,7 @@ async function _submitOneImage(positivePrompt) {
     body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
-  if (!submitRes.ok || submitData.error) throw new Error('Queue rejected');
+  if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
   if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
 
   var pendingCard = addGeneratingCard(generatedCount + 1, positivePrompt);
@@ -1171,6 +1286,17 @@ function _snapshotRefine(stepDef) {
         advancedValues[f.adv_key] = seed;
       }
     });
+  }
+
+  // Same promptKey/promptValue pair Mix supports (_snapshotMix): the prompt
+  // comes from a standalone prompt_input step (e.g. Style Reference's
+  // composed "Final prompt") instead of a prompt_history field.
+  var promptKey = inputMap['promptKey'] || '';
+  var promptValue = resolveRef(inputMap['promptValue']) || '';
+  if (promptKey && promptValue) {
+    if (!advancedValues || typeof advancedValues !== 'object') advancedValues = {};
+    advancedValues[promptKey] = promptValue;
+    if (!resolveRef(inputMap['cardPrompt'])) promptText = promptValue;
   }
 
   return {
@@ -1456,7 +1582,7 @@ async function _runUpscale(stepDef, ctx) {
     body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
-  if (!submitRes.ok || submitData.error) throw new Error('Queue rejected');
+  if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
   if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
 
   var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, promptRefine || 'Upscaling…');
@@ -1663,7 +1789,7 @@ async function _runRefine(stepDef, ctx) {
     body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
-  if (!submitRes.ok || submitData.error) throw new Error('Queue rejected');
+  if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
   if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
 
   var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, promptText || 'Refining…');
@@ -1688,6 +1814,23 @@ async function _runRefine(stepDef, ctx) {
   showResultActions(stepDef);
   if (generateStatus) generateStatus.textContent = '✓ Refined';
   saveSessionSnapshot();
+}
+
+// ComfyUI refused the job at submit. Almost always a model file or custom
+// node it doesn't have: re-check the flow and open the Missing files panel
+// when that's it, and pass ComfyUI's own reason on instead of a bare
+// "Queue rejected".
+function _queueRejected(submitData) {
+  if (typeof NcfRequirements !== 'undefined') NcfRequirements.afterRejected();
+  var err = submitData && submitData.error;
+  var reason = err && (err.message || err.type);
+  var nodeErrors = submitData && submitData.node_errors;
+  if (nodeErrors && typeof nodeErrors === 'object') {
+    var first = Object.keys(nodeErrors).map(function (k) { return nodeErrors[k]; })[0];
+    var detail = first && first.errors && first.errors[0];
+    if (detail) reason = (detail.message || '') + (detail.details ? ': ' + detail.details : '');
+  }
+  return new Error(reason ? 'ComfyUI: ' + reason : 'Queue rejected');
 }
 
 async function _runMix(stepDef, ctx) {
@@ -1718,7 +1861,7 @@ async function _runMix(stepDef, ctx) {
     body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
-  if (!submitRes.ok || submitData.error) throw new Error('Queue rejected');
+  if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
   if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
 
   var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, cardPrompt);

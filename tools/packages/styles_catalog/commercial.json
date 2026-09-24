@@ -1,0 +1,274 @@
+[
+  {
+    "src": [
+      105
+    ],
+    "key": "advertising-poster",
+    "name": {
+      "en": "Advertising Poster",
+      "es": "Póster publicitario",
+      "zh": "广告海报",
+      "ko": "광고 포스터"
+    },
+    "category": "Commercial/Product",
+    "prefix": "sleek studio product photograph for an advertising campaign",
+    "suffix": "the product centered on a clean graphic background, strong studio light and reflections, eye-catching modern commercial look, no text, no typography, no logos",
+    "prompt": "a premium smartwatch on a clean acrylic pedestal",
+    "review": {
+      "status": "cleaned",
+      "note": "Added 'no text, no logos' — preview rendered the words 'PROFESSIONAL POSTER STYLE'. Regenerate. Krea preview (2026-09-23) showed a trademark/text/over-16 — scene rewritten, regenerated.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      111
+    ],
+    "key": "luxury-product",
+    "name": {
+      "en": "Luxury Product",
+      "es": "Producto de lujo",
+      "zh": "奢侈品",
+      "ko": "럭셔리 제품"
+    },
+    "category": "Commercial/Product",
+    "prefix": "luxury product photograph",
+    "suffix": "elegant dark or marble backdrop, precise soft reflections, gold and black accents, refined minimal styling, high-end catalog finish",
+    "prompt": "a premium smartwatch on a clean acrylic pedestal",
+    "review": {
+      "status": "rewritten",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      113
+    ],
+    "key": "retail-packaging",
+    "name": {
+      "en": "Retail Packaging",
+      "es": "Packaging de tienda",
+      "zh": "零售包装",
+      "ko": "리테일 패키지"
+    },
+    "category": "Commercial/Product",
+    "prefix": "retail packaging product shot",
+    "suffix": "vibrant colorful packaging lined up on a shelf-like set, bright even lighting, crisp shapes, enticing commercial look, no readable text",
+    "prompt": "a lineup of colorful snack boxes on a bright display",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch for every Ads style. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      106
+    ],
+    "key": "automotive-ad",
+    "name": {
+      "en": "Automotive Ad",
+      "es": "Anuncio de coches",
+      "zh": "汽车广告",
+      "ko": "자동차 광고"
+    },
+    "category": "Commercial/Product",
+    "prefix": "automotive advertising photograph",
+    "suffix": "sleek car in a dramatic low three-quarter angle, glossy paint reflections, motion-blurred road or studio floor, dynamic commercial lighting, no logos",
+    "prompt": "a modern electric sports car on a coastal road at dusk",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      107
+    ],
+    "key": "corporate",
+    "name": {
+      "en": "Corporate",
+      "es": "Corporativo",
+      "zh": "企业形象",
+      "ko": "코퍼레이트"
+    },
+    "category": "Commercial/Product",
+    "prefix": "corporate brand photography",
+    "suffix": "clean modern office setting, neutral palette with one accent color, bright natural light, professional confident mood, minimalist composition",
+    "prompt": "a small team discussing ideas around a table in a bright office",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      109
+    ],
+    "key": "food-photography",
+    "name": {
+      "en": "Food Photography",
+      "es": "Fotografía de comida",
+      "zh": "美食摄影",
+      "ko": "푸드 사진"
+    },
+    "category": "Commercial/Food",
+    "prefix": "appetizing food photograph",
+    "suffix": "bright natural window light, fresh ingredients, rustic table styling, vibrant colors, shallow depth of field",
+    "prompt": "a colorful bowl of fresh pasta with basil on a rustic table",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      110
+    ],
+    "key": "fine-dining",
+    "name": {
+      "en": "Fine Dining",
+      "es": "Alta cocina",
+      "zh": "精致料理",
+      "ko": "파인 다이닝"
+    },
+    "category": "Commercial/Food",
+    "prefix": "gourmet fine-dining food photograph",
+    "suffix": "artful plating on a white plate, macro detail, glistening textures, soft side lighting, dark moody background, editorial quality",
+    "prompt": "a plated dessert with berries and gold leaf",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      108
+    ],
+    "key": "fashion-editorial",
+    "name": {
+      "en": "Fashion Editorial",
+      "es": "Editorial de moda",
+      "zh": "时尚大片",
+      "ko": "패션 에디토리얼"
+    },
+    "category": "Commercial/Fashion",
+    "prefix": "high-fashion editorial photograph",
+    "suffix": "styled designer outfit, confident pose, studio or location set, magazine lighting, trendy modern color story",
+    "prompt": "a model in a tailored coat walking through a city street",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      173
+    ],
+    "key": "techwear",
+    "name": {
+      "en": "Techwear",
+      "es": "Techwear",
+      "zh": "机能风",
+      "ko": "테크웨어"
+    },
+    "category": "Commercial/Fashion",
+    "prefix": "techwear fashion photograph",
+    "suffix": "black tactical layered outfit, straps and technical fabrics, urban concrete setting, overcast light, sleek futuristic mood",
+    "prompt": "a person in a techwear outfit standing in a city street",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Techwear Fashion'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      112
+    ],
+    "key": "interior-real-estate",
+    "name": {
+      "en": "Interior & Real Estate",
+      "es": "Interiores e inmobiliaria",
+      "zh": "室内与房产",
+      "ko": "인테리어 & 부동산"
+    },
+    "category": "Commercial/Spaces",
+    "prefix": "real estate interior photograph",
+    "suffix": "wide-angle straight verticals, bright balanced daylight, inviting clean staging, warm natural materials",
+    "prompt": "a sunlit modern living room with large windows",
+    "review": {
+      "status": "rewritten",
+      "note": "Example scene was a smartwatch. Regenerate.",
+      "preview": "regen"
+    }
+  },
+  {
+    "src": [
+      155
+    ],
+    "key": "architectural",
+    "name": {
+      "en": "Architectural",
+      "es": "Arquitectónico",
+      "zh": "建筑摄影",
+      "ko": "건축"
+    },
+    "category": "Commercial/Spaces",
+    "prefix": "architectural photograph",
+    "suffix": "clean lines and geometric forms, minimalist modern design, raw concrete and wood, crisp natural light, precise perspective",
+    "prompt": "a modern concrete house facade",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Architectural'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      168
+    ],
+    "key": "minimalist",
+    "name": {
+      "en": "Minimalist",
+      "es": "Minimalista",
+      "zh": "极简",
+      "ko": "미니멀"
+    },
+    "category": "Commercial/Spaces",
+    "prefix": "minimalist composition",
+    "suffix": "one simple subject, generous negative space, clean uncluttered background, soft even light, calm elegant palette",
+    "prompt": "a white coffee cup on a white table",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Minimalist'.",
+      "preview": "ok"
+    }
+  },
+  {
+    "src": [
+      156
+    ],
+    "key": "disco-night",
+    "name": {
+      "en": "Disco Night",
+      "es": "Noche disco",
+      "zh": "迪斯科之夜",
+      "ko": "디스코 나이트"
+    },
+    "category": "Commercial/Nightlife",
+    "prefix": "retro 1970s disco scene",
+    "suffix": "mirror balls throwing sparkles, glowing colorful dance floor, neon lights, groovy saturated palette, festive energy",
+    "prompt": "an empty dance floor ready for the party",
+    "review": {
+      "status": "rewritten",
+      "note": "Was 'Misc Disco'.",
+      "preview": "ok"
+    }
+  }
+]

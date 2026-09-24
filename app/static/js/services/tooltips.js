@@ -60,6 +60,11 @@
     if (open && open.tip === tip) return;
     hide();
     if (!tip.parentNode || !document.body) return;
+    // An empty tooltip means "nothing to say right now" — e.g. the Generate
+    // button's tip, which only has text while the button is disabled. The
+    // CSS gates it with :not(:empty); .nt-tip-floating's opacity:1 !important
+    // bypassed that and floated an empty pill above the button.
+    if (!String(tip.textContent || '').trim()) return;
     // Which side the CSS wanted: the ones pinned with `bottom` open upward.
     var prefersAbove = window.getComputedStyle(tip).bottom !== 'auto';
     var holder = document.createComment('tip');

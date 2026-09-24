@@ -27,11 +27,16 @@ import zipfile
 from html import escape as _esc
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 from flask import Blueprint, jsonify, request, send_file, session
 
 from app.routes.models_api import _ensure_registry, _save_registry
-from app.routes.models_api_shared import _registry_transaction, _resolve_output_dir
+from app.routes.models_api_shared import (
+    _registry_transaction,
+    _resolve_output_dir,
+    _resolve_viewer_output_dir,
+)
 from app.services import session_service, flow_engine, story_project_service
 
 # Must match viewers_routes.SESSION_KEY — duplicated as a plain string (rather
@@ -296,7 +301,15 @@ def _workflow_file_for_flow(flow_id: str, settings: dict[str, Any], packs: list[
 
 
 def _image_bytes_from_url(output_dir: Path, url: str) -> tuple[bytes, str] | None:
-    """Return (bytes, ext) for a step image URL (server path or data: URI)."""
+    """Return (bytes, ext) for a step image URL (server path or data: URI).
+
+    Resolves /api/images/<rel> the same way serve_image() does: Session
+    images (and the legacy bundle/ + vault/ aliases) from <output>/session,
+    everything else from the active viewer's own <output>/<viewer-slug>
+    folder first, then the shared output root for pre-per-viewer images.
+    Looking only in the shared root made every freshly generated image
+    "not found", so image exports came back empty.
+    """
     if not url:
         return None
     try:
@@ -310,16 +323,29 @@ def _image_bytes_from_url(output_dir: Path, url: str) -> tuple[bytes, str] | Non
         rel = url
         if "/api/images/" in rel:
             rel = rel.split("/api/images/", 1)[1]
-        rel = rel.split("?", 1)[0].lstrip("/")
+        rel = unquote(rel.split("?", 1)[0]).lstrip("/")
+        if rel.endswith("/thumb"):
+            rel = rel[: -len("/thumb")]
         if not rel:
             return None
-        candidate = (output_dir / rel).resolve()
-        # path-traversal guard
-        if output_dir.resolve() not in candidate.parents and candidate != output_dir.resolve():
-            return None
-        if candidate.is_file():
-            ext = candidate.suffix.lstrip(".").lower() or "png"
-            return candidate.read_bytes(), ext
+        for alias in ("bundle/", "vault/"):
+            if rel.startswith(alias):
+                rel = "session/" + rel[len(alias):]
+        bases: list[Path] = []
+        if not rel.startswith("session/"):
+            viewer_dir = _resolve_viewer_output_dir(_ensure_registry())
+            if viewer_dir:
+                bases.append(Path(viewer_dir))
+        bases.append(output_dir)
+        for base in bases:
+            root = base.resolve()
+            candidate = (root / rel).resolve()
+            # path-traversal guard
+            if root not in candidate.parents:
+                continue
+            if candidate.is_file():
+                ext = candidate.suffix.lstrip(".").lower() or "png"
+                return candidate.read_bytes(), ext
     except Exception:
         logger.exception("export: failed reading image %s", url)
     return None

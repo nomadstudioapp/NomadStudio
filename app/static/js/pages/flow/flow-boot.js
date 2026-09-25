@@ -62,24 +62,12 @@ function flowBootLoad(id) {
         saveBtnTip.className = 'action-tip';
         saveBtnTip.textContent = 'Save to Build';
         saveBtn.innerHTML =
-          // Authored in a 100×160 viewBox (not the usual 24×24), so it needs a
-          // much heavier stroke-width than typical icons to read as "thick"
-          // once scaled down to the rail's 16px — 1.8 would come out near-
-          // invisible (used to be handled by the now-removed .nsc-flow-save-btn
-          // svg rule; inlined here since .explore-zoom-icon doesn't set it).
-          '<svg class="explore-zoom-icon" viewBox="0 0 100 160" preserveAspectRatio="none" ' +
-          'fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-          '<path d="M50 8 L15 55"/>' +
-          '<path d="M50 8 L85 55"/>' +
-          '<path d="M15 55 L15 105"/>' +
-          '<path d="M85 55 L85 105"/>' +
-          '<path d="M15 105 L50 152"/>' +
-          '<path d="M85 105 L50 152"/>' +
-          '<path d="M50 8 L50 152"/>' +
-          '<path d="M15 55 L50 80"/>' +
-          '<path d="M85 55 L50 80"/>' +
-          '<path d="M15 105 L50 80"/>' +
-          '<path d="M85 105 L50 80"/>' +
+          // A cube — the Depot's own icon (topbar badge). The thin prism it
+          // replaced, drawn in a 100×160 box, barely showed at the rail's size.
+          '<svg class="explore-zoom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>' +
+          '<path d="M3.3 7 12 12l8.7-5M12 22V12"/>' +
           '</svg>';
         saveBtn.appendChild(saveBtnTip);
         saveBtn.addEventListener('click', function () {

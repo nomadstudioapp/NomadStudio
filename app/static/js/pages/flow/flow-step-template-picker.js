@@ -526,9 +526,16 @@ function renderTemplatePicker(stepDef, el) {
   assistRow.hidden = true;
   var ideaTa = document.createElement('textarea');
   ideaTa.className = 'nsc-textarea ncf-template-idea';
+  ideaTa.id = 'ncf-template-idea-' + stepDef.id;
   ideaTa.rows = 2;
   ideaTa.placeholder = _tplT('Your idea (optional): the AI writes it in this template\'s style.');
-  ideaTa.setAttribute('aria-label', _tplT('Your idea'));
+  // Titled like the step's own label ("Choose a template") — not
+  // .nsc-step-label itself: the picker looks that class up for its buttons.
+  var ideaLabel = document.createElement('label');
+  ideaLabel.className = 'nsc-param-title ncf-template-idea-label';
+  ideaLabel.htmlFor = ideaTa.id;
+  ideaLabel.textContent = _tplT('Your idea');
+  ideaLabel.setAttribute('data-i18n-literal', 'Your idea');
   var assistBtn = document.createElement('button');
   assistBtn.type = 'button';
   assistBtn.className = 'nss-generate-scenes-btn ncf-template-assist-btn';
@@ -560,6 +567,7 @@ function renderTemplatePicker(stepDef, el) {
   assistActions.className = 'ncf-template-assist-actions';
   assistActions.appendChild(assistBtn);
   assistActions.appendChild(modelBtn);
+  assistRow.appendChild(ideaLabel);
   assistRow.appendChild(ideaTa);
   assistRow.appendChild(assistActions);
   wrap.appendChild(assistRow);

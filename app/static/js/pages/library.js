@@ -620,9 +620,17 @@
   // strip" look, which read as a raw photo with a title bar slapped on
   // top — no card chrome, no description, inconsistent with every other
   // Build grid (Backgrounds/Characters/Styles all use .rp-card or .cs-card).
+  // A template image is served from its package (`url`, PACKAGE_FORMAT.md
+  // §10.1) or stored under data/images (`filename`).
+  function templateImgSrc(img) {
+    if (!img) return '';
+    if (img.url) return img.url;
+    return img.filename ? '/static/images/' + img.filename : '';
+  }
+
   function templateCardHtml(item) {
     var first = item.images && item.images[0];
-    var img = first && first.filename ? '/static/images/' + first.filename : '';
+    var img = templateImgSrc(first);
     var name = item.name || 'Untitled';
     var theme = item.theme || '';
     var prompt = (first && first.prompt) || item.template || '';
@@ -637,8 +645,8 @@
             '<i data-lucide="layout-template" class="lib-style-card-fallback-icon" aria-hidden="true"></i>' +
           '</div>' +
           '<div class="rp-card-body">' +
-            '<p class="rp-card-name">' + escHtml(name) + '</p>' +
-            (theme ? '<p class="lib-style-card-category">' + escHtml(theme) + '</p>' : '') +
+            '<p class="rp-card-name">' + trLit(name) + '</p>' +
+            (theme ? '<p class="lib-style-card-category">' + trLit(theme) + '</p>' : '') +
             (prompt ? '<p class="rp-card-desc">' + escHtml(prompt) + '</p>' : '') +
           '</div>' +
         '</div>' +
@@ -818,7 +826,7 @@
   function renderTemplateLightbox() {
     var img = templateLightboxImages[templateLightboxIndex];
     if (!img) return;
-    templateLightboxImg.src = img.filename ? '/static/images/' + img.filename : '';
+    templateLightboxImg.src = templateImgSrc(img);
     templateLightboxImg.alt = '';
     templateLightboxCounter.textContent = (templateLightboxIndex + 1) + ' / ' + templateLightboxImages.length;
     templateLightboxPrompt.textContent = img.prompt || '';
@@ -1359,7 +1367,7 @@
           if (updated) {
             if (item) item.images = updated.images;
             var firstImg = updated.images && updated.images[0];
-            var url = firstImg && firstImg.filename ? '/static/images/' + firstImg.filename : '';
+            var url = templateImgSrc(firstImg);
             setTemplateEditImage(url);
             if (url) setTemplateCardImage(editingTemplateId, url);
           }
@@ -1591,7 +1599,7 @@
     if (templateEditDelBtn) templateEditDelBtn.hidden = false;
     if (templateEditImageStep) templateEditImageStep.hidden = false;
     var firstImg = item.images && item.images[0];
-    setTemplateEditImage(firstImg && firstImg.filename ? '/static/images/' + firstImg.filename : '');
+    setTemplateEditImage(templateImgSrc(firstImg));
     templateEditFields.name.value = item.name || '';
     templateEditFields.theme.value = item.theme || '';
     templateEditFields.pack.value = item.pack || '';

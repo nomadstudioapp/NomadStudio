@@ -7719,6 +7719,30 @@ button.nse-model-hint.ncf-enum-picker-btn:hover {
 }
 .ncf-template-prompt-preview { margin-top: 0.5rem; }
 
+/* Your idea + "Apply with AI" between the picked template and its prompt. */
+.ncf-template-assist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ncf-template-assist[hidden] { display: none; }
+.ncf-template-assist-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ncf-template-assist .nss-generate-scenes-btn { flex: 1; margin-top: 0; }
+.ncf-template-assist .nss-generate-scenes-btn:disabled { opacity: 0.45; cursor: default; }
+.ncf-template-assist .ncf-llm-model-btn { flex-shrink: 0; }
+/* Reset under the prompt, right-aligned. [hidden] must beat the
+   display rule .nsc-history-btn carries. */
+.ncf-template-prompt-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+}
+.ncf-template-reset-btn[hidden] { display: none; }
+
 /* ── "Fill template" panel ───────────────────────────────────────────────── */
 .ncf-tplfill-head {
   display: flex;

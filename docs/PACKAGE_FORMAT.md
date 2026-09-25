@@ -169,7 +169,7 @@ Se ignoran `__MACOSX/`, `.DS_Store`, `Thumbs.db` y `__pycache__/`.
 | `workflows` | Workflows de ComfyUI que usan sus flows (§5.2). |
 | `engines` | Motores que instala (§8.1). |
 | `addon` | Código Python (§9). |
-| `template_packs` | Datos de plantillas con placeholders (§10.1). |
+| `template_packs` | Temas de plantillas: template con huecos, valores e imágenes de ejemplo (§10.1). |
 | `presets` | Looks de un solo clic (§10.2). |
 | `styles` | Estilos de Build > Styles, solo texto (§10.3). |
 | `tags` | Etiquetas nuevas con sus traducciones (§7.3). |
@@ -741,12 +741,27 @@ Hoy `flow-render-all.js` elige el bloque con un `switch` fijo. Pasa a un **regis
 
 ### 10.1 Template packs
 
-`data/template_packs.json`: lista con el formato actual (`id`, `name`, `pack`, `theme`, `template`, `images[]` con `filename` y `prompt`).
+`contributes.template_packs`: lista de ficheros JSON (normalmente `["data/template_packs.json"]`). Cada fichero es una lista de **temas**:
 
-- `filename` es relativo al paquete (`assets/templates/90s_smalltown.webp`).
-- El paquete aporta una card de pack en el grupo **Template Packs** de Create, con `style: "cover"` y, por defecto, la primera imagen como portada. PUEDE fijarla con `card.cover`.
-- Los ids de plantilla se prefijan con el id del paquete al instalar, para que no choquen.
-- Opcional: `i18n` de nombres de tema. Los prompts no se traducen (son entrada del modelo).
+```json
+{
+  "key": "1920s-flapper",
+  "pack": {"en": "Cinematic", "es": "Cinematográfico", "zh": "电影感", "ko": "시네마틱"},
+  "theme": {"en": "1920s Flapper", "es": "Flapper de los años 20", "zh": "1920年代摩登女郎", "ko": "1920년대 플래퍼"},
+  "template": "{shot} of a 1920s flapper {look}, {action}, {setting}. {lighting}. Candid cinematic film still from a prohibition-era drama…",
+  "values": {"shot": ["A cinematic close-up", "A medium shot"], "look": ["with a beaded headband and a sleek bob"], "…": []},
+  "images": [{"file": "extras/cinematic-stills/16-9/1920s_flapper.webp", "prompt": "A cinematic, photorealistic close-up of…"}]
+}
+```
+
+- Un tema es **un template** con huecos `{campo}`, los valores sugeridos para cada hueco (`values`) y sus imágenes de ejemplo, cada una con el prompt real que la generó. El template DEBERÍA nombrar el sujeto del tema: elegir un tema tiene que cambiar el prompt, no solo los ejemplos.
+- `key` es un slug único dentro del paquete y es lo que identifica el tema entre versiones (nunca el nombre). `pack` y `theme` son textos (§7.1). Los templates, los valores y los prompts no se traducen: son entrada del modelo.
+- Al instalar, cada imagen de un tema pasa a ser una entrada de `template_packs.json` (una tarjeta en From Template y en Build › Templates), marcada con `package` + `package_key` (`<key>#<n>`), con el nombre del tema numerado (`1920s Flapper — 2`) si tiene más de una. Las imágenes se sirven desde la carpeta del paquete (`url`, no se copian). Los `values` van a `template_pack_field_values.json`, con el pack y el tema como clave.
+- Actualizar el paquete añade los temas nuevos, actualiza los que el usuario no ha editado y quita los que ya no vienen. Una entrada que el usuario **editó** o a la que **añadió imágenes** no se pisa nunca; si el paquete la quita o se desinstala, se queda como suya, sin las imágenes del paquete. Lo mismo pasa con los valores de un tema que el usuario haya cambiado.
+- `replaces` (en el manifest) funciona igual que en los estilos (§10.3).
+- En Create, cada pack tiene su card en el grupo **Template Packs**, con la primera imagen como portada. El flow From Template (`create.from_template`) viene en `nomad.core-create`: los packs solo aportan datos.
+- **Extras**: un pack PUEDE llevar ficheros que la app no usa, como un editor offline o instrucciones para ComfyUI. Van en `extras/` y se declaran en el manifest con `"extras": {"composer": "extras/Template-Composer.html", "setup": "extras/ComfyUI-Setup.txt"}`. Las imágenes de los temas pueden vivir dentro de `extras/` para que esos ficheros las encuentren por su ruta relativa. La app nunca sirve ni ejecuta el HTML de `extras/`.
+- Los template packs de Nomad Studio se construyen en el repo **Nomad Studio Packs** (`tools/build_templates.py`), no aquí.
 
 ### 10.2 Presets
 

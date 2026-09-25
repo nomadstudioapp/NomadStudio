@@ -52,7 +52,7 @@ MAX_RATIO = 100
 MAX_PATH_CHARS = 180  # relative path inside the package (Windows 260-char limit, §12.1)
 IGNORED = ("__MACOSX/", ".DS_Store", "Thumbs.db", "__pycache__/")
 
-SUPPORTED_CONTRIBUTIONS = {"engines", "flows", "workflows", "addon", "styles"}
+SUPPORTED_CONTRIBUTIONS = {"engines", "flows", "workflows", "addon", "styles", "template_packs"}
 STYLE_KEY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 TOKEN_TTL_S = 3600
 
@@ -381,6 +381,67 @@ def load_package_styles(pkg_dir: Path, manifest: dict[str, Any]) -> list[dict[st
     return out
 
 
+IMAGE_EXTS = (".webp", ".png", ".jpg", ".jpeg")
+
+
+def validate_template_packs(themes: Any, rel: str, default_lang: str, files: set[str] | None = None) -> None:
+    """contributes.template_packs file: a list of themes (§10.1). Each theme
+    is one prompt template with {fields}, the suggested values for them and
+    its example images; `key` identifies it inside its package."""
+    if not isinstance(themes, list) or not themes:
+        raise PackageError(f"{rel}: must be a non-empty list of template themes")
+    keys: set[str] = set()
+    for i, theme in enumerate(themes):
+        where = f"{rel}[{i}]"
+        if not isinstance(theme, dict):
+            raise PackageError(f"{where}: a theme must be a JSON object")
+        key = str(theme.get("key", ""))
+        if not STYLE_KEY_RE.match(key):
+            raise PackageError(f"{where}: key must be a lowercase slug like '1920s-flapper'")
+        if key in keys:
+            raise PackageError(f"{where}: duplicate key {key!r}")
+        keys.add(key)
+        for field in ("pack", "theme"):
+            if not text_for(theme.get(field), default_lang, default_lang):
+                raise PackageError(f"{where}: {field} needs a text in default_lang ({default_lang})")
+        template = theme.get("template")
+        if not isinstance(template, str) or not template.strip():
+            raise PackageError(f"{where}: template must be a non-empty string")
+        values = theme.get("values", {})
+        if not isinstance(values, dict) or not all(
+            isinstance(v, list) and all(isinstance(x, str) for x in v) for v in values.values()
+        ):
+            raise PackageError(f"{where}: values must be an object of field → list of texts")
+        images = theme.get("images")
+        if not isinstance(images, list) or not images:
+            raise PackageError(f"{where}: images must be a non-empty list")
+        for img in images:
+            path = img.get("file") if isinstance(img, dict) else None
+            if not isinstance(path, str) or not path.lower().endswith(IMAGE_EXTS):
+                raise PackageError(f"{where}: every image needs a .webp/.png/.jpg \"file\"")
+            if files is not None and path not in files:
+                raise PackageError(f"{where}: image not in the package: {path}")
+
+
+def load_package_template_packs(pkg_dir: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    """Every template theme an installed package contributes, in file order."""
+    out: list[dict[str, Any]] = []
+    for rel in (manifest.get("contributes") or {}).get("template_packs", []) or []:
+        try:
+            data = json.loads((pkg_dir / rel).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, list):
+            out.extend(t for t in data if isinstance(t, dict))
+    return out
+
+
+def template_entry_name(theme_name: str, index: int, count: int) -> str:
+    """Card name of one example of a theme in template_packs.json — the
+    theme itself, numbered when it has more than one example."""
+    return theme_name if count == 1 else f"{theme_name} — {index}"
+
+
 def _workflow_derived_flows(
     zf: zipfile.ZipFile, workflow_rels: list[str], skip_ids: set[str] = frozenset()
 ) -> list[tuple[str, dict[str, Any]]]:
@@ -551,6 +612,18 @@ def texts_for(data_dir: Path, lang: str) -> dict[str, str]:
                 if len(src_parts) == len(dst_parts):
                     for s, d in zip(src_parts, dst_parts):
                         out.setdefault(s, d)
+        # Template pack and theme names (§10.1), plus the numbered card name
+        # of each example ("1920s Flapper — 2"), as template_packs.json has it.
+        for theme in load_package_template_packs(base / pkg_id, manifest):
+            for field in ("pack", "theme"):
+                value = theme.get(field)
+                if isinstance(value, dict) and value.get(lang) and value.get(default_lang):
+                    out[str(value[default_lang])] = str(value[lang])
+            name = theme.get("theme")
+            if isinstance(name, dict) and name.get(lang) and name.get(default_lang):
+                count = len(theme.get("images") or [])
+                for i in range(1, count + 1):
+                    out[template_entry_name(str(name[default_lang]), i, count)] = template_entry_name(str(name[lang]), i, count)
         try:
             translations = json.loads((base / pkg_id / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -617,6 +690,16 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
                 raise PackageError(f"{rel}: style key already used in this package: {sorted(dupes)[0]}")
             style_keys |= {s["key"] for s in styles}
             style_count += len(styles)
+        template_count = 0
+        template_keys: set[str] = set()
+        for rel in contributes.get("template_packs", []):
+            themes = _load_json_member(zf, rel)
+            validate_template_packs(themes, rel, default_lang, files)
+            dupes = template_keys & {t["key"] for t in themes}
+            if dupes:
+                raise PackageError(f"{rel}: template key already used in this package: {sorted(dupes)[0]}")
+            template_keys |= {t["key"] for t in themes}
+            template_count += len(themes)
 
     installed = index.get("packages", {}).get(pkg_id)
     operation = "install"
@@ -638,6 +721,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
         "engines": engines,
         "flows": flows,
         "styles": style_count,
+        "templates": template_count,
         "requiresMissing": missing,
         "warnings": warnings,
         "sizeBytes": zip_path.stat().st_size,
@@ -804,6 +888,7 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         "flows": [f["id"] for f in flows],
         "engines": [pkg_id] if engine else [],
         "styles": summary["styles"],
+        "templates": summary["templates"],
         "has_code": bool(manifest["contributes"].get("addon")),
         "bundled": was_bundled,
     }

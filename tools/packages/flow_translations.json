@@ -1,4 +1,14 @@
 {
+  "Pick a template from your template packs, fill in the blanks and generate. No AI needed.": {
+    "es": "Elige un template de tus template packs, rellena los huecos y genera. Sin IA.",
+    "zh": "从你的模板包中选一个模板，填好空白处即可生成，无需 AI。",
+    "ko": "템플릿 팩에서 템플릿을 골라 빈칸을 채우고 생성하세요. AI가 필요 없습니다."
+  },
+  "Pick a template from an installed template pack, fill in its blanks, and generate.": {
+    "es": "Elige un template de un template pack instalado, rellena sus huecos y genera.",
+    "zh": "从已安装的模板包中选一个模板，填好空白处即可生成。",
+    "ko": "설치된 템플릿 팩에서 템플릿을 골라 빈칸을 채우고 생성하세요."
+  },
   "Write your prompt as structured JSON and generate straight away. The block is sent as the prompt, as it is. No AI needed.": {
     "es": "Escribe tu prompt como JSON estructurado y genera directamente. El bloque se envía tal cual como prompt. Sin IA.",
     "zh": "把提示词写成结构化 JSON，直接生成。整段会原样作为提示词发送，无需 AI。",

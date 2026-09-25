@@ -53,6 +53,24 @@ def _sync_styles(result: dict) -> None:
     sync_package_styles(pkg_id, package_service.packages_dir(DATA_DIR) / pkg_id, manifest)
 
 
+def _sync_template_packs(result: dict) -> None:
+    """contributes.template_packs (§10.1): copy the package's themes into
+    template_packs.json (Create > Template Packs, From Template, Build >
+    Templates) and their field values into template_pack_field_values.json."""
+    manifest = result["manifest"]
+    if not (manifest.get("contributes") or {}).get("template_packs"):
+        return
+    from .models_api_modules.template_packs_routes import sync_package_template_packs
+
+    pkg_id = manifest["id"]
+    sync_package_template_packs(pkg_id, package_service.packages_dir(DATA_DIR) / pkg_id, manifest)
+
+
+def _sync_contents(result: dict) -> None:
+    _sync_styles(result)
+    _sync_template_packs(result)
+
+
 def install_bundled_packages() -> list[str]:
     """Install or update the packages shipped with the app (bundled-packages/)
     — called once at startup so a fresh install already has the free engines
@@ -73,7 +91,7 @@ def install_bundled_packages() -> list[str]:
                 package_service.mark_bundled(index, result["manifest"])
                 with _registry_transaction() as data:
                     package_service.apply_to_registry(data, DATA_DIR, result)
-                _sync_styles(result)
+                _sync_contents(result)
                 done.append(f"{action} {result['manifest']['id']} {result['manifest']['version']}")
             except Exception:  # noqa: BLE001
                 log.exception("bundled package failed: %s", zip_path.name)
@@ -135,7 +153,7 @@ def install_package():
         with _registry_transaction() as data:
             package_service.apply_to_registry(data, DATA_DIR, result)
         package_service.write_index(DATA_DIR, index)
-        _sync_styles(result)
+        _sync_contents(result)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     finally:
@@ -164,6 +182,13 @@ def serve_package_file(pkg_id: str, rel: str):
     full = safe_join(str(base), rel)
     if not full or not os.path.isfile(full):
         abort(404)
+    # A package's HTML would run inside the app's origin: never served. Of
+    # extras/ (files for use outside the app, §10.1) only the images are.
+    lowered = rel.lower()
+    if lowered.endswith((".html", ".htm", ".xhtml")) or (
+        lowered.startswith("extras/") and not lowered.endswith(package_service.IMAGE_EXTS)
+    ):
+        abort(404)
     response = send_from_directory(base, rel)
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
@@ -181,8 +206,10 @@ def uninstall_package(pkg_id: str):
             package_service.remove_from_registry(data, pkg_id)
         package_service.write_index(DATA_DIR, index)
         from .models_api_modules.styles_routes import remove_package_styles
+        from .models_api_modules.template_packs_routes import remove_package_template_packs
 
         remove_package_styles(pkg_id)
+        remove_package_template_packs(pkg_id)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 404
     finally:

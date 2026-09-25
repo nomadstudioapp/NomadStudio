@@ -17,14 +17,14 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       <a href="{{ url_for('main.nomad_studio_create_page') }}">Create</a>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      <span class="cs-breadcrumb-current">{{ pack_name }}</span>
+      <span class="cs-breadcrumb-current" data-i18n-literal="{{ pack_name }}">{{ pack_name }}</span>
     </p>
   </div>
 
   <section class="rp-shell">
 
     <header class="rp-topbar">
-      <h1 class="rp-title">{{ pack_name }}</h1>
+      <h1 class="rp-title" data-i18n-literal="{{ pack_name }}">{{ pack_name }}</h1>
       <p class="rp-subtitle" data-i18n="hub.packs.gallerySubtitle" data-i18n-n="{{ themes|length }}">{{ themes|length }} curated looks. Pick one, tweak the details, generate.</p>
     </header>
 
@@ -33,11 +33,11 @@
       <a href="{{ url_for('main.ns_create_generic_flow_page', slug='from-template', pack=pack_name, theme=theme.name) }}" class="rp-card" aria-label="{{ theme.name }}">
         <div class="rp-card-media">
           {% if theme.cover %}
-          <img src="{{ url_for('static', filename='images/' ~ theme.cover) }}" alt="{{ theme.name }} preview" loading="lazy">
+          <img src="{{ theme.cover }}" alt="{{ theme.name }} preview" loading="lazy">
           {% endif %}
         </div>
         <div class="rp-card-body">
-          <p class="rp-card-name">{{ theme.name }}</p>
+          <p class="rp-card-name" data-i18n-literal="{{ theme.name }}">{{ theme.name }}</p>
           {% if theme.description %}
           <p class="rp-card-desc">{{ theme.description }}</p>
           {% endif %}

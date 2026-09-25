@@ -580,6 +580,18 @@ def _load_template_pack_items() -> list[dict]:
     return data if isinstance(data, list) else []
 
 
+def _template_image_url(image: dict) -> str | None:
+    """A template example image: served from its package (`url`, §10.1) or
+    stored under data/images (`filename`)."""
+    if not isinstance(image, dict):
+        return None
+    if image.get("url"):
+        return str(image["url"])
+    if image.get("filename"):
+        return url_for("static", filename="images/" + str(image["filename"]))
+    return None
+
+
 def _load_pack_summaries() -> list[dict]:
     """One card per distinct `pack` value in template_packs.json (e.g.
     "Cinematic") — cover image from its first item, count = number of
@@ -599,12 +611,12 @@ def _load_pack_summaries() -> list[dict]:
             entry["themes"].add(theme)
         images = it.get("images") or []
         if entry["cover"] is None and images:
-            entry["cover"] = images[0].get("filename")
+            entry["cover"] = _template_image_url(images[0])
     return [
         {
             "name": p["name"],
             "slug": p["slug"],
-            "cover_image": p["cover"],
+            "cover_url": p["cover"],
             "count": len(p["themes"]),
         }
         for p in sorted(packs.values(), key=lambda p: p["name"])
@@ -639,7 +651,7 @@ def _load_pack_themes(pack_slug: str) -> tuple[str | None, list[dict]]:
         images = it.get("images") or []
         if images:
             if entry["cover"] is None:
-                entry["cover"] = images[0].get("filename")
+                entry["cover"] = _template_image_url(images[0])
             # Description shown on the theme card: the actual generated
             # prompt for its cover image — real, readable copy instead of
             # the raw {placeholder} template string. Clamped to 2 lines via

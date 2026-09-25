@@ -38,9 +38,22 @@ function _tplParsePlaceholders(text) {
   return out;
 }
 
+// A template image is served from its package (`url`, PACKAGE_FORMAT.md
+// §10.1) or stored under data/images (`filename`).
+function _tplImgSrc(img) {
+  if (!img) return '';
+  if (img.url) return img.url;
+  return img.filename ? '/static/images/' + img.filename : '';
+}
+
 function _tplImageUrl(item) {
-  var first = item && item.images && item.images[0];
-  return first && first.filename ? '/static/images/' + first.filename : '';
+  return _tplImgSrc(item && item.images && item.images[0]);
+}
+
+// Pack, theme and card names that came from a package are translated by
+// their English text (packages' texts merged into flowLabels).
+function _tplT(text) {
+  return (window.NomadI18n && typeof window.NomadI18n.tField === 'function') ? window.NomadI18n.tField(text) : text;
 }
 
 function _tplThemeList(items) {
@@ -107,8 +120,8 @@ function _tplCardHtml(item) {
           '<i data-lucide="layout-template" class="lib-style-card-fallback-icon" aria-hidden="true"></i>' +
         '</div>' +
         '<div class="rp-card-body">' +
-          '<p class="rp-card-name">' + escHtml(item.name || 'Untitled') + '</p>' +
-          (item.theme ? '<p class="lib-style-card-category">' + escHtml(item.theme) + '</p>' : '') +
+          '<p class="rp-card-name">' + escHtml(_tplT(item.name || 'Untitled')) + '</p>' +
+          (item.theme ? '<p class="lib-style-card-category">' + escHtml(_tplT(item.theme)) + '</p>' : '') +
         '</div>' +
       '</button>' +
     '</div>'
@@ -119,7 +132,7 @@ function _tplCardHtml(item) {
 // same panel, but only that theme's cards — no theme list, no search, since
 // there is nothing to navigate between. The panel title names the theme.
 function _openTemplatePickerPanel(onPick, lock) {
-  openOptionsPanel(lock ? lock.theme : 'Choose a template', function (body) {
+  openOptionsPanel(lock ? _tplT(lock.theme) : 'Choose a template', function (body) {
     body.innerHTML = lock
       ? '<div class="ncf-style-picker-layout">' +
           '<div class="ncf-style-picker-grid ncf-style-picker-grid--tpl"></div>' +
@@ -148,7 +161,7 @@ function _openTemplatePickerPanel(onPick, lock) {
       html += themes.map(function (t) {
         return '<button type="button" class="lib-style-cat-tree-item' +
           (selectedTheme === t ? ' is-active' : '') + '" data-theme="' + escHtml(t) + '">' +
-          escHtml(t) + '</button>';
+          escHtml(_tplT(t)) + '</button>';
       }).join('');
       treeEl.innerHTML = html;
     }
@@ -159,7 +172,7 @@ function _openTemplatePickerPanel(onPick, lock) {
         if (lock && ((it.pack || '').trim() !== lock.pack || (it.theme || '').trim() !== lock.theme)) return false;
         if (selectedTheme && (it.theme || '').trim() !== selectedTheme) return false;
         if (q) {
-          var hay = [it.name, it.theme, it.pack, it.template].join(' ').toLowerCase();
+          var hay = [it.name, it.theme, it.pack, it.template, _tplT(it.name), _tplT(it.theme)].join(' ').toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
         return true;
@@ -394,6 +407,54 @@ function _openTemplateFillPanel(state, onApply) {
   }, { wide: true });
 }
 
+// ── Assist: the template applied to your own idea ────────────────────────────
+//
+// The picked template is a recipe — framing, light, medium, finish — and its
+// theme's example images carry the real prompts written with it. The local
+// LLM gets both and writes the user's idea the same way. Same endpoint as
+// Create > Style + AI (studio-enhance with an explicit system prompt).
+
+var _TPL_ASSIST_SYSTEM =
+  'You write prompts for AI image generation. You get the user\'s idea and a TEMPLATE from a ' +
+  'template pack: a prompt recipe with a fixed look (framing, lighting, medium, genre, finishing ' +
+  'words), followed by example prompts written with it.\n' +
+  'Write ONE image prompt that shows the user\'s idea written the way this template writes its prompts.\n' +
+  'Rules:\n' +
+  '- The idea decides the subject and the scene. Keep every concrete element of it; do not add new subjects.\n' +
+  '- Take from the template its structure, wording, style, lighting and closing quality words, and ' +
+  'replace the template\'s own subject with the idea\'s.\n' +
+  '- Match the length and tone of the examples.\n' +
+  '- Write in English, whatever language the idea is in.\n' +
+  '- No text, captions, signatures or logos in the image unless the idea asks for them.\n' +
+  '- Suitable for a general audience.\n' +
+  '- Reply with the prompt only: no quotes, no preamble.';
+
+var _TPL_ASSIST_MAX_EXAMPLES = 4;
+
+function _tplThemeExamples(item) {
+  var out = [];
+  (_templatePacksCache || []).forEach(function (it) {
+    if ((it.pack || '') !== (item.pack || '') || (it.theme || '') !== (item.theme || '')) return;
+    (it.images || []).forEach(function (img) {
+      var p = img && String(img.prompt || '').trim();
+      if (p && out.indexOf(p) === -1) out.push(p);
+    });
+  });
+  // The picked card's own example first: it is the look the user chose.
+  var own = item.images && item.images[0] && String(item.images[0].prompt || '').trim();
+  if (own) out = [own].concat(out.filter(function (p) { return p !== own; }));
+  return out.slice(0, _TPL_ASSIST_MAX_EXAMPLES);
+}
+
+function _tplAssistSystemPrompt(item, filledTemplate) {
+  var examples = _tplThemeExamples(item);
+  return _TPL_ASSIST_SYSTEM +
+    '\n\nTEMPLATE (' + (item.pack || '') + ' / ' + (item.theme || '') + '):\n' + filledTemplate +
+    (examples.length
+      ? '\n\nEXAMPLE PROMPTS written with this template:\n' + examples.map(function (p) { return '- ' + p; }).join('\n')
+      : '');
+}
+
 // ── Step body ────────────────────────────────────────────────────────────────
 
 function renderTemplatePicker(stepDef, el) {
@@ -458,14 +519,120 @@ function renderTemplatePicker(stepDef, el) {
     openFill);
   fillBtn.hidden = true;
 
+  // Your idea + Assist: between the picked template and its prompt, hidden
+  // until a template is picked. Empty idea → the template works as before.
+  var assistRow = document.createElement('div');
+  assistRow.className = 'ncf-template-assist';
+  assistRow.hidden = true;
+  var ideaTa = document.createElement('textarea');
+  ideaTa.className = 'nsc-textarea ncf-template-idea';
+  ideaTa.rows = 2;
+  ideaTa.placeholder = _tplT('Your idea (optional): the AI writes it in this template\'s style.');
+  ideaTa.setAttribute('aria-label', _tplT('Your idea'));
+  var assistBtn = document.createElement('button');
+  assistBtn.type = 'button';
+  assistBtn.className = 'nss-generate-scenes-btn ncf-template-assist-btn';
+  assistBtn.insertAdjacentHTML('afterbegin',
+    '<svg class="nss-btn-icon" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 15l-4.9 3.2 1.9-5.8L4 8.8h6.1z"/></svg>');
+  var assistLbl = document.createElement('span');
+  assistLbl.textContent = _tplT('Apply with AI');
+  assistBtn.appendChild(assistLbl);
+  assistBtn.disabled = true;
+  // Which model writes can change on the fly: the round button beside Apply
+  // opens the same model panel as every AI step (ncf-llm-model-btn is the
+  // hook the panel repaints through; hovering it names the current model).
+  var modelBtn = document.createElement('button');
+  modelBtn.type = 'button';
+  modelBtn.className = 'nsc-history-btn nsc-options-trigger ncf-llm-model-btn';
+  modelBtn.setAttribute('aria-haspopup', 'dialog');
+  modelBtn.setAttribute('aria-label', _tplT('Change LLM model'));
+  modelBtn.innerHTML =
+    '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+      '<rect x="2" y="5" width="14" height="9" rx="1.5"/>' +
+      '<line x1="5" y1="8" x2="5.01" y2="8"/><line x1="9" y1="8" x2="9.01" y2="8"/><line x1="13" y1="8" x2="13.01" y2="8"/>' +
+      '<line x1="5" y1="11" x2="13" y2="11"/>' +
+    '</svg>';
+  modelBtn.addEventListener('click', function () {
+    if (typeof openModelOptionsPanel === 'function') openModelOptionsPanel();
+  });
+  if (typeof loadPromptModelHint === 'function') loadPromptModelHint(modelBtn, null);
+  var assistActions = document.createElement('div');
+  assistActions.className = 'ncf-template-assist-actions';
+  assistActions.appendChild(assistBtn);
+  assistActions.appendChild(modelBtn);
+  assistRow.appendChild(ideaTa);
+  assistRow.appendChild(assistActions);
+  wrap.appendChild(assistRow);
+
+  ideaTa.addEventListener('input', function () {
+    assistBtn.disabled = !ideaTa.value.trim();
+    setVal(stepDef.id, 'idea_text', ideaTa.value.trim());
+  });
+
+  var assistBusy = false;
+  assistBtn.addEventListener('click', async function () {
+    var idea = ideaTa.value.trim();
+    if (!idea || !state.selected || assistBusy) return;
+    assistBusy = true;
+    assistBtn.disabled = true;
+    assistBtn.classList.add('is-loading');
+    assistLbl.textContent = _tplT('Writing…');
+    try {
+      var res = await fetch('/api/models/chat/studio-enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: idea, level: 'style', flair: 0,
+          systemPrompt: _tplAssistSystemPrompt(state.selected, resolvePrompt()) }),
+      });
+      var data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'AI error');
+      var written = String(data.enhancedPrompt || '').trim();
+      if (!written) throw new Error('The AI returned an empty prompt');
+      promptTa.value = written;
+      setVal(stepDef.id, 'prompt_text', written);
+      syncResetBtn();
+    } catch (err) {
+      if (typeof showErrorToast === 'function') showErrorToast(_tplT('Apply with AI') + ': ' + (err.message || 'something went wrong'));
+      else console.error('[template assist]', err);
+    } finally {
+      assistBusy = false;
+      assistBtn.classList.remove('is-loading');
+      assistLbl.textContent = _tplT('Apply with AI');
+      assistBtn.disabled = !ideaTa.value.trim();
+    }
+  });
+
   var promptTa = document.createElement('textarea');
   promptTa.className = 'nsc-textarea ncf-template-prompt-preview';
   promptTa.rows = 4;
   promptTa.placeholder = 'Pick a template and its prompt appears here — editable, as always.';
   promptTa.addEventListener('input', function () {
     setVal(stepDef.id, 'prompt_text', promptTa.value);
+    syncResetBtn();
   });
   wrap.appendChild(promptTa);
+
+  // Reset: back to the template's own prompt (with the current field
+  // values) after the AI or a hand edit changed it. Only there when it
+  // would change something.
+  var resetRow = document.createElement('div');
+  resetRow.className = 'ncf-template-prompt-tools';
+  var resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'nsc-history-btn ncf-template-reset-btn';
+  resetBtn.setAttribute('aria-label', _tplT('Reset to the template'));
+  resetBtn.title = _tplT('Reset to the template');
+  resetBtn.innerHTML =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M2.5 8a5.5 5.5 0 1 0 1.8-4.1L2.5 5.5"/><path d="M2.5 2.5v3h3"/></svg>';
+  resetBtn.hidden = true;
+  resetBtn.addEventListener('click', function () { recomputePrompt(); });
+  resetRow.appendChild(resetBtn);
+  wrap.appendChild(resetRow);
+
+  function syncResetBtn() {
+    resetBtn.hidden = !state.selected || promptTa.value === resolvePrompt();
+  }
 
   function renderSummary() {
     if (!state.selected) {
@@ -482,8 +649,8 @@ function renderTemplatePicker(stepDef, el) {
     summaryEl.innerHTML =
       (img ? '<img src="' + escHtml(img) + '" alt="" class="ncf-template-summary-thumb">' : '') +
       '<span class="ncf-template-summary-text">' +
-        '<span class="ncf-template-summary-name">' + escHtml(state.selected.name || 'Untitled') + '</span>' +
-        '<span class="ncf-template-summary-theme">' + escHtml(state.selected.theme || '') +
+        '<span class="ncf-template-summary-name">' + escHtml(_tplT(state.selected.name || 'Untitled')) + '</span>' +
+        '<span class="ncf-template-summary-theme">' + escHtml(_tplT(state.selected.theme || '')) +
           (blanks ? ' · ' + blanks + (blanks === 1 ? ' blank' : ' blanks') : '') + '</span>' +
       '</span>';
   }
@@ -501,6 +668,7 @@ function renderTemplatePicker(stepDef, el) {
     var resolved = resolvePrompt();
     promptTa.value = resolved;
     setVal(stepDef.id, 'prompt_text', resolved);
+    syncResetBtn();
   }
 
   function selectTemplate(item) {
@@ -510,6 +678,7 @@ function renderTemplatePicker(stepDef, el) {
     setVal(stepDef.id, 'template_id', item.id);
     setVal(stepDef.id, 'template_image_url', _tplImageUrl(item));
     renderSummary();
+    assistRow.hidden = false;
 
     var placeholders = _tplParsePlaceholders(item.template);
     fillBtn.hidden = !placeholders.length;

@@ -1893,14 +1893,25 @@ def build_engine(source: Path, version: str, name: str, catalog: dict = ENGINES,
 
 # Create › core flows shipped with the app. They only need an image engine,
 # plus LM Studio for the LLM ones. Left out: the CivitAI flows (their own free
-# pack, build_core_civitai below), From Template (needs template packs, which
-# packages cannot carry yet) and the unfinished ones (Character, From Brief, Style).
+# pack, build_core_civitai below) and the unfinished ones (Character, From
+# Brief, Style). From Template ships here with no templates of its own: they
+# come in template packs (contributes.template_packs, built in the Nomad
+# Studio Packs repo).
 CORE_CREATE_FLOWS = [
     "create.simple", "create.simple_json", "create.assist", "create.chat",
     "create.variations", "create.variations_json", "create.story", "create.scenes",
     "create.portraits", "create.posters", "create.describe_image", "create.bulk_vision",
+    "create.from_template",
 ]
-CORE_CREATE_VERSION = "0.2.0"
+CORE_CREATE_VERSION = "0.3.0"
+# The source card still describes the single cinematic catalog it started with.
+CORE_CREATE_OVERRIDES = {
+    "create.from_template": {
+        "description": "Pick a template from an installed template pack, fill in its blanks, and generate.",
+        "card_desc": "Pick a template from your template packs, fill in the blanks and generate. No AI needed.",
+        "card_tags": ["No LLM", "Catalog"],
+    },
+}
 
 
 def build_core_create(source: Path, version: str) -> Path:
@@ -1908,7 +1919,7 @@ def build_core_create(source: Path, version: str) -> Path:
     files: dict[str, object] = {}
     flows = []
     for flow_id in CORE_CREATE_FLOWS:
-        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        flow = add_card_texts({**flow_from_source(source, flow_id), **CORE_CREATE_OVERRIDES.get(flow_id, {})}, table)
         flows.append(flow)
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
     i18n, counts = flow_i18n(flows, table)
@@ -1920,10 +1931,10 @@ def build_core_create(source: Path, version: str) -> Path:
         "default_lang": "en",
         "name": {"en": "Core Create", "es": "Create básico", "zh": "基础创作", "ko": "기본 만들기"},
         "summary": {
-            "en": "The base Create flows: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters and image description. The AI-assisted ones use LM Studio.",
-            "es": "Los flows base de Create: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters y descripción de imágenes. Los que usan IA necesitan LM Studio.",
-            "zh": "Create 基础流程：Simple、Assist、Chat、Variations、Story、Scenes、Portraits、Posters 以及图像描述。AI 辅助流程需要 LM Studio。",
-            "ko": "Create 기본 플로우: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters, 이미지 설명. AI 보조 플로우는 LM Studio가 필요합니다.",
+            "en": "The base Create flows: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters, From Template and image description. The AI-assisted ones use LM Studio.",
+            "es": "Los flows base de Create: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters, From Template y descripción de imágenes. Los que usan IA necesitan LM Studio.",
+            "zh": "Create 基础流程：Simple、Assist、Chat、Variations、Story、Scenes、Portraits、Posters、From Template 以及图像描述。AI 辅助流程需要 LM Studio。",
+            "ko": "Create 기본 플로우: Simple, Assist, Chat, Variations, Story, Scenes, Portraits, Posters, From Template, 이미지 설명. AI 보조 플로우는 LM Studio가 필요합니다.",
         },
         "author": AUTHOR,
         "license": "proprietary",

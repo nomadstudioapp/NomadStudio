@@ -386,13 +386,13 @@
           <nav class="cs-sub-grid cs-sub-grid--hero" aria-label="Template Packs">
           {% for pack in template_packs %}
           <a href="{{ url_for('main.ns_create_pack_gallery_page', pack_slug=pack.slug) }}"
-             class="cs-card cs-card--presets-hub cs-card--pack{% if not pack.cover_image %} cs-card--pack-nocover{% endif %}"
+             class="cs-card cs-card--presets-hub cs-card--pack{% if not pack.cover_url %} cs-card--pack-nocover{% endif %}"
              aria-label="{{ pack.name }}">
-            {% if pack.cover_image %}
-            <img class="cs-card-pack-cover" src="{{ url_for('static', filename='images/' ~ pack.cover_image) }}" alt="" loading="lazy">
+            {% if pack.cover_url %}
+            <img class="cs-card-pack-cover" src="{{ pack.cover_url }}" alt="" loading="lazy">
             {% endif %}
             <div class="cs-card-body">
-              <p class="cs-card-name">{{ pack.name }}</p>
+              <p class="cs-card-name" data-i18n-literal="{{ pack.name }}">{{ pack.name }}</p>
               <div class="cs-card-tag-row">
                 <span class="cs-tag" data-i18n="hub.sections.looks" data-i18n-n="{{ pack.count }}">{{ pack.count }} looks</span>
               </div>

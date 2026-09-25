@@ -164,6 +164,24 @@
   // Pending is NOT cleared here — it is cleared when the user returns to the
   // session view (see nomad_studio.sessionInit), so multi-image flows aren't
   // truncated to their first output.
+  // The flow's input images at capture time — {image picker step id: server
+  // URL} — so reopening the step restores every input (a Mix step has up to
+  // four), not just its parent's output. Only server URLs (image_server_url,
+  // set once the picker's upload is persisted): data URLs would bloat
+  // sessions.json.
+  function collectFlowInputs() {
+    var out = {};
+    try {
+      if (typeof stepValues !== 'object' || !stepValues || typeof allSteps === 'undefined' || !Array.isArray(allSteps)) return out;
+      allSteps.forEach(function (s) {
+        if (!s || s.type !== 'image_picker') return;
+        var url = stepValues[s.id] && stepValues[s.id].image_server_url;
+        if (url) out[s.id] = url;
+      });
+    } catch (_) {}
+    return out;
+  }
+
   function captureImages(urls) {
     var p = getPending();
     if (!p || !p.sessionId || !urls || !urls.length) return false;
@@ -183,7 +201,12 @@
       step.images = existing.concat(clean.filter(function (u) { return existing.indexOf(u) === -1; }));
       if (!step.imageUrl) step.imageUrl = step.images[0];
       if (p.flowParams && !step.params) step.params = p.flowParams;
+      if (!step.inputs) {
+        var laterInputs = collectFlowInputs();
+        if (Object.keys(laterInputs).length) step.inputs = laterInputs;
+      }
     } else {
+      var inputs = collectFlowInputs();
       step = {
         id: 'step-' + Date.now() + '-' + Math.floor(Math.random() * 1e4),
         flowLabel: p.flowLabel || 'Flow',
@@ -195,6 +218,7 @@
         parentId: p.parentId || null,
         createdAt: new Date().toISOString()
       };
+      if (Object.keys(inputs).length) step.inputs = inputs;
       b.steps.forEach(function (s) { s.selected = false; });
       step.selected = true;
       b.steps.push(step);

@@ -766,7 +766,10 @@ function renderImagePicker(stepDef, el) {
   try {
     if (_pendingSession && _pendingSession.data && !getVal(stepDef.id, 'image_data_url')) {
       var _d = _pendingSession.data;
-      var _imgSrc = stepDef.id === 'image' ? _d.image1 : (stepDef.id === 'image_2' ? _d.image2 : null);
+      // `inputs` ({picker step id: URL}) covers every picker a flow has —
+      // image1/image2 only ever knew the first two.
+      var _imgSrc = (_d.inputs && _d.inputs[stepDef.id]) ||
+        (stepDef.id === 'image' ? _d.image1 : (stepDef.id === 'image_2' ? _d.image2 : null));
       if (_imgSrc) {
         if (_imgSrc.startsWith('data:image/')) {
           handleDataUrl(_imgSrc);

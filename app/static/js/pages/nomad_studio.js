@@ -1206,7 +1206,10 @@
     var parent = step.parentId
       ? (session.steps || []).find(function (s) { return s.id === step.parentId; })
       : null;
-    var srcImg = (parent && parent.imageUrl) || step.imageUrl;
+    // Every input the step was made from ({image picker step id: URL}, a Mix
+    // step has several); older steps only know their parent's output.
+    var inputs = (step.inputs && typeof step.inputs === 'object') ? step.inputs : {};
+    var srcImg = inputs.image || (parent && parent.imageUrl) || step.imageUrl;
     var action = step.flowAction || slug.replace(/-/g, '_');
     var params = step.params || null;
     var promptText = params && (params.prompt || params.promptText || params.positive) || '';
@@ -1234,6 +1237,7 @@
         prompt: promptText,
         data: {
           image1: srcImg,
+          inputs: inputs,
           images: outputs,
           prompt: promptText,
           params: params

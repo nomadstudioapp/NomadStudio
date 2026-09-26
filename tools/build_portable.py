@@ -132,12 +132,15 @@ def strip_library_tests(lib_dir: Path) -> int:
 
 def write_launchers(app_dir: Path, root: Path) -> None:
     """Launcher at the root and in app/launcher/ (the copy an update brings),
-    plus the update script (app/services/update_service.py)."""
+    plus the update script (app/services/update_service.py) and the start
+    screen the launcher opens while the app boots (start.html + its image)."""
     (app_dir / "launcher").mkdir(parents=True, exist_ok=True)
     for name in ("NomadStudio.bat", "apply_update.ps1"):
         text = (REPO / "tools" / "launcher" / name).read_text(encoding="utf-8")
         crlf = text.replace("\r\n", "\n").replace("\n", "\r\n").encode("utf-8")
         (app_dir / "launcher" / name).write_bytes(crlf)
+    for name in ("start.html", "raccoon.png"):
+        shutil.copyfile(REPO / "tools" / "launcher" / name, app_dir / "launcher" / name)
     (root / "NomadStudio.bat").write_bytes((app_dir / "launcher" / "NomadStudio.bat").read_bytes())
 
 

@@ -1,0 +1,313 @@
+<!doctype html>
+<!--
+  Nomad Studio start screen (docs/APP_UPDATES.md §7.4). NomadStudio.bat opens
+  this straight from disk (app\launcher\start.html) while Nomad Studio boots,
+  after writing start-config.js next to it with the port. No server of its
+  own: it knows Nomad Studio is up when the app's own logo loads from
+  127.0.0.1, then hands over to the app. ComfyUI and LM Studio are shown for
+  information only — the launcher doesn't start them.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nomad Studio</title>
+  <link rel="icon" type="image/png" href="raccoon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="start-config.js"></script>
+  <style>
+    :root {
+      --bg: #070a13;
+      --panel: rgba(18, 22, 38, 0.72);
+      --line: rgba(154, 166, 214, 0.14);
+      --text: #e9edf9;
+      --dim: #9fb0d6;
+      --muted: #7f8bc0;
+      --blue: #4d7cfe;
+      --violet: #8b5cf6;
+      --lilac: #c084fc;
+      --ok: #4ecb91;
+      --warn: #f0b429;
+      --bad: #ff6b7a;
+      --brand: linear-gradient(100deg, var(--blue) 0%, var(--violet) 55%, var(--lilac) 100%);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Asap', 'Segoe UI', 'Microsoft YaHei', 'Malgun Gothic', sans-serif;
+      overflow: hidden;
+    }
+    /* Two slow brand-coloured glows behind the card. */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      width: 60vmax;
+      height: 60vmax;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.22;
+      pointer-events: none;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    body::before { background: var(--blue); top: -30vmax; left: -20vmax; }
+    body::after  { background: var(--lilac); bottom: -32vmax; right: -22vmax; animation-delay: -9s; }
+    @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
+
+    .card {
+      position: relative;
+      width: min(440px, 100%);
+      padding: 36px 32px 28px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(14px);
+      text-align: center;
+    }
+    .mascot {
+      width: 132px;
+      height: 132px;
+      margin: 0 auto 18px;
+      border-radius: 32px;
+      padding: 3px;
+      background: var(--brand);
+      box-shadow: 0 0 42px rgba(139, 92, 246, 0.45);
+      animation: breathe 3.2s ease-in-out infinite;
+    }
+    .mascot img { width: 100%; height: 100%; border-radius: 29px; display: block; }
+    body.is-ready .mascot { animation: none; box-shadow: 0 0 56px rgba(78, 203, 145, 0.45); }
+    body.is-late .mascot  { animation: none; box-shadow: 0 0 42px rgba(255, 107, 122, 0.35); }
+    @keyframes breathe { 50% { box-shadow: 0 0 64px rgba(139, 92, 246, 0.7); transform: scale(1.015); } }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    h1 span {
+      background: var(--brand);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .message {
+      margin: 8px 0 22px;
+      min-height: 1.4em;
+      font-size: 15px;
+      line-height: 1.45;
+      color: var(--dim);
+    }
+
+    .bar {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(154, 166, 214, 0.12);
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 40%;
+      border-radius: inherit;
+      background: var(--brand);
+      animation: slide 1.3s ease-in-out infinite;
+    }
+    body.is-ready .bar i { width: 100%; animation: none; background: var(--ok); }
+    body.is-late .bar i  { width: 100%; animation: none; background: var(--bad); }
+    @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+    .services {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      text-align: left;
+      border-top: 1px solid var(--line);
+    }
+    .services li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 2px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .dot[data-state="up"]       { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+    .dot[data-state="starting"] { background: var(--warn); animation: blink 1s ease-in-out infinite; }
+    .dot[data-state="late"]     { background: var(--bad); }
+    @keyframes blink { 50% { opacity: 0.35; } }
+    .name { flex: 1; font-weight: 600; }
+    .state { color: var(--muted); font-size: 13px; }
+    .dot[data-state="up"] ~ .state { color: var(--ok); }
+
+    .hint {
+      margin: 14px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 18px;
+      padding: 10px 26px;
+      border-radius: 999px;
+      background: #fff;
+      color: #1b1f3a;
+      font: 600 14px 'Asap', 'Segoe UI', sans-serif;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover { background: var(--brand); color: #fff; box-shadow: 0 0 26px rgba(139, 92, 246, 0.5); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <div class="mascot"><img src="raccoon.png" alt=""></div>
+    <h1><span>Nomad Studio</span></h1>
+    <p class="message" id="message"></p>
+    <div class="bar" aria-hidden="true"><i></i></div>
+
+    <ul class="services">
+      <li data-service="nomad"><span class="dot"></span><span class="name">Nomad Studio</span><span class="state"></span></li>
+      <li data-service="comfy"><span class="dot"></span><span class="name">ComfyUI</span><span class="state"></span></li>
+      <li data-service="lmstudio"><span class="dot"></span><span class="name">LM Studio</span><span class="state"></span></li>
+    </ul>
+    <p class="hint" id="hint" hidden></p>
+    <button class="btn" id="retry" type="button" hidden></button>
+  </main>
+
+  <script>
+  (function () {
+    var PORT = Number(window.NOMAD_PORT) || 5123;
+    var APP_URL = 'http://localhost:' + PORT + '/';
+    var LATE_AFTER_MS = 120000;
+
+    // EN / ES / ZH / KO, from the browser's language.
+    var TEXT = {
+      en: { starting: 'Starting Nomad Studio…', opening: 'Ready. Opening Nomad Studio…',
+            late: 'Nomad Studio is taking too long. Open the “Nomad Studio” window in the taskbar to see what happened.',
+            on: 'Running', off: 'Off', booting: 'Starting…', slow: 'Not answering', retry: 'Keep waiting',
+            hint: 'ComfyUI and LM Studio start on their own: turn them on to generate images and use the AI.' },
+      es: { starting: 'Arrancando Nomad Studio…', opening: 'Listo. Abriendo Nomad Studio…',
+            late: 'Nomad Studio está tardando demasiado. Abre la ventana «Nomad Studio» de la barra de tareas para ver qué ha pasado.',
+            on: 'Encendido', off: 'Apagado', booting: 'Arrancando…', slow: 'No responde', retry: 'Seguir esperando',
+            hint: 'ComfyUI y LM Studio se arrancan aparte: enciéndelos para generar imágenes y usar la IA.' },
+      zh: { starting: '正在启动 Nomad Studio…', opening: '已就绪，正在打开 Nomad Studio…',
+            late: 'Nomad Studio 启动时间过长。请打开任务栏中的“Nomad Studio”窗口查看原因。',
+            on: '运行中', off: '未运行', booting: '启动中…', slow: '无响应', retry: '继续等待',
+            hint: 'ComfyUI 和 LM Studio 需单独启动：打开它们才能生成图片和使用 AI。' },
+      ko: { starting: 'Nomad Studio 시작 중…', opening: '준비 완료. Nomad Studio를 여는 중…',
+            late: 'Nomad Studio가 너무 오래 걸립니다. 작업 표시줄의 “Nomad Studio” 창을 열어 무슨 일인지 확인하세요.',
+            on: '실행 중', off: '꺼짐', booting: '시작 중…', slow: '응답 없음', retry: '계속 기다리기',
+            hint: 'ComfyUI와 LM Studio는 따로 시작합니다. 이미지 생성과 AI를 쓰려면 켜 주세요.' }
+    };
+    var lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    var T = TEXT[lang] || TEXT.en;
+    document.documentElement.lang = TEXT[lang] ? lang : 'en';
+
+    var $ = function (id) { return document.getElementById(id); };
+    var message = $('message');
+    message.textContent = T.starting;
+    $('retry').textContent = T.retry;
+    $('hint').textContent = T.hint;
+
+    function setRow(key, state, label) {
+      var li = document.querySelector('[data-service="' + key + '"]');
+      li.querySelector('.dot').dataset.state = state;
+      li.querySelector('.state').textContent = label;
+    }
+
+    // Nomad Studio: its own logo loading from 127.0.0.1 means it is up — and
+    // that it is Nomad Studio, not some other server on that port.
+    // (127.0.0.1, not localhost: localhost can try IPv6 first on Windows.)
+    function nomadUp() {
+      return new Promise(function (resolve) {
+        var img = new Image();
+        var timer = setTimeout(function () { img.src = ''; resolve(false); }, 2500);
+        img.onload = function () { clearTimeout(timer); resolve(true); };
+        img.onerror = function () { clearTimeout(timer); resolve(false); };
+        img.src = 'http://127.0.0.1:' + PORT + '/static/images/logo/raccoon.svg?t=' + Date.now();
+      });
+    }
+
+    // ComfyUI / LM Studio: any answer at all counts (an opaque no-cors
+    // response is enough); a refused connection rejects.
+    function answers(url) {
+      var ctrl = window.AbortController ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 2500);
+      return fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ctrl && ctrl.signal })
+        .then(function () { clearTimeout(timer); return true; })
+        .catch(function () { clearTimeout(timer); return false; });
+    }
+
+    function checkOthers() {
+      Promise.all([answers('http://127.0.0.1:8188/system_stats'), answers('http://127.0.0.1:1234/api/v1/models')])
+        .then(function (up) {
+          setRow('comfy', up[0] ? 'up' : 'off', up[0] ? T.on : T.off);
+          setRow('lmstudio', up[1] ? 'up' : 'off', up[1] ? T.on : T.off);
+          $('hint').hidden = up[0] && up[1];
+        });
+    }
+
+    var startedAt = Date.now();
+    var done = false;
+
+    function poll() {
+      if (done) return;
+      nomadUp().then(function (up) {
+        if (up) {
+          done = true;
+          document.body.classList.remove('is-late');
+          document.body.classList.add('is-ready');
+          setRow('nomad', 'up', T.on);
+          message.textContent = T.opening;
+          $('retry').hidden = true;
+          setTimeout(function () { window.location.replace(APP_URL); }, 900);
+          return;
+        }
+        if (Date.now() - startedAt > LATE_AFTER_MS) {
+          document.body.classList.add('is-late');
+          setRow('nomad', 'late', T.slow);
+          message.textContent = T.late;
+          $('retry').hidden = false;
+          return;
+        }
+        setRow('nomad', 'starting', T.booting);
+        setTimeout(poll, 700);
+      });
+    }
+
+    $('retry').addEventListener('click', function () {
+      document.body.classList.remove('is-late');
+      $('retry').hidden = true;
+      message.textContent = T.starting;
+      startedAt = Date.now();
+      poll();
+    });
+
+    setRow('nomad', 'starting', T.booting);
+    checkOthers();
+    setInterval(function () { if (!done) checkOthers(); }, 3000);
+    poll();
+  })();
+  </script>
+</body>
+</html>

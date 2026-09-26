@@ -113,6 +113,15 @@
       "fromPicture": "From Picture 1",
       "fromPictureHint": "Keep the pose the subject already has"
     },
+    "fromBuild": {
+      "menu": "From Build",
+      "panelTitle": "From Build",
+      "characters": "Characters",
+      "backgrounds": "Backgrounds",
+      "empty": "Nothing in Build yet. Add Characters or Backgrounds there first.",
+      "loading": "Loading…",
+      "error": "Could not load Build."
+    },
     "results": {
       "zoomOut": "Zoom out",
       "zoomIn": "Zoom in",

@@ -113,6 +113,15 @@
       "fromPicture": "沿用图 1",
       "fromPictureHint": "保持主体原有的姿势"
     },
+    "fromBuild": {
+      "menu": "来自 Build",
+      "panelTitle": "来自 Build",
+      "characters": "角色",
+      "backgrounds": "背景",
+      "empty": "Build 中还没有内容。请先在那里添加角色或背景。",
+      "loading": "加载中…",
+      "error": "无法加载 Build。"
+    },
     "results": {
       "zoomOut": "缩小",
       "zoomIn": "放大",

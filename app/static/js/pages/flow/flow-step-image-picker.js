@@ -840,6 +840,81 @@ function renderImagePicker(stepDef, el) {
       });
   }
 
+  // ── From Build panel (issue #21) ─────────────────────────────────────────
+  // Build's Characters and Backgrounds as picker sources, one titled section
+  // each (same layout as the Pose panel's categories). Their images live at a
+  // guessed /static/images/<kind>/<keyword>.png (the Library does the same) —
+  // an entry with no picture yet just drops out when its <img> fails to load.
+  // A pick goes through loadUrlAsImage(), like Tray/History, so in a Mix each
+  // slot takes its own: background in slot 1, characters in the next ones.
+  function _fillBuildPanel(bodyEl) {
+    var t = _ncfPoseT; // generic NomadI18n.t wrapper, despite the name
+    var loading = document.createElement('p');
+    loading.className = 'nsc-step-hint';
+    loading.textContent = t('flow.fromBuild.loading', 'Loading…');
+    bodyEl.appendChild(loading);
+
+    var kinds = [
+      { key: 'characters', title: t('flow.fromBuild.characters', 'Characters') },
+      { key: 'backgrounds', title: t('flow.fromBuild.backgrounds', 'Backgrounds') },
+    ];
+    Promise.all(kinds.map(function (k) {
+      return fetch('/api/' + k.key).then(function (r) { return r.json(); })
+        .then(function (data) { return (data && data[k.key]) || []; });
+    })).then(function (lists) {
+      bodyEl.innerHTML = '';
+      if (!lists[0].length && !lists[1].length) {
+        var empty = document.createElement('p');
+        empty.className = 'nsc-step-hint';
+        empty.textContent = t('flow.fromBuild.empty', 'Nothing in Build yet. Add Characters or Backgrounds there first.');
+        bodyEl.appendChild(empty);
+        return;
+      }
+      kinds.forEach(function (k, i) {
+        if (!lists[i].length) return;
+        var block = document.createElement('div');
+        block.className = 'nsc-param-block ncf-build-block';
+        var title = document.createElement('p');
+        title.className = 'nsc-param-title';
+        title.textContent = k.title;
+        block.appendChild(title);
+        var grid = document.createElement('div');
+        grid.className = 'nit-tray-grid ncf-build-grid';
+        lists[i].forEach(function (item) {
+          var url = '/static/images/' + k.key + '/' + encodeURIComponent(item.keyword) + '.png';
+          var name = String(item.keyword || '').replace(/_/g, ' ');
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'nsc-tray-strip-thumb ncf-build-thumb';
+          btn.title = item.description || name;
+          var imgEl = document.createElement('img');
+          imgEl.src = url;
+          imgEl.alt = name;
+          imgEl.loading = 'lazy';
+          imgEl.addEventListener('error', function () { btn.remove(); });
+          var cap = document.createElement('span');
+          cap.className = 'ncf-build-thumb-name';
+          cap.textContent = name;
+          btn.appendChild(imgEl);
+          btn.appendChild(cap);
+          btn.addEventListener('click', function () {
+            loadUrlAsImage(url);
+            closeOptionsPanel();
+          });
+          grid.appendChild(btn);
+        });
+        block.appendChild(grid);
+        bodyEl.appendChild(block);
+      });
+    }).catch(function () {
+      bodyEl.innerHTML = '';
+      var err = document.createElement('p');
+      err.className = 'nsc-step-hint';
+      err.textContent = t('flow.fromBuild.error', 'Could not load Build.');
+      bodyEl.appendChild(err);
+    });
+  }
+
   // ── Crop panel ───────────────────────────────────────────────────────────
   // Two interaction modes, picked via an aspect-ratio slider (issue #90):
   //  - "Free" (default, _renderFreeCropStage): the original behaviour —
@@ -1211,6 +1286,13 @@ function renderImagePicker(stepDef, el) {
         openOptionsPanel('Inputs', function (body) {
           _fillThumbGridPanel(body, '/api/images/inputs?limit=20', 'No previously used reference images yet.');
         }, { wide: true });
+      },
+    },
+    {
+      label: _ncfPoseT('flow.fromBuild.menu', 'From Build'),
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
+      onClick: function () {
+        openOptionsPanel(_ncfPoseT('flow.fromBuild.panelTitle', 'From Build'), _fillBuildPanel, { wide: true });
       },
     },
     {

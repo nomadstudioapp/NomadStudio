@@ -113,6 +113,15 @@
       "fromPicture": "De la imagen 1",
       "fromPictureHint": "Mantener la pose que ya tiene el sujeto"
     },
+    "fromBuild": {
+      "menu": "Desde Build",
+      "panelTitle": "Desde Build",
+      "characters": "Personajes",
+      "backgrounds": "Fondos",
+      "empty": "Aún no hay nada en Build. Añade personajes o fondos allí primero.",
+      "loading": "Cargando…",
+      "error": "No se pudo cargar Build."
+    },
     "results": {
       "zoomOut": "Alejar",
       "zoomIn": "Acercar",

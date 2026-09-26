@@ -11854,6 +11854,33 @@ body.nsc-session-workspace-page .nss-scenes-area {
   aspect-ratio: 1;
 }
 
+/* From Build panel (issue #21): the same thumbs, with the item's name over
+   the bottom edge, and one titled section per kind (Characters/Backgrounds). */
+.ncf-build-block + .ncf-build-block {
+  margin-top: 1rem;
+}
+
+.ncf-build-thumb {
+  position: relative;
+}
+
+.ncf-build-thumb-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1rem 0.4rem 0.3rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  text-align: left;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Crop panel (CROP side button) ───────────────────────────────────────── */
 
 .nsc-crop-stage {

@@ -2525,16 +2525,35 @@
 
     // Mirror model availability LEDs from the (hidden) sidebar so the panel
     // reflects the same live status without duplicating the polling logic.
+    // A service that goes down (ComfyUI, LM Studio) opens the panel by itself
+    // so its warning triangle is seen — once per outage: the set of services
+    // down is remembered for this tab, so closing the panel sticks, and it
+    // resets once everything answers again.
+    var LED_AUTOOPEN_KEY = 'cs-settings-autoopened-v1';
     function syncLeds() {
       var leds = settingsPanel.querySelectorAll('[data-cs-led-mirror]');
+      var down = [];
       Array.prototype.forEach.call(leds, function (el) {
         var srcId = el.getAttribute('data-cs-led-mirror');
         var src = srcId && document.getElementById(srcId);
         if (!src) return;
+        var isDown = src.classList.contains('unavailable');
         el.classList.toggle('available', src.classList.contains('available'));
-        el.classList.toggle('unavailable', src.classList.contains('unavailable'));
+        el.classList.toggle('unavailable', isDown);
         if (src.title) el.title = src.title;
+        if (isDown) down.push(srcId);
       });
+      var signature = down.sort().join(',');
+      var seen = '';
+      try { seen = sessionStorage.getItem(LED_AUTOOPEN_KEY) || ''; } catch (_) {}
+      if (!signature) {
+        if (seen) { try { sessionStorage.removeItem(LED_AUTOOPEN_KEY); } catch (_) {} }
+        return;
+      }
+      if (signature !== seen) {
+        try { sessionStorage.setItem(LED_AUTOOPEN_KEY, signature); } catch (_) {}
+        setOpen(true);
+      }
     }
     syncLeds();
     setInterval(syncLeds, 2000);

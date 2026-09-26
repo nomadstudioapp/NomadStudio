@@ -1587,7 +1587,13 @@ function ncfFillThumbGrid(bodyEl, fetchUrl, emptyMsg, onPick) {
 // same) — an entry with no picture yet just drops out when its <img> fails.
 // In a Mix each slot has its own picker: background in slot 1, characters in
 // the next ones.
-function ncfFillBuildPanel(bodyEl, onPick) {
+// onPick(url, {kind, keyword, name}). onlyKind ('characters' / 'backgrounds')
+// shows just that section, for the result cards' "Send to Character /
+// Background" (flow-gallery.js _openSendToBuildPanel), which picks one whose
+// image to replace: there an entry with no picture stays, as an empty tile —
+// giving it one is the point. The panel appends to bodyEl and leaves anything
+// already in it alone.
+function ncfFillBuildPanel(bodyEl, onPick, onlyKind) {
   var t = _ncfPoseT;
   var loading = document.createElement('p');
   loading.className = 'nsc-step-hint';
@@ -1597,13 +1603,16 @@ function ncfFillBuildPanel(bodyEl, onPick) {
   var kinds = [
     { key: 'characters', title: t('flow.fromBuild.characters', 'Characters') },
     { key: 'backgrounds', title: t('flow.fromBuild.backgrounds', 'Backgrounds') },
-  ];
+  ].filter(function (k) { return !onlyKind || k.key === onlyKind; });
+  // Cache-buster for the thumbnails: an image replaced from here keeps its
+  // file name (<keyword>.png), and the browser would show the old one.
+  var bust = '?v=' + Date.now();
   Promise.all(kinds.map(function (k) {
     return fetch('/api/' + k.key).then(function (r) { return r.json(); })
       .then(function (data) { return (data && data[k.key]) || []; });
   })).then(function (lists) {
-    bodyEl.innerHTML = '';
-    if (!lists[0].length && !lists[1].length) {
+    loading.remove();
+    if (!lists.some(function (l) { return l.length; })) {
       var empty = document.createElement('p');
       empty.className = 'nsc-step-hint';
       empty.textContent = t('flow.fromBuild.empty', 'Nothing in Build yet. Add Characters or Backgrounds there first.');
@@ -1628,23 +1637,28 @@ function ncfFillBuildPanel(bodyEl, onPick) {
         btn.className = 'nsc-tray-strip-thumb ncf-build-thumb';
         btn.title = item.description || name;
         var imgEl = document.createElement('img');
-        imgEl.src = url;
+        imgEl.src = url + bust;
         imgEl.alt = name;
         imgEl.loading = 'lazy';
-        imgEl.addEventListener('error', function () { btn.remove(); });
+        imgEl.addEventListener('error', function () {
+          if (onlyKind) { imgEl.remove(); btn.classList.add('ncf-build-thumb--empty'); }
+          else btn.remove();
+        });
         var cap = document.createElement('span');
         cap.className = 'ncf-build-thumb-name';
         cap.textContent = name;
         btn.appendChild(imgEl);
         btn.appendChild(cap);
-        btn.addEventListener('click', function () { onPick(url); });
+        btn.addEventListener('click', function () {
+          onPick(url + bust, { kind: k.key, keyword: item.keyword, name: name });
+        });
         grid.appendChild(btn);
       });
       block.appendChild(grid);
       bodyEl.appendChild(block);
     });
   }).catch(function () {
-    bodyEl.innerHTML = '';
+    loading.remove();
     var err = document.createElement('p');
     err.className = 'nsc-step-hint';
     err.textContent = t('flow.fromBuild.error', 'Could not load Build.');

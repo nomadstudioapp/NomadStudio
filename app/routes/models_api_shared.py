@@ -831,12 +831,22 @@ def _describe_cache_set(data: dict[str, Any], settings: dict[str, Any], image_ha
 
 def _load_source_image_bytes_for_style(data: dict[str, Any], image_filename: str, image_url: str) -> bytes | None:
     from app.services.workflow_service import _extract_filename_from_image_url, _decode_data_url_image_bytes
-    output_dir = _resolve_output_dir(data)
     filename = str(image_filename or "").strip()
     if not filename:
         filename = _extract_filename_from_image_url(image_url)
     if filename:
-        image_bytes = image_service.serve_image(output_dir, filename)
+        # Current generations are saved under the active viewer's own
+        # <output>/<viewer-slug>/ folder (images_routes.py serves from there
+        # first) — looking only in the output root, as this used to, made
+        # "Send to Character / Background" fail with "image source not found"
+        # for every result. Same order as styles_routes' own copy of this.
+        viewer_output_dir = _resolve_viewer_output_dir(data)
+        if viewer_output_dir:
+            image_bytes = image_service.serve_image(viewer_output_dir, filename)
+            if image_bytes:
+                return image_bytes
+        # Legacy fallback: pre-viewer saves in the output root.
+        image_bytes = image_service.serve_image(_resolve_output_dir(data), filename)
         if image_bytes:
             return image_bytes
     return _decode_data_url_image_bytes(image_url)

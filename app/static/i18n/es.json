@@ -647,7 +647,15 @@
       "Send to Background": "Enviar a fondo",
       "Character created": "Personaje creado",
       "Background created": "Fondo creado",
-      "edit it in Build.": "edítalo en Build."
+      "edit it in Build.": "edítalo en Build.",
+      "New character": "Nuevo personaje",
+      "New background": "Nuevo fondo",
+      "Or use it as the image of one that already exists:": "O úsala como imagen de uno que ya existe:",
+      "Replace its image with this one? The current image is lost.": "¿Sustituir su imagen por esta? La imagen actual se pierde.",
+      "Now": "Ahora",
+      "New": "Nueva",
+      "Cancel": "Cancelar",
+      "Image updated": "Imagen actualizada"
     },
     "creativity": {
       "title": "Creatividad",

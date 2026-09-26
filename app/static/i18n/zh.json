@@ -647,7 +647,15 @@
       "Send to Background": "发送到背景",
       "Character created": "角色已创建",
       "Background created": "背景已创建",
-      "edit it in Build.": "可在 Build 中编辑。"
+      "edit it in Build.": "可在 Build 中编辑。",
+      "New character": "新角色",
+      "New background": "新背景",
+      "Or use it as the image of one that already exists:": "或者把它用作已有项的图片：",
+      "Replace its image with this one? The current image is lost.": "用这张替换它的图片？当前图片将丢失。",
+      "Now": "当前",
+      "New": "新",
+      "Cancel": "取消",
+      "Image updated": "图片已更新"
     },
     "creativity": {
       "title": "创意程度",

@@ -522,9 +522,10 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   });
   imgWrap.appendChild(sendDepotBtn);
 
-  // Send to Character / Send to Background — create a new Build Character
-  // or Background from this result right away (image + the card's prompt),
-  // see _sendResultToBuild below. Distinct from "Send to Depot" above, which
+  // Send to Character / Send to Background — a side panel: a new Build
+  // Character or Background from this result (image + the card's prompt), or
+  // this image for one that already exists (issue #13); see
+  // _openSendToBuildPanel below. Distinct from "Send to Depot" above, which
   // files the image into the active Depot's own buckets.
   [
     { kind: 'character', label: 'Send to Character',
@@ -535,14 +536,14 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.id = 'nit-send-' + target.kind + '-btn-' + idx;
-    btn.className = 'nit-send-tray-btn nit-send-' + target.kind + '-btn';
+    btn.className = 'nit-send-tray-btn nit-send-' + target.kind + '-btn nsc-options-trigger';
     btn.setAttribute('aria-label', tF(target.label));
     btn.title = tF(target.label);
     btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       target.svg + '</svg>';
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      _sendResultToBuild(target.kind, imgUrl, _cardPromptStr, btn);
+      _openSendToBuildPanel(target.kind, imgUrl, _cardPromptStr, btn);
     });
     imgWrap.appendChild(btn);
   });
@@ -665,7 +666,6 @@ function _openSendToDepotPanel(imgUrl, caption) {
 // prompt and the full prompt as the item's own prompt, then set this image as
 // its reference image (PATCH …/<keyword>/image, same call Build's "Change
 // image" makes). The server picks a unique keyword (character, character_2…).
-// Picking an existing character to update instead is still to be designed.
 function _sendResultToBuild(kind, imgUrl, prompt, btn) {
   var plural = kind + 's';
   var fullPrompt = String(prompt || '').trim();
@@ -683,7 +683,8 @@ function _sendResultToBuild(kind, imgUrl, prompt, btn) {
   }).then(function (res) {
     if (!res.ok) throw new Error((res.data && res.data.error) || 'Create failed');
     var item = res.data[kind] || {};
-    return fetch('/api/' + plural + '/' + encodeURIComponent(item.keyword) + '/image', {
+    var itemUrl = '/api/' + plural + '/' + encodeURIComponent(item.keyword);
+    return fetch(itemUrl + '/image', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imageUrl: imgUrl }),
@@ -692,6 +693,10 @@ function _sendResultToBuild(kind, imgUrl, prompt, btn) {
         if (!r.ok) throw new Error((d && d.error) || 'Image failed');
         return item;
       });
+    }).catch(function (err) {
+      // No image, no character: drop the one just created instead of
+      // leaving an empty entry behind in Build.
+      return fetch(itemUrl, { method: 'DELETE' }).catch(function () {}).then(function () { throw err; });
     });
   }).then(function (item) {
     if (typeof showToast === 'function') {
@@ -704,6 +709,108 @@ function _sendResultToBuild(kind, imgUrl, prompt, btn) {
   }).then(function () {
     if (btn) btn.disabled = false;
   });
+}
+
+// The side panel behind a result's "Send to Character / Background" (issue
+// #13): "New character" on top — the old one-click action — and below it the
+// existing ones of that kind (flow-step-image-picker.js ncfFillBuildPanel).
+// Picking one asks first, in the panel itself, then makes this result its
+// image (PATCH …/<keyword>/image — the same call Build's "Change image"
+// makes; its prompt and description stay as they are).
+function _openSendToBuildPanel(kind, imgUrl, prompt, btn) {
+  var isChar = kind === 'character';
+  var plural = kind + 's';
+  var title = tF(isChar ? 'Send to Character' : 'Send to Background');
+
+  function renderChoose(body) {
+    body.innerHTML = '';
+    ncfFillOptionsMenu(body, [{
+      label: tF(isChar ? 'New character' : 'New background'),
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+      onClick: function () {
+        closeOptionsPanel();
+        _sendResultToBuild(kind, imgUrl, prompt, btn);
+      },
+    }]);
+    var hint = document.createElement('p');
+    hint.className = 'nsc-step-hint ncf-send-build-hint';
+    hint.textContent = tF('Or use it as the image of one that already exists:');
+    body.appendChild(hint);
+    ncfFillBuildPanel(body, function (currentUrl, item) {
+      renderConfirm(body, currentUrl, item);
+    }, plural);
+  }
+
+  // Replacing loses the current image, so the panel shows both and asks.
+  function renderConfirm(body, currentUrl, item) {
+    body.innerHTML = '';
+    var q = document.createElement('p');
+    q.className = 'ncf-send-build-question';
+    var strong = document.createElement('strong');
+    strong.textContent = item.name;
+    q.appendChild(strong);
+    q.appendChild(document.createTextNode(' — ' + tF('Replace its image with this one? The current image is lost.')));
+    body.appendChild(q);
+
+    var pair = document.createElement('div');
+    pair.className = 'ncf-send-build-pair';
+    [currentUrl, imgUrl].forEach(function (src, i) {
+      var fig = document.createElement('figure');
+      var im = document.createElement('img');
+      im.src = src;
+      im.alt = '';
+      im.addEventListener('error', function () { fig.classList.add('is-empty'); im.remove(); });
+      var cap = document.createElement('figcaption');
+      cap.textContent = tF(i ? 'New' : 'Now');
+      fig.appendChild(im);
+      fig.appendChild(cap);
+      pair.appendChild(fig);
+      if (!i) {
+        var arrow = document.createElement('span');
+        arrow.className = 'ncf-send-build-arrow';
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.textContent = '→';
+        pair.appendChild(arrow);
+      }
+    });
+    body.appendChild(pair);
+
+    var actions = document.createElement('div');
+    actions.className = 'ncf-send-build-actions';
+    var ok = document.createElement('button');
+    ok.type = 'button';
+    ok.className = 'nss-generate-scenes-btn ncf-send-build-ok';
+    ok.textContent = tF('Replace');
+    var back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'ncf-send-build-back';
+    back.textContent = tF('Cancel');
+    back.addEventListener('click', function () { renderChoose(body); });
+    ok.addEventListener('click', function () {
+      ok.disabled = back.disabled = true;
+      fetch('/api/' + plural + '/' + encodeURIComponent(item.keyword) + '/image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: imgUrl }),
+      }).then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error((d && d.error) || 'Image failed');
+        });
+      }).then(function () {
+        closeOptionsPanel();
+        if (typeof showToast === 'function') showToast(tF('Image updated') + ': ' + item.keyword, 'info');
+      }).catch(function (err) {
+        console.error('[FlowGallery] Replace ' + kind + ' image failed:', err);
+        ok.disabled = back.disabled = false;
+        if (typeof showErrorToast === 'function') showErrorToast((err && err.message) || String(err));
+      });
+    });
+    actions.appendChild(ok);
+    actions.appendChild(back);
+    body.appendChild(actions);
+  }
+
+  openOptionsPanel(title, renderChoose, { wide: true });
 }
 
 // ── Story project persistence (narrative continuity) ────────────────────────

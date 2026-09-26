@@ -647,7 +647,15 @@
       "Send to Background": "배경으로 보내기",
       "Character created": "캐릭터 생성됨",
       "Background created": "배경 생성됨",
-      "edit it in Build.": "Build에서 편집하세요."
+      "edit it in Build.": "Build에서 편집하세요.",
+      "New character": "새 캐릭터",
+      "New background": "새 배경",
+      "Or use it as the image of one that already exists:": "또는 이미 있는 항목의 이미지로 사용하세요:",
+      "Replace its image with this one? The current image is lost.": "이 이미지로 바꿀까요? 현재 이미지는 사라집니다.",
+      "Now": "현재",
+      "New": "새 이미지",
+      "Cancel": "취소",
+      "Image updated": "이미지를 바꿨습니다"
     },
     "creativity": {
       "title": "창의성",

@@ -313,7 +313,16 @@
       "Send to Background": "Send to Background",
       "Character created": "Character created",
       "Background created": "Background created",
-      "edit it in Build.": "edit it in Build."
+      "edit it in Build.": "edit it in Build.",
+      "New character": "New character",
+      "New background": "New background",
+      "Or use it as the image of one that already exists:": "Or use it as the image of one that already exists:",
+      "Replace its image with this one? The current image is lost.": "Replace its image with this one? The current image is lost.",
+      "Now": "Now",
+      "New": "New",
+      "Replace": "Replace",
+      "Cancel": "Cancel",
+      "Image updated": "Image updated"
     },
     "creativity": {
       "title": "Creativity",

@@ -20,6 +20,8 @@ bundled-packages/
 update-pending.json
 update-result.json
 update.log
+# Server logs of hand / launcher starts (server5125.log, release5125.out.log…)
+*.log
 app/data/*
 app/workflows/import_registry.json*
 app/images/styles/

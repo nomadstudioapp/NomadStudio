@@ -784,135 +784,14 @@ function renderImagePicker(stepDef, el) {
     }
   } catch (_) {}
 
-  // ── CROP / INPUTS / TRAY / HISTORY side buttons ─────────────────────────
-  // All four open the shared right-side options panel (openOptionsPanel,
-  // flow-options-panel.js) instead of stacking their own UI inline — TRAY
-  // used to be a permanently-visible strip here (loadTrayStrip/
-  // selectTrayThumb); INPUTS and HISTORY are new "reuse a past image"
-  // shortcuts. The three thumbnail-grid panels (Inputs/Tray/History) all
-  // fetch a `{images:[{url,thumb_url,filename}]}` endpoint and share one
-  // render function; clicking a thumb just calls the picker's own generic
-  // loadUrlAsImage() — same funnel drag/drop/tray/previous-flow already use.
-  function _fillThumbGridPanel(bodyEl, fetchUrl, emptyMsg) {
-    var loading = document.createElement('p');
-    loading.className = 'nsc-step-hint';
-    loading.textContent = 'Loading…';
-    bodyEl.appendChild(loading);
-
-    fetch(fetchUrl)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        var images = (data && Array.isArray(data.images)) ? data.images : [];
-        bodyEl.innerHTML = '';
-        if (!images.length) {
-          var empty = document.createElement('p');
-          empty.className = 'nsc-step-hint';
-          empty.textContent = emptyMsg;
-          bodyEl.appendChild(empty);
-          return;
-        }
-        var grid = document.createElement('div');
-        grid.className = 'nit-tray-grid';
-        images.forEach(function (img) {
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'nsc-tray-strip-thumb';
-          btn.title = img.filename || '';
-          var imgEl = document.createElement('img');
-          imgEl.src = img.thumb_url || img.url;
-          imgEl.alt = img.filename || '';
-          imgEl.loading = 'lazy';
-          btn.appendChild(imgEl);
-          btn.addEventListener('click', function () {
-            loadUrlAsImage(img.url);
-            closeOptionsPanel();
-          });
-          grid.appendChild(btn);
-        });
-        bodyEl.appendChild(grid);
-      })
-      .catch(function () {
-        bodyEl.innerHTML = '';
-        var err = document.createElement('p');
-        err.className = 'nsc-step-hint';
-        err.textContent = 'Failed to load images.';
-        bodyEl.appendChild(err);
-      });
-  }
-
-  // ── From Build panel (issue #21) ─────────────────────────────────────────
-  // Build's Characters and Backgrounds as picker sources, one titled section
-  // each (same layout as the Pose panel's categories). Their images live at a
-  // guessed /static/images/<kind>/<keyword>.png (the Library does the same) —
-  // an entry with no picture yet just drops out when its <img> fails to load.
-  // A pick goes through loadUrlAsImage(), like Tray/History, so in a Mix each
-  // slot takes its own: background in slot 1, characters in the next ones.
-  function _fillBuildPanel(bodyEl) {
-    var t = _ncfPoseT; // generic NomadI18n.t wrapper, despite the name
-    var loading = document.createElement('p');
-    loading.className = 'nsc-step-hint';
-    loading.textContent = t('flow.fromBuild.loading', 'Loading…');
-    bodyEl.appendChild(loading);
-
-    var kinds = [
-      { key: 'characters', title: t('flow.fromBuild.characters', 'Characters') },
-      { key: 'backgrounds', title: t('flow.fromBuild.backgrounds', 'Backgrounds') },
-    ];
-    Promise.all(kinds.map(function (k) {
-      return fetch('/api/' + k.key).then(function (r) { return r.json(); })
-        .then(function (data) { return (data && data[k.key]) || []; });
-    })).then(function (lists) {
-      bodyEl.innerHTML = '';
-      if (!lists[0].length && !lists[1].length) {
-        var empty = document.createElement('p');
-        empty.className = 'nsc-step-hint';
-        empty.textContent = t('flow.fromBuild.empty', 'Nothing in Build yet. Add Characters or Backgrounds there first.');
-        bodyEl.appendChild(empty);
-        return;
-      }
-      kinds.forEach(function (k, i) {
-        if (!lists[i].length) return;
-        var block = document.createElement('div');
-        block.className = 'nsc-param-block ncf-build-block';
-        var title = document.createElement('p');
-        title.className = 'nsc-param-title';
-        title.textContent = k.title;
-        block.appendChild(title);
-        var grid = document.createElement('div');
-        grid.className = 'nit-tray-grid ncf-build-grid';
-        lists[i].forEach(function (item) {
-          var url = '/static/images/' + k.key + '/' + encodeURIComponent(item.keyword) + '.png';
-          var name = String(item.keyword || '').replace(/_/g, ' ');
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'nsc-tray-strip-thumb ncf-build-thumb';
-          btn.title = item.description || name;
-          var imgEl = document.createElement('img');
-          imgEl.src = url;
-          imgEl.alt = name;
-          imgEl.loading = 'lazy';
-          imgEl.addEventListener('error', function () { btn.remove(); });
-          var cap = document.createElement('span');
-          cap.className = 'ncf-build-thumb-name';
-          cap.textContent = name;
-          btn.appendChild(imgEl);
-          btn.appendChild(cap);
-          btn.addEventListener('click', function () {
-            loadUrlAsImage(url);
-            closeOptionsPanel();
-          });
-          grid.appendChild(btn);
-        });
-        block.appendChild(grid);
-        bodyEl.appendChild(block);
-      });
-    }).catch(function () {
-      bodyEl.innerHTML = '';
-      var err = document.createElement('p');
-      err.className = 'nsc-step-hint';
-      err.textContent = t('flow.fromBuild.error', 'Could not load Build.');
-      bodyEl.appendChild(err);
-    });
+  // ── Image sources (Inputs / From Build / Tray / History) ───────────────
+  // The thumbnail panels live at file level (ncfImageSourceItems, below), so
+  // the Session workspace's Add Images panel can offer the same sources. Here
+  // a pick goes through this picker's own loadUrlAsImage() — the same funnel
+  // drag/drop and "From flow" use — and closes the panel.
+  function _pickFromSource(url) {
+    loadUrlAsImage(url);
+    closeOptionsPanel();
   }
 
   // ── Crop panel ───────────────────────────────────────────────────────────
@@ -1279,59 +1158,21 @@ function renderImagePicker(stepDef, el) {
       svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
       onClick: function () { openOptionsPanel('Crop', _fillCropPanel, { wide: true }); },
     },
-    {
-      label: 'Previously used inputs',
-      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+  ].concat(ncfImageSourceItems().map(function (src) {
+    return {
+      label: src.label,
+      svgInner: src.svgInner,
       onClick: function () {
-        openOptionsPanel('Inputs', function (body) {
-          _fillThumbGridPanel(body, '/api/images/inputs?limit=20', 'No previously used reference images yet.');
-        }, { wide: true });
+        openOptionsPanel(src.title, function (body) { src.fill(body, _pickFromSource); }, { wide: true });
       },
-    },
-    {
-      label: _ncfPoseT('flow.fromBuild.menu', 'From Build'),
-      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
-      onClick: function () {
-        openOptionsPanel(_ncfPoseT('flow.fromBuild.panelTitle', 'From Build'), _fillBuildPanel, { wide: true });
-      },
-    },
-    {
-      label: 'From tray',
-      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>',
-      onClick: function () {
-        openOptionsPanel('Tray', function (body) {
-          _fillThumbGridPanel(body, '/api/images/tray', 'Tray is empty.');
-        }, { wide: true });
-      },
-    },
-    {
-      label: 'Recent generations',
-      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-      onClick: function () {
-        openOptionsPanel('History', function (body) {
-          _fillThumbGridPanel(body, '/api/images?limit=20', 'No generated images yet.');
-        }, { wide: true });
-      },
-    },
-  ];
+    };
+  }));
 
   var moreBtn = _makeSideBtn(
     'More',
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
     function () {
-      openOptionsPanel('More', function (body) {
-        var list = document.createElement('div');
-        list.className = 'nsc-options-menu';
-        _pickerMoreItems.forEach(function (item) {
-          var row = document.createElement('button');
-          row.type = 'button';
-          row.className = 'nsc-options-menu-item';
-          row.innerHTML = '<span class="nsc-options-menu-item-icon">' + item.svgInner + '</span><span>' + item.label + '</span>';
-          row.addEventListener('click', item.onClick);
-          list.appendChild(row);
-        });
-        body.appendChild(list);
-      });
+      openOptionsPanel('More', function (body) { ncfFillOptionsMenu(body, _pickerMoreItems); });
     }
   );
   // Next to the step's own label ("SOURCE IMAGE"), same spot/pattern the
@@ -1631,6 +1472,184 @@ function renderImagePicker(stepDef, el) {
   // loadUrlAsImage() the "From flow" grid already uses.
   window._ncfImagePickers = window._ncfImagePickers || {};
   window._ncfImagePickers[stepDef.id] = { loadUrlAsImage: loadUrlAsImage, wrap: wrap };
+}
+
+// ── Image sources, shared ──────────────────────────────────────────────────
+// An image picker's ⋯ menu and the Session workspace's Add Images panel
+// (nomad_studio.js) offer the same places to take an image from. Each item's
+// fill(bodyEl, onPick) builds its panel and calls onPick(url) on a click; the
+// caller decides what a pick does (load it into the picker, or add it to the
+// session as an "Imported image" step).
+function ncfImageSourceItems() {
+  var t = _ncfPoseT; // generic NomadI18n.t wrapper, despite the name
+  return [
+    {
+      key: 'inputs',
+      label: 'Previously used inputs',
+      title: 'Inputs',
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+      fill: function (body, onPick) {
+        ncfFillThumbGrid(body, '/api/images/inputs?limit=20', 'No previously used reference images yet.', onPick);
+      },
+    },
+    {
+      key: 'build',
+      label: t('flow.fromBuild.menu', 'From Build'),
+      title: t('flow.fromBuild.panelTitle', 'From Build'),
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
+      fill: ncfFillBuildPanel,
+    },
+    {
+      key: 'tray',
+      label: 'From tray',
+      title: 'Tray',
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>',
+      fill: function (body, onPick) {
+        ncfFillThumbGrid(body, '/api/images/tray', 'Tray is empty.', onPick);
+      },
+    },
+    {
+      key: 'history',
+      label: 'Recent generations',
+      title: 'History',
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+      fill: function (body, onPick) {
+        ncfFillThumbGrid(body, '/api/images?limit=20', 'No generated images yet.', onPick);
+      },
+    },
+  ];
+}
+
+// A list of menu rows (icon + label) in a panel body — the ⋯ menu's shape.
+function ncfFillOptionsMenu(bodyEl, items) {
+  var list = document.createElement('div');
+  list.className = 'nsc-options-menu';
+  items.forEach(function (item) {
+    var row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'nsc-options-menu-item';
+    row.innerHTML = '<span class="nsc-options-menu-item-icon">' + item.svgInner + '</span><span>' + item.label + '</span>';
+    row.addEventListener('click', item.onClick);
+    list.appendChild(row);
+  });
+  bodyEl.appendChild(list);
+}
+
+// Inputs / Tray / History: every endpoint returns
+// {images:[{url, thumb_url, filename}]}, so one grid renders all three.
+function ncfFillThumbGrid(bodyEl, fetchUrl, emptyMsg, onPick) {
+  var loading = document.createElement('p');
+  loading.className = 'nsc-step-hint';
+  loading.textContent = 'Loading…';
+  bodyEl.appendChild(loading);
+
+  fetch(fetchUrl)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var images = (data && Array.isArray(data.images)) ? data.images : [];
+      bodyEl.innerHTML = '';
+      if (!images.length) {
+        var empty = document.createElement('p');
+        empty.className = 'nsc-step-hint';
+        empty.textContent = emptyMsg;
+        bodyEl.appendChild(empty);
+        return;
+      }
+      var grid = document.createElement('div');
+      grid.className = 'nit-tray-grid';
+      images.forEach(function (img) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'nsc-tray-strip-thumb';
+        btn.title = img.filename || '';
+        var imgEl = document.createElement('img');
+        imgEl.src = img.thumb_url || img.url;
+        imgEl.alt = img.filename || '';
+        imgEl.loading = 'lazy';
+        btn.appendChild(imgEl);
+        btn.addEventListener('click', function () { onPick(img.url); });
+        grid.appendChild(btn);
+      });
+      bodyEl.appendChild(grid);
+    })
+    .catch(function () {
+      bodyEl.innerHTML = '';
+      var err = document.createElement('p');
+      err.className = 'nsc-step-hint';
+      err.textContent = 'Failed to load images.';
+      bodyEl.appendChild(err);
+    });
+}
+
+// From Build (issue #21): Build's Characters and Backgrounds, one titled
+// section each (same layout as the Pose panel's categories). Their images
+// live at a guessed /static/images/<kind>/<keyword>.png (the Library does the
+// same) — an entry with no picture yet just drops out when its <img> fails.
+// In a Mix each slot has its own picker: background in slot 1, characters in
+// the next ones.
+function ncfFillBuildPanel(bodyEl, onPick) {
+  var t = _ncfPoseT;
+  var loading = document.createElement('p');
+  loading.className = 'nsc-step-hint';
+  loading.textContent = t('flow.fromBuild.loading', 'Loading…');
+  bodyEl.appendChild(loading);
+
+  var kinds = [
+    { key: 'characters', title: t('flow.fromBuild.characters', 'Characters') },
+    { key: 'backgrounds', title: t('flow.fromBuild.backgrounds', 'Backgrounds') },
+  ];
+  Promise.all(kinds.map(function (k) {
+    return fetch('/api/' + k.key).then(function (r) { return r.json(); })
+      .then(function (data) { return (data && data[k.key]) || []; });
+  })).then(function (lists) {
+    bodyEl.innerHTML = '';
+    if (!lists[0].length && !lists[1].length) {
+      var empty = document.createElement('p');
+      empty.className = 'nsc-step-hint';
+      empty.textContent = t('flow.fromBuild.empty', 'Nothing in Build yet. Add Characters or Backgrounds there first.');
+      bodyEl.appendChild(empty);
+      return;
+    }
+    kinds.forEach(function (k, i) {
+      if (!lists[i].length) return;
+      var block = document.createElement('div');
+      block.className = 'nsc-param-block ncf-build-block';
+      var title = document.createElement('p');
+      title.className = 'nsc-param-title';
+      title.textContent = k.title;
+      block.appendChild(title);
+      var grid = document.createElement('div');
+      grid.className = 'nit-tray-grid ncf-build-grid';
+      lists[i].forEach(function (item) {
+        var url = '/static/images/' + k.key + '/' + encodeURIComponent(item.keyword) + '.png';
+        var name = String(item.keyword || '').replace(/_/g, ' ');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'nsc-tray-strip-thumb ncf-build-thumb';
+        btn.title = item.description || name;
+        var imgEl = document.createElement('img');
+        imgEl.src = url;
+        imgEl.alt = name;
+        imgEl.loading = 'lazy';
+        imgEl.addEventListener('error', function () { btn.remove(); });
+        var cap = document.createElement('span');
+        cap.className = 'ncf-build-thumb-name';
+        cap.textContent = name;
+        btn.appendChild(imgEl);
+        btn.appendChild(cap);
+        btn.addEventListener('click', function () { onPick(url); });
+        grid.appendChild(btn);
+      });
+      block.appendChild(grid);
+      bodyEl.appendChild(block);
+    });
+  }).catch(function () {
+    bodyEl.innerHTML = '';
+    var err = document.createElement('p');
+    err.className = 'nsc-step-hint';
+    err.textContent = t('flow.fromBuild.error', 'Could not load Build.');
+    bodyEl.appendChild(err);
+  });
 }
 
 // ── Pose picker (Clothes Mix) ──────────────────────────────────────────────

@@ -6,6 +6,24 @@
     "panelTitle": "Language",
     "comingSoon": "Coming soon"
   },
+  "session": {
+    "addFlow": {
+      "title": "Add Flow",
+      "baseHint": "The chosen flow will run from here.",
+      "importTitle": "Add images",
+      "importSub": "From your device, Build, the tray or past generations",
+      "search": "Search flows…",
+      "all": "All",
+      "sectionCreate": "Create — new image",
+      "sectionRefine": "Refine — uses the selected image",
+      "sectionMix": "Mix — combine images",
+      "empty": "No flows match your search."
+    },
+    "addImages": {
+      "title": "Add Images",
+      "device": "From your device"
+    }
+  },
   "hub": {
     "subtitle": "What do you want to create today?",
     "mode": {

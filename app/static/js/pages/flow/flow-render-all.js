@@ -178,6 +178,11 @@ function renderAction(stepDef, el) {
   else el.appendChild(generateStatus);
 
   function _proceedToGenerate() {
+    // Inside a Session: the step appears in the Steps panel now, filled in
+    // as images land (session-store.js beginStep / settleStep).
+    if (window.NomadSession && typeof NomadSession.beginStep === 'function') {
+      try { NomadSession.beginStep(); } catch (_) {}
+    }
     if (isGenerating) {
       _enqueueGeneration(stepDef);
       return;

@@ -6,6 +6,24 @@
     "panelTitle": "언어",
     "comingSoon": "곧 제공"
   },
+  "session": {
+    "addFlow": {
+      "title": "플로우 추가",
+      "baseHint": "선택한 플로우가 여기서 시작됩니다.",
+      "importTitle": "이미지 추가",
+      "importSub": "내 기기, Build, 트레이 또는 이전 생성에서",
+      "search": "플로우 검색…",
+      "all": "전체",
+      "sectionCreate": "Create — 새 이미지",
+      "sectionRefine": "Refine — 선택한 이미지 사용",
+      "sectionMix": "Mix — 이미지 결합",
+      "empty": "검색과 일치하는 플로우가 없습니다."
+    },
+    "addImages": {
+      "title": "이미지 추가",
+      "device": "내 기기에서"
+    }
+  },
   "hub": {
     "subtitle": "오늘은 무엇을 만들고 싶나요?",
     "mode": {

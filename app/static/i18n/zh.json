@@ -6,6 +6,24 @@
     "panelTitle": "语言",
     "comingSoon": "即将推出"
   },
+  "session": {
+    "addFlow": {
+      "title": "添加流程",
+      "baseHint": "所选流程将从这里开始。",
+      "importTitle": "添加图片",
+      "importSub": "来自你的设备、Build、托盘或以往生成",
+      "search": "搜索流程…",
+      "all": "全部",
+      "sectionCreate": "Create — 新图片",
+      "sectionRefine": "Refine — 使用所选图片",
+      "sectionMix": "Mix — 组合图片",
+      "empty": "没有匹配的流程。"
+    },
+    "addImages": {
+      "title": "添加图片",
+      "device": "来自你的设备"
+    }
+  },
   "hub": {
     "subtitle": "今天想创作什么？",
     "mode": {

@@ -244,6 +244,92 @@
     return true;
   }
 
+  // Generate/Queue pressed in a flow opened from a Session: the step shows
+  // up in the Steps panel right away, empty and marked `generating`, instead
+  // of only once the first image lands. captureImages() then fills this same
+  // step (p.stepId), and settleStep() clears the mark when the flow's queue
+  // runs dry — or drops the step if nothing came out of it (an error, a
+  // cancel). An empty `generating` step older than half an hour is a run
+  // that never settled (tab closed mid-run) and is cleared here too.
+  var STALE_GENERATING_MS = 30 * 60 * 1000;
+
+  function _notifyStepChange() {
+    if (typeof window.__nomadOnSessionStepCaptured === 'function') {
+      try { window.__nomadOnSessionStepCaptured(); } catch (_) {}
+    }
+  }
+
+  function _isEmptyStep(s) {
+    return !(Array.isArray(s.images) && s.images.length) && !s.imageUrl;
+  }
+
+  function beginStep() {
+    var p = getPending();
+    if (!p || !p.sessionId) return false;
+    var sessions = load();
+    var bi = sessions.findIndex(function (b) { return b.id === p.sessionId; });
+    if (bi === -1) return false;
+    var b = sessions[bi];
+    b.steps = (b.steps || []).filter(function (s) {
+      return !(s.generating && _isEmptyStep(s) && s.id !== p.stepId &&
+               Date.now() - Date.parse(s.createdAt || 0) > STALE_GENERATING_MS);
+    });
+
+    var step = p.stepId ? b.steps.find(function (s) { return s.id === p.stepId; }) : null;
+    if (step) {
+      step.generating = true;
+    } else {
+      step = {
+        id: 'step-' + Date.now() + '-' + Math.floor(Math.random() * 1e4),
+        flowLabel: p.flowLabel || 'Flow',
+        flowCategory: p.flowCategory || 'create',
+        flowAction: p.flowAction || null,
+        params: p.flowParams || null,
+        imageUrl: '',
+        images: [],
+        parentId: p.parentId || null,
+        createdAt: new Date().toISOString(),
+        generating: true
+      };
+      var inputs = collectFlowInputs();
+      if (Object.keys(inputs).length) step.inputs = inputs;
+      b.steps.forEach(function (s) { s.selected = false; });
+      step.selected = true;
+      b.steps.push(step);
+      p.stepId = step.id;
+      setPending(p);
+    }
+    sessions[bi] = b;
+    save(sessions);
+    pushUpdate(b);
+    _notifyStepChange();
+    return true;
+  }
+
+  function settleStep() {
+    var p = getPending();
+    if (!p || !p.sessionId || !p.stepId) return false;
+    var sessions = load();
+    var bi = sessions.findIndex(function (b) { return b.id === p.sessionId; });
+    if (bi === -1) return false;
+    var b = sessions[bi];
+    var si = (b.steps || []).findIndex(function (s) { return s.id === p.stepId; });
+    if (si === -1 || !b.steps[si].generating) return false;
+    var step = b.steps[si];
+    if (_isEmptyStep(step)) {
+      b.steps.splice(si, 1);
+      p.stepId = null;
+      setPending(p);
+    } else {
+      delete step.generating;
+    }
+    sessions[bi] = b;
+    save(sessions);
+    pushUpdate(b);
+    _notifyStepChange();
+    return true;
+  }
+
   // The mirror of captureImages: an image deleted from a flow's result feed
   // has to leave the session step too, or the Steps panel keeps showing a
   // thumbnail of something the user just threw away (and, once the file is
@@ -442,6 +528,7 @@
     getActive: getActive, setActive: setActive,
     wantsReturn: wantsReturn, setReturn: setReturn,
     captureImages: captureImages, removeImages: removeImages,
+    beginStep: beginStep, settleStep: settleStep,
     slugify: slugify, folderOf: folderOf, subdirOf: subdirOf,
     SCOPE_ALL: SCOPE_ALL, SCOPE_USER: SCOPE_USER,
     syncFromServer: syncFromServer, createRemote: createRemote, importRemote: importRemote,

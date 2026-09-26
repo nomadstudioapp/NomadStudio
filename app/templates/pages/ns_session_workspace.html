@@ -241,11 +241,11 @@
           </svg>
         </button>
         <div class="cs-session-action-bar">
-          <button class="nss-generate-scenes-btn cs-session-apply-btn" id="cs-session-apply-btn" type="button" style="--nss-accent:var(--accent)">
+          <button class="nss-generate-scenes-btn cs-session-apply-btn cs-session-side-trigger" id="cs-session-apply-btn" type="button" style="--nss-accent:var(--accent)">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Add Flow
           </button>
-          <button class="nss-generate-scenes-btn" id="cs-session-add-images-btn" type="button" title="Add images" aria-label="Add images" style="--nss-accent:var(--accent)">
+          <button class="nss-generate-scenes-btn cs-session-side-trigger" id="cs-session-add-images-btn" type="button" title="Add images" aria-label="Add images" style="--nss-accent:var(--accent)">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
             Add Images
           </button>
@@ -259,6 +259,128 @@
           </button>
         </div>
       </div>
+    </aside>
+
+    <!-- ── Side panel: Add Flow ─────────────────────────────────────────────
+         Docked next to the session column (was a centered modal): the same
+         .nsc-options-panel as a flow's own side panels, laid out like "Choose
+         a Refine Flow" (flow-gallery.js _openRefinePickerPanel) — search,
+         category tree, one row per flow. The ids are the old modal's, so
+         nomad_studio.js still finds them. -->
+    <aside class="nsc-options-panel nsc-options-panel--wide cs-session-side-panel" id="cs-session-flow-modal" aria-labelledby="cs-session-flow-modal-title" hidden>
+      <div class="nsc-options-panel-header">
+        <span class="nsc-options-panel-title" id="cs-session-flow-modal-title" data-i18n="session.addFlow.title">Add Flow</span>
+        <button class="nse-modal-close" id="cs-session-flow-modal-close" type="button" aria-label="Close">
+          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+      <div class="nsc-options-panel-body nsc-options-panel-body--flex cs-session-flow-modal-body">
+        <!-- What the next flow builds on -->
+        <div class="cs-session-flow-base" id="cs-session-flow-base">
+          <span class="cs-session-flow-base-thumb" id="cs-session-flow-base-thumb" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          </span>
+          <span class="cs-session-flow-base-text">
+            <span class="cs-session-flow-base-label" id="cs-session-flow-base-label">New image</span>
+            <span class="cs-session-flow-base-hint" data-i18n="session.addFlow.baseHint">The chosen flow will run from here.</span>
+          </span>
+        </div>
+
+        <!-- Opens the Add Images panel (upload, Build, tray…) -->
+        <button class="ncf-refine-picker-row cs-session-flow-import-row" id="cs-session-flow-import-img" type="button">
+          <span class="ncf-refine-picker-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          </span>
+          <span class="ncf-refine-picker-row-text">
+            <span class="ncf-refine-picker-row-name" data-i18n="session.addFlow.importTitle">Add images</span>
+            <span class="ncf-refine-picker-row-desc" data-i18n="session.addFlow.importSub">From your device, Build, the tray or past generations</span>
+          </span>
+          <svg class="ncf-refine-picker-row-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+
+        <div class="ncf-style-picker-search-row cs-session-flow-search-row">
+          <input type="text" class="nsc-input ncf-style-picker-search" id="cs-session-flow-search-input" placeholder="Search flows…" data-i18n-attr="placeholder:session.addFlow.search" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="ncf-style-picker-layout">
+          <nav class="ncf-style-picker-tree ncf-style-picker-tree--narrow" id="cs-session-flow-tree" aria-label="Flow categories">
+            <button type="button" class="lib-style-cat-tree-item is-active" data-cs-session-flow-filter="" data-i18n="session.addFlow.all">All</button>
+            <button type="button" class="lib-style-cat-tree-item" data-cs-session-flow-filter="create">Create</button>
+            <button type="button" class="lib-style-cat-tree-item" data-cs-session-flow-filter="refine">Refine</button>
+            <button type="button" class="lib-style-cat-tree-item" data-cs-session-flow-filter="mix">Mix</button>
+          </nav>
+          <div class="ncf-style-picker-grid ncf-style-picker-grid--list cs-session-flow-grid" id="cs-session-flow-grid">
+
+            <p class="nsc-param-title cs-session-flow-section" data-cs-session-flow-section="create" data-i18n="session.addFlow.sectionCreate">Create — new image</p>
+            {% for flow in flows %}
+            <button class="ncf-refine-picker-row cs-session-flow-card" type="button"
+              data-cs-session-flow-id="{{ flow.id }}"
+              data-cs-session-flow-label="{{ flow.label }}"
+              data-cs-session-flow-action="{{ flow.action }}"
+              data-cs-session-flow-category="create"
+              data-cs-session-flow-search="{{ (flow.label ~ ' ' ~ flow.action ~ ' ' ~ (flow.card_desc or '')) | lower }}">
+              <span class="ncf-refine-picker-row-icon" aria-hidden="true">{{ flow_icon(flow.action) }}</span>
+              <span class="ncf-refine-picker-row-text">
+                <span class="ncf-refine-picker-row-name">{{ flow.label }}</span>
+                {% if flow.card_desc %}<span class="ncf-refine-picker-row-desc">{{ flow.card_desc }}</span>{% endif %}
+              </span>
+              <svg class="ncf-refine-picker-row-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            {% endfor %}
+
+            <p class="nsc-param-title cs-session-flow-section" data-cs-session-flow-section="refine" data-i18n="session.addFlow.sectionRefine">Refine — uses the selected image</p>
+            {% for flow in refine_flows %}
+            <button class="ncf-refine-picker-row cs-session-flow-card cs-session-flow-card--refine" type="button"
+              data-cs-session-flow-id="{{ flow.id }}"
+              data-cs-session-flow-label="{{ flow.label }}"
+              data-cs-session-flow-action="{{ flow.action }}"
+              data-cs-session-flow-category="refine"
+              data-cs-session-flow-needs-base="1"
+              data-cs-session-flow-search="{{ (flow.label ~ ' ' ~ flow.action ~ ' ' ~ (flow.card_desc or '')) | lower }}">
+              <span class="ncf-refine-picker-row-icon" aria-hidden="true">{{ refine_icon(flow.action) }}</span>
+              <span class="ncf-refine-picker-row-text">
+                <span class="ncf-refine-picker-row-name">{{ flow.label }}</span>
+                {% if flow.card_desc %}<span class="ncf-refine-picker-row-desc">{{ flow.card_desc }}</span>{% endif %}
+              </span>
+              <svg class="ncf-refine-picker-row-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            {% endfor %}
+
+            <p class="nsc-param-title cs-session-flow-section" data-cs-session-flow-section="mix" data-i18n="session.addFlow.sectionMix">Mix — combine images</p>
+            {% for flow in mix_flows %}
+            <button class="ncf-refine-picker-row cs-session-flow-card cs-session-flow-card--mix" type="button"
+              data-cs-session-flow-id="{{ flow.id }}"
+              data-cs-session-flow-label="{{ flow.label }}"
+              data-cs-session-flow-action="{{ flow.action }}"
+              data-cs-session-flow-category="mix"
+              data-cs-session-flow-search="{{ (flow.label ~ ' ' ~ flow.action ~ ' ' ~ (flow.card_desc or '')) | lower }}">
+              <span class="ncf-refine-picker-row-icon" aria-hidden="true">{{ mix_icon(flow.action) }}</span>
+              <span class="ncf-refine-picker-row-text">
+                <span class="ncf-refine-picker-row-name">{{ flow.label }}</span>
+                {% if flow.card_desc %}<span class="ncf-refine-picker-row-desc">{{ flow.card_desc }}</span>{% endif %}
+              </span>
+              <svg class="ncf-refine-picker-row-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            {% endfor %}
+
+            <p class="ncf-style-picker-empty muted-note" id="cs-session-flow-empty" hidden data-i18n="session.addFlow.empty">No flows match your search.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Side panel: Add Images ────────────────────────────────────────────
+         Same sources as an image picker's ⋯ menu (flow-step-image-picker.js
+         ncfImageSourceItems) plus "From your device"; each pick becomes an
+         "Imported image" step. Filled by nomad_studio.js. -->
+    <aside class="nsc-options-panel nsc-options-panel--wide cs-session-side-panel" id="cs-session-images-panel" aria-labelledby="cs-session-images-panel-title" hidden>
+      <div class="nsc-options-panel-header">
+        <span class="nsc-options-panel-title" id="cs-session-images-panel-title" data-i18n="session.addImages.title">Add Images</span>
+        <button class="nse-modal-close" id="cs-session-images-panel-close" type="button" aria-label="Close">
+          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+      <div class="nsc-options-panel-body" id="cs-session-images-panel-body"></div>
     </aside>
 
     <!-- Opening a step (or Add Flow → a create/refine/mix pick) mounts that
@@ -282,115 +404,6 @@
   <input type="file" id="cs-session-image-input" accept="image/*" hidden aria-hidden="true">
 
 </div><!-- /nsc-page -->
-
-<!-- ── Modal: Flow Picker (Session > Add Flow) ─────────────────────────── -->
-<div class="nse-modal-backdrop" id="cs-session-flow-modal" role="dialog" aria-modal="true" aria-labelledby="cs-session-flow-modal-title" hidden>
-  <div class="nse-modal nse-modal--session-flow">
-    <header class="nse-modal-header">
-      <span class="nse-modal-title" id="cs-session-flow-modal-title" style="--nss-accent:#8a6416">Add Flow</span>
-      <button class="nse-modal-close" id="cs-session-flow-modal-close" aria-label="Close">
-        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </header>
-    <div class="nse-modal-body cs-session-flow-modal-body">
-
-      <!-- Base context: what the next flow builds on -->
-      <div class="cs-session-flow-base" id="cs-session-flow-base">
-        <span class="cs-session-flow-base-thumb" id="cs-session-flow-base-thumb" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-        </span>
-        <span class="cs-session-flow-base-text">
-          <span class="cs-session-flow-base-label" id="cs-session-flow-base-label">New image</span>
-          <span class="cs-session-flow-base-hint">The chosen flow will run from here.</span>
-        </span>
-      </div>
-
-      <!-- Import image option -->
-      <button class="cs-session-flow-import-card" id="cs-session-flow-import-img" type="button">
-        <span class="cs-session-flow-import-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </span>
-        <span class="cs-session-flow-import-text">
-          <span class="cs-session-flow-import-label">Import an image</span>
-          <span class="cs-session-flow-import-sub">Add an existing image from your device</span>
-        </span>
-        <svg class="cs-session-flow-import-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </button>
-
-      <!-- Search -->
-      <div class="cs-session-flow-search">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="cs-session-flow-search-input" placeholder="Search flows…" autocomplete="off" spellcheck="false">
-      </div>
-
-      <p class="cs-session-flow-modal-hint">Or pick a flow to generate the next step:</p>
-
-      <!-- Flows grid: Create (from scratch) + Refine (operate on selected image) -->
-      <div class="cs-session-flow-grid" id="cs-session-flow-grid">
-
-        <div class="cs-session-flow-section" data-cs-session-flow-section="create">
-          <span class="cs-session-flow-section-label">Create — new image</span>
-        </div>
-        {% for flow in flows %}
-        <button class="cs-session-flow-card" type="button"
-          data-cs-session-flow-id="{{ flow.id }}"
-          data-cs-session-flow-label="{{ flow.label }}"
-          data-cs-session-flow-action="{{ flow.action }}"
-          data-cs-session-flow-category="create"
-          data-cs-session-flow-search="{{ (flow.label ~ ' ' ~ flow.action ~ ' ' ~ (flow.card_desc or '')) | lower }}">
-          <span class="cs-session-flow-card-icon" aria-hidden="true">{{ flow_icon(flow.action) }}</span>
-          <span class="cs-session-flow-card-text">
-            <span class="cs-session-flow-card-name">{{ flow.label }}</span>
-            {% if flow.card_desc %}<span class="cs-session-flow-card-desc">{{ flow.card_desc }}</span>{% endif %}
-          </span>
-          {% if flow.card_tags %}<span class="cs-session-flow-card-tag">{{ flow.card_tags[0] }}</span>{% endif %}
-        </button>
-        {% endfor %}
-
-        <div class="cs-session-flow-section" data-cs-session-flow-section="refine">
-          <span class="cs-session-flow-section-label">Refine — uses the selected image</span>
-        </div>
-        {% for flow in refine_flows %}
-        <button class="cs-session-flow-card cs-session-flow-card--refine" type="button"
-          data-cs-session-flow-id="{{ flow.id }}"
-          data-cs-session-flow-label="{{ flow.label }}"
-          data-cs-session-flow-action="{{ flow.action }}"
-          data-cs-session-flow-category="refine"
-          data-cs-session-flow-needs-base="1"
-          data-cs-session-flow-search="{{ (flow.label ~ ' ' ~ flow.action ~ ' ' ~ (flow.card_desc or '')) | lower }}">
-          <span class="cs-session-flow-card-icon" aria-hidden="true">{{ refine_icon(flow.action) }}</span>
-          <span class="cs-session-flow-card-text">
-            <span class="cs-session-flow-card-name">{{ flow.label }}</span>
-            {% if flow.card_desc %}<span class="cs-session-flow-card-desc">{{ flow.card_desc }}</span>{% endif %}
-          </span>
-          {% if flow.card_tags %}<span class="cs-session-flow-card-tag">{{ flow.card_tags[0] }}</span>{% endif %}
-        </button>
-        {% endfor %}
-
-        <div class="cs-session-flow-section" data-cs-session-flow-section="mix">
-          <span class="cs-session-flow-section-label">Mix — combine two images</span>
-        </div>
-        {% for flow in mix_flows %}
-        <button class="cs-session-flow-card cs-session-flow-card--mix" type="button"
-          data-cs-session-flow-id="{{ flow.id }}"
-          data-cs-session-flow-label="{{ flow.label }}"
-          data-cs-session-flow-action="{{ flow.action }}"
-          data-cs-session-flow-category="mix"
-          data-cs-session-flow-search="{{ (flow.label ~ ' ' ~ flow.action ~ ' ' ~ (flow.card_desc or '')) | lower }}">
-          <span class="cs-session-flow-card-icon" aria-hidden="true">{{ mix_icon(flow.action) }}</span>
-          <span class="cs-session-flow-card-text">
-            <span class="cs-session-flow-card-name">{{ flow.label }}</span>
-            {% if flow.card_desc %}<span class="cs-session-flow-card-desc">{{ flow.card_desc }}</span>{% endif %}
-          </span>
-          {% if flow.card_tags %}<span class="cs-session-flow-card-tag">{{ flow.card_tags[0] }}</span>{% endif %}
-        </button>
-        {% endfor %}
-
-        <p class="cs-session-flow-empty" id="cs-session-flow-empty" hidden>No flows match your search.</p>
-      </div>
-    </div>
-  </div>
-</div>
 
 {% endblock %}
 

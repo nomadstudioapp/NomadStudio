@@ -886,8 +886,12 @@
       // modifier class, both halves handled in CSS. See .cs-session-node--import.
       var isImport = step.flowCategory === 'import';
 
+      // Started on Generate/Queue and still running (session-store.js
+      // beginStep) — shown with a spinner until settleStep clears it.
+      var isGenerating = !!step.generating;
+
       var node = document.createElement('div');
-      node.className = 'cs-session-node' + (isSelected ? ' is-selected' : '') + (isChild ? ' cs-session-node--child' : '') + (isImport ? ' cs-session-node--import' : '');
+      node.className = 'cs-session-node' + (isSelected ? ' is-selected' : '') + (isChild ? ' cs-session-node--child' : '') + (isImport ? ' cs-session-node--import' : '') + (isGenerating ? ' is-generating' : '');
       node.dataset.stepId = step.id;
       node.setAttribute('role', 'treeitem');
       node.setAttribute('aria-selected', isSelected ? 'true' : 'false');
@@ -936,7 +940,9 @@
         : '<div class="cs-session-node-thumb">' +
             (step.imageUrl
               ? '<img src="' + step.imageUrl + '" alt="' + escHtml(step.flowLabel || 'Step') + '">'
-              : '<div class="cs-session-node-thumb-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>') +
+              : isGenerating
+                ? '<div class="cs-session-node-thumb-empty"><span class="cs-session-node-spinner" aria-hidden="true"></span></div>'
+                : '<div class="cs-session-node-thumb-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>') +
           '</div>';
 
       node.innerHTML =
@@ -952,7 +958,9 @@
           '<div class="cs-session-node-top">' +
             '<span class="cs-session-node-index">' + (stepIdx + 1) + '</span>' +
             '<span class="cs-session-node-name">' + escHtml(step.flowLabel || 'Step') + '</span>' +
-            (isSelected ? '<span class="cs-session-node-badge">Selected</span>' : '') +
+            (isGenerating
+              ? '<span class="cs-session-node-badge cs-session-node-badge--generating">Generating…</span>'
+              : (isSelected ? '<span class="cs-session-node-badge">Selected</span>' : '')) +
           '</div>' +
         '</div>' +
         openBtnHtml +
@@ -1307,14 +1315,52 @@
     }
   }
 
+  // Add Flow and Add Images are side panels docked beside the session column
+  // (ns_session_workspace.html, .cs-session-side-panel) — one open at a time.
+  function sessionOpenSidePanel(panel) {
+    document.querySelectorAll('.cs-session-side-panel').forEach(function (p) {
+      if (p !== panel) p.hidden = true;
+    });
+    if (panel) panel.hidden = false;
+  }
+
+  function sessionCloseSidePanels() {
+    document.querySelectorAll('.cs-session-side-panel').forEach(function (p) { p.hidden = true; });
+  }
+
+  // Click outside an open side panel closes it — except on the buttons that
+  // open them (.cs-session-side-trigger), which switch panels themselves.
+  document.addEventListener('mousedown', function (e) {
+    var open = document.querySelector('.cs-session-side-panel:not([hidden])');
+    if (!open || open.contains(e.target)) return;
+    if (e.target.closest && e.target.closest('.cs-session-side-trigger')) return;
+    sessionCloseSidePanels();
+  }, true);
+
+  // Category of the tree beside the flow list: '' (All), create, refine, mix.
+  var sessionFlowFilter = '';
+
   function sessionOpenFlowModal() {
     if (!sessionFlowModal) return;
     sessionUpdateFlowBase();
     var search = document.getElementById('cs-session-flow-search-input');
     if (search) { search.value = ''; sessionFilterFlows(''); }
-    sessionFlowModal.hidden = false;
-    document.body.style.overflow = 'hidden';
+    sessionOpenSidePanel(sessionFlowModal);
     if (search) requestAnimationFrame(function () { search.focus(); });
+  }
+
+  var sessionFlowTree = document.getElementById('cs-session-flow-tree');
+  if (sessionFlowTree) {
+    sessionFlowTree.addEventListener('click', function (e) {
+      var item = e.target.closest('[data-cs-session-flow-filter]');
+      if (!item) return;
+      sessionFlowFilter = item.dataset.csSessionFlowFilter || '';
+      sessionFlowTree.querySelectorAll('[data-cs-session-flow-filter]').forEach(function (b) {
+        b.classList.toggle('is-active', b === item);
+      });
+      var search = document.getElementById('cs-session-flow-search-input');
+      sessionFilterFlows(search ? search.value : '');
+    });
   }
 
   function sessionFilterFlows(q) {
@@ -1328,8 +1374,9 @@
     grid.querySelectorAll('.cs-session-flow-card').forEach(function (card) {
       var isMix = card.classList.contains('cs-session-flow-card--mix');
       if (isMix && !hasBase) { card.hidden = true; return; }
+      var inCategory = !sessionFlowFilter || card.dataset.csSessionFlowCategory === sessionFlowFilter;
       var hay = card.dataset.csSessionFlowSearch || '';
-      var match = !q || hay.indexOf(q) !== -1;
+      var match = inCategory && (!q || hay.indexOf(q) !== -1);
       card.hidden = !match;
       if (match) shown++;
     });
@@ -1354,21 +1401,18 @@
   }
 
   function sessionCloseFlowModal() {
-    if (!sessionFlowModal) return;
-    sessionFlowModal.hidden = true;
-    document.body.style.overflow = '';
+    if (sessionFlowModal) sessionFlowModal.hidden = true;
   }
 
   if (sessionFlowModalClose) {
     sessionFlowModalClose.addEventListener('click', sessionCloseFlowModal);
   }
-  if (sessionFlowModal) {
-    sessionFlowModal.addEventListener('click', function (e) {
-      if (e.target === sessionFlowModal) sessionCloseFlowModal();
-    });
+  var sessionImagesPanelClose = document.getElementById('cs-session-images-panel-close');
+  if (sessionImagesPanelClose) {
+    sessionImagesPanelClose.addEventListener('click', sessionCloseSidePanels);
   }
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && sessionFlowModal && !sessionFlowModal.hidden) sessionCloseFlowModal();
+    if (e.key === 'Escape' && document.querySelector('.cs-session-side-panel:not([hidden])')) sessionCloseSidePanels();
   });
 
   // Wire flow cards inside modal — record pending context, then navigate.
@@ -1428,30 +1472,68 @@
 
   var sessionImageInput = document.getElementById('cs-session-image-input');
 
+  // Add Images panel: the same sources as an image picker's ⋯ menu
+  // (flow-step-image-picker.js ncfImageSourceItems), plus the device's own
+  // files first. A source swaps the panel's content in place, like the ⋯
+  // menu does; a pick is imported as an "Imported image" step.
+  var sessionImagesPanel = document.getElementById('cs-session-images-panel');
+
+  function sessionPickImageFile() {
+    if (window.__sessionPickingImage) return;   // guard against any double trigger
+    window.__sessionPickingImage = true;
+    setTimeout(function () { window.__sessionPickingImage = false; }, 1200);
+    var fi = document.getElementById('cs-session-image-input');
+    if (fi) fi.click();
+  }
+
+  function sessionSetImagesPanel(title, fill) {
+    var titleEl = document.getElementById('cs-session-images-panel-title');
+    var body = document.getElementById('cs-session-images-panel-body');
+    if (titleEl) titleEl.textContent = title;
+    if (!body) return;
+    body.innerHTML = '';
+    fill(body);
+  }
+
+  function sessionOpenImagesPanel() {
+    if (!sessionImagesPanel) return;
+    var t = function (k, f) { return (window.NomadI18n && NomadI18n.t) ? NomadI18n.t(k, f) : f; };
+    var sources = typeof ncfImageSourceItems === 'function' ? ncfImageSourceItems() : [];
+    var items = [{
+      label: t('session.addImages.device', 'From your device'),
+      svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+      onClick: function () { sessionCloseSidePanels(); sessionPickImageFile(); },
+    }].concat(sources.map(function (src) {
+      return {
+        label: src.label,
+        svgInner: src.svgInner,
+        onClick: function () {
+          sessionSetImagesPanel(src.title, function (body) {
+            src.fill(body, function (url) {
+              sessionCloseSidePanels();
+              sessionImportImageUrl(url);
+            });
+          });
+        },
+      };
+    }));
+    sessionSetImagesPanel(t('session.addImages.title', 'Add Images'), function (body) {
+      if (typeof ncfFillOptionsMenu === 'function') ncfFillOptionsMenu(body, items);
+    });
+    sessionOpenSidePanel(sessionImagesPanel);
+  }
+
   if (sessionFlowImportImg) {
     sessionFlowImportImg.onclick = function (e) {
       e.preventDefault();
-      e.stopPropagation();
-      if (window.__sessionPickingImage) return;   // guard against any double trigger
-      window.__sessionPickingImage = true;
-      setTimeout(function () { window.__sessionPickingImage = false; }, 1200);
-      sessionCloseFlowModal();
-      var fi = document.getElementById('cs-session-image-input');
-      if (fi) setTimeout(function () { fi.click(); }, 0);
+      sessionOpenImagesPanel();
     };
   }
-
-  // "Add Images" header action — same file input as "Import an image" inside
-  // the Add Flow modal, just reachable without opening that modal first.
   var sessionAddImagesBtn = document.getElementById('cs-session-add-images-btn');
   if (sessionAddImagesBtn) {
     sessionAddImagesBtn.onclick = function (e) {
       e.preventDefault();
-      if (window.__sessionPickingImage) return;
-      window.__sessionPickingImage = true;
-      setTimeout(function () { window.__sessionPickingImage = false; }, 1200);
-      var fi = document.getElementById('cs-session-image-input');
-      if (fi) fi.click();
+      sessionOpenImagesPanel();
     };
   }
 
@@ -1477,65 +1559,82 @@
     img.src = dataUrl;
   }
 
+  // Adds an image to the active session as an "Imported image" step:
+  // downscaled (caps the upload), saved to the server's output folder, and
+  // only its URL kept in the session. A copy, not a link, so a Build image
+  // edited later doesn't change the session.
+  function sessionImportDataUrl(dataUrl) {
+    var session = sessionActiveSession();
+    if (!session || !dataUrl) return;
+    sessionDownscaleImage(dataUrl, 1600, function (smallUrl) {
+      function commit(finalUrl) {
+        var step = {
+          id: 'step-' + Date.now(),
+          flowLabel: 'Imported image',
+          flowCategory: 'import',
+          imageUrl: finalUrl,
+          images: [finalUrl],
+          parentId: null,
+          createdAt: new Date().toISOString()
+        };
+        session.steps = session.steps || [];
+        session.steps.forEach(function (s) { s.selected = false; });
+        step.selected = true;   // just-imported image becomes the active base
+        session.steps.push(step);
+        try {
+          var all = Session.load();
+          var i = all.findIndex(function (b) { return b.id === session.id; });
+          if (i !== -1) { all[i] = session; } else { all.push(session); }
+          Session.save(all);
+        } catch (_) {}
+        // Confirm persistence (a data: URL fallback may still exceed quota)
+        var ok = false;
+        try {
+          var check = Session.find(session.id);
+          ok = !!(check && check.steps && check.steps.some(function (s) { return s.id === step.id; }));
+        } catch (_) {}
+        if (!ok && /^data:/.test(finalUrl)) {
+          alert('The image was added but could not be saved permanently (storage is full). It will stay until you reload.');
+        }
+        sessionRenderWorkspace(session);
+      }
+
+      fetch('/api/images/save-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: smallUrl, filenamePrefix: 'session-import', subdir: (Session.subdirOf ? Session.subdirOf(session) : 'session') })
+      })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (res) {
+        if (res && res.ok && res.url) commit(res.url);  // server URL (tiny)
+        else commit(smallUrl);                          // fallback: inline data URL
+      })
+      .catch(function () { commit(smallUrl); });
+    });
+  }
+
+  // A picked image from Add Images (Build, tray, history, inputs): fetched
+  // and imported like a file from the device.
+  function sessionImportImageUrl(url) {
+    fetch(url)
+      .then(function (r) { return r.blob(); })
+      .then(function (blob) {
+        var reader = new FileReader();
+        reader.onload = function (e) { sessionImportDataUrl(String(e.target.result || '')); };
+        reader.readAsDataURL(blob);
+      })
+      .catch(function () { alert('Could not load that image.'); });
+  }
+
   if (sessionImageInput) {
     sessionImageInput.onchange = function () {
       var file = sessionImageInput.files && sessionImageInput.files[0];
       sessionImageInput.value = '';
       window.__sessionPickingImage = false;
-      var session = sessionActiveSession();
-      if (!file || !session) return;
+      if (!file || !sessionActiveSession()) return;
       if (!/^image\//.test(file.type)) { alert('Please choose an image file.'); return; }
       var reader = new FileReader();
-      reader.onload = function (e) {
-        // Downscale (caps upload size), then store the image on the SERVER's
-        // output folder and keep only its URL in the session — this avoids the
-        // localStorage quota entirely.
-        sessionDownscaleImage(e.target.result, 1600, function (smallUrl) {
-          function commit(finalUrl) {
-            var step = {
-              id: 'step-' + Date.now(),
-              flowLabel: 'Imported image',
-              flowCategory: 'import',
-              imageUrl: finalUrl,
-              images: [finalUrl],
-              parentId: null,
-              createdAt: new Date().toISOString()
-            };
-            session.steps = session.steps || [];
-            session.steps.forEach(function (s) { s.selected = false; });
-            step.selected = true;   // just-imported image becomes the active base
-            session.steps.push(step);
-            try {
-              var all = Session.load();
-              var i = all.findIndex(function (b) { return b.id === session.id; });
-              if (i !== -1) { all[i] = session; } else { all.push(session); }
-              Session.save(all);
-            } catch (_) {}
-            // Confirm persistence (a data: URL fallback may still exceed quota)
-            var ok = false;
-            try {
-              var check = Session.find(session.id);
-              ok = !!(check && check.steps && check.steps.some(function (s) { return s.id === step.id; }));
-            } catch (_) {}
-            if (!ok && /^data:/.test(finalUrl)) {
-              alert('The image was added but could not be saved permanently (storage is full). It will stay until you reload.');
-            }
-            sessionRenderWorkspace(session);
-          }
-
-          fetch('/api/images/save-upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dataUrl: smallUrl, filenamePrefix: 'session-import', subdir: (Session.subdirOf ? Session.subdirOf(session) : 'session') })
-          })
-          .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (res) {
-            if (res && res.ok && res.url) commit(res.url);  // server URL (tiny)
-            else commit(smallUrl);                          // fallback: inline data URL
-          })
-          .catch(function () { commit(smallUrl); });
-        });
-      };
+      reader.onload = function (e) { sessionImportDataUrl(e.target.result); };
       reader.readAsDataURL(file);
     };
   }

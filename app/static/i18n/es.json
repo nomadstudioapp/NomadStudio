@@ -6,6 +6,24 @@
     "panelTitle": "Idioma",
     "comingSoon": "Próximamente"
   },
+  "session": {
+    "addFlow": {
+      "title": "Añadir flow",
+      "baseHint": "El flow elegido partirá de aquí.",
+      "importTitle": "Añadir imágenes",
+      "importSub": "Desde tu equipo, Build, la bandeja o generaciones anteriores",
+      "search": "Buscar flows…",
+      "all": "Todos",
+      "sectionCreate": "Create — imagen nueva",
+      "sectionRefine": "Refine — usa la imagen seleccionada",
+      "sectionMix": "Mix — combina imágenes",
+      "empty": "Ningún flow coincide con la búsqueda."
+    },
+    "addImages": {
+      "title": "Añadir imágenes",
+      "device": "Desde tu equipo"
+    }
+  },
   "hub": {
     "subtitle": "¿Qué quieres crear hoy?",
     "mode": {

@@ -395,6 +395,12 @@ function _markCardError(card, message) {
 }
 
 async function _processQueue() {
+  // Every run ends here (each runner's finally calls it): with nothing left
+  // to do, the Session step started on Generate is settled.
+  if (!isGenerating && !_genQueue.length && window.NomadSession &&
+      typeof NomadSession.settleStep === 'function') {
+    try { NomadSession.settleStep(); } catch (_) {}
+  }
   if (isGenerating || !_genQueue.length) return;
   var item = _genQueue.shift();
   var card = item.card;

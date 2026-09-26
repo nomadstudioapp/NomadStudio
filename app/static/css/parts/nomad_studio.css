@@ -2480,13 +2480,16 @@
    pill — same shape, type and icon slot as .nss-generate-scenes-btn in the
    Session workspace action bar. Save and Change image are filled accent;
    Delete is the red-tinted variant of the same pill. */
-.lib-style-edit-panel-apply,
 /* display:inline-flex below outranks the browser's [hidden] rule — the
-   Depot panel's Delete showed while *creating* a depot. */
+   Depot panel's Delete showed while *creating* a depot. Its own rule: it
+   once sat inside the selector list below and hid every Save/Apply button
+   in Build (Characters, Backgrounds, Styles, Templates, Depots). */
+.lib-style-edit-panel-apply[hidden],
 .lib-style-edit-panel-secondary[hidden] {
   display: none;
 }
 
+.lib-style-edit-panel-apply,
 .lib-style-edit-panel-secondary {
   display: inline-flex;
   align-items: center;

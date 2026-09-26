@@ -1,0 +1,149 @@
+{
+  "palettes": [
+    {
+      "id": "builtin-1bit",
+      "name": "1-bit",
+      "author": "",
+      "source": "",
+      "colors": [
+        "#000000",
+        "#ffffff"
+      ]
+    },
+    {
+      "id": "builtin-gray-4",
+      "name": "Grayscale 4",
+      "author": "",
+      "source": "",
+      "colors": [
+        "#000000",
+        "#555555",
+        "#aaaaaa",
+        "#ffffff"
+      ]
+    },
+    {
+      "id": "builtin-gray-8",
+      "name": "Grayscale 8",
+      "author": "",
+      "source": "",
+      "colors": [
+        "#000000",
+        "#242424",
+        "#494949",
+        "#6d6d6d",
+        "#929292",
+        "#b6b6b6",
+        "#dbdbdb",
+        "#ffffff"
+      ]
+    },
+    {
+      "id": "builtin-nintendo-gameboy-bgb",
+      "name": "Game Boy",
+      "author": "Nintendo",
+      "source": "https://lospec.com/palette-list/nintendo-gameboy-bgb",
+      "colors": [
+        "#081820",
+        "#346856",
+        "#88c070",
+        "#e0f8d0"
+      ]
+    },
+    {
+      "id": "builtin-color-graphics-adapter",
+      "name": "CGA",
+      "author": "IBM",
+      "source": "https://lospec.com/palette-list/color-graphics-adapter",
+      "colors": [
+        "#000000",
+        "#555555",
+        "#aaaaaa",
+        "#ffffff",
+        "#0000aa",
+        "#5555ff",
+        "#00aa00",
+        "#55ff55",
+        "#00aaaa",
+        "#55ffff",
+        "#aa0000",
+        "#ff5555",
+        "#aa00aa",
+        "#ff55ff",
+        "#aa5500",
+        "#ffff55"
+      ]
+    },
+    {
+      "id": "builtin-zx-spectrum",
+      "name": "ZX Spectrum",
+      "author": "Sinclair",
+      "source": "https://lospec.com/palette-list/zx-spectrum",
+      "colors": [
+        "#000000",
+        "#0000d8",
+        "#0000ff",
+        "#d80000",
+        "#ff0000",
+        "#d800d8",
+        "#ff00ff",
+        "#00d800",
+        "#00ff00",
+        "#00d8d8",
+        "#00ffff",
+        "#d8d800",
+        "#ffff00",
+        "#d8d8d8",
+        "#ffffff"
+      ]
+    },
+    {
+      "id": "builtin-commodore64",
+      "name": "Commodore 64",
+      "author": "Commodore",
+      "source": "https://lospec.com/palette-list/commodore64",
+      "colors": [
+        "#000000",
+        "#626262",
+        "#898989",
+        "#adadad",
+        "#ffffff",
+        "#9f4e44",
+        "#cb7e75",
+        "#6d5412",
+        "#a1683c",
+        "#c9d487",
+        "#9ae29b",
+        "#5cab5e",
+        "#6abfc6",
+        "#887ecb",
+        "#50459b",
+        "#a057a3"
+      ]
+    },
+    {
+      "id": "builtin-pico-8",
+      "name": "PICO-8",
+      "author": "Lexaloffle",
+      "source": "https://lospec.com/palette-list/pico-8",
+      "colors": [
+        "#000000",
+        "#1d2b53",
+        "#7e2553",
+        "#008751",
+        "#ab5236",
+        "#5f574f",
+        "#c2c3c7",
+        "#fff1e8",
+        "#ff004d",
+        "#ffa300",
+        "#ffec27",
+        "#00e436",
+        "#29adff",
+        "#83769c",
+        "#ff77a8",
+        "#ffccaa"
+      ]
+    }
+  ]
+}

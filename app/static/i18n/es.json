@@ -636,6 +636,24 @@
     "queue": {
       "waitingComfy": "Esperando a que ComfyUI termine…",
       "waitingLms": "Esperando a que LM Studio termine…"
+    },
+    "palettes": {
+      "title": "Paletas",
+      "import": "Importar paleta",
+      "auto": "Automática",
+      "autoHint": "Saca los colores de la imagen; usa el deslizador.",
+      "colors": "{n} colores",
+      "delete": "Borrar paleta",
+      "deleteConfirm": "Haz clic otra vez para borrar",
+      "deleteFailed": "No se pudo borrar la paleta.",
+      "formats": "Formatos: {ext}. Descarga la paleta en .pal, .gpl o .hex e impórtala aquí.",
+      "empty": "Aún no hay paletas. Importa un archivo .pal, .gpl o .hex.",
+      "loadFailed": "No se pudieron cargar las paletas.",
+      "importFailed": "No se pudo importar:",
+      "by": "de {author}",
+      "mine": "Tus paletas",
+      "included": "Incluidas",
+      "browse": "Buscar paletas en {site}"
     }
   },
   "settings": {

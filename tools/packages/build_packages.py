@@ -2349,6 +2349,7 @@ def build_refine_static_group(
     extra_files: dict[str, object] | None = None,
     extra_contributes: dict | None = None,
     extra_texts: dict[str, dict[str, str]] | None = None,
+    extra_i18n: dict[str, dict] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -2373,7 +2374,9 @@ def build_refine_static_group(
     `extra_files`/`extra_contributes` bolt on non-flow zip content — e.g. an
     `addon/` folder (contributes.addon, PACKAGE_FORMAT.md §9 minimal slice,
     see build_styling) — merged straight into the files dict and the
-    manifest's contributes respectively, no other effect on this function."""
+    manifest's contributes respectively, no other effect on this function.
+    `extra_i18n` ({lang: {flow id: {path: text}}}) adds ready-made texts for
+    flows that are not in `flows` — the addon's own flow.json."""
     table = load_translations(source)
     # Hand translations for UI strings the OPENHIKER table doesn't carry yet
     # (e.g. the style flows' step labels) — only fills gaps.
@@ -2442,6 +2445,9 @@ def build_refine_static_group(
         files[ref] = graph
 
     i18n, counts = flow_i18n(flows, table)
+    for lang, by_flow in (extra_i18n or {}).items():
+        if lang in i18n:
+            i18n[lang].update(by_flow)
     manifest = {
         "schema_version": 1,
         "id": pkg_id,
@@ -2830,24 +2836,30 @@ def _pixel_art_qwen2_flow(source: Path) -> dict:
 
 # Pixel Matcher (contributes.addon, PACKAGE_FORMAT.md §9 minimal slice —
 # see build_refine_static_group's extra_files/extra_contributes): local,
-# no-AI KMeans pixel-art conversion, the natural next step after Pixel
-# Art's AI-model presets. Bundled as source text straight into Styling's
-# zip under addon/ — same 4 files as the addon's own OPENHIKER folder,
-# except flow.json's group is overridden to "styling" (source says "core").
+# no-AI pixel-art conversion (KMeans or an imported .pal/.gpl/.hex palette),
+# the natural next step after Pixel Art's AI-model presets. Its source lives
+# in THIS repo, tools/packages/addons/pixel_matcher/ (not in --source), and
+# is bundled as source text into Styling's zip under addon/. The folder's
+# i18n.json ({lang: {path: text}}, §7.2 paths) is merged into the package's
+# own i18n/<lang>.json under the flow's id.
 # Installing this package extracts addon/ to data/packages/<pkg>/addon/;
 # app/services/addon_loader.py picks it up from there on the NEXT app
-# start (no hot-load — same restart this addon already needed when it was
-# a manual copy in the source tree, just delivered by the pack now).
-def _pixel_matcher_addon_contribution(source: Path) -> tuple[dict[str, str], dict]:
-    addon_dir = source / "addons" / "pixel_matcher"
+# start (no hot-load).
+PIXEL_MATCHER_ADDON_DIR = Path(__file__).with_name("addons") / "pixel_matcher"
+
+
+def _pixel_matcher_addon_contribution() -> tuple[dict[str, str], dict, dict[str, dict]]:
+    addon_dir = PIXEL_MATCHER_ADDON_DIR
     files = {
         f"addon/{name}": (addon_dir / name).read_text(encoding="utf-8")
-        for name in ("__init__.py", "routes.py", "service.py")
+        for name in ("__init__.py", "routes.py", "service.py", "palettes.py", "default_palettes.json")
     }
     flow = json.loads((addon_dir / "flow.json").read_text(encoding="utf-8"))
     flow["group"] = "styling"
     files["addon/flow.json"] = json.dumps(flow, indent=2, ensure_ascii=False)
-    return files, {"addon": {"entry": "addon/__init__.py"}}
+    texts = json.loads((addon_dir / "i18n.json").read_text(encoding="utf-8"))
+    i18n = {lang: {flow["id"]: by_path} for lang, by_path in texts.items() if by_path}
+    return files, {"addon": {"entry": "addon/__init__.py"}}, i18n
 
 
 # ── Style Transfer across Create / Refine / Mix ──────────────────────────────
@@ -3599,7 +3611,7 @@ STYLE_TRANSFER_UI_TEXTS = {
 
 
 def build_styling(source: Path, version: str) -> Path:
-    addon_files, addon_contributes = _pixel_matcher_addon_contribution(source)
+    addon_files, addon_contributes, addon_i18n = _pixel_matcher_addon_contribution()
     return build_refine_static_group(
         source, version, "nomad.refine-styling", "styling",
         name={"en": "Styling", "es": "Estilizado", "zh": "风格化", "ko": "스타일링"},
@@ -3625,6 +3637,7 @@ def build_styling(source: Path, version: str) -> Path:
         extra_files=addon_files,
         extra_contributes=addon_contributes,
         extra_texts=STYLE_TRANSFER_UI_TEXTS,
+        extra_i18n=addon_i18n,
     )
 
 

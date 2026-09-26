@@ -1,0 +1,154 @@
+{
+  "id": "refine.pixel_matcher",
+  "label": "Pixel Matcher",
+  "category": "refine",
+  "group": "styling",
+  "description": "Convert any image into crisp pixel art. Auto-detects the ideal grid size and reduces the colours with KMeans clustering or an imported palette. No AI model required — 100% local Python processing.",
+  "card_desc": "Turn any photo or illustration into pixel art. Auto-detects grid size, quantises the palette (or uses one of yours), and optionally scales up the result.",
+  "card": {
+    "label": {"en": "Pixel Matcher", "es": "Pixel Matcher", "zh": "Pixel Matcher", "ko": "Pixel Matcher"},
+    "desc": {
+      "en": "Turn any photo or illustration into pixel art. Auto-detects grid size, quantises the palette (or uses one of yours), and optionally scales up the result.",
+      "es": "Convierte cualquier foto o ilustración en pixel art. Detecta la rejilla, reduce la paleta (o usa una tuya) y, si quieres, amplía el resultado.",
+      "zh": "将任意照片或插画转换为像素艺术。自动检测网格、量化调色板（或使用你自己的调色板），并可放大结果。",
+      "ko": "사진이나 일러스트를 픽셀 아트로 변환합니다. 격자를 자동 감지하고 팔레트를 줄이며(또는 내 팔레트 사용), 결과를 확대할 수도 있습니다."
+    }
+  },
+  "card_tags": [
+    "Pixel Art",
+    "Local",
+    "No AI"
+  ],
+  "card_css_modifier": "pixel-matcher",
+  "llm_required": false,
+  "comfyui_required": false,
+  "steps": [
+    {
+      "id": "image",
+      "type": "image_picker",
+      "label": "Source image",
+      "required": true
+    },
+    {
+      "id": "params",
+      "type": "workflow_params",
+      "label": "Parameters",
+      "fields": [
+        {
+          "id": "auto_detect",
+          "adv_key": "auto_detect",
+          "label": "Grid size",
+          "type": "select",
+          "default": "true",
+          "options": [
+            {
+              "value": "true",
+              "label": "Auto-detect"
+            },
+            {
+              "value": "false",
+              "label": "Manual"
+            }
+          ]
+        },
+        {
+          "id": "pixel_size",
+          "adv_key": "pixel_size",
+          "label": "Pixel size (px)",
+          "type": "slider",
+          "default": 8,
+          "min": 2,
+          "max": 32,
+          "step": 2,
+          "note": "Grid cell size in pixels. Only used when Grid size is set to Manual. Smaller = more detail, larger = blockier."
+        },
+        {
+          "id": "num_colors",
+          "adv_key": "num_colors",
+          "label": "Palette colours",
+          "type": "slider",
+          "default": 16,
+          "min": 4,
+          "max": 256,
+          "step": 4,
+          "palette_src": "/api/models/pixel-match/palettes",
+          "palette_adv_key": "palette",
+          "palette_browse_url": "https://lospec.com/palette-list",
+          "palette_browse_label": "Lospec"
+        },
+        {
+          "id": "scale_factor",
+          "adv_key": "scale_factor",
+          "label": "Output scale",
+          "type": "select",
+          "default": "1",
+          "options": [
+            {
+              "value": "1",
+              "label": "1× (original size)"
+            },
+            {
+              "value": "2",
+              "label": "2× upscale"
+            },
+            {
+              "value": "4",
+              "label": "4× upscale"
+            },
+            {
+              "value": "8",
+              "label": "8× upscale"
+            }
+          ]
+        },
+        {
+          "id": "dither",
+          "adv_key": "dither",
+          "label": "Dithering",
+          "type": "select",
+          "default": "0",
+          "options": [
+            {
+              "value": "0",
+              "label": "Off"
+            },
+            {
+              "value": "2",
+              "label": "Bayer 2×2"
+            },
+            {
+              "value": "4",
+              "label": "Bayer 4×4"
+            },
+            {
+              "value": "8",
+              "label": "Bayer 8×8"
+            }
+          ],
+          "note": "Ordered/retro cross-hatch dithering between adjacent palette colours — not Floyd-Steinberg. Smaller matrix = more pronounced pattern."
+        }
+      ]
+    },
+    {
+      "id": "generate",
+      "type": "action",
+      "label": "Convert to Pixel Art",
+      "calls": "pixel_match.submit",
+      "input_map": {
+        "imageDataUrl": "steps.image.output.image_data_url",
+        "advancedValues": "steps.params.output.adv_values"
+      }
+    },
+    {
+      "id": "result",
+      "type": "result_view",
+      "label": "Result",
+      "actions": [
+        "save",
+        "regenerate"
+      ]
+    }
+  ],
+  "entry_category": "Pixel Art",
+  "entry_model": "Local"
+}

@@ -302,6 +302,24 @@
     "queue": {
       "waitingComfy": "Waiting for ComfyUI to finish…",
       "waitingLms": "Waiting for LM Studio to finish…"
+    },
+    "palettes": {
+      "title": "Palettes",
+      "import": "Import palette",
+      "auto": "Automatic",
+      "autoHint": "Picks the colours from the image; use the slider.",
+      "colors": "{n} colours",
+      "delete": "Delete palette",
+      "deleteConfirm": "Click again to delete",
+      "deleteFailed": "Could not delete the palette.",
+      "formats": "Formats: {ext}. Download the palette as .pal, .gpl or .hex and import it here.",
+      "empty": "No palettes yet. Import a .pal, .gpl or .hex file.",
+      "loadFailed": "Could not load the palettes.",
+      "importFailed": "Could not import:",
+      "by": "by {author}",
+      "mine": "Your palettes",
+      "included": "Included",
+      "browse": "Find palettes on {site}"
     }
   },
   "settings": {

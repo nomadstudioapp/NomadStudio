@@ -276,6 +276,12 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         if (val !== undefined) {
           advVals[f.adv_key] = (f.type === 'number' || f.type === 'slider') ? Number(val) : String(val);
         }
+        // Slider with a palette picker (f.palette_src): the chosen palette's
+        // id travels in its own key; empty = automatic (the slider's value).
+        if (f.palette_adv_key) {
+          var palSel = getVal(stepDef.id, 'field_' + f.id + '_palette');
+          if (palSel && palSel.id) advVals[f.palette_adv_key] = String(palSel.id);
+        }
       }
     });
     // Quantization override (INT8/FP8/NVFP4/...) picked in the Advanced panel
@@ -1438,6 +1444,13 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             buildAdv();
           });
         }(f.id, slInput, slValEl));
+
+        if (f.palette_src) {
+          _attachPalettePicker({
+            field: f, stepId: stepDef.id, title: slTitle, block: slBlock,
+            slider: slInput, valueEl: slValEl, fmt: slFmt, onChange: buildAdv,
+          });
+        }
         return;
       }
 
@@ -2966,6 +2979,341 @@ function _openStylePickerPanel(onPick) {
       gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">Could not load styles.</p>';
     });
   }, { wide: 'xl', flexBody: true });
+}
+
+// ── Palette picker (slider option `palette_src`) ─────────────────────────────
+// A circular button on a colour-count slider (Pixel Matcher's "Palette
+// colours") that opens the side panel with the imported palettes. Picking one
+// locks the slider to that palette's colour count; "Automatic" goes back to
+// the slider. The endpoint belongs to whoever declares the field (the addon):
+//   GET    <src>        → {palettes: [{id, name, colors: ["#rrggbb", …]}], extensions}
+//   POST   <src>        ← {filename, dataBase64} → {palette}
+//   DELETE <src>/<id>
+// Stored per step as field_<id>_palette = {id, name, colors}.
+
+function _palT(key, fallback) {
+  return (window.NomadI18n && window.NomadI18n.t) ? window.NomadI18n.t('flow.palettes.' + key, fallback) : fallback;
+}
+
+// Up to 32 colours: all of them, in file order. More: 32 samples of the
+// palette sorted by hue (greys first, by lightness), so a big palette still
+// shows its overall character instead of one muddy average colour.
+function _paletteSwatchColors(colors) {
+  if (!Array.isArray(colors)) return [];
+  if (colors.length <= 32) return colors.slice();
+  var keyed = colors.map(function (hex) {
+    var r = parseInt(hex.substr(1, 2), 16) / 255;
+    var g = parseInt(hex.substr(3, 2), 16) / 255;
+    var b = parseInt(hex.substr(5, 2), 16) / 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    var l = (max + min) / 2;
+    var s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    var h = 0;
+    if (d !== 0) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = (h * 60 + 360) % 360;
+    }
+    return { hex: hex, key: s < 0.12 ? -1 + l / 2 : h + l / 10 };
+  });
+  keyed.sort(function (a, b) { return a.key - b.key; });
+  var out = [];
+  for (var i = 0; i < 32; i++) {
+    out.push(keyed[Math.floor(i * keyed.length / 32)].hex);
+  }
+  return out;
+}
+
+function _paletteStrip(colors) {
+  var strip = document.createElement('span');
+  strip.className = 'ncf-palette-strip';
+  _paletteSwatchColors(colors).forEach(function (hex) {
+    var sw = document.createElement('span');
+    sw.className = 'ncf-palette-swatch';
+    sw.style.backgroundColor = hex;
+    strip.appendChild(sw);
+  });
+  return strip;
+}
+
+function _attachPalettePicker(ctx) {
+  var f = ctx.field;
+  var stateKey = 'field_' + f.id + '_palette';
+  var src = String(f.palette_src).replace(/\/+$/, '');
+
+  ctx.title.classList.add('nsc-param-title--flex');
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nsc-history-btn nsc-options-trigger ncf-palette-btn';
+  btn.setAttribute('aria-label', _palT('title', 'Palettes'));
+  btn.title = _palT('title', 'Palettes');
+  btn.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>' +
+    '<circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>' +
+    '<circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>' +
+    '<circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>' +
+    '<path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 ' +
+    '0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 ' +
+    '1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>';
+  ctx.title.appendChild(btn);
+
+  // Selected palette shown under the slider (name + swatches).
+  var current = document.createElement('div');
+  current.className = 'ncf-palette-current';
+  ctx.block.insertBefore(current, ctx.slider.parentNode.nextSibling);
+
+  function selected() {
+    var v = getVal(ctx.stepId, stateKey);
+    return v && v.id ? v : null;
+  }
+
+  function applyState() {
+    var pal = selected();
+    ctx.slider.disabled = !!pal;
+    ctx.slider.parentNode.classList.toggle('is-locked', !!pal);
+    btn.classList.toggle('is-active', !!pal);
+    current.innerHTML = '';
+    current.hidden = !pal;
+    if (pal) {
+      ctx.valueEl.textContent = String(pal.colors.length);
+      var name = document.createElement('span');
+      name.className = 'ncf-palette-current-name';
+      name.textContent = pal.name;
+      current.appendChild(name);
+      current.appendChild(_paletteStrip(pal.colors));
+    } else {
+      ctx.valueEl.textContent = ctx.fmt(ctx.slider.value);
+    }
+  }
+
+  function choose(pal) {
+    setVal(ctx.stepId, stateKey, pal ? { id: pal.id, name: pal.name, colors: pal.colors } : null);
+    applyState();
+    ctx.onChange();
+  }
+
+  function openPanel() {
+    openOptionsPanel(_palT('title', 'Palettes'), function (body) {
+      var listEl = document.createElement('div');
+      listEl.className = 'nse-model-list ncf-palette-list';
+      body.appendChild(listEl);
+
+      var fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.multiple = true;
+      fileInput.hidden = true;
+      body.appendChild(fileInput);
+
+      var importBtn = document.createElement('button');
+      importBtn.type = 'button';
+      importBtn.className = 'nss-generate-scenes-btn ncf-palette-import';
+      importBtn.textContent = _palT('import', 'Import palette');
+      body.appendChild(importBtn);
+
+      // Where to get more (f.palette_browse_url, e.g. Lospec) — opens in a
+      // new tab; the downloaded file comes back through Import above.
+      if (f.palette_browse_url) {
+        var browse = document.createElement('a');
+        browse.className = 'nss-generate-scenes-btn ncf-palette-browse';
+        browse.href = f.palette_browse_url;
+        browse.target = '_blank';
+        browse.rel = 'noopener noreferrer';
+        browse.innerHTML =
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/>' +
+          '<path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+        browse.appendChild(document.createTextNode(
+          _palT('browse', 'Find palettes on {site}').replace('{site}', f.palette_browse_label || 'Lospec')));
+        body.appendChild(browse);
+      }
+
+      var hint = document.createElement('p');
+      hint.className = 'nsc-res-sub ncf-palette-hint';
+      body.appendChild(hint);
+
+      var status = document.createElement('p');
+      status.className = 'nsc-res-sub ncf-palette-status';
+      status.hidden = true;
+      body.appendChild(status);
+
+      function showStatus(text) {
+        status.textContent = text;
+        status.hidden = !text;
+      }
+
+      function item(pal) {
+        var sel = selected();
+        var active = pal ? !!(sel && sel.id === pal.id) : !sel;
+        var row = document.createElement('div');
+        row.className = 'nse-model-item ncf-palette-item' + (active ? ' is-active' : '');
+        row.setAttribute('role', 'button');
+        row.tabIndex = 0;
+
+        var info = document.createElement('span');
+        info.className = 'ncf-palette-info';
+        var nameEl = document.createElement('span');
+        nameEl.className = 'nse-model-name';
+        nameEl.textContent = pal ? pal.name : _palT('auto', 'Automatic');
+        info.appendChild(nameEl);
+        var meta = document.createElement('span');
+        meta.className = 'ncf-palette-meta';
+        meta.textContent = pal
+          ? _palT('colors', '{n} colours').replace('{n}', pal.colors.length) +
+            (pal.author ? ' · ' + _palT('by', 'by {author}').replace('{author}', pal.author) : '')
+          : _palT('autoHint', 'Picks the colours from the image; use the slider.');
+        info.appendChild(meta);
+        if (pal) info.appendChild(_paletteStrip(pal.colors));
+        row.appendChild(info);
+
+        function pick() { choose(pal); closeOptionsPanel(); }
+        row.addEventListener('click', pick);
+        row.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
+        });
+
+        if (pal && !pal.builtin) {
+          var del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'nsc-history-btn ncf-palette-delete';
+          del.setAttribute('aria-label', _palT('delete', 'Delete palette'));
+          del.title = _palT('delete', 'Delete palette');
+          del.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>' +
+            '<path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+          // Two clicks, no dialog: the first arms the button (turns red and
+          // asks), the second deletes; it disarms itself after 3 s.
+          del.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (!del.classList.contains('is-armed')) {
+              del.classList.add('is-armed');
+              del.title = _palT('deleteConfirm', 'Click again to delete');
+              setTimeout(function () {
+                del.classList.remove('is-armed');
+                del.title = _palT('delete', 'Delete palette');
+              }, 3000);
+              return;
+            }
+            fetch(src + '/' + encodeURIComponent(pal.id), { method: 'DELETE' })
+              .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); })
+              .then(function () {
+                var s = selected();
+                if (s && s.id === pal.id) choose(null);
+                load();
+              })
+              .catch(function (err) {
+                console.error('[Palettes] delete:', err);
+                showStatus(_palT('deleteFailed', 'Could not delete the palette.'));
+              });
+          });
+          row.appendChild(del);
+        }
+        return row;
+      }
+
+      function load() {
+        listEl.innerHTML = '';
+        listEl.appendChild(item(null));
+        fetch(src)
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            var pals = (data && data.palettes) || [];
+            var exts = (data && data.extensions) || [];
+            fileInput.accept = exts.join(',');
+            hint.textContent = _palT('formats', 'Formats: {ext}. Download the palette as .pal, .gpl or .hex and import it here.')
+              .replace('{ext}', exts.join(' '));
+            // Keep the selection in step with the server (renamed/removed elsewhere).
+            var s = selected();
+            if (s) {
+              var fresh = pals.filter(function (p) { return p.id === s.id; })[0];
+              if (!fresh) choose(null);
+              else if (fresh.name !== s.name || fresh.colors.length !== s.colors.length) choose(fresh);
+            }
+            var mine = pals.filter(function (p) { return !p.builtin; });
+            var included = pals.filter(function (p) { return p.builtin; });
+            function section(text) {
+              var h = document.createElement('p');
+              h.className = 'nsc-param-title ncf-palette-section';
+              h.textContent = text;
+              listEl.appendChild(h);
+            }
+            listEl.innerHTML = '';
+            listEl.appendChild(item(null));
+            section(_palT('mine', 'Your palettes'));
+            mine.forEach(function (p) { listEl.appendChild(item(p)); });
+            if (!mine.length) {
+              var empty = document.createElement('p');
+              empty.className = 'nsc-res-sub ncf-palette-empty';
+              empty.textContent = _palT('empty', 'No palettes yet. Import a .pal, .gpl or .hex file.');
+              listEl.appendChild(empty);
+            }
+            if (included.length) {
+              section(_palT('included', 'Included'));
+              included.forEach(function (p) { listEl.appendChild(item(p)); });
+            }
+          })
+          .catch(function (err) {
+            console.error('[Palettes] load:', err);
+            showStatus(_palT('loadFailed', 'Could not load the palettes.'));
+          });
+      }
+
+      function readAsBase64(file) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () {
+            var res = String(reader.result || '');
+            resolve(res.indexOf(',') >= 0 ? res.split(',')[1] : res);
+          };
+          reader.onerror = function () { reject(reader.error); };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      importBtn.addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', async function () {
+        var files = Array.prototype.slice.call(fileInput.files || []);
+        fileInput.value = '';
+        if (!files.length) return;
+        importBtn.disabled = true;
+        showStatus('');
+        var errors = [];
+        var last = null;
+        for (var i = 0; i < files.length; i++) {
+          try {
+            var b64 = await readAsBase64(files[i]);
+            var res = await fetch(src, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filename: files[i].name, dataBase64: b64 }),
+            });
+            var data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
+            last = data.palette;
+          } catch (err) {
+            errors.push(files[i].name + ': ' + err.message);
+          }
+        }
+        importBtn.disabled = false;
+        if (errors.length) showStatus(_palT('importFailed', 'Could not import:') + ' ' + errors.join(' · '));
+        // A single successful import is almost always meant to be used now.
+        if (last && files.length === 1) choose(last);
+        load();
+      });
+
+      load();
+    }, { flexBody: true });
+  }
+
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    openPanel();
+  });
+
+  applyState();
 }
 
 // ── scene_builder ──────────────────────────────────────────────────────────

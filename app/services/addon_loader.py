@@ -175,7 +175,7 @@ def get_addon_flows() -> list[dict[str, Any]]:
         if not isinstance(definition, dict) or not definition.get("id"):
             logger.warning("Addon '%s': flow.json missing 'id' field — skipping.", addon_id)
             continue
-        flows.append({"addon_id": addon_id, "definition": definition})
+        flows.append({"addon_id": addon_id, "definition": definition, "dir": flow_path.parent})
     return flows
 
 

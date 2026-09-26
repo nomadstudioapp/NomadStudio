@@ -636,6 +636,24 @@
     "queue": {
       "waitingComfy": "正在等待 ComfyUI 完成…",
       "waitingLms": "正在等待 LM Studio 完成…"
+    },
+    "palettes": {
+      "title": "调色板",
+      "import": "导入调色板",
+      "auto": "自动",
+      "autoHint": "从图像中提取颜色；使用滑块调整。",
+      "colors": "{n} 种颜色",
+      "delete": "删除调色板",
+      "deleteConfirm": "再次点击以删除",
+      "deleteFailed": "无法删除调色板。",
+      "formats": "格式：{ext}。将调色板下载为 .pal、.gpl 或 .hex，然后在此导入。",
+      "empty": "还没有调色板。请导入 .pal、.gpl 或 .hex 文件。",
+      "loadFailed": "无法加载调色板。",
+      "importFailed": "无法导入：",
+      "by": "作者：{author}",
+      "mine": "你的调色板",
+      "included": "内置",
+      "browse": "在 {site} 查找调色板"
     }
   },
   "settings": {

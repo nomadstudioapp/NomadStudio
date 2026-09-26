@@ -784,6 +784,11 @@ def load_all_flows(
             flow_id = str(definition.get("id", "")).strip()
             if flow_id in existing_ids:
                 continue  # core/pack takes precedence
+            # An addon shipped in a package (data/packages/<pkg>/addon/) is
+            # translated from that package's i18n/, like its other flows.
+            addon_dir = addon_flow.get("dir")
+            if lang and lang != "en" and addon_dir is not None and addon_dir.name == "addon":
+                definition = translate_flow(definition, addon_dir.parent, lang)
             entry = {
                 "id": flow_id,
                 "label": definition.get("label", flow_id),

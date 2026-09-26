@@ -15744,3 +15744,103 @@ body.explore-page-body #album-topbar-toolbar + div {
   flex-wrap: wrap;
   gap: 0.9rem;
 }
+
+/* ── Palette picker (slider field with palette_src, e.g. Pixel Matcher) ──── */
+.ncf-palette-btn { margin-left: auto; }
+.ncf-palette-btn.is-active {
+  color: var(--nss-accent, var(--accent));
+  border-color: color-mix(in srgb, var(--nss-accent, var(--accent)) 70%, transparent);
+  background: color-mix(in srgb, var(--nss-accent, var(--accent)) 12%, transparent);
+}
+/* Slider locked to the palette's colour count. */
+.nsc-aspect-slider-wrap.is-locked { opacity: 0.4; }
+.nsc-aspect-slider-wrap.is-locked .nsc-aspect-slider { cursor: not-allowed; }
+
+.ncf-palette-current {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+.ncf-palette-current[hidden] { display: none; }
+.ncf-palette-current-name {
+  font-size: var(--fs-xs);
+  color: var(--text);
+}
+
+/* Swatch strip: one cell per colour (≤32) or 32 hue-sorted samples. */
+.ncf-palette-strip {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+}
+.ncf-palette-swatch {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Fills the panel's height (flexBody) and scrolls on its own — the base
+   .nse-model-list is capped at 4 short rows, too little for palette rows. */
+.nse-model-list.ncf-palette-list {
+  gap: 0.2rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+.ncf-palette-section { margin: 0.9rem 0 0.3rem 0.6rem; }
+.nse-model-item.ncf-palette-item {
+  align-items: center;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  white-space: normal;
+}
+.ncf-palette-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+.ncf-palette-meta {
+  font-size: var(--fs-xs);
+  color: var(--nsc-hint, var(--muted));
+}
+.ncf-palette-delete { opacity: 0.55; }
+.ncf-palette-item:hover .ncf-palette-delete { opacity: 1; }
+.ncf-palette-delete.is-armed {
+  opacity: 1;
+  color: var(--danger, #e5484d);
+  border-color: color-mix(in srgb, var(--danger, #e5484d) 70%, transparent);
+  background: color-mix(in srgb, var(--danger, #e5484d) 12%, transparent);
+}
+.ncf-palette-import { justify-content: center; margin-top: 0.9rem; }
+.ncf-palette-import { flex-shrink: 0; }
+/* Secondary pill: same shape as Import, outlined instead of filled. */
+.nss-generate-scenes-btn.ncf-palette-browse {
+  flex-shrink: 0;
+  justify-content: center;
+  margin-top: 0.5rem;
+  background: transparent;
+  color: var(--nss-accent, var(--accent));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--nss-accent, var(--accent)) 70%, transparent);
+  text-decoration: none;
+}
+.nss-generate-scenes-btn.ncf-palette-browse:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--nss-accent, var(--accent)) 12%, transparent);
+}
+.nss-generate-scenes-btn.ncf-palette-browse svg { width: 15px; height: 15px; }
+.ncf-palette-hint,
+.ncf-palette-status,
+.ncf-palette-empty {
+  margin: 0.5rem 0 0;
+  white-space: normal;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  flex-shrink: 0;
+}
+.ncf-palette-status { color: var(--danger, #e5484d); }

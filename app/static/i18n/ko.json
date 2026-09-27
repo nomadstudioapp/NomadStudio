@@ -930,6 +930,48 @@
       "sectionOther": "기타",
       "bundled": "Nomad Studio 기본 포함"
     },
+    "agents": {
+      "navName": "에이전트",
+      "navDesc": "Claude Desktop, ChatGPT, Bionic 연결",
+      "title": "에이전트",
+      "desc": "AI 어시스턴트가 MCP를 통해 이곳에서 이미지를 생성하고 수정하게 하세요. 아래 내용은 이 설치의 폴더와 포트로 이미 채워져 있습니다.",
+      "needApp": "어시스턴트가 작업하는 동안 Nomad Studio를 열어 두어야 합니다(ComfyUI도 실행 중이어야 합니다).",
+      "stateConnected": "이 설치에 연결됨",
+      "stateOther": "다른 설치를 가리킴",
+      "stateMissing": "아직 설정되지 않음",
+      "stateNotInstalled": "이 컴퓨터에 설치되지 않음",
+      "mismatchPython": "Python: {is} — {shouldBe}이어야 합니다",
+      "mismatchFolder": "폴더: {is} — {shouldBe}이어야 합니다",
+      "mismatchPort": "포트: {is} — {shouldBe}이어야 합니다",
+      "fixHint": "값을 아래 값으로 바꾸고 다시 시작하세요.",
+      "configFile": "설정 파일",
+      "command": "명령",
+      "args": "인수",
+      "env": "변수",
+      "copy": "복사",
+      "copied": "복사됨",
+      "claudeSteps": [
+        "Settings → Developer → Edit Config를 여세요.",
+        "\"mcpServers\" 안에 \"nomad-studio\" 블록을 추가하세요(파일이 비어 있으면 전체를 붙여 넣으세요).",
+        "Claude를 완전히 종료(시계 옆 아이콘에서도)한 뒤 다시 여세요."
+      ],
+      "codexNote": "데스크톱 앱의 Codex 및 ChatGPT Work 모드에서만 됩니다. 일반 ChatGPT 채팅은 원격 서버만 지원합니다.",
+      "codexSteps": [
+        "Ctrl + , → Integrations → Plugins → Add → Add MCP Server. 유형 STDIO, 이름 nomad_studio, 그리고 아래의 명령, 인수, 변수를 입력하세요.",
+        "또는 앱을 닫은 상태에서 이 블록을 설정 파일에 추가하세요(긴 생성에 10분을 주는 설정도 포함).",
+        "앱을 다시 여세요. 생성이나 수정 전에는 허락을 구하고, 조회는 그렇지 않습니다."
+      ],
+      "bionicSteps": [
+        "Bionic의 MCP 서버 설정을 열고 하나 추가하세요: 이름 Nomad Studio, 유형 stdio, 그리고 아래의 명령, 인수, 변수.",
+        "또는 Bionic을 닫은 상태에서 이 항목을 설정 파일의 \"servers\" 목록에 추가하세요.",
+        "Bionic을 다시 시작하고 도구 사용을 지원하는 모델을 불러오세요(테스트에서 가장 좋았던 모델: Ornith 1.5 9B)."
+      ],
+      "tryIt": "사용해 보기: \"Nomad Studio에 어떤 모델이 있어?\"라고 물어보세요",
+      "connectedAgents": "연결된 어시스턴트",
+      "noAgents": "아직 연결된 어시스턴트가 없습니다.",
+      "album": "앨범",
+      "loadError": "이 컴퓨터의 설정을 읽을 수 없습니다."
+    },
     "updates": {
       "title": "업데이트",
       "desc": "릴리스 ZIP으로 새 버전의 Nomad Studio를 설치합니다. 데이터는 프로그램 폴더 밖에 보관되며 업데이트 전에 백업됩니다.",

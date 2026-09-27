@@ -1636,6 +1636,58 @@
 }
 .settings-btn-danger:disabled { opacity: .45; cursor: not-allowed; }
 
+/* ── Agents (settings-agents.js) ──────────────────────────────────────── */
+.agents-client {
+  max-width: 640px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.agents-client + .agents-client { margin-top: 12px; }
+.agents-client-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.agents-client-head .settings-field-label { margin: 0; }
+.agents-state {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.agents-state--connected { color: #4ade80; box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.45); background: rgba(74, 222, 128, 0.08); }
+.agents-state--other { color: #fbbf24; box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.08); }
+.agents-state--not_installed { opacity: 0.7; }
+.agents-mismatches { margin: 8px 0 4px; padding-left: 18px; font-size: 12px; color: #fbbf24; overflow-wrap: anywhere; }
+.agents-steps { margin: 8px 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px; }
+.agents-note { color: var(--text-secondary); }
+.agents-copy-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.agents-copy-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.agents-copy-label { font-size: 12px; color: var(--muted); flex: 0 0 150px; }
+.agents-copy-value {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  overflow-wrap: anywhere;
+}
+.agents-copy-btn { flex-shrink: 0; }
+.agents-snippet { margin-top: 8px; }
+.agents-snippet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.agents-snippet-head code { overflow-wrap: anywhere; }
+.agents-snippet-code {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+
 /* ── Packages ────────────────────────────────────────────────────────── */
 .settings-package-review { max-width: 640px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .settings-package-review[hidden] { display: none; }

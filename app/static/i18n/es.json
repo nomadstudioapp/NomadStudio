@@ -931,6 +931,48 @@
       "sectionOther": "Otros",
       "bundled": "Incluido con Nomad Studio"
     },
+    "agents": {
+      "navName": "Agentes",
+      "navDesc": "Conecta Claude Desktop, ChatGPT y Bionic",
+      "title": "Agentes",
+      "desc": "Deja que tu asistente de IA cree y retoque imágenes aquí, por MCP. Todo lo de abajo ya lleva la carpeta y el puerto de esta instalación.",
+      "needApp": "Nomad Studio tiene que seguir abierto (y ComfyUI funcionando) mientras el asistente trabaja.",
+      "stateConnected": "Conectado a esta instalación",
+      "stateOther": "Apunta a otra instalación",
+      "stateMissing": "Sin configurar",
+      "stateNotInstalled": "No instalado en este ordenador",
+      "mismatchPython": "Python: {is} — debería ser {shouldBe}",
+      "mismatchFolder": "Carpeta: {is} — debería ser {shouldBe}",
+      "mismatchPort": "Puerto: {is} — debería ser {shouldBe}",
+      "fixHint": "Cambia sus valores por los de abajo y reinícialo.",
+      "configFile": "Archivo de configuración",
+      "command": "Comando",
+      "args": "Argumentos",
+      "env": "Variables",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "claudeSteps": [
+        "Abre Settings → Developer → Edit Config.",
+        "Añade el bloque \"nomad-studio\" dentro de \"mcpServers\" (si el archivo está vacío, pégalo entero).",
+        "Cierra Claude del todo (también desde el icono junto al reloj) y vuelve a abrirlo."
+      ],
+      "codexNote": "Solo en los modos Codex y ChatGPT Work de la app de escritorio: el chat normal de ChatGPT solo admite servidores remotos.",
+      "codexSteps": [
+        "Pulsa Ctrl + , → Integrations → Plugins → Add → Add MCP Server. Tipo STDIO, nombre nomad_studio, y rellena comando, argumentos y variables de abajo.",
+        "O, con la app cerrada, añade este bloque al archivo de configuración (además da 10 minutos a las generaciones largas).",
+        "Vuelve a abrir la app. Pide permiso antes de generar o retocar; las consultas no."
+      ],
+      "bionicSteps": [
+        "Abre los ajustes de servidores MCP de Bionic y añade uno: nombre Nomad Studio, tipo stdio, y el comando, argumentos y variables de abajo.",
+        "O, con Bionic cerrado, añade esta entrada a la lista \"servers\" del archivo de configuración.",
+        "Reinicia Bionic y carga un modelo con uso de herramientas (el mejor en nuestras pruebas: Ornith 1.5 9B)."
+      ],
+      "tryIt": "Pruébalo: pregunta \"¿Qué modelos tengo en Nomad Studio?\"",
+      "connectedAgents": "Asistentes conectados",
+      "noAgents": "Todavía no se ha conectado ningún asistente.",
+      "album": "Álbum",
+      "loadError": "No se ha podido leer la configuración de este ordenador."
+    },
     "updates": {
       "title": "Actualizaciones",
       "desc": "Instala una versión más nueva de Nomad Studio desde su ZIP. Tus datos están fuera de la carpeta del programa y se hace una copia de seguridad antes de actualizar.",

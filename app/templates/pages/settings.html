@@ -274,6 +274,29 @@
     </div>
   </article>
 
+  <!-- ── Agents (MCP: Claude Desktop, ChatGPT, Bionic) ─────────────────── -->
+  <article class="panel settings-panel-v2" id="agents">
+    <div class="settings-section-heading">
+      <div class="settings-section-heading-top">
+        <i data-lucide="bot" class="settings-section-icon" aria-hidden="true"></i>
+        <h3 data-i18n="settings.agents.title">Agents</h3>
+      </div>
+      <p class="settings-section-desc" data-i18n="settings.agents.desc">Let your AI assistant create and edit images here, through MCP. Everything below is already filled in with this installation's folder and port.</p>
+    </div>
+    <div class="settings-section-body" id="agents-section">
+      {% if is_local_request() %}
+      <p class="settings-field-hint" data-i18n="settings.agents.needApp">Nomad Studio must stay open (and ComfyUI running) while the assistant works.</p>
+      <div id="agents-clients"></div>
+      <div class="settings-field-block">
+        <p class="settings-field-label" data-i18n="settings.agents.connectedAgents">Connected assistants</p>
+        <ul class="settings-backup-list" id="agents-connected"></ul>
+      </div>
+      {% else %}
+      <p class="settings-field-hint" data-i18n="settings.common.localOnly">Only available on the computer where Nomad Studio is installed.</p>
+      {% endif %}
+    </div>
+  </article>
+
   <!-- ── Backups ──────────────────────────────────────────────────────── -->
   <article class="panel settings-panel-v2" id="backup-section">
     <div class="settings-section-heading">
@@ -470,4 +493,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/pages/settings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/settings-agents.js') }}"></script>
 {% endblock %}

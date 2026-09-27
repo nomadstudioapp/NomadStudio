@@ -930,6 +930,48 @@
       "sectionOther": "其他",
       "bundled": "Nomad Studio 自带"
     },
+    "agents": {
+      "navName": "智能体",
+      "navDesc": "连接 Claude Desktop、ChatGPT 和 Bionic",
+      "title": "智能体",
+      "desc": "让你的 AI 助手通过 MCP 在这里生成和修改图片。下面的内容已按本安装的文件夹和端口填好。",
+      "needApp": "助手工作时，Nomad Studio 必须保持打开（ComfyUI 也要在运行）。",
+      "stateConnected": "已连接到本安装",
+      "stateOther": "指向了另一个安装",
+      "stateMissing": "尚未配置",
+      "stateNotInstalled": "本电脑未安装",
+      "mismatchPython": "Python：{is}——应为 {shouldBe}",
+      "mismatchFolder": "文件夹：{is}——应为 {shouldBe}",
+      "mismatchPort": "端口：{is}——应为 {shouldBe}",
+      "fixHint": "把它的值换成下面的值，然后重启它。",
+      "configFile": "配置文件",
+      "command": "命令",
+      "args": "参数",
+      "env": "变量",
+      "copy": "复制",
+      "copied": "已复制",
+      "claudeSteps": [
+        "打开 Settings → Developer → Edit Config。",
+        "在 \"mcpServers\" 中添加 \"nomad-studio\" 块（如果文件是空的，就全部粘贴）。",
+        "完全退出 Claude（包括时钟旁的图标），然后重新打开。"
+      ],
+      "codexNote": "仅适用于桌面应用的 Codex 和 ChatGPT Work 模式：普通 ChatGPT 聊天只支持远程服务器。",
+      "codexSteps": [
+        "按 Ctrl + , → Integrations → Plugins → Add → Add MCP Server。类型选 STDIO，名称填 nomad_studio，并填入下面的命令、参数和变量。",
+        "或者在关闭应用后，把这段添加到配置文件中（还会给较长的生成留出 10 分钟）。",
+        "重新打开应用。生成或修改前它会征求同意；查询不需要。"
+      ],
+      "bionicSteps": [
+        "打开 Bionic 的 MCP 服务器设置并添加一个：名称 Nomad Studio，类型 stdio，并填入下面的命令、参数和变量。",
+        "或者在关闭 Bionic 后，把这一项添加到配置文件的 \"servers\" 列表中。",
+        "重启 Bionic，并加载支持工具调用的模型（我们测试中最好的是 Ornith 1.5 9B）。"
+      ],
+      "tryIt": "试一试：问“我在 Nomad Studio 里有哪些模型？”",
+      "connectedAgents": "已连接的助手",
+      "noAgents": "还没有助手连接过。",
+      "album": "相册",
+      "loadError": "无法读取本电脑的配置。"
+    },
     "updates": {
       "title": "更新",
       "desc": "通过发布 ZIP 安装更新版本的 Nomad Studio。你的数据保存在程序文件夹之外，更新前会自动备份。",

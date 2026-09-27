@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import os
 import secrets
 from pathlib import Path
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 
-from ..services import viewer_service
+from ..services import agent_setup, viewer_service
+from ..services.local_access import local_only
 
 viewers_bp = Blueprint("viewers", __name__)
 
@@ -125,6 +127,20 @@ def switch_viewer():
 @viewers_bp.get("/api/agents")
 def list_agents():
     return jsonify({"agents": viewer_service.list_agent_viewers()})
+
+
+@viewers_bp.get("/api/agents/setup")
+@local_only
+def agents_setup():
+    """Settings › Agents: this installation's MCP launch values (Python,
+    PYTHONPATH, port) and whether Claude Desktop / ChatGPT / Bionic already
+    point here (app/services/agent_setup.py). Local only: it shows paths on
+    this computer."""
+    try:
+        port = int(request.host.rsplit(":", 1)[1])
+    except (IndexError, ValueError):
+        port = int(os.environ.get("PORT") or agent_setup.DEFAULT_MCP_PORT)
+    return jsonify(agent_setup.setup_info(port))
 
 
 @viewers_bp.post("/api/agents")

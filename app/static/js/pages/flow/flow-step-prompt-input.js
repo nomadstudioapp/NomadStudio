@@ -479,6 +479,12 @@ function renderPromptInput(stepDef, el) {
   } catch (_) {}
   _renderPromptChips();
 
+  // --ar / --no / --seed… (flow-prompt-params.js): Create flows only — their
+  // graphs are the ones built by workflow_service._apply_prompt_params.
+  if (typeof NcfPromptParams !== 'undefined' && typeof flowId === 'string' && flowId.indexOf('create.') === 0) {
+    NcfPromptParams.attach(ta);
+  }
+
   function _syncOnConfirm() {
     setVal(stepDef.id, 'prompt_text', ta.value.trim());
     // Chat flows: mirror world text into scene_prompt store so Generate works when AI is skipped

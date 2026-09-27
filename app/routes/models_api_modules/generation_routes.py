@@ -825,3 +825,18 @@ def poll_import_result(import_id: str):
             "numImages": len(images_payload),
         }
     )
+
+
+@models_api_bp.post("/models/prompt-params")
+def parse_prompt_params_route():
+    """What the Midjourney-style --parameters at the end of a prompt mean
+    (NomadStudio#27) — for the pills under Create's prompt box. Same parser
+    the graph builder applies (workflow_service._apply_prompt_params), so what
+    the pills say is what generation does. Body: {text}. Response: {prompt,
+    params: {aspect, no, seed, model, speed, quantization, steps, repeat,
+    ignored, invalid}}."""
+    from app.services.prompt_params import parse
+
+    payload = request.get_json(silent=True) or {}
+    parsed = parse(str(payload.get("text", "") or "")[:20000])
+    return jsonify({"prompt": parsed.prompt, "params": parsed.as_dict()})

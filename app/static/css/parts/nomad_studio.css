@@ -8321,6 +8321,41 @@ button.nse-model-hint.ncf-enum-picker-btn:hover {
   background: color-mix(in srgb, #f87171 12%, transparent);
   text-decoration: line-through;
 }
+
+/* --ar / --no / --seed… understood in the prompt (flow-prompt-params.js):
+   applied ones in the accent, the ones the app's selectors handle muted,
+   Midjourney-only ones struck through, unusable values in red. */
+.ncf-param-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+.ncf-param-pills[hidden] { display: none; }
+.ncf-param-pill {
+  position: relative;
+  font-size: var(--fs-xxs);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  line-height: 1.5;
+  border: 1px solid var(--border-subtle, var(--border));
+  background: var(--bg3, var(--bg2));
+  color: var(--text-secondary, var(--muted));
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.ncf-param-pill--on {
+  color: var(--nss-accent, var(--accent));
+  border-color: color-mix(in srgb, var(--nss-accent, var(--accent)) 55%, transparent);
+  background: color-mix(in srgb, var(--nss-accent, var(--accent)) 12%, transparent);
+}
+.ncf-param-pill--off { text-decoration: line-through; opacity: 0.7; }
+.ncf-param-pill--bad {
+  color: #f87171;
+  border-color: #f87171;
+  background: color-mix(in srgb, #f87171 12%, transparent);
+}
+.ncf-param-pill:hover .action-tip { opacity: 1; transform: translateX(-50%) translateY(0); }
 .ncf-civ-edit-btn {
   font-size: var(--fs-xxs);
   padding: 0.15rem 0.4rem;

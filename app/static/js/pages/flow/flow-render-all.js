@@ -571,6 +571,15 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
 
   try {
     var input = resolveRef(stepDef.input_from) || '';
+    // "--ar 16:9 --no text…" (flow-prompt-params.js) would be rewritten or
+    // dropped by the LLM: it gets the idea only, and they go back at the end
+    // of what it writes (generic output handling below).
+    var _llmParams = '';
+    if (typeof input === 'string' && typeof NcfPromptParams !== 'undefined' && NcfPromptParams.has(input)) {
+      var _llmSplit = NcfPromptParams.split(input);
+      input = _llmSplit.text;
+      _llmParams = _llmSplit.params;
+    }
     var resolvedCtx = {};
     if (stepDef.context_from && typeof stepDef.context_from === 'object') {
       Object.keys(stepDef.context_from).forEach(function (k) {
@@ -1070,12 +1079,23 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       }
     }
 
+    if (_llmParams) {
+      var _withParams = function (text) {
+        return typeof text === 'string' && text.trim() ? text.trim() + ' ' + _llmParams : text;
+      };
+      result = Array.isArray(result) ? result.map(_withParams) : _withParams(result);
+    }
+
     // Generic output handling: array + output_mode:"prompt_cards" → editable cards
     if (stepDef.output_mode === 'prompt_cards' && Array.isArray(result)) {
       renderPromptCards(result, stepDef.id);
       if (statusEl) statusEl.textContent = '✓ ' + result.length + ' ready — edit if needed, then Generate Images';
     } else {
-      if (outputTa) outputTa.value = result;
+      if (outputTa) {
+        outputTa.value = result;
+        // Pills under it (flow-prompt-params.js) follow the new text.
+        if (_llmParams) outputTa.dispatchEvent(new Event('change'));
+      }
       setVal(stepDef.id, 'transformed_text', result);
       syncPrefillTargets(stepDef.id, 'transformed_text', result);
       // stepDef.output_to targets another step's OWN textarea directly (no
@@ -2013,6 +2033,18 @@ async function runGenerate(stepDef, ctx) {
     || getVal('world', 'prompt_text') || '';
 
   var prompts = Array.isArray(rawPositive) ? rawPositive.filter(Boolean) : [rawPositive];
+  // "--r 3" at the end of a single prompt (flow-prompt-params.js): run it 3
+  // times, each with its own seed. Scene batches (arrays) keep one card per
+  // prompt, so they're left alone.
+  if (!Array.isArray(rawPositive) && rawPositive && typeof NcfPromptParams !== 'undefined') {
+    var _repeat = NcfPromptParams.repeatCount(rawPositive);
+    // With --seed, copy N gets seed+N: the same seed would repeat one image.
+    for (var _ri = 1; _ri < _repeat; _ri++) {
+      prompts.push(String(rawPositive).replace(/((?:^|\s)--seed\s+)(\d+)/i, function (_m, pre, n) {
+        return pre + (Number(n) + _ri);
+      }));
+    }
+  }
   var dims = getDims();
 
   allSteps.forEach(function (s) {

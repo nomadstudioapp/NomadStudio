@@ -15,6 +15,7 @@ from app.config import (
     LMSTUDIO_TEMPERATURE_MIN,
     MAX_URL_LENGTH,
 )
+from app.services.prompt_params import parse as parse_prompt_params, size_for_aspect
 from app.services.subgraph_toggles import apply_disabled_subgraphs, extract_optional_subgraphs
 
 # ---------------------------------------------------------------------------
@@ -1831,6 +1832,41 @@ def _lora_words_inside_json(text: str, words: list[str]) -> str | None:
     return json.dumps(document, ensure_ascii=False, indent=2 if "\n" in stripped else None)
 
 
+def _apply_prompt_params(
+    record: dict[str, Any], basic_values: dict[str, Any], advanced_values: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Midjourney-style ``--ar 16:9 --no text --seed 1 --steps 8`` at the end of
+    the prompt (NomadStudio#27, app/services/prompt_params.py). Every path that
+    builds a graph goes through here, so they work wherever the prompt was
+    typed. The parameters never reach the engine as text — unusable ones are
+    dropped too (the UI shows why). Engine/speed/quantization/--r are the
+    caller's business (selectors, the MCP), not the graph's."""
+    positive = str(basic_values.get("positive", "") or "")
+    params = parse_prompt_params(positive)
+    if not params.found:
+        return basic_values, advanced_values
+    basic = dict(basic_values)
+    advanced = dict(advanced_values) if isinstance(advanced_values, dict) else {}
+    basic["positive"] = basic["prompt"] = params.prompt
+    if params.aspect:
+        try:
+            area = int(basic.get("width") or 0) * int(basic.get("height") or 0)
+        except (TypeError, ValueError):
+            area = 0
+        # Multiples of 16, like Create's own sizes (HD 16:9 = 1536x864).
+        basic["width"], basic["height"] = size_for_aspect(params.aspect, area or 1024 * 1024, multiple=16)
+    if params.no:
+        base = str(basic.get("negative", "") or "").strip().rstrip(",").strip()
+        basic["negative"] = basic["negative_prompt"] = ", ".join(p for p in (base, params.no) if p)
+    if params.seed is not None:
+        basic["seed"] = params.seed
+    if params.steps is not None:
+        sampler_id = str(((record.get("analysis") or {}).get("detected") or {}).get("samplerNodeId") or "").strip()
+        if sampler_id:
+            advanced[f"{sampler_id}.steps"] = params.steps
+    return basic, advanced
+
+
 def _apply_basic_values_to_workflow(
     record: dict[str, Any],
     basic_values: dict[str, Any],
@@ -1841,6 +1877,7 @@ def _apply_basic_values_to_workflow(
     workflow = deepcopy(record.get("workflow", {}))
     workflow.pop("config", None)
     basic_values = _normalize_basic_values_aliases(basic_values)
+    basic_values, advanced_values = _apply_prompt_params(record, basic_values, advanced_values)
     _validate_clip_last_layer_advanced_values(
         workflow, advanced_values if isinstance(advanced_values, dict) else {}
     )

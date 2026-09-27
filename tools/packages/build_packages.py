@@ -1972,7 +1972,7 @@ LAYOUT_FLOWS = {
     "create.ideogram_storyboard": "create.layout_storyboard",
     "create.character_sheet": "create.character_sheet",
 }
-LAYOUT_VERSION = "0.2.0"
+LAYOUT_VERSION = "0.3.0"
 
 # Layout Assist on any engine (NomadStudio#18). Tested 2026-09-26 on Krea 2
 # Turbo / Monaco / Roma: they don't read bbox numbers as positions — they
@@ -1982,15 +1982,110 @@ LAYOUT_VERSION = "0.2.0"
 # still gets its bboxes. So the composer is asked for both, accepts a free
 # description as well as ';' fragments, and stops asking for hex colours
 # (two levels asked for them right after forbidding them).
-LAYOUT_ASSIST_RULES = """
+def _layout_position_rules(*extra: str) -> str:
+    """The POSITIONS IN WORDS block, with each flow's own lines for its
+    element types (text elements differ: Assist quotes the words in desc,
+    Lettering/Poster keep them in the element's own "text" field)."""
+    return "\n".join([
+        "POSITIONS IN WORDS — this layout is used with engines that cannot read bbox numbers (they ignore them, "
+        "or paint them into the image as text), so every position must ALSO be written in plain words:",
+        "- high_level_description says where the main elements are: \"a red sphere in the upper left and a blue "
+        "sphere in the lower right\".",
+        "- Every element's desc states its position and size in words, matching its bbox: \"in the upper-left "
+        "corner\", \"centered along the bottom edge\", \"filling the right half\", \"small, in the lower-left third\".",
+        *extra,
+        "- Never write numbers, coordinates or bbox values in any prose field — only in the bbox arrays.",
+    ])
 
-INPUT: either composition fragments separated by ';' (one element each) or a free description of the scene. With a free description, pick out each physical element yourself (people, objects, pieces of lettering) and give each one its own entry.
 
-POSITIONS IN WORDS — this layout is used with engines that cannot read bbox numbers (they ignore them, or paint them into the image as text), so every position must ALSO be written in plain words:
-- high_level_description says where the main elements are: "a red sphere in the upper left and a blue sphere in the lower right".
-- Every element's desc states its position and size in words, matching its bbox: "in the upper-left corner", "centered along the bottom edge", "filling the right half", "small, in the lower-left third".
-- For type "text", the desc gives the exact words in quotes, their look and where they sit: "the word 'HELLO' in bold black capitals, centered at the top".
-- Never write numbers, coordinates or bbox values in any prose field — only in the bbox arrays."""
+_LAYOUT_TEXT_QUOTED = ("- For type \"text\", the desc gives the exact words in quotes, their look and where they sit: "
+                       "\"the word 'HELLO' in bold black capitals, centered at the top\".")
+
+LAYOUT_ASSIST_RULES = (
+    "\n\nINPUT: either composition fragments separated by ';' (one element each) or a free description of the "
+    "scene. With a free description, pick out each physical element yourself (people, objects, pieces of lettering) "
+    "and give each one its own entry.\n\n" + _layout_position_rules(_LAYOUT_TEXT_QUOTED))
+
+# The rest of the Layout flows (NomadStudio#18): same POSITIONS IN WORDS
+# block, inserted just before their closing "Output ONLY valid JSON" rule.
+# Storyboard already names each panel's cell in words ("Top-left grid cell")
+# and its high_level_description legitimately carries "16:9"-style labels, so
+# it only gets the hex clean-up.
+_LAYOUT_TEXT_FIELD = ("- For type \"text\", the words stay in the element's \"text\" field only; desc gives their look "
+                      "and where they sit, in words — \"bold black capitals, centered along the top edge\" — never "
+                      "the words themselves.")
+_LAYOUT_TEXT_POSTER = ("- For type \"text\", the words stay in \"text\"; desc gives the treatment and where it sits, in "
+                       "words — \"large bold serif capitals across the lower third\" — never the element's role "
+                       "(title, tagline, credits).")
+_LAYOUT_CHARACTER = ("- The character's desc begins with where they are and how much of the frame they fill: "
+                     "\"standing in the left third, seen from head to knees\".")
+LAYOUT_POSITION_RULES = {
+    "create.layout_reference": _layout_position_rules(_LAYOUT_TEXT_QUOTED),
+    "create.layout_lettering": _layout_position_rules(_LAYOUT_TEXT_FIELD),
+    "create.layout_character_reference": _layout_position_rules(_LAYOUT_CHARACTER),
+    "create.layout_poster": _layout_position_rules(_LAYOUT_TEXT_POSTER),
+    "create.layout_storyboard": None,
+}
+# Hex requests left in these prompts right after "never hex codes" (and in
+# character descriptions: "skin tone (hex)") — any engine but Ideogram paints
+# a hex string into the image.
+_LAYOUT_HEX_PATTERNS = [
+    (r"(\d+(?:–\d+)?) (?:specific )?hex (?:colors|values)", r"\1 color names"),
+    (r"color \(hex\)", "color name"),
+    (r" \(hex\)", ""),
+    (r"every hex, ", "every color, "),
+    (r"exact hex colors", "exact color names"),
+    (r"accurate hex values", "precise color names"),
+    (r"hex codes throughout", "color names throughout"),
+]
+# Poster examples: the model copies them, so they show positions in words too.
+_LAYOUT_POSTER_EXAMPLES = [
+    ('"main character full/3-4 body, dramatically lit"',
+     '"main character full/3-4 body filling the upper two thirds, dramatically lit"'),
+    ('"large bold theatrical lettering, the dominant type on the poster"',
+     '"large bold theatrical lettering across the lower part of the poster, the dominant type on it"'),
+    ('"main character or ensemble — horizontal spread"',
+     '"main character or ensemble spread across the left half"'),
+    ('"wide horizontal lettering, the dominant type on the key art"',
+     '"wide horizontal lettering in the upper right, the dominant type on the key art"'),
+]
+
+
+# Character Reference's high_level_description template ("A photograph of
+# [character]. [Scene: pose, action, …]") outweighed the rule: tested, it
+# described the scene with no positions. The template itself asks for them.
+_LAYOUT_CHARREF_SCENE = ("[Scene: ", "[Scene: where the character is in the frame and where the main scene elements "
+                                     "sit, in words; ")
+
+
+def _improve_layout_positions(flow: dict) -> dict:
+    rules = LAYOUT_POSITION_RULES[flow["id"]]
+    marker = "\n- Output ONLY valid JSON."
+    for step in flow["steps"]:
+        prompts = step.get("system_prompts")
+        if not isinstance(prompts, dict):
+            continue
+        for level, text in prompts.items():
+            where = f"{flow['id']} {level}"
+            for pattern, repl in _LAYOUT_HEX_PATTERNS:
+                text = re.sub(pattern, repl, text)
+            if re.search(r"hex", re.sub(r"never hex codes|a hex string", "", text)):
+                raise SystemExit(f"{where}: still asks for hex colours")
+            if flow["id"] == "create.layout_poster":
+                for old, new in _LAYOUT_POSTER_EXAMPLES:
+                    text = text.replace(old, new)
+            if flow["id"] == "create.layout_character_reference":
+                if _LAYOUT_CHARREF_SCENE[0] not in text:
+                    raise SystemExit(f"{where}: scene template not found")
+                text = text.replace(*_LAYOUT_CHARREF_SCENE)
+            if rules:
+                if marker not in text:
+                    raise SystemExit(f"{where}: output rule not found")
+                head, tail = text.rsplit(marker, 1)
+                text = head + "\n\n" + rules + "\n" + marker + tail
+            prompts[level] = text
+    return flow
+
 
 _LAYOUT_ASSIST_HEX_TO_NAMES = [
     ("Include 5 global hex colors in style_description.color_palette", "Include 5 global color names in style_description.color_palette"),
@@ -2073,6 +2168,8 @@ def build_create_layout(source: Path, version: str) -> Path:
             raise SystemExit(f"{source_id}: old id still referenced inside the flow")
         if flow_id == "create.layout_assist":
             flow = _improve_layout_assist(flow)
+        elif flow_id in LAYOUT_POSITION_RULES:
+            flow = _improve_layout_positions(flow)
         flows.append(add_card_texts(flow, table))
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
     i18n, counts = flow_i18n(flows, table)

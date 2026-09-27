@@ -2843,6 +2843,42 @@ function renderParamGroup(stepDef, el, stepNum) {
     buildLoraFieldsList(selectedImportRecord, loraListEl);
     syncStepVisibility();
   }
+
+  // "--q max" / "--quant int8" in the prompt (flow-prompt-params.js) press
+  // the matching Quality / Quantization pill, as if clicked. Applied when
+  // they change, and again after an engine switch rebuilds both lists (this
+  // listener is added after the one above, so it runs after the rebuild).
+  var _QUALITY_IDS = { fast: ['fast'], balanced: ['balanced'], max: ['quality', 'max'] };
+  var _QUALITY_LABELS = { fast: 'fast', balanced: 'balanced', max: 'max' };
+  var _promptQ = { speed: null, quant: null };
+  function _pressQuality(speed) {
+    var ids = _QUALITY_IDS[speed] || [];
+    var btns = Array.prototype.slice.call(qualListEl.querySelectorAll('[data-quality-id]'));
+    var btn = btns.find(function (b) { return ids.indexOf(b.getAttribute('data-quality-id')) >= 0; })
+      || btns.find(function (b) { return b.textContent.trim().toLowerCase().indexOf(_QUALITY_LABELS[speed]) === 0; });
+    if (btn && !btn.classList.contains('is-active')) btn.click();
+  }
+  function _pressQuant(id) {
+    var btn = quantListEl.querySelector('[data-quantization-id="' + String(id).replace(/"/g, '') + '"]');
+    if (btn && !btn.disabled && !btn.classList.contains('is-active')) btn.click();
+  }
+  document.addEventListener('ncf-prompt-params', function (e) {
+    var params = (e.detail && e.detail.params) || {};
+    var speed = params.speed || null, quant = params.quantization || null;
+    if (speed && speed !== _promptQ.speed) _pressQuality(speed);
+    if (quant && quant !== _promptQ.quant) _pressQuant(quant);
+    _promptQ = { speed: speed, quant: quant };
+  });
+  document.addEventListener('ncf-workflow-loaded', function () {
+    if (_promptQ.speed) _pressQuality(_promptQ.speed);
+    if (_promptQ.quant) _pressQuant(_promptQ.quant);
+  });
+  if (typeof NcfPromptParams !== 'undefined') {
+    var _lastQ = NcfPromptParams.last();
+    _promptQ = { speed: _lastQ.speed || null, quant: _lastQ.quantization || null };
+    if (_promptQ.speed) _pressQuality(_promptQ.speed);
+    if (_promptQ.quant) _pressQuant(_promptQ.quant);
+  }
 }
 
 // ── style_picker panel ───────────────────────────────────────────────────────

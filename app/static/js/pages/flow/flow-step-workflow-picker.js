@@ -85,7 +85,33 @@ function renderWorkflowPicker(stepDef, el) {
   syncPickerVisibility();
   document.addEventListener('ncf-mode-change', syncPickerVisibility);
 
-  loadWorkflows(select, hint, stepDef.recommended_import_ids || stepDef.import_ids);
+  // "--v monaco" / "--anime" in the prompt (flow-prompt-params.js) picks that
+  // engine here, as if chosen by hand — only when the --v changes, and only in
+  // the single-engine picker (Custom mode's multi-list is the user's own).
+  var _promptEngine = null;
+  function applyPromptEngine(name, force) {
+    if (!name || typeof NcfPromptParams === 'undefined' || getMode() === 'advanced') return;
+    if (name === _promptEngine && !force) return;
+    var engine = NcfPromptParams.findEngine(name);
+    if (!engine) return;              // list not loaded yet, or not installed (the pill says so)
+    _promptEngine = name;
+    var id = String(engine.id);
+    if (select.value !== id && select.querySelector('option[value="' + id.replace(/"/g, '') + '"]')) {
+      select.value = id;
+      select.dispatchEvent(new Event('change'));
+    }
+  }
+  document.addEventListener('ncf-prompt-params', function (e) {
+    var model = ((e.detail && e.detail.params) || {}).model || null;
+    if (!model) { _promptEngine = null; return; }
+    applyPromptEngine(model);
+  });
+
+  Promise.resolve(loadWorkflows(select, hint, stepDef.recommended_import_ids || stepDef.import_ids)).then(function () {
+    if (typeof NcfPromptParams === 'undefined') return;
+    NcfPromptParams.refreshAll();   // pills can now tell installed engines apart
+    applyPromptEngine(NcfPromptParams.last().model, true);
+  });
 }
 
 // ── prompt_input ───────────────────────────────────────────────────────────

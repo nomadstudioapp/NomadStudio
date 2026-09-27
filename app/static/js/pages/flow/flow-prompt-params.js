@@ -56,6 +56,20 @@ var NcfPromptParams = (function () {
     return pill;
   }
 
+  var _SPEED_LABELS = { fast: 'Fast', balanced: 'Balanced', max: 'Max' };
+
+  // Installed engine for "--v monaco" / "--anime": same rule as the MCP
+  // (app/mcp/preferences.resolve_model) — a piece of the name, case and
+  // "-"/"_" ignored; the first match in the engine list wins. undefined =
+  // the engine list isn't loaded yet (can't tell), null = not installed.
+  function findEngine(name) {
+    if (!name) return null;
+    if (typeof allImportsList === 'undefined' || !Array.isArray(allImportsList) || !allImportsList.length) return undefined;
+    function norm(s) { return String(s || '').toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim(); }
+    var needle = norm(name);
+    return allImportsList.find(function (imp) { return imp && norm(imp.name).indexOf(needle) >= 0; }) || null;
+  }
+
   function _render(wrap, params) {
     wrap.innerHTML = '';
     var p = params || {};
@@ -64,12 +78,14 @@ var NcfPromptParams = (function () {
     if (p.seed != null) wrap.appendChild(_pill('on', _fill('Seed {v}', p.seed)));
     if (p.steps != null) wrap.appendChild(_pill('on', _fill('{v} steps', p.steps)));
     if (p.repeat != null) wrap.appendChild(_pill('on', _fill('{v} images', p.repeat)));
-    if (p.model) wrap.appendChild(_pill('note', _fill('Engine: {v}', p.model),
-      _t('In the app, choose the engine in its selector — --v is not applied here yet.')));
-    if (p.speed) wrap.appendChild(_pill('note', _fill('Speed: {v}', p.speed),
-      _t('In the app, choose Fast / Balanced / Max under Quality — --q is not applied here yet.')));
-    if (p.quantization) wrap.appendChild(_pill('note', _fill('Quantization: {v}', p.quantization),
-      _t('In the app, choose it in Advanced — --quant is not applied here yet.')));
+    if (p.model) {
+      var engine = findEngine(p.model);
+      wrap.appendChild(engine === null
+        ? _pill('bad', _fill('Engine not installed: {v}', p.model))
+        : _pill('on', _fill('Engine: {v}', engine ? (engine.name || engine.id) : p.model)));
+    }
+    if (p.speed) wrap.appendChild(_pill('on', _fill('Quality: {v}', _SPEED_LABELS[p.speed] || p.speed)));
+    if (p.quantization) wrap.appendChild(_pill('on', _fill('Quantization: {v}', p.quantization.toUpperCase())));
     // Midjourney-only ones (--stylize, --chaos…) are dropped silently: no pill.
     Object.keys(p.invalid || {}).forEach(function (name) {
       wrap.appendChild(_pill('bad', _fill('{v} · wrong value', '--' + name),
@@ -120,10 +136,16 @@ var NcfPromptParams = (function () {
     function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 250); }
     ta.addEventListener('input', schedule);
     ta.addEventListener('change', schedule);
+    _attached.push(refresh);
     refresh();
     return { refresh: refresh };
   }
 
-  return { has: has, split: split, repeatCount: repeatCount, attach: attach, sizeFor: sizeFor,
+  // Re-read every attached prompt box — e.g. once the engine list has
+  // loaded, so "--v monaco" can be matched and applied.
+  var _attached = [];
+  function refreshAll() { _attached.forEach(function (fn) { fn(); }); }
+
+  return { has: has, split: split, repeatCount: repeatCount, attach: attach, refreshAll: refreshAll, sizeFor: sizeFor, findEngine: findEngine,
            last: function () { return _last; } };
 })();

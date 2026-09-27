@@ -23,7 +23,13 @@ ASPECT_RATIO_DIMENSIONS: dict[str, tuple[int, int]] = {
     "square": (1024, 1024),
     "landscape": (1216, 832),
     "portrait": (832, 1216),
+    # 16:9 / 9:16 (~1 MP, the size these engines are trained around).
+    "wide": (1344, 768),
+    "tall": (768, 1344),
 }
+
+# What people actually type for the two 16:9 formats.
+ASPECT_RATIO_ALIASES: dict[str, str] = {"16:9": "wide", "widescreen": "wide", "9:16": "tall", "vertical": "tall"}
 
 DEFAULT_ASPECT_RATIO = "square"
 DEFAULT_SPEED = "fast"

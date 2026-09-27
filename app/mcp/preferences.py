@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, Field
 
 from app.mcp.client_capabilities import try_elicit
-from app.mcp.config import ASPECT_RATIO_DIMENSIONS, SPEED_TO_QUANTIZATIONS
+from app.mcp.config import ASPECT_RATIO_ALIASES, ASPECT_RATIO_DIMENSIONS, SPEED_TO_QUANTIZATIONS
 
 if TYPE_CHECKING:
     from app.mcp.nomad_client import NomadClient
@@ -35,7 +35,8 @@ _session_model_id: str | None = None
 
 class _AspectRatioChoice(BaseModel):
     aspect_ratio: str = Field(
-        description="Formato de la imagen. Escribe exactamente: landscape (apaisado), portrait (retrato) o square (cuadrado)."
+        description="Formato de la imagen. Escribe exactamente: landscape (apaisado 3:2), portrait (retrato 2:3), "
+        "square (cuadrado), wide (panoramico 16:9) o tall (vertical 9:16)."
     )
 
 
@@ -50,23 +51,25 @@ async def resolve_aspect_ratio(aspect_ratio: str | None, ctx) -> str | None:
 
     if aspect_ratio:
         normalized = aspect_ratio.strip().lower()
+        normalized = ASPECT_RATIO_ALIASES.get(normalized, normalized)
         if normalized in ASPECT_RATIO_DIMENSIONS:
             _session_aspect_ratio = normalized
             return normalized
-        # Valor no reconocido (ej. "wide"): tratar como ausente para que se
+        # Valor no reconocido (ej. "panorama"): tratar como ausente para que se
         # pregunte en vez de generar con algo que el usuario no pidio.
     if _session_aspect_ratio:
         return _session_aspect_ratio
 
     result = await try_elicit(
         ctx,
-        message="¿Que formato quieres para la imagen? (landscape / portrait / square)",
+        message="¿Que formato quieres para la imagen? (landscape / portrait / square / wide 16:9 / tall 9:16)",
         schema=_AspectRatioChoice,
     )
     if result is None or result.action != "accept" or not result.data:
         return None
 
     answer = result.data.aspect_ratio.strip().lower()
+    answer = ASPECT_RATIO_ALIASES.get(answer, answer)
     if answer in ASPECT_RATIO_DIMENSIONS:
         _session_aspect_ratio = answer
         return answer

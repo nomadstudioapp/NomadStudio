@@ -68,13 +68,16 @@ async def nomad_studio_create_image(
     steps: int | None = None,
     width: int | None = None,
     height: int | None = None,
+    negative: str | None = None,
+    seed: int | None = None,
 ) -> list[TextContent | ImageContent]:
     """
     Args:
         prompt: Descripcion de la imagen a generar, en ingles preferiblemente.
-        aspect_ratio: 'landscape' (apaisado/horizontal), 'portrait' (retrato/vertical)
-            o 'square' (cuadrado). Si el usuario ya lo indico (aunque sea con otras palabras),
-            traducelo a uno de esos tres valores. Si no lo indico, deja el campo vacio: se
+        aspect_ratio: 'landscape' (apaisado 3:2), 'portrait' (retrato 2:3), 'square'
+            (cuadrado), 'wide' (panoramico 16:9, tipo pantalla/YouTube/cabecera) o 'tall'
+            (vertical 9:16, tipo movil/stories/reels). Si el usuario ya lo indico (aunque sea
+            con otras palabras, ej. "16:9", "para el movil"), traducelo a uno de esos valores. Si no lo indico, deja el campo vacio: se
             reutilizara su eleccion anterior de esta conversacion, o la tool te pedira que
             se lo preguntes en el chat antes de generar. Ignorado si se pasan 'width'/'height'
             explicitos.
@@ -104,6 +107,15 @@ async def nomad_studio_create_image(
             'height' (los dos o ninguno) — si solo se da uno de los dos, se ignoran ambos y se
             usa 'aspect_ratio' en su lugar. Se redondea al multiplo de 64 mas cercano.
         height: Alto exacto en pixeles — ver 'width'.
+        negative: Lo que NO debe aparecer en la imagen, en ingles (ej. "text, watermark,
+            people") — SOLO si el usuario lo pide ("sin gente", "que no salga texto"). Si se
+            deja vacio se usa el negativo por defecto del modelo, que ya evita marcas de agua,
+            deformidades, etc. Si lo pasas, sustituye a ese por defecto: incluye tambien lo
+            generico que convenga conservar.
+        seed: Semilla exacta, SOLO para repetir o variar una imagen anterior: cada respuesta
+            de esta tool dice la semilla usada. Mismo prompt + misma semilla + mismo modelo y
+            tamano = la misma imagen; cambiando solo el prompt se obtiene una variacion cercana.
+            Si se deja vacio, semilla aleatoria (lo normal).
     """
     agent_name = "unknown"
     agent_slug = "unknown"
@@ -118,6 +130,8 @@ async def nomad_studio_create_image(
             "steps": steps,
             "width": width,
             "height": height,
+            "negative": negative,
+            "seed": seed,
         }
     }
 
@@ -161,7 +175,8 @@ async def nomad_studio_create_image(
         # silencio con un formato/calidad/modelo que nadie eligio.
         missing: list[str] = []
         if aspect_ratio is None and not has_explicit_dims:
-            missing.append("aspect_ratio — landscape (apaisado), portrait (vertical) o square (cuadrado)")
+            missing.append("aspect_ratio — landscape (apaisado 3:2), portrait (vertical 2:3), square (cuadrado), "
+                           "wide (panoramico 16:9) o tall (vertical 9:16)")
         if speed is None:
             missing.append("speed — fast (superrapida), balanced (equilibrada) o max (maxima calidad)")
         if record is None:
@@ -246,9 +261,16 @@ async def nomad_studio_create_image(
             "available_options": describe_quantization_options(quant_options) if quant_options else None,
         }
 
+        basic_values: dict[str, Any] = {"positive": prompt, "width": width, "height": height}
+        if negative and negative.strip():
+            # Both aliases: an engine record can carry its own default under
+            # each, and the one left behind would win.
+            basic_values["negative"] = basic_values["negative_prompt"] = negative.strip()
+        if seed is not None:
+            basic_values["seed"] = max(0, int(seed))
         request_payload = {
             "import_id": import_id,
-            "basicValues": {"positive": prompt, "width": width, "height": height},
+            "basicValues": basic_values,
             "advancedValues": advanced_values,
             "numImages": 1,
         }
@@ -257,7 +279,7 @@ async def nomad_studio_create_image(
 
         result = await _client.generate(
             import_id=import_id,
-            basic_values={"positive": prompt, "width": width, "height": height},
+            basic_values=basic_values,
             advanced_values=advanced_values,
             num_images=1,
         )
@@ -302,6 +324,8 @@ async def nomad_studio_create_image(
                     f"Generado con Nomad Studio — modelo: {record.get('name', 'desconocido')}, "
                     f"cuantizacion: {chosen_id or 'por defecto del workflow'} "
                     f"(velocidad pedida: {speed}).\n"
+                    f"Tamano: {width}x{height}. Semilla usada: {result.get('appliedSeed')} (pasala en 'seed' "
+                    f"para repetir esta imagen o variarla solo con cambios en el prompt).\n"
                     f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
                     f"Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
                     f"ensenarsela al usuario directamente en el chat, sin que tenga que pedirlo."

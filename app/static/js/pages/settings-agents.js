@@ -71,8 +71,16 @@
       html += '<ul class="agents-mismatches">' + (status.mismatches || []).map(function (m) {
         var msg = MISMATCH[m.what] || MISMATCH.folder;
         return '<li>' + esc(t(msg[0], msg[1], { is: m.is, shouldBe: m.shouldBe })) + '</li>';
-      }).join('') + '</ul><p class="settings-field-hint">' + esc(t('fixHint', 'Replace its values with the ones below and restart it.')) + '</p>';
+      }).join('') + '</ul>';
     }
+    // Connect / Fix (phase 2): Nomad Studio writes its own entry into that
+    // program's file — confirmed inline first, never on a single click.
+    if (status.installed && (status.state === 'missing' || status.state === 'other')) {
+      var fix = status.state === 'other';
+      html += '<div class="agents-action"><button type="button" class="btn settings-btn-secondary agents-connect-btn" data-client="' +
+        esc(client.id) + '">' + esc(fix ? t('fix', 'Fix') : t('connect', 'Connect')) + '</button></div>';
+    }
+    html += '<div class="agents-result" data-result-for="' + esc(client.id) + '"></div>';
     if (client.note) html += '<p class="settings-field-hint agents-note">' + esc(t('codexNote', client.note)) + '</p>';
     html += '<ol class="agents-steps">' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>';
     if (client.fields) {
@@ -106,7 +114,59 @@
     }).join('');
   }
 
+  var RESTART = {
+    claude: ['restartClaude', 'Quit Claude completely and open it again.'],
+    codex: ['restartCodex', 'Close the ChatGPT app and open it again.'],
+    bionic: ['restartBionic', 'Open Bionic again.'],
+  };
+  var lastData = null;
+  var results = {};   // client → message shown after a write, kept across re-renders
+
+  function resultArea(client) {
+    return clientsEl.querySelector('[data-result-for="' + client + '"]');
+  }
+
+  function askConnect(client) {
+    var area = resultArea(client);
+    var status = lastData && lastData.clients[client];
+    if (!area || !status) return;
+    area.innerHTML = '<div class="settings-backup-confirm">' +
+      '<span>' + esc(t('confirmWrite', 'Nomad Studio will write its entry into {path}. A copy of the file is saved first, and nothing else in it changes.', { path: status.configPath })) +
+      (client === 'bionic' ? ' ' + esc(t('bionicCloseFirst', 'Close Bionic first: it rewrites this file when it quits.')) : '') + '</span>' +
+      '<button type="button" class="btn settings-btn-secondary agents-confirm-btn" data-client="' + esc(client) + '">' + esc(t('confirm', 'Write')) + '</button>' +
+      '<button type="button" class="btn settings-btn-secondary agents-cancel-btn" data-client="' + esc(client) + '">' + esc(t('cancel', 'Cancel')) + '</button>' +
+      '</div>';
+  }
+
+  function doConnect(client, btn) {
+    btn.disabled = true;
+    fetch('/api/agents/setup/' + encodeURIComponent(client) + '/connect', { method: 'POST' })
+      .then(function (r) { return r.json().catch(function () { return { ok: false, error: r.status }; }); })
+      .then(function (res) {
+        if (res && res.ok) {
+          var restart = RESTART[client] || RESTART.claude;
+          results[client] = '<p class="settings-field-hint status-ok">' + esc(t('done', 'Done.')) + ' ' + esc(t(restart[0], restart[1])) + '</p>' +
+            (res.backupPath ? '<p class="settings-field-hint">' + esc(t('backupSaved', 'Previous file saved in {path}', { path: res.backupPath })) + '</p>' : '');
+        } else {
+          results[client] = '<p class="settings-field-hint status-error">' +
+            esc(t('writeError', 'Couldn\'t write the file: {error}', { error: (res && res.error) || '?' })) + '</p>';
+        }
+        load();
+      })
+      .catch(function (err) {
+        results[client] = '<p class="settings-field-hint status-error">' +
+          esc(t('writeError', 'Couldn\'t write the file: {error}', { error: err && err.message })) + '</p>';
+        load();
+      });
+  }
+
   clientsEl.addEventListener('click', function (e) {
+    var connectBtn = e.target.closest('.agents-connect-btn');
+    if (connectBtn) { askConnect(connectBtn.getAttribute('data-client')); return; }
+    var confirmBtn = e.target.closest('.agents-confirm-btn');
+    if (confirmBtn) { doConnect(confirmBtn.getAttribute('data-client'), confirmBtn); return; }
+    var cancelBtn = e.target.closest('.agents-cancel-btn');
+    if (cancelBtn) { var area = resultArea(cancelBtn.getAttribute('data-client')); if (area) area.innerHTML = ''; return; }
     var btn = e.target.closest('.agents-copy-btn');
     if (!btn) return;
     var value = btn.getAttribute('data-copy') || '';
@@ -125,19 +185,28 @@
     }
   });
 
-  Promise.all([
-    fetch('/api/agents/setup').then(function (r) { return r.ok ? r.json() : null; }),
-    fetch('/api/agents').then(function (r) { return r.ok ? r.json() : { agents: [] }; }).catch(function () { return { agents: [] }; }),
-  ]).then(function (res) {
-    var data = res[0];
-    if (!data) {
+  function load() {
+    return Promise.all([
+      fetch('/api/agents/setup').then(function (r) { return r.ok ? r.json() : null; }),
+      fetch('/api/agents').then(function (r) { return r.ok ? r.json() : { agents: [] }; }).catch(function () { return { agents: [] }; }),
+    ]).then(function (res) {
+      var data = res[0];
+      if (!data) {
+        clientsEl.innerHTML = '<p class="settings-field-hint status-error">' + esc(t('loadError', 'Couldn\'t read this computer\'s setup.')) + '</p>';
+        return;
+      }
+      lastData = data;
+      clientsEl.innerHTML = CLIENTS.map(function (c) { return card(c, data, data); }).join('') +
+        '<p class="settings-field-hint">' + esc(t('tryIt', 'Try it: ask "Which models do I have in Nomad Studio?"')) + '</p>';
+      Object.keys(results).forEach(function (client) {
+        var area = resultArea(client);
+        if (area) area.innerHTML = results[client];
+      });
+      renderConnected((res[1] && res[1].agents) || []);
+    }).catch(function () {
       clientsEl.innerHTML = '<p class="settings-field-hint status-error">' + esc(t('loadError', 'Couldn\'t read this computer\'s setup.')) + '</p>';
-      return;
-    }
-    clientsEl.innerHTML = CLIENTS.map(function (c) { return card(c, data, data); }).join('') +
-      '<p class="settings-field-hint">' + esc(t('tryIt', 'Try it: ask "Which models do I have in Nomad Studio?"')) + '</p>';
-    renderConnected((res[1] && res[1].agents) || []);
-  }).catch(function () {
-    clientsEl.innerHTML = '<p class="settings-field-hint status-error">' + esc(t('loadError', 'Couldn\'t read this computer\'s setup.')) + '</p>';
-  });
+    });
+  }
+
+  load();
 })();

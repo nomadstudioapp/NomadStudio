@@ -136,11 +136,31 @@ def agents_setup():
     PYTHONPATH, port) and whether Claude Desktop / ChatGPT / Bionic already
     point here (app/services/agent_setup.py). Local only: it shows paths on
     this computer."""
+    return jsonify(agent_setup.setup_info(_request_port()))
+
+
+def _request_port() -> int:
     try:
-        port = int(request.host.rsplit(":", 1)[1])
+        return int(request.host.rsplit(":", 1)[1])
     except (IndexError, ValueError):
-        port = int(os.environ.get("PORT") or agent_setup.DEFAULT_MCP_PORT)
-    return jsonify(agent_setup.setup_info(port))
+        return int(os.environ.get("PORT") or agent_setup.DEFAULT_MCP_PORT)
+
+
+@viewers_bp.post("/api/agents/setup/<client>/connect")
+@local_only
+def agents_setup_connect(client: str):
+    """Settings › Agents › Connect / Fix: write this installation's MCP entry
+    into Claude Desktop's, ChatGPT's (Codex) or Bionic's config file — a dated
+    copy first, only Nomad Studio's entry changes (agent_setup.connect)."""
+    from ..paths import DATA_DIR
+
+    try:
+        result = agent_setup.connect(client, _request_port(), DATA_DIR / "backups" / "agents")
+    except agent_setup.ConnectError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except OSError as exc:
+        return jsonify({"ok": False, "error": f"Could not write the file: {exc}"}), 500
+    return jsonify({"ok": True, **result})
 
 
 @viewers_bp.post("/api/agents")

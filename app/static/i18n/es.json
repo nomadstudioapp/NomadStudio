@@ -944,7 +944,6 @@
       "mismatchPython": "Python: {is} — debería ser {shouldBe}",
       "mismatchFolder": "Carpeta: {is} — debería ser {shouldBe}",
       "mismatchPort": "Puerto: {is} — debería ser {shouldBe}",
-      "fixHint": "Cambia sus valores por los de abajo y reinícialo.",
       "configFile": "Archivo de configuración",
       "command": "Comando",
       "args": "Argumentos",
@@ -971,7 +970,19 @@
       "connectedAgents": "Asistentes conectados",
       "noAgents": "Todavía no se ha conectado ningún asistente.",
       "album": "Álbum",
-      "loadError": "No se ha podido leer la configuración de este ordenador."
+      "loadError": "No se ha podido leer la configuración de este ordenador.",
+      "connect": "Conectar",
+      "fix": "Corregir",
+      "confirmWrite": "Nomad Studio escribirá su entrada en {path}. Antes se guarda una copia del archivo, y no cambia nada más.",
+      "confirm": "Escribir",
+      "cancel": "Cancelar",
+      "bionicCloseFirst": "Cierra Bionic antes: reescribe este archivo al salir.",
+      "done": "Hecho.",
+      "restartClaude": "Cierra Claude del todo y vuelve a abrirlo.",
+      "restartCodex": "Cierra la app de ChatGPT y vuelve a abrirla.",
+      "restartBionic": "Vuelve a abrir Bionic.",
+      "backupSaved": "El archivo anterior está guardado en {path}",
+      "writeError": "No se ha podido escribir el archivo: {error}"
     },
     "updates": {
       "title": "Actualizaciones",

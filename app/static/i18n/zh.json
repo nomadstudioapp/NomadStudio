@@ -943,7 +943,6 @@
       "mismatchPython": "Python：{is}——应为 {shouldBe}",
       "mismatchFolder": "文件夹：{is}——应为 {shouldBe}",
       "mismatchPort": "端口：{is}——应为 {shouldBe}",
-      "fixHint": "把它的值换成下面的值，然后重启它。",
       "configFile": "配置文件",
       "command": "命令",
       "args": "参数",
@@ -970,7 +969,19 @@
       "connectedAgents": "已连接的助手",
       "noAgents": "还没有助手连接过。",
       "album": "相册",
-      "loadError": "无法读取本电脑的配置。"
+      "loadError": "无法读取本电脑的配置。",
+      "connect": "连接",
+      "fix": "修复",
+      "confirmWrite": "Nomad Studio 将把它的条目写入 {path}。写入前会先保存该文件的副本，其他内容不会改变。",
+      "confirm": "写入",
+      "cancel": "取消",
+      "bionicCloseFirst": "请先关闭 Bionic：它退出时会重写这个文件。",
+      "done": "完成。",
+      "restartClaude": "完全退出 Claude 后重新打开。",
+      "restartCodex": "关闭 ChatGPT 应用后重新打开。",
+      "restartBionic": "重新打开 Bionic。",
+      "backupSaved": "原文件已保存在 {path}",
+      "writeError": "无法写入文件：{error}"
     },
     "updates": {
       "title": "更新",

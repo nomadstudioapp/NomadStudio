@@ -11,7 +11,7 @@
 - **Asistente de configuración.** En el primer arranque comprueba ComfyUI y LM Studio, detecta qué ficheros de motores tienes, instala lo que falta y recomienda modelos de lenguaje ([docs/SETUP_WIZARD.md](docs/SETUP_WIZARD.md)).
 - **Copias de seguridad y reset** desde Ajustes.
 - **Servidores compartidos.** Varias instalaciones de Nomad Studio pueden usar el mismo ComfyUI y LM Studio de tu red; se esperan entre ellas en vez de pelearse por la GPU.
-- **Servidor MCP** para que los agentes de IA creen y retoquen imágenes.
+- **Servidor MCP** para que los agentes de IA creen y retoquen imágenes — cómo conectarlo a Claude Desktop, ChatGPT y Bionic: [docs/MCP_SETUP_ES.md](docs/MCP_SETUP_ES.md).
 
 ## Requisitos
 

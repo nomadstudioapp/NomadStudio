@@ -58,5 +58,25 @@
     "es": "Describe tu composición con fragmentos separados por ';' y la IA genera un layout estructurado con recuadros.",
     "zh": "用 ';' 分隔的片段描述你的构图，AI 会生成带边界框的结构化版式。",
     "ko": "';'로 구분한 조각으로 구도를 설명하면 AI가 경계 상자가 있는 구조화된 레이아웃을 만듭니다."
+  },
+  "Describe a composition — freely, or as elements separated by ';' — and the AI lays it out: bounding boxes plus every position written in words, so it places things on any engine, not only Ideogram.": {
+    "es": "Describe una composición —libremente o como elementos separados por ';'— y la IA la maqueta: cajas de posición y cada posición escrita en palabras, para que coloque las cosas con cualquier motor, no solo con Ideogram.",
+    "zh": "描述一个构图——自由描述，或用 ';' 分隔各元素——AI 会完成版式：给出边界框，并用文字写明每个位置，因此任何引擎都能正确摆放，而不只是 Ideogram。",
+    "ko": "구도를 자유롭게, 또는 ';'로 요소를 나눠 설명하면 AI가 레이아웃을 잡습니다. 바운딩 박스와 함께 모든 위치를 글로도 적어 두어 Ideogram뿐 아니라 어떤 엔진에서도 제자리에 놓입니다."
+  },
+  "Describe the scene and the AI places each element on a canvas you can adjust. Works on any engine.": {
+    "es": "Describe la escena y la IA coloca cada elemento en un lienzo que puedes ajustar. Funciona con cualquier motor.",
+    "zh": "描述场景，AI 会把每个元素放到可调整的画布上。适用于任意引擎。",
+    "ko": "장면을 설명하면 AI가 각 요소를 조정 가능한 캔버스에 배치합니다. 어떤 엔진에서도 작동합니다."
+  },
+  "Describe the scene freely, or separate the elements with ';' — each fragment becomes one placed element.": {
+    "es": "Describe la escena libremente, o separa los elementos con ';': cada fragmento se convierte en un elemento colocado.",
+    "zh": "自由描述场景，或用 ';' 分隔元素——每个片段都会成为一个已摆放的元素。",
+    "ko": "장면을 자유롭게 설명하거나 ';'로 요소를 나누세요. 각 조각이 하나의 배치된 요소가 됩니다."
+  },
+  "a woman skateboarder mid-air in the center, giant puffy letters COMFY behind her, a torn paper strip along the bottom that says STAY COZY": {
+    "es": "una skater en el aire en el centro, unas letras gigantes e hinchadas COMFY detrás de ella, una tira de papel rasgado abajo que dice STAY COZY",
+    "zh": "一位女滑板手在画面中央腾空，身后是巨大的充气字母 COMFY，底部一条撕开的纸条上写着 STAY COZY",
+    "ko": "가운데에서 공중에 뜬 여성 스케이트보더, 그 뒤로 커다랗게 부푼 글자 COMFY, 아래쪽에 STAY COZY라고 적힌 찢어진 종이 띠"
   }
 }

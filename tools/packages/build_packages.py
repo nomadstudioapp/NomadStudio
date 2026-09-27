@@ -1972,6 +1972,91 @@ LAYOUT_FLOWS = {
     "create.ideogram_storyboard": "create.layout_storyboard",
     "create.character_sheet": "create.character_sheet",
 }
+LAYOUT_VERSION = "0.2.0"
+
+# Layout Assist on any engine (NomadStudio#18). Tested 2026-09-26 on Krea 2
+# Turbo / Monaco / Roma: they don't read bbox numbers as positions — they
+# ignore them, and Monaco even paints them (next to a text element, as more
+# lettering). The SAME JSON works on every engine once each position is also
+# written in words, in high_level_description and in every desc; Ideogram
+# still gets its bboxes. So the composer is asked for both, accepts a free
+# description as well as ';' fragments, and stops asking for hex colours
+# (two levels asked for them right after forbidding them).
+LAYOUT_ASSIST_RULES = """
+
+INPUT: either composition fragments separated by ';' (one element each) or a free description of the scene. With a free description, pick out each physical element yourself (people, objects, pieces of lettering) and give each one its own entry.
+
+POSITIONS IN WORDS — this layout is used with engines that cannot read bbox numbers (they ignore them, or paint them into the image as text), so every position must ALSO be written in plain words:
+- high_level_description says where the main elements are: "a red sphere in the upper left and a blue sphere in the lower right".
+- Every element's desc states its position and size in words, matching its bbox: "in the upper-left corner", "centered along the bottom edge", "filling the right half", "small, in the lower-left third".
+- For type "text", the desc gives the exact words in quotes, their look and where they sit: "the word 'HELLO' in bold black capitals, centered at the top".
+- Never write numbers, coordinates or bbox values in any prose field — only in the bbox arrays."""
+
+_LAYOUT_ASSIST_HEX_TO_NAMES = [
+    ("Include 5 global hex colors in style_description.color_palette", "Include 5 global color names in style_description.color_palette"),
+    ("Add 2–3 hex colors per element color_palette", "Add 2–3 color names per element color_palette"),
+    ("Per-element color_palette: 3–5 hex values dominant in that element", "Per-element color_palette: 3–5 color names dominant in that element"),
+    ("Global color_palette: 5 hex values that define the mood of the whole piece", "Global color_palette: 5 color names that define the mood of the whole piece"),
+    ("Every element must have 4–5 specific hex colors", "Every element must have 4–5 specific color names"),
+    ("Place each input fragment as one element with a sensible bbox", "Place each element (one per ';' fragment, or each one you pick out of a free description) with a sensible bbox"),
+    ("Given a list of composition elements,", "Given a composition idea,"),
+    ("Given composition fragments,", "Given a composition idea,"),
+    ("an Ideogram composition AI", "a layout composition AI"),
+    ("world-class Ideogram composition director", "world-class layout composition director"),
+    ("Ideogram JSON", "layout JSON"),
+]
+# The scene level's few-shot example still carried hex palettes and a
+# high_level_description with no positions: models copy the example.
+_LAYOUT_ASSIST_EXAMPLE_HEX = {
+    "#1E73BE": "sky blue", "#FDFDFD": "off white", "#C82A2A": "stamp red", "#657C9C": "slate blue",
+    "#EFEFEF": "paper white", "#E0E0E0": "light grey", "#D3DBE2": "pale blue grey", "#FFDAB9": "peach",
+    "#A11D1D": "deep red", "#1A1A1A": "near black",
+}
+_LAYOUT_ASSIST_EXAMPLE_DESC = (
+    "backed by giant puffy 3D letters spelling 'COMFY'.\", \"style_description\"",
+    "with giant puffy 3D letters spelling 'COMFY' across the upper half, the skateboarder in the center, "
+    "red grunge stamps in the top right and torn paper banners on the left edge and along the bottom.\", "
+    "\"style_description\"",
+)
+
+
+def _improve_layout_assist(flow: dict) -> dict:
+    flow["description"] = ("Describe a composition — freely, or as elements separated by ';' — and the AI lays it "
+                           "out: bounding boxes plus every position written in words, so it places things on any "
+                           "engine, not only Ideogram.")
+    flow["card_desc"] = "Describe the scene and the AI places each element on a canvas you can adjust. Works on any engine."
+    flow["card_tags"] = ["Assist", "Layout", "Any engine", "AI Compose"]
+    for step in flow["steps"]:
+        if step.get("id") == "idea":
+            step["note"] = "Describe the scene freely, or separate the elements with ';' — each fragment becomes one placed element."
+            step["placeholder"] = ("a woman skateboarder mid-air in the center, giant puffy letters COMFY behind her, "
+                                   "a torn paper strip along the bottom that says STAY COZY")
+        if step.get("id") == "compose":
+            prompts = step["system_prompts"]
+            for level, text in prompts.items():
+                for old, new in _LAYOUT_ASSIST_HEX_TO_NAMES:
+                    text = text.replace(old, new)
+                for hex_code, name in _LAYOUT_ASSIST_EXAMPLE_HEX.items():
+                    text = text.replace(f'"{hex_code}"', f'"{name}"')
+                if "Few-shot example" in text:
+                    if _LAYOUT_ASSIST_EXAMPLE_DESC[0] not in text:
+                        raise SystemExit(f"layout_assist {level}: example description not found")
+                    text = text.replace(*_LAYOUT_ASSIST_EXAMPLE_DESC)
+                # Before the closing output rule, so "Output ONLY valid JSON" stays last.
+                marker = "\n- Output ONLY valid JSON."
+                if marker not in text:
+                    raise SystemExit(f"layout_assist {level}: output rule not found")
+                head, tail = text.rsplit(marker, 1)
+                if "Few-shot example" in tail:
+                    # scene: the example comes after the rules — keep it there.
+                    rules_end, example = tail.split("\n\nFew-shot example", 1)
+                    text = head + marker + rules_end + LAYOUT_ASSIST_RULES + "\n\nFew-shot example" + example
+                else:
+                    text = head + marker + tail + LAYOUT_ASSIST_RULES
+                if re.search(r"hex (colors|values)", text):
+                    raise SystemExit(f"layout_assist {level}: still asks for hex colours")
+                prompts[level] = text
+    return flow
 
 
 def build_create_layout(source: Path, version: str) -> Path:
@@ -1986,13 +2071,15 @@ def build_create_layout(source: Path, version: str) -> Path:
         text = json.dumps(flow)
         if source_id != flow_id and source_id in text:
             raise SystemExit(f"{source_id}: old id still referenced inside the flow")
+        if flow_id == "create.layout_assist":
+            flow = _improve_layout_assist(flow)
         flows.append(add_card_texts(flow, table))
         files[f"flows/{flow_id.split('.', 1)[1]}.json"] = flow
     i18n, counts = flow_i18n(flows, table)
     manifest = {
         "schema_version": 1,
         "id": "nomad.create-layout",
-        "version": version,
+        "version": LAYOUT_VERSION,
         "default_lang": "en",
         "name": {"en": "Layout", "es": "Layout", "zh": "版式布局", "ko": "레이아웃"},
         "summary": {

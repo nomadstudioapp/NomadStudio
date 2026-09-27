@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import json
+import secrets
 import sys
 from typing import Any
 
@@ -40,6 +41,7 @@ from app.mcp.quantization import (
 from app.mcp import refine_actions
 from app.mcp import session_state
 from app.mcp.regions import MarkedRegion, annotate_data_url
+from app.services.prompt_params import parse as parse_prompt_params, size_for_aspect
 
 mcp = FastMCP("nomad-studio")
 _client = NomadClient()
@@ -73,7 +75,13 @@ async def nomad_studio_create_image(
 ) -> list[TextContent | ImageContent]:
     """
     Args:
-        prompt: Descripcion de la imagen a generar, en ingles preferiblemente.
+        prompt: Descripcion de la imagen a generar, en ingles preferiblemente. Puede terminar
+            con parametros estilo Midjourney, que se interpretan aqui y mandan sobre los demas
+            argumentos: --ar 16:9 (cualquier proporcion), --no people, text (se suma al
+            negativo por defecto), --seed 1234, --v <modelo> (ej. --v krea), --q fast|balanced|max
+            (o --draft), --steps 20, --quant int8, --r 2 (varias imagenes, hasta 4). Si el
+            usuario los escribe, dejalos tal cual al final del prompt — no los traduzcas ni los
+            quites. Los de Midjourney sin equivalente (--stylize, --chaos...) se ignoran avisando.
         aspect_ratio: 'landscape' (apaisado 3:2), 'portrait' (retrato 2:3), 'square'
             (cuadrado), 'wide' (panoramico 16:9, tipo pantalla/YouTube/cabecera) o 'tall'
             (vertical 9:16, tipo movil/stories/reels). Si el usuario ya lo indico (aunque sea
@@ -134,6 +142,26 @@ async def nomad_studio_create_image(
             "seed": seed,
         }
     }
+
+    # Midjourney-style "--ar 16:9 --no text --seed 1" at the end of the prompt
+    # (NomadStudio#27): they win over the separate arguments.
+    prompt_params = parse_prompt_params(prompt)
+    if prompt_params.found:
+        debug["prompt_params"] = prompt_params.as_dict()
+        if prompt_params.invalid:
+            problems = "\n".join(f"- --{name}: {why}" for name, why in prompt_params.invalid.items())
+            return [TextContent(type="text", text=(
+                "NO SE HA GENERADO NADA TODAVIA. Estos parametros del prompt no se pueden usar:\n"
+                f"{problems}\nCorrigelos (o quitalos) y vuelve a llamar a la tool."))]
+        prompt = prompt_params.prompt
+        if prompt_params.aspect:
+            width, height = size_for_aspect(prompt_params.aspect)
+        seed = prompt_params.seed if prompt_params.seed is not None else seed
+        model = prompt_params.model or model
+        speed = prompt_params.speed or speed
+        quantization = prompt_params.quantization or quantization
+        steps = prompt_params.steps or steps
+    num_images = prompt_params.repeat or 1
 
     try:
         agent = await ensure_agent_session(_client, ctx)
@@ -262,17 +290,25 @@ async def nomad_studio_create_image(
         }
 
         basic_values: dict[str, Any] = {"positive": prompt, "width": width, "height": height}
-        if negative and negative.strip():
+        negative = (negative or "").strip()
+        if prompt_params.no:
+            # --no adds to the negative — the given one, else the engine's own
+            # default (it already keeps watermarks, bad anatomy… out).
+            base = negative or str((record.get("basicValues") or {}).get("negative") or "").strip()
+            negative = ", ".join(p for p in (base.rstrip(", "), prompt_params.no) if p)
+        if negative:
             # Both aliases: an engine record can carry its own default under
             # each, and the one left behind would win.
-            basic_values["negative"] = basic_values["negative_prompt"] = negative.strip()
-        if seed is not None:
-            basic_values["seed"] = max(0, int(seed))
+            basic_values["negative"] = basic_values["negative_prompt"] = negative
+        # The app never draws a seed itself (Create sends a fresh one each
+        # time); without one the engine's last saved seed was reused, so the
+        # same prompt gave the same image every time.
+        basic_values["seed"] = max(0, int(seed)) if seed is not None else secrets.randbelow(2**48)
         request_payload = {
             "import_id": import_id,
             "basicValues": basic_values,
             "advancedValues": advanced_values,
-            "numImages": 1,
+            "numImages": num_images,
         }
         debug["request"] = request_payload
         _log(f"REQUEST: {json.dumps(request_payload, ensure_ascii=False)}")
@@ -281,7 +317,7 @@ async def nomad_studio_create_image(
             import_id=import_id,
             basic_values=basic_values,
             advanced_values=advanced_values,
-            num_images=1,
+            num_images=num_images,
         )
         debug["response"] = result
         _log(f"RESPONSE: {json.dumps(result, ensure_ascii=False)}")
@@ -291,22 +327,34 @@ async def nomad_studio_create_image(
             debug["error"] = "Nomad Studio no devolvio ninguna imagen."
             return [_debug_text(agent_name, agent_slug, debug)]
 
-        filename = images[0].get("savedFilename") or images[0].get("filename")
-        debug["filename"] = filename
-        if not filename:
+        filenames = [str(img.get("savedFilename") or img.get("filename") or "") for img in images]
+        filenames = [f for f in filenames if f]
+        debug["filename"] = filenames[0] if filenames else None
+        if not filenames:
             debug["error"] = "No se pudo determinar el nombre de fichero de la imagen generada."
             return [_debug_text(agent_name, agent_slug, debug)]
+        filename = filenames[-1]
         session_state.set_last_image(filename)
 
         output_dir = await _client.get_output_dir()
-        thumb_bytes, thumb_mime = read_thumbnail(output_dir, agent_slug, filename, THUMBNAIL_WIDTH)
-        thumb_b64 = base64.b64encode(thumb_bytes).decode("ascii")
-        debug["thumbnail_bytes"] = len(thumb_bytes)
-        debug["thumbnail_mime"] = thumb_mime
+        image_blocks: list[ImageContent] = []
+        for name in filenames:
+            thumb_bytes, thumb_mime = read_thumbnail(output_dir, agent_slug, name, THUMBNAIL_WIDTH)
+            image_blocks.append(ImageContent(type="image", data=base64.b64encode(thumb_bytes).decode("ascii"),
+                                             mimeType=thumb_mime))
         debug["thumbnail_source"] = "local_disk"
         public_url = _client.image_url(filename, viewer_id=agent_slug)
         debug["image_url_with_cookie_bypass"] = public_url
-        _log(f"THUMBNAIL (disco local): {len(thumb_bytes)} bytes, url={public_url}")
+        _log(f"THUMBNAILS (disco local): {len(image_blocks)}, url={public_url}")
+
+        links = "\n".join(f"- {name}: {_client.image_url(name, viewer_id=agent_slug)}" for name in filenames)
+        params_note = ""
+        if prompt_params.ignored:
+            params_note = ("\nParametros de Midjourney sin equivalente en Nomad Studio (no se han aplicado): "
+                           + ", ".join(f"--{n}" for n in prompt_params.ignored) + ".")
+        if len(filenames) > 1:
+            params_note += (f"\nSe han generado {len(filenames)} imagenes (--r); 'la imagen' en lo siguiente "
+                            f"es la ultima, {filename}, salvo que el usuario elija otra por su nombre.")
 
         quant_note = ""
         if quant_options:
@@ -317,7 +365,7 @@ async def nomad_studio_create_image(
             )
 
         return [
-            ImageContent(type="image", data=thumb_b64, mimeType=thumb_mime),
+            *image_blocks,
             TextContent(
                 type="text",
                 text=(
@@ -325,8 +373,8 @@ async def nomad_studio_create_image(
                     f"cuantizacion: {chosen_id or 'por defecto del workflow'} "
                     f"(velocidad pedida: {speed}).\n"
                     f"Tamano: {width}x{height}. Semilla usada: {result.get('appliedSeed')} (pasala en 'seed' "
-                    f"para repetir esta imagen o variarla solo con cambios en el prompt).\n"
-                    f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
+                    f"para repetir esta imagen o variarla solo con cambios en el prompt).{params_note}\n"
+                    f"Enlace directo (sin login, no requiere sesion):\n{links}\n"
                     f"Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
                     f"ensenarsela al usuario directamente en el chat, sin que tenga que pedirlo."
                     f"{quant_note}\n"

@@ -82,7 +82,9 @@ class NomadClient:
         advanced_values: dict[str, Any] | None = None,
         num_images: int = 1,
     ) -> dict[str, Any]:
-        payload: dict[str, Any] = {"basicValues": basic_values, "numImages": num_images}
+        # remember=False: an agent's generation must not become the engine's
+        # saved defaults (what Create shows the user next).
+        payload: dict[str, Any] = {"basicValues": basic_values, "numImages": num_images, "remember": False}
         if advanced_values:
             payload["advancedValues"] = advanced_values
         return await self._post(f"/api/models/imports/{import_id}/generate", payload)

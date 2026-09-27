@@ -206,13 +206,17 @@ def generate_from_import(import_id: str):
     # during which another request may have already changed this same
     # import; holding the registry's mutation lock for that whole stretch
     # would also freeze every other read/write in the app for minutes.
-    with _registry_transaction() as tx_data:
-        tx_record = next(
-            (item for item in tx_data.get("imports", []) if item.get("id") == import_id), None
-        )
-        if tx_record is not None:
-            tx_record["basicValues"] = merged_basic
-            tx_record["advancedValues"] = merged_advanced
+    # "remember": false (the MCP) leaves the engine's saved values alone —
+    # otherwise an agent's size, negative and seed become the defaults Create
+    # shows next, and a seed nobody chose sticks to every later call.
+    if payload.get("remember", True) is not False:
+        with _registry_transaction() as tx_data:
+            tx_record = next(
+                (item for item in tx_data.get("imports", []) if item.get("id") == import_id), None
+            )
+            if tx_record is not None:
+                tx_record["basicValues"] = merged_basic
+                tx_record["advancedValues"] = merged_advanced
 
     return jsonify(
         {

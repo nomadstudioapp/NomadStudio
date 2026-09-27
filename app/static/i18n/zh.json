@@ -614,6 +614,8 @@
       "Missing files": "缺少的文件",
       "Model files": "模型文件",
       "Not installed in ComfyUI": "未安装在 ComfyUI 中",
+      "Default": "默认",
+      "Choose prompt": "选择提示词",
       "Model version — one is enough": "模型版本——一个即可",
       "No download address for this file — search for it on Hugging Face": "此文件没有下载地址——请在 Hugging Face 上搜索",
       "Only {free} free in the models folder.": "模型文件夹仅剩 {free} 可用空间。",

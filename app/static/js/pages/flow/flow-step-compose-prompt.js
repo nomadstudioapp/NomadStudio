@@ -34,15 +34,20 @@ function _getActiveComposePromptLabel() {
   return 'Default';
 }
 
-function _openComposePromptModal(onSelect) {
+// Side panel (never a modal) listing Default + the variants saved in Settings.
+function _openComposePromptPanel(onSelect) {
   _loadComposePrompts(function () {
-    var modal   = document.getElementById('ncf-compose-prompt-modal');
-    var listEl  = document.getElementById('ncf-compose-prompt-modal-list');
-    var closeEl = document.getElementById('ncf-compose-prompt-modal-close');
-    if (!modal || !listEl) return;
+    openOptionsPanel(tF('Prompt'), function (panelBody) {
+      var listEl = document.createElement('div');
+      listEl.className = 'nse-model-list';
+      listEl.setAttribute('role', 'listbox');
+      panelBody.appendChild(listEl);
+      _fillComposePromptList(listEl, onSelect);
+    });
+  });
+}
 
-    listEl.innerHTML = '';
-
+function _fillComposePromptList(listEl, onSelect) {
     // "Default" option
     var items = [{ id: '', label: 'Default', text: _composePromptState.baseText || _composePromptState.defaultText }]
       .concat(_composePromptState.variants);
@@ -57,7 +62,7 @@ function _openComposePromptModal(onSelect) {
 
       var nameEl = document.createElement('span');
       nameEl.className = 'nse-model-name';
-      nameEl.textContent = item.label;
+      nameEl.textContent = item.id ? item.label : tF(item.label);
       row.appendChild(nameEl);
 
       if (isActive) {
@@ -76,69 +81,50 @@ function _openComposePromptModal(onSelect) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ promptActiveVariants: { main: item.id } }),
         }).catch(function () {});
-        modal.hidden = true;
-        if (onSelect) onSelect(item.label, _getActiveComposePromptText());
+        closeOptionsPanel();
+        if (onSelect) onSelect(item.id ? item.label : tF(item.label), _getActiveComposePromptText());
       }
 
       row.addEventListener('click', select);
       row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
       listEl.appendChild(row);
     });
-
-    modal.hidden = false;
-
-    function closeModal() { modal.hidden = true; closeEl.removeEventListener('click', closeModal); modal.removeEventListener('click', backdropClose); }
-    function backdropClose(e) { if (e.target === modal) closeModal(); }
-    closeEl.addEventListener('click', closeModal);
-    modal.addEventListener('click', backdropClose);
-  });
 }
 
+// Settings' compose prompt ("Default" or a saved variant) is only a fallback:
+// flow-render-all.js sends the step's own system_prompts when it has them, so
+// on those steps the chip would change nothing — it isn't shown at all.
+// Same title-row pattern as Genre (flow-step-llm-transform.js).
 function renderComposePromptChip(stepDef, el) {
+  var sys = stepDef && stepDef.system_prompts;
+  if (sys && typeof sys === 'object' && Object.keys(sys).length) return;
+
   var chipBlock = document.createElement('div');
   chipBlock.className = 'nse-control-block';
+  chipBlock.innerHTML =
+    '<p class="nsc-param-title nsc-param-title--flex"><span class="ncf-compose-chip-title"></span> ' +
+    '<span class="nsc-param-value"></span>' +
+    '<button type="button" class="nsc-history-btn nsc-options-trigger"></button>' +
+    '</p>';
+  chipBlock.querySelector('.ncf-compose-chip-title').textContent = tF('Prompt');
+  var valueEl = chipBlock.querySelector('.nsc-param-value');
+  var btn = chipBlock.querySelector('.nsc-options-trigger');
+  btn.setAttribute('aria-label', tF('Choose prompt'));
+  btn.innerHTML =
+    '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
+      '<path d="M3 5h12M3 9h9M3 13h6"/>' +
+    '</svg>';
+  valueEl.textContent = '…';
 
-  var chipLabel = document.createElement('p');
-  chipLabel.className = 'nsc-param-title';
-  chipLabel.textContent = 'Prompt';
-  chipBlock.appendChild(chipLabel);
-
-  var chip = document.createElement('button');
-  chip.type = 'button';
-  chip.className = 'ncf-compose-prompt-chip';
-  chip.setAttribute('aria-haspopup', 'dialog');
-
-  var chipIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  chipIcon.setAttribute('viewBox', '0 0 16 16');
-  chipIcon.setAttribute('aria-hidden', 'true');
-  chipIcon.setAttribute('class', 'ncf-compose-chip-icon');
-  chipIcon.innerHTML = '<path d="M2 4h12M2 8h8M2 12h5"/>';
-  chip.appendChild(chipIcon);
-
-  var chipNameEl = document.createElement('span');
-  chipNameEl.className = 'ncf-compose-chip-name';
-  chipNameEl.textContent = '…';
-  chip.appendChild(chipNameEl);
-
-  var chipChevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  chipChevron.setAttribute('viewBox', '0 0 16 16');
-  chipChevron.setAttribute('aria-hidden', 'true');
-  chipChevron.setAttribute('class', 'nse-model-hint-chevron');
-  chipChevron.innerHTML = '<path d="M4 6l4 4 4-4"/>';
-  chip.appendChild(chipChevron);
-
-  // Load and set initial label
   _loadComposePrompts(function () {
-    chipNameEl.textContent = _getActiveComposePromptLabel();
+    var label = _getActiveComposePromptLabel();
+    valueEl.textContent = _composePromptState.activeId ? label : tF(label);
   });
 
-  chip.addEventListener('click', function () {
-    _openComposePromptModal(function (label) {
-      chipNameEl.textContent = label;
-    });
+  btn.addEventListener('click', function () {
+    _openComposePromptPanel(function (label) { valueEl.textContent = label; });
   });
 
-  chipBlock.appendChild(chip);
   el.appendChild(chipBlock);
 }
 

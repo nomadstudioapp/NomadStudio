@@ -447,7 +447,7 @@ function _addQueuedCard(idx, promptText) {
   header.className = 'nss-card-header';
   var numBadge = document.createElement('span');
   numBadge.className = 'nss-card-num';
-  numBadge.textContent = 'Scene ' + idx;
+  numBadge.textContent = resultCardLabel(idx);
   header.appendChild(numBadge);
   card.appendChild(header);
 
@@ -489,6 +489,14 @@ function _addQueuedCard(idx, promptText) {
 
 // Creates a placeholder card with a spinner and adds it to the feed.
 // Returns the card element so addToFeed can update it once the image is ready.
+// Result card badge: "Scene N" in the scene-telling flows (Story, Scenes,
+// Chat), "Image N" everywhere else (Simple's --r copies aren't scenes).
+function resultCardLabel(idx) {
+  var scenes = typeof flowId === 'string' && /\.(story|scenes|chat)/.test(flowId);
+  var text = scenes ? 'Scene {n}' : 'Image {n}';
+  return (typeof tF === 'function' ? tF(text) : text).replace('{n}', idx);
+}
+
 function addGeneratingCard(idx, promptText) {
   if (resultsEmpty) resultsEmpty.style.display = 'none';
   if (resultsGrid)  resultsGrid.style.display  = '';
@@ -502,7 +510,7 @@ function addGeneratingCard(idx, promptText) {
   header.className = 'nss-card-header';
   var numBadge = document.createElement('span');
   numBadge.className = 'nss-card-num';
-  numBadge.textContent = 'Scene ' + idx;
+  numBadge.textContent = resultCardLabel(idx);
   header.appendChild(numBadge);
   card.appendChild(header);
 

@@ -78,8 +78,8 @@ async def nomad_studio_create_image(
         "imagenes, hasta 4). IMPORTANTE: si el usuario escribe parametros con --, copialos "
         "LITERALMENTE al final de este 'prompt', exactamente como los escribio — no los quites, no "
         "los traduzcas y no los pases a otros argumentos (aspect_ratio, model, speed, steps...): se "
-        "interpretan aqui. Los de Midjourney sin equivalente (--stylize, --chaos...) se ignoran "
-        "avisando."))],
+        "interpretan aqui. Los de Midjourney sin equivalente (--stylize, --chaos...) se quitan "
+        "solos: no hace falta mencionarlos."))],
     ctx: Context,
     aspect_ratio: Annotated[str | None, Field(description=(
         "'landscape' (apaisado 3:2), 'portrait' (retrato 2:3), 'square' (cuadrado), 'wide' "
@@ -346,10 +346,8 @@ async def nomad_studio_create_image(
         _log(f"THUMBNAILS (disco local): {len(image_blocks)}, url={public_url}")
 
         links = "\n".join(f"- {name}: {_client.image_url(name, viewer_id=agent_slug)}" for name in filenames)
+        # Midjourney-only parameters (--stylize...) are dropped silently, as in the app.
         params_note = ""
-        if prompt_params.ignored:
-            params_note = ("\nParametros de Midjourney sin equivalente en Nomad Studio (no se han aplicado): "
-                           + ", ".join(f"--{n}" for n in prompt_params.ignored) + ".")
         if len(filenames) > 1:
             params_note += (f"\nSe han generado {len(filenames)} imagenes (--r); 'la imagen' en lo siguiente "
                             f"es la ultima, {filename}, salvo que el usuario elija otra por su nombre.")

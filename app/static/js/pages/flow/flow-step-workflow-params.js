@@ -2310,6 +2310,7 @@ function renderParamGroup(stepDef, el, stepNum) {
       if (ch) ch.value = dRes ? dRes.h : '';
     }
   }
+
   // Which preset, if any, has the ratio of these dimensions. The key carries
   // it exactly ('r16x9'), so no guessing from the stored pixel pairs — those
   // are rounded to multiples of 8 and drift a little from the true ratio.
@@ -2392,6 +2393,39 @@ function renderParamGroup(stepDef, el, stepNum) {
     });
   });
   setResolutionTier(_sp.resolution || 'md');
+
+  // "--ar 16:9" in the prompt (flow-prompt-params.js) sets Aspect ratio as if
+  // picked here: a listed ratio selects its preset; any other (2.39:1) becomes
+  // a custom size with the chosen tier's pixels. Generation applies the same
+  // --ar anyway (workflow_service._apply_prompt_params) — this keeps the
+  // picker telling the truth.
+  var _appliedPromptAspect = null;
+  function _applyPromptAspect(aspect) {
+    if (!aspect || aspect === _appliedPromptAspect || typeof NcfPromptParams === 'undefined') return;
+    _appliedPromptAspect = aspect;
+    var m = /^(\d+):(\d+)$/.exec(aspect);
+    if (!m) return;
+    var key = 'r' + m[1] + 'x' + m[2];
+    var idx = ASPECT_PRESETS.findIndex(function (p) { return p.key === key; });
+    if (idx >= 0) {
+      customResDims = null;
+      setAspect(idx);
+      return;
+    }
+    var size = NcfPromptParams.sizeFor(aspect, getDims());
+    if (!size) return;
+    customResDims = size;
+    syncAspectToCustomDims();
+    if (aspectLabelEl && aspectIdxForDims(size.w, size.h) < 0) aspectLabelEl.textContent = aspect;
+    updateResLabels();
+    saveParams();
+  }
+  document.addEventListener('ncf-prompt-params', function (e) {
+    var aspect = ((e.detail && e.detail.params) || {}).aspect || null;
+    if (!aspect) { _appliedPromptAspect = null; return; }
+    _applyPromptAspect(aspect);
+  });
+  if (typeof NcfPromptParams !== 'undefined') _applyPromptAspect(NcfPromptParams.last().aspect);
 
   // Custom resolution (Custom mode only) — type your own width/height instead
   // of picking SD/MD/HD.

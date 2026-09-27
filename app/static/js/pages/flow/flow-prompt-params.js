@@ -70,13 +70,33 @@ var NcfPromptParams = (function () {
       _t('In the app, choose Fast / Balanced / Max under Quality — --q is not applied here yet.')));
     if (p.quantization) wrap.appendChild(_pill('note', _fill('Quantization: {v}', p.quantization),
       _t('In the app, choose it in Advanced — --quant is not applied here yet.')));
-    (p.ignored || []).forEach(function (name) {
-      wrap.appendChild(_pill('off', '--' + name, _t('Midjourney-only parameter: it has no equivalent here and is ignored.')));
-    });
+    // Midjourney-only ones (--stylize, --chaos…) are dropped silently: no pill.
     Object.keys(p.invalid || {}).forEach(function (name) {
-      wrap.appendChild(_pill('bad', '--' + name, _t('This value can\'t be used: it is ignored.')));
+      wrap.appendChild(_pill('bad', _fill('{v} · wrong value', '--' + name),
+        _t('This value can\'t be used: it is ignored.')));
     });
     wrap.hidden = !wrap.childNodes.length;
+    _announce(p);
+  }
+
+  // Other controls (Aspect ratio / Resolution, flow-step-workflow-params.js)
+  // show what the prompt overrides.
+  var _last = {};
+  function _announce(params) {
+    _last = params || {};
+    document.dispatchEvent(new CustomEvent('ncf-prompt-params', { detail: { params: params || {} } }));
+  }
+
+  // Same sizing as the backend (prompt_params.size_for_aspect, multiples of
+  // 16 in the app): ratio "16:9" at the pixel count of `dims`.
+  function sizeFor(aspect, dims) {
+    var m = /^(\d+):(\d+)$/.exec(String(aspect || ''));
+    if (!m) return null;
+    var rw = +m[1], rh = +m[2];
+    var area = dims && dims.w > 0 && dims.h > 0 ? dims.w * dims.h : 1024 * 1024;
+    var width = Math.sqrt(area * rw / rh);
+    var height = width * rh / rw;
+    return { w: Math.max(16, Math.round(width / 16) * 16), h: Math.max(16, Math.round(height / 16) * 16) };
   }
 
   // Pills right under `ta`, kept in sync as the user types.
@@ -90,7 +110,7 @@ var NcfPromptParams = (function () {
     var seq = 0;
     function refresh() {
       var text = ta.value;
-      if (!has(text)) { wrap.innerHTML = ''; wrap.hidden = true; return; }
+      if (!has(text)) { wrap.innerHTML = ''; wrap.hidden = true; _announce(null); return; }
       var mine = ++seq;
       parse(text).then(function (res) {
         if (mine !== seq) return;
@@ -104,5 +124,6 @@ var NcfPromptParams = (function () {
     return { refresh: refresh };
   }
 
-  return { has: has, split: split, repeatCount: repeatCount, attach: attach };
+  return { has: has, split: split, repeatCount: repeatCount, attach: attach, sizeFor: sizeFor,
+           last: function () { return _last; } };
 })();

@@ -304,7 +304,7 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   // Update header badge label and add open-in-new-tab button
   var header = card.querySelector('.nss-card-header');
   var numBadge = header.querySelector('.nss-card-num');
-  if (numBadge) numBadge.textContent = 'Scene ' + idx;
+  if (numBadge) numBadge.textContent = resultCardLabel(idx);
   var openBtn = document.createElement('button');
   openBtn.type = 'button';
   openBtn.id = 'nss-card-open-btn-' + idx;
@@ -331,7 +331,7 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   imgWrap.innerHTML = '';
   imgWrap.style.cursor = 'pointer';
   var img = document.createElement('img');
-  img.src = imgUrl; img.alt = 'Scene ' + idx; img.loading = 'lazy';
+  img.src = imgUrl; img.alt = resultCardLabel(idx); img.loading = 'lazy';
   imgWrap.appendChild(img);
 
   // Favorite/diamond — same functionality (and same server sidecar via

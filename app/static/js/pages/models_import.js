@@ -571,6 +571,7 @@
             name: safeName,
             workflow: fullImport.workflow,
             comfyApiUrl: safeComfyUri,
+            resetValues: true,
           });
 
           // Ensure Studio sidebar uses fresh defaults immediately for this import.
@@ -1402,7 +1403,7 @@
       }
       if (editingImportId) {
         const targetImportId = editingImportId;
-        await window.openJourneyApi.updateImport(editingImportId, {
+        const updated = await window.openJourneyApi.updateImport(editingImportId, {
           name: nameInput.value.trim() || 'Imported Workflow',
           slug: slugInput ? slugInput.value.trim() : undefined,
           workflow: rawWorkflow,
@@ -1413,9 +1414,10 @@
           loras: editableLoras,
         });
 
-        // Reimport/update should reflect the new workflow defaults in Studio.
-        // Clear per-import cached advanced overrides so stale local values do not win.
-        try {
+        // A new workflow brings new defaults to Studio: clear the per-import
+        // cached advanced overrides so stale local values do not win. Saving
+        // only the name/identifier keeps them.
+        if (updated && updated.valuesReset !== false) try {
           const cacheKey = 'openjourney_model_advanced_cache_v1';
           const rawCache = localStorage.getItem(cacheKey);
           if (rawCache) {

@@ -849,19 +849,26 @@ def update_import(import_id: str):
                 record.pop("slugAuto", None)
                 import_slugs.assign(record, imports_list)
 
+        # Saving only the name/identifier/URL must not wipe the engine's
+        # remembered values: they go back to the workflow's defaults only when
+        # the workflow itself changed or the caller asks for it (Reset values).
+        reset_values = bool(payload.get("resetValues")) or record.get("workflow") != workflow
+
         record["name"] = name
         record["comfyApiUrl"] = import_comfy_api_url
         record["workflow"] = workflow
         record["analysis"] = analysis
-        record["basicValues"] = analysis.get("basicValues", {})
-        record["advancedValues"] = {
-            item["key"]: item["value"]
-            for item in analysis.get("advancedParameters", [])
-            if not bool(item.get("isLinked"))
-        }
+        if reset_values or not isinstance(record.get("basicValues"), dict):
+            record["basicValues"] = analysis.get("basicValues", {})
+        if reset_values or not isinstance(record.get("advancedValues"), dict):
+            record["advancedValues"] = {
+                item["key"]: item["value"]
+                for item in analysis.get("advancedParameters", [])
+                if not bool(item.get("isLinked"))
+            }
         if not isinstance(record.get("annotation"), dict):
             record["annotation"] = _build_default_annotation(record)
-    return jsonify({"import": record})
+    return jsonify({"import": record, "valuesReset": reset_values})
 
 
 @models_api_bp.get("/models/imports/<import_id>/annotations")

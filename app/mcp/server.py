@@ -14,7 +14,9 @@ import base64
 import json
 import secrets
 import sys
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import Field
 
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.types import ImageContent, TextContent
@@ -52,7 +54,10 @@ _client = NomadClient()
     description=(
         "Genera una imagen 100% local con Nomad Studio (ComfyUI en tu propio PC, sin API "
         "keys ni cuenta). Usa esto cuando el usuario pida crear, generar o dibujar una imagen, "
-        "ilustracion o foto. El prompt debe describirse en ingles cuando sea posible."
+        "ilustracion o foto. El prompt debe describirse en ingles cuando sea posible. Si el "
+        "usuario escribe parametros estilo Midjourney (--ar 16:9, --v monaco, --q max, --no text, "
+        "--seed 1...), copialos LITERALMENTE al final de 'prompt' y no rellenes con ellos los "
+        "demas argumentos: la tool los interpreta."
     ),
     # Sin structured_output=False, FastMCP genera un outputSchema a partir de la
     # anotacion de retorno y adjunta structuredContent (el base64 duplicado como
@@ -60,74 +65,61 @@ _client = NomadClient()
     # de imagen. La tool debe ser "unstructured" para que la imagen se muestre.
     structured_output=False,
 )
+# Cada argumento lleva su descripcion en Field(description=...): es lo unico
+# que llega al cliente. Con description= en @mcp.tool, un bloque "Args:" en el
+# docstring NO se publica — ningun modelo lo veia.
 async def nomad_studio_create_image(
-    prompt: str,
+    prompt: Annotated[str, Field(description=(
+        "Descripcion de la imagen a generar, en ingles preferiblemente. Puede terminar con "
+        "parametros estilo Midjourney, que se interpretan aqui y mandan sobre los demas "
+        "argumentos: --ar 16:9 (cualquier proporcion), --no people, text (se suma al negativo por "
+        "defecto), --seed 1234, --v <modelo> (ej. --v krea), --anime (el modelo de anime "
+        "instalado), --q fast|balanced|max (o --draft), --steps 20, --quant int8, --r 2 (varias "
+        "imagenes, hasta 4). IMPORTANTE: si el usuario escribe parametros con --, copialos "
+        "LITERALMENTE al final de este 'prompt', exactamente como los escribio — no los quites, no "
+        "los traduzcas y no los pases a otros argumentos (aspect_ratio, model, speed, steps...): se "
+        "interpretan aqui. Los de Midjourney sin equivalente (--stylize, --chaos...) se ignoran "
+        "avisando."))],
     ctx: Context,
-    aspect_ratio: str | None = None,
-    speed: str | None = None,
-    model: str | None = None,
-    quantization: str | None = None,
-    steps: int | None = None,
-    width: int | None = None,
-    height: int | None = None,
-    negative: str | None = None,
-    seed: int | None = None,
+    aspect_ratio: Annotated[str | None, Field(description=(
+        "'landscape' (apaisado 3:2), 'portrait' (retrato 2:3), 'square' (cuadrado), 'wide' "
+        "(panoramico 16:9, tipo pantalla/YouTube/cabecera) o 'tall' (vertical 9:16, tipo "
+        "movil/stories/reels). Si el usuario ya lo indico con palabras (ej. 'para el movil'), "
+        "traducelo a uno de esos valores. Si no lo indico, dejalo vacio: se reutilizara su "
+        "eleccion anterior de esta conversacion, o la tool te pedira que se lo preguntes. "
+        "Ignorado si se pasan 'width'/'height'."))] = None,
+    speed: Annotated[str | None, Field(description=(
+        "'fast' (superrapida), 'balanced' (rapida) o 'max' (maxima calidad). Si el usuario ya lo "
+        "indico, traducelo a uno de esos tres valores. Si no, dejalo vacio: se reutilizara su "
+        "eleccion anterior de esta conversacion, o la tool te pedira que se lo preguntes."))] = None,
+    model: Annotated[str | None, Field(description=(
+        "Nombre (o parte reconocible) del modelo a usar, tal y como lo tenga el usuario en Nomad "
+        "Studio (ej. 'Krea 2', 'Ideogram 4', 'Flux Klein'). Si el usuario no dijo ninguno, dejalo "
+        "vacio: se reutilizara su eleccion anterior de esta conversacion, o la tool te pedira que "
+        "le preguntes listando los modelos reales. Con un solo modelo instalado se usa sin "
+        "preguntar."))] = None,
+    quantization: Annotated[str | None, Field(description=(
+        "Id exacto de una cuantizacion del modelo elegido (ej. 'fp8', 'int8', 'bf16', 'w4a8') — "
+        "SOLO si el usuario pide una concreta o pregunta que opciones hay. Vacio = se elige sola "
+        "segun 'speed'. Si el id no existe para ese modelo, la tool devuelve sus opciones reales "
+        "sin generar nada, para que se las ensenes al usuario."))] = None,
+    steps: Annotated[int | None, Field(description=(
+        "Pasos del sampler, SOLO si el usuario da un numero explicito (ej. 'usa 8 steps'). Nunca "
+        "lo inventes para subir la calidad: para eso esta 'speed'. Vacio = el valor del propio "
+        "modelo (lo normal)."))] = None,
+    width: Annotated[int | None, Field(description=(
+        "Ancho exacto en pixeles — SOLO si el usuario pide una resolucion concreta (ej. "
+        "'1024x768'). Va junto con 'height' (los dos o ninguno). Se redondea al multiplo de 64."))] = None,
+    height: Annotated[int | None, Field(description="Alto exacto en pixeles — ver 'width'.")] = None,
+    negative: Annotated[str | None, Field(description=(
+        "Lo que NO debe aparecer, en ingles (ej. 'text, watermark, people') — SOLO si el usuario "
+        "lo pide ('sin gente', 'que no salga texto'). Vacio = el negativo por defecto del modelo. "
+        "Si lo pasas, sustituye a ese por defecto."))] = None,
+    seed: Annotated[int | None, Field(description=(
+        "Semilla exacta, SOLO para repetir o variar una imagen anterior (cada respuesta dice la "
+        "semilla usada). Mismo prompt + semilla + modelo + tamano = la misma imagen. Vacio = "
+        "aleatoria (lo normal)."))] = None,
 ) -> list[TextContent | ImageContent]:
-    """
-    Args:
-        prompt: Descripcion de la imagen a generar, en ingles preferiblemente. Puede terminar
-            con parametros estilo Midjourney, que se interpretan aqui y mandan sobre los demas
-            argumentos: --ar 16:9 (cualquier proporcion), --no people, text (se suma al
-            negativo por defecto), --seed 1234, --v <modelo> (ej. --v krea), --anime (el modelo
-            de anime instalado), --q fast|balanced|max
-            (o --draft), --steps 20, --quant int8, --r 2 (varias imagenes, hasta 4). IMPORTANTE:
-            si el usuario escribe parametros con --, copialos LITERALMENTE al final de este
-            'prompt', exactamente como los escribio — no los quites, no los traduzcas y no los
-            pases a otros argumentos (aspect_ratio, model, speed...): se interpretan aqui. Los de
-            Midjourney sin equivalente (--stylize, --chaos...) se ignoran avisando.
-        aspect_ratio: 'landscape' (apaisado 3:2), 'portrait' (retrato 2:3), 'square'
-            (cuadrado), 'wide' (panoramico 16:9, tipo pantalla/YouTube/cabecera) o 'tall'
-            (vertical 9:16, tipo movil/stories/reels). Si el usuario ya lo indico (aunque sea
-            con otras palabras, ej. "16:9", "para el movil"), traducelo a uno de esos valores. Si no lo indico, deja el campo vacio: se
-            reutilizara su eleccion anterior de esta conversacion, o la tool te pedira que
-            se lo preguntes en el chat antes de generar. Ignorado si se pasan 'width'/'height'
-            explicitos.
-        speed: 'fast' (superrapida), 'balanced' (rapida) o 'max' (normal/maxima calidad).
-            Si el usuario ya lo indico, traducelo a uno de esos tres valores. Si no lo indico,
-            deja el campo vacio: se reutilizara su eleccion anterior de esta conversacion, o
-            la tool te pedira que se lo preguntes en el chat antes de generar.
-        model: Nombre (o parte reconocible del nombre) del modelo/checkpoint a usar, tal y
-            como lo tenga importado el usuario en Nomad Studio (ej. "Krea 2", "Ideogram 4",
-            "Flux Klein"). Si el usuario no especifico ninguno y hay mas de un modelo
-            disponible, deja el campo vacio: se reutilizara su eleccion anterior de esta
-            conversacion, o la tool te pedira que preguntes al usuario en el chat, listando
-            los modelos reales disponibles. Si solo hay un modelo importado, se usa sin preguntar.
-        quantization: Id exacto de una cuantizacion concreta del modelo elegido (ej. "fp8",
-            "int8", "bf16", "w4a8") — SOLO si el usuario pide explicitamente una cuantizacion
-            concreta o pregunta que opciones hay. A diferencia de aspect_ratio/speed/model,
-            esto NUNCA bloquea la generacion: si se deja vacio, se sigue eligiendo automaticamente
-            segun 'speed' como hasta ahora. Cada modelo tiene sus propias opciones (no todas
-            existen en todos los modelos) — si pides un id que no existe para el modelo elegido,
-            la tool te devolvera la lista real de opciones de ese modelo con una explicacion de
-            calidad/velocidad de cada una, sin generar nada, para que se lo reenvies al usuario.
-        steps: Numero de pasos de sampler, SOLO si el usuario lo pide explicitamente (ej. "usa
-            8 steps"). Si se deja vacio, se usa el valor por defecto del propio workflow/modelo
-            (normal — la mayoria de usuarios nunca necesita tocar esto).
-        width: Ancho exacto en pixeles — SOLO si el usuario pide una resolucion concreta (ej.
-            "1024x768"), no una de las tres orientaciones estandar. Tiene que darse junto con
-            'height' (los dos o ninguno) — si solo se da uno de los dos, se ignoran ambos y se
-            usa 'aspect_ratio' en su lugar. Se redondea al multiplo de 64 mas cercano.
-        height: Alto exacto en pixeles — ver 'width'.
-        negative: Lo que NO debe aparecer en la imagen, en ingles (ej. "text, watermark,
-            people") — SOLO si el usuario lo pide ("sin gente", "que no salga texto"). Si se
-            deja vacio se usa el negativo por defecto del modelo, que ya evita marcas de agua,
-            deformidades, etc. Si lo pasas, sustituye a ese por defecto: incluye tambien lo
-            generico que convenga conservar.
-        seed: Semilla exacta, SOLO para repetir o variar una imagen anterior: cada respuesta
-            de esta tool dice la semilla usada. Mismo prompt + misma semilla + mismo modelo y
-            tamano = la misma imagen; cambiando solo el prompt se obtiene una variacion cercana.
-            Si se deja vacio, semilla aleatoria (lo normal).
-    """
     agent_name = "unknown"
     agent_slug = "unknown"
     agent_id = "unknown"
@@ -488,56 +480,40 @@ _OUTPAINT_POSITIONS = {
 
 
 async def _nomad_studio_refine_image_impl(
-    action: str,
+    action: Annotated[str, Field(description=(
+        "Que retoque aplicar: el id exacto de un flow de Refine de Nomad Studio (ej. "
+        "'refine.pf_relight', 'refine.remove_bg_simple', 'refine.outpaint'). Si no sabes que ids "
+        "hay, llama primero a nomad_studio_list_refine_actions (lista completa, con descripcion y "
+        "categoria). Con un id invalido, esta tool devuelve esa lista en el error."))],
     ctx: Context,
-    filename: str | None = None,
-    instruction: str | None = None,
-    position: str | None = None,
-    scale: int | None = None,
-    expand_percent: int | None = None,
-    regions: list[MarkedRegion] | None = None,
+    filename: Annotated[str | None, Field(description=(
+        "Fichero de la imagen a editar, tal y como aparecio en una respuesta anterior de esta "
+        "conversacion (create_image o esta tool). Si el usuario dice 'la imagen'/'esta foto' sin "
+        "mas, dejalo vacio: se usa la ultima imagen generada en esta conversacion."))] = None,
+    instruction: Annotated[str | None, Field(description=(
+        "Detalle en ingles sobre COMO aplicar la accion (ej. relight: 'backlit rim light'; quitar "
+        "un objeto: 'the red car'). Sin detalle del usuario, dejalo vacio: se usa un valor por "
+        "defecto razonable. En las acciones con 'regions' es obligatorio y nombra cada zona por su "
+        "color ('the red rectangle')."))] = None,
+    position: Annotated[str | None, Field(description=(
+        "SOLO para action='refine.outpaint'. Donde queda la imagen ORIGINAL en el lienzo nuevo: "
+        "center, top, bottom, left, right, top-left, top-right, bottom-left o bottom-right. "
+        "'bajala un poco' -> bottom (se rellena arriba); 'muevela a la izquierda' -> left (se "
+        "rellena a la derecha). Vacio = center."))] = None,
+    scale: Annotated[int | None, Field(description=(
+        "SOLO para outpaint. 10-100: que porcentaje del lienzo nuevo ocupa la imagen original "
+        "(100 = sin encoger). 'Reducela antes de expandir' -> 70-80. Vacio = 100."))] = None,
+    expand_percent: Annotated[int | None, Field(description=(
+        "SOLO para outpaint. Cuanto crece el lienzo, en % (40 = un 40% mas grande). Vacio = 40."))] = None,
+    regions: Annotated[list[MarkedRegion] | None, Field(description=(
+        "SOLO para las acciones marcadas [NEEDS 'regions'] en nomad_studio_list_refine_actions "
+        "(Local Edit, Text Editor...), y ahi es obligatorio: las zonas a editar, que se marcan "
+        "sobre la imagen con un contorno de color. Una entrada por zona, en % del lienzo "
+        "(left/top/right/bottom de 0 a 100; la mitad superior = 0, 0, 100, 50) y un color distinto "
+        "por zona (red, green, blue, yellow, purple, orange). La 'instruction' las nombra por su "
+        "color: 'Replace the text inside the red rectangle with \"SALE\"'. Si no sabes donde "
+        "esta algo, preguntaselo al usuario."))] = None,
 ) -> list[TextContent | ImageContent]:
-    """
-    Args:
-        action: Que tipo de retoque aplicar — el id exacto de un flow de Refine de Nomad
-            Studio (ej. "refine.pf_relight", "refine.remove_bg_simple", "refine.outpaint").
-            Si no sabes que ids hay disponibles para esta conversacion, llama primero a
-            nomad_studio_list_refine_actions: devuelve la lista completa con una descripcion
-            de cada uno, agrupada por categoria. Si pasas un id invalido, esta misma tool
-            devuelve esa lista igualmente en el mensaje de error.
-        filename: Nombre del fichero de la imagen a editar, tal y como aparecio en una
-            respuesta anterior de esta conversacion (nomad_studio_create_image o esta misma
-            tool). Si el usuario se refiere a "la imagen"/"esta foto" sin mas, deja el campo
-            vacio: se usara automaticamente la ultima imagen generada en esta conversacion.
-        instruction: Detalle adicional en ingles sobre COMO aplicar la accion (ej. para
-            'relight': "backlit rim light"; para 'remove_object': el objeto a quitar, ej.
-            "the red car"). Si el usuario no da detalle, deja el campo vacio: se usara un
-            valor por defecto razonable para esa accion.
-        position: SOLO para action='outpaint'. Donde queda la imagen ORIGINAL dentro del
-            lienzo nuevo, mas grande — uno de: center, top, bottom, left, right, top-left,
-            top-right, bottom-left, bottom-right. Traduce la frase del usuario: "bajala un
-            poco"/"muevela abajo" -> "bottom" (el hueco nuevo se rellena arriba); "muevela a
-            la izquierda" -> "left" (el hueco nuevo se rellena a la derecha); etc. Si no lo
-            menciona, deja vacio (default "center", expande por todos los lados por igual).
-        scale: SOLO para action='outpaint'. 10-100, que porcentaje del lienzo nuevo ocupa la
-            imagen original (100 = a tamano completo, sin encoger). Si el usuario pide
-            "reducela"/"hazla mas pequena" antes de expandir el lienzo, baja este valor (ej.
-            70-80) para dejar mas borde alrededor a rellenar. Si no lo menciona, deja vacio
-            (default 100).
-        expand_percent: SOLO para action='outpaint'. Cuanto crece el lienzo respecto al
-            tamano original de la imagen, en porcentaje (ej. 40 = el lienzo nuevo es un 40%
-            mas grande). Si el usuario pide una extension grande, sube este valor; si no dice
-            nada, deja vacio (default 40).
-        regions: SOLO para las acciones marcadas [NEEDS 'regions'] en
-            nomad_studio_list_refine_actions (Local Edit, Text Editor...): esas acciones editan
-            zonas concretas que se marcan sobre la imagen con un contorno de color, y son
-            obligatorias. Una entrada por zona, en porcentaje del lienzo: left/top/right/bottom
-            de 0 a 100 (ej. la mitad superior entera = left 0, top 0, right 100, bottom 50), y
-            un color distinto por zona (red, green, blue, yellow, purple, orange). La
-            'instruction' tiene que nombrar cada zona por su color, en ingles: "Replace the text
-            inside the red rectangle with \"SALE\"", "Remove the object in the blue circle".
-            Si no sabes donde esta algo en la imagen, preguntaselo al usuario antes de llamar.
-    """
     agent_name = "unknown"
     agent_slug = "unknown"
     debug: dict[str, Any] = {

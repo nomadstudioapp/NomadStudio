@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 
 from app.mcp.client_capabilities import try_elicit
 from app.mcp.config import ASPECT_RATIO_ALIASES, ASPECT_RATIO_DIMENSIONS, SPEED_TO_QUANTIZATIONS
+from app.services import import_slugs
 
 if TYPE_CHECKING:
     from app.mcp.nomad_client import NomadClient
@@ -97,18 +98,9 @@ async def resolve_model(model: str | None, client: "NomadClient", ctx) -> dict[s
     by_id = {str(imp.get("id", "")): imp for imp in imports if isinstance(imp, dict)}
 
     if model:
-        # Normaliza guiones/guiones bajos a espacios antes de comparar — sin
-        # esto, "Z Image Turbo" (como lo escribe un usuario o un LLM al
-        # transcribir el nombre) no hace match contra el nombre real
-        # "Z-Image Turbo" por una simple diferencia de puntuacion.
-        def _normalize(text: str) -> str:
-            return " ".join(str(text).lower().replace("-", " ").replace("_", " ").split())
-
-        needle = _normalize(model)
-        match = next(
-            (imp for imp in imports if isinstance(imp, dict) and needle in _normalize(imp.get("name", ""))),
-            None,
-        )
+        # Identificador exacto ("monaco"), nombre exacto o trozo del nombre
+        # (guiones = espacios): la misma busqueda que la app, import_slugs.find.
+        match, _candidates = import_slugs.find(imports, model)
         if match:
             _session_model_id = str(match.get("id", ""))
             return await client.get_import(_session_model_id)
@@ -134,11 +126,7 @@ async def resolve_model(model: str | None, client: "NomadClient", ctx) -> dict[s
     if result is None or result.action != "accept" or not result.data:
         return None
 
-    needle = result.data.model.strip().lower()
-    match = next(
-        (imp for imp in imports if isinstance(imp, dict) and needle in str(imp.get("name", "")).lower()),
-        None,
-    )
+    match, _candidates = import_slugs.find(imports, result.data.model)
     if match is None:
         return None
     _session_model_id = str(match.get("id", ""))

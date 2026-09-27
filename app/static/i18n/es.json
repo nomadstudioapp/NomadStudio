@@ -630,6 +630,7 @@
       "{v} · wrong value": "{v} · valor no válido",
       "Quality: {v}": "Calidad: {v}",
       "Engine not installed: {v}": "Motor no instalado: {v}",
+      "Also matches: {v}": "También encaja con: {v}",
       "Model version — one is enough": "Versión del modelo — basta con una",
       "No download address for this file — search for it on Hugging Face": "Este archivo no tiene dirección de descarga — búscalo en Hugging Face",
       "Only {free} free in the models folder.": "Solo quedan {free} libres en la carpeta de modelos.",
@@ -1225,5 +1226,13 @@
   },
   "depot": {
     "badgeTip": "Depot activo: todo lo que generes se guarda aquí. Abre Build en una pestaña nueva."
+  },
+  "models": {
+    "import": {
+      "slugLabel": "Identificador del workflow",
+      "slugHint": "Elige este motor desde el prompt con --v y esta palabra. Minúsculas, números y guiones.",
+      "slugInvalid": "Usa minúsculas, números y guiones (hasta 32).",
+      "slugTaken": "Ya lo usa {name}."
+    }
   }
 }

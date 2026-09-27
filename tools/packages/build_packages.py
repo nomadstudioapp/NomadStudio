@@ -110,6 +110,14 @@ ENGINES_OPTIONAL = {
     }),
 }
 
+# Workflow identifier each engine brings ("--v monaco" in a prompt,
+# NomadStudio#27; app/services/import_slugs.py). Short, stable, unique —
+# changing one breaks the prompts people saved with it.
+ENGINE_SLUGS = {
+    "krea-2-turbo": "krea", "z-image-turbo": "zimage", "flux-klein": "klein", "ideogram-4": "ideogram",
+    "z-anime": "anime", "krea2-monaco": "monaco", "krea2-roma": "roma", "qwen-image": "qwen",
+}
+
 # Downloads the source workflows do not declare (vault: "Modelos - Descargas").
 EXTRA_DOWNLOADS = {
     "Z Anime": [
@@ -1852,6 +1860,7 @@ def build_qwen_image_21_engine(version: str) -> Path:
     engine = {
         "category": "image",
         "name": "Qwen Image 2.1",
+        "slug": ENGINE_SLUGS["qwen-image"],
         "workflow": workflow,
         "analysis": analysis,
         "basicValues": analysis.get("basicValues", {}),
@@ -1882,7 +1891,7 @@ def build_qwen_image_21_engine(version: str) -> Path:
 
 def build_engine(source: Path, version: str, name: str, catalog: dict = ENGINES, dest: Path = DIST) -> Path:
     slug, summary = catalog[name]
-    engine = engine_from_registry(source, name)
+    engine = {**engine_from_registry(source, name), "slug": ENGINE_SLUGS[slug]}
     pkg_id = f"nomad.engine.{slug}"
     file_rel = f"engines/{slug.replace('-', '_')}.json"
     manifest = {

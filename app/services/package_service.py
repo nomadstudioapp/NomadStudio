@@ -38,6 +38,8 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from app.services import import_slugs
+
 SCHEMA_VERSION = 1
 ID_RE = re.compile(r"^[a-z0-9]+(\.[a-z0-9-]+)+$")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$")
@@ -1010,6 +1012,11 @@ def apply_to_registry(data: dict[str, Any], data_dir: Path, result: dict[str, An
             "package": pkg_id,
             "packageVersion": manifest["version"],
         }
+        # Workflow identifier for "--v <slug>" (import_slugs): the package's
+        # own, unless the user typed one on the previous install.
+        if previous and previous.get("slug"):
+            record["slug"], record["slugAuto"] = previous["slug"], bool(previous.get("slugAuto"))
+        import_slugs.assign(record, [r for r in imports if r is not previous], wanted=engine.get("slug"))
         if previous:
             # An update keeps what the user tuned on this engine — except
             # model-file references (_is_model_file_key), where the new

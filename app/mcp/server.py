@@ -93,8 +93,9 @@ async def nomad_studio_create_image(
         "indico, traducelo a uno de esos tres valores. Si no, dejalo vacio: se reutilizara su "
         "eleccion anterior de esta conversacion, o la tool te pedira que se lo preguntes."))] = None,
     model: Annotated[str | None, Field(description=(
-        "Nombre (o parte reconocible) del modelo a usar, tal y como lo tenga el usuario en Nomad "
-        "Studio (ej. 'Krea 2', 'Ideogram 4', 'Flux Klein'). Si el usuario no dijo ninguno, dejalo "
+        "Identificador del modelo (el de '--v', ej. 'monaco', 'qwen', 'ideogram': lo lista "
+        "nomad_studio_list_models) o su nombre / parte reconocible del nombre, tal y como lo tenga el "
+        "usuario en Nomad Studio. Si el usuario no dijo ninguno, dejalo "
         "vacio: se reutilizara su eleccion anterior de esta conversacion, o la tool te pedira que "
         "le preguntes listando los modelos reales. Con un solo modelo instalado se usa sin "
         "preguntar."))] = None,
@@ -429,7 +430,8 @@ async def nomad_studio_list_models(ctx: Context) -> list[TextContent]:
             )
         ]
 
-    lines = ["Modelos disponibles en Nomad Studio:\n"]
+    lines = ["Modelos disponibles en Nomad Studio (entre parentesis, su identificador para '--v' en el "
+             "prompt o para el argumento 'model'):\n"]
     for imp in imports:
         name = str(imp.get("name", "") or imp.get("id", ""))
         try:
@@ -438,7 +440,8 @@ async def nomad_studio_list_models(ctx: Context) -> list[TextContent]:
             record = {}
         quant_block = (record.get("analysis") or {}).get("quantization")
         options = (quant_block or {}).get("options") or []
-        lines.append(f"## {name}")
+        slug = str(imp.get("slug") or "")
+        lines.append(f"## {name}" + (f"  (--v {slug})" if slug else ""))
         lines.append(describe_quantization_options(options))
         lines.append("")
 

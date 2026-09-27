@@ -85,6 +85,11 @@
               <input type="text" id="import-name" placeholder="z-image turbo" />
             </label>
             <label>
+              <span data-i18n="models.import.slugLabel">Workflow identifier</span>
+              <input type="text" id="import-slug" placeholder="monaco" maxlength="32" autocomplete="off" spellcheck="false" />
+              <span class="muted-note import-slug-hint" id="import-slug-hint" data-i18n="models.import.slugHint">Pick this engine from a prompt with --v and this word. Lowercase letters, numbers and dashes.</span>
+            </label>
+            <label>
               Workflow JSON
               <input type="file" id="workflow-file" class="hidden-file-input" accept=".json,application/json" />
             </label>

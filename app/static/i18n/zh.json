@@ -629,6 +629,7 @@
       "{v} · wrong value": "{v} · 值无效",
       "Quality: {v}": "画质：{v}",
       "Engine not installed: {v}": "未安装的引擎：{v}",
+      "Also matches: {v}": "也匹配：{v}",
       "Model version — one is enough": "模型版本——一个即可",
       "No download address for this file — search for it on Hugging Face": "此文件没有下载地址——请在 Hugging Face 上搜索",
       "Only {free} free in the models folder.": "模型文件夹仅剩 {free} 可用空间。",
@@ -1224,5 +1225,13 @@
   },
   "depot": {
     "badgeTip": "当前 Depot——你生成的所有内容都会保存到这里。在新标签页中打开 Build。"
+  },
+  "models": {
+    "import": {
+      "slugLabel": "工作流标识符",
+      "slugHint": "在提示词中用 --v 加这个词即可选择此引擎。仅限小写字母、数字和连字符。",
+      "slugInvalid": "请使用小写字母、数字和连字符（最多 32 个）。",
+      "slugTaken": "已被 {name} 使用。"
+    }
   }
 }

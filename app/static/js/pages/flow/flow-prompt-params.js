@@ -58,16 +58,29 @@ var NcfPromptParams = (function () {
 
   var _SPEED_LABELS = { fast: 'Fast', balanced: 'Balanced', max: 'Max' };
 
-  // Installed engine for "--v monaco" / "--anime": same rule as the MCP
-  // (app/mcp/preferences.resolve_model) — a piece of the name, case and
-  // "-"/"_" ignored; the first match in the engine list wins. undefined =
-  // the engine list isn't loaded yet (can't tell), null = not installed.
+  // Installed engine for "--v monaco" / "--anime" — same order as the backend
+  // and the MCP (app/services/import_slugs.find): its workflow identifier
+  // (Edit Import), then its exact name, then a piece of the name ("-"/"_" as
+  // spaces; the first of several wins). undefined = the engine list isn't
+  // loaded yet (can't tell), null = not installed.
+  function _norm(s) { return String(s || '').toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function engineCandidates(name) {
+    if (!name || typeof allImportsList === 'undefined' || !Array.isArray(allImportsList)) return [];
+    var ref = String(name).trim().toLowerCase();
+    var bySlug = allImportsList.filter(function (imp) { return imp && imp.slug === ref; });
+    if (bySlug.length) return bySlug;
+    var needle = _norm(name);
+    var exact = allImportsList.filter(function (imp) { return imp && _norm(imp.name) === needle; });
+    if (exact.length) return exact;
+    return allImportsList.filter(function (imp) {
+      var n = _norm(imp && imp.name);
+      return n.indexOf(needle) >= 0 || n.replace(/ /g, '').indexOf(needle.replace(/ /g, '')) >= 0;
+    });
+  }
   function findEngine(name) {
     if (!name) return null;
     if (typeof allImportsList === 'undefined' || !Array.isArray(allImportsList) || !allImportsList.length) return undefined;
-    function norm(s) { return String(s || '').toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim(); }
-    var needle = norm(name);
-    return allImportsList.find(function (imp) { return imp && norm(imp.name).indexOf(needle) >= 0; }) || null;
+    return engineCandidates(name)[0] || null;
   }
 
   function _render(wrap, params) {
@@ -80,9 +93,19 @@ var NcfPromptParams = (function () {
     if (p.repeat != null) wrap.appendChild(_pill('on', _fill('{v} images', p.repeat)));
     if (p.model) {
       var engine = findEngine(p.model);
-      wrap.appendChild(engine === null
-        ? _pill('bad', _fill('Engine not installed: {v}', p.model))
-        : _pill('on', _fill('Engine: {v}', engine ? (engine.name || engine.id) : p.model)));
+      if (engine === null) {
+        wrap.appendChild(_pill('bad', _fill('Engine not installed: {v}', p.model)));
+      } else {
+        // Several engines fit ("--v krea"): say which one won and how to
+        // name the others exactly.
+        var others = engine ? engineCandidates(p.model).slice(1) : [];
+        var label = _fill('Engine: {v}', engine ? (engine.name || engine.id) : p.model)
+          + (others.length ? ' (+' + others.length + ')' : '');
+        var tip = others.length ? _fill('Also matches: {v}', others.map(function (imp) {
+          return (imp.name || imp.id) + (imp.slug ? ' (--v ' + imp.slug + ')' : '');
+        }).join(', ')) : '';
+        wrap.appendChild(_pill('on', label, tip));
+      }
     }
     if (p.speed) wrap.appendChild(_pill('on', _fill('Quality: {v}', _SPEED_LABELS[p.speed] || p.speed)));
     if (p.quantization) wrap.appendChild(_pill('on', _fill('Quantization: {v}', p.quantization.toUpperCase())));

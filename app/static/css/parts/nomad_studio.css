@@ -3867,6 +3867,21 @@
   min-width: 0;
 }
 
+/* Workflow identifier next to the engine name: what to type after --v
+   (models_import.js). */
+.import-name-row .import-slug {
+  flex-shrink: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--fs-xxs);
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  color: var(--nss-accent, var(--accent));
+  background: color-mix(in srgb, var(--nss-accent, var(--accent)) 12%, transparent);
+  white-space: nowrap;
+}
+.import-slug-hint { display: block; margin-top: 0.3rem; }
+.import-slug-hint.is-error { color: #f87171; }
+
 #cs-settings-detail-embed .import-item.import-item-stacked > div > p.muted-note {
   flex: 0 1 auto;
   margin: 0;

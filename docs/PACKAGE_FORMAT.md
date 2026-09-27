@@ -426,6 +426,8 @@ Regla: lo que no se puede resolver instalando otras cosas (Python, librerías de
 
 Un motor es un paquete con `contributes.engines`. El fichero contiene lo que hoy guarda cada entrada de `import_registry.json`: `category`, `name`, `workflow`, `analysis`, `basicValues`, `advancedValues`, `annotation`. No lleva `comfyApiUrl`: la URL de ComfyUI es un ajuste de la app. El id del motor es el id del paquete.
 
+`slug` (opcional, recomendado): identificador corto del motor para elegirlo desde el prompt con `--v <slug>` (ej. `"monaco"`). Minúsculas, números y guiones, hasta 32 caracteres. Al instalar se usa si está libre; si otro motor ya lo tiene, o no viene, la app genera uno a partir del nombre. Uno que haya escrito el usuario en Edit Import nunca se sustituye. No cambiarlo entre versiones: rompe los prompts guardados con él.
+
 ### 8.2 Modelos
 
 Principio (D15): **el paquete identifica el modelo; el catálogo sabe dónde está.** Una dirección de descarga caduca (repos que se mueven, modelos que pasan a ser privados), y un paquete ya distribuido —sobre todo uno de pago— no se puede republicar cada vez. El nombre, el tamaño y el SHA-256 de un fichero no cambian nunca.

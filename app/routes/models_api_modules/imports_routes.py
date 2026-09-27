@@ -13,6 +13,7 @@ from flask import Response, jsonify, make_response, request
 
 from app.config import DEFAULT_COMFY_URL, MAX_IMPORT_NAME_LENGTH
 from app import paths
+from app.services import import_slugs
 from app.services.http_client import http_json
 from app.services.workflow_service import (
     _apply_basic_values_to_workflow,
@@ -450,6 +451,11 @@ def _normalize_annotation_payload(
 @models_api_bp.get("/models/imports")
 def list_imports():
     data = _ensure_registry()
+    # Records from before workflow identifiers existed get one, once (import_slugs).
+    if any(isinstance(r, dict) and not r.get("slug") for r in data.get("imports", []) or []):
+        with _registry_transaction() as tx_data:
+            import_slugs.ensure(tx_data.setdefault("imports", []))
+        data = _ensure_registry()
     image_imports = _image_import_records(data)
     image_ids = {str(item.get("id", "")).strip() for item in image_imports}
     active_import_id = str(data.get("activeImportId", "")).strip()
@@ -478,6 +484,7 @@ def list_imports():
                 {
                     "id": item.get("id"),
                     "name": item.get("name"),
+                    "slug": item.get("slug"),
                     "createdAt": item.get("createdAt"),
                     "saveImageCount": item.get("analysis", {})
                     .get("detected", {})
@@ -637,6 +644,14 @@ def save_import():
             },
         }
         record["annotation"] = _build_default_annotation(record)
+        wanted_slug = str(payload.get("slug") or "").strip().lower()
+        if wanted_slug:
+            slug_error = import_slugs.validation_error(wanted_slug, data.setdefault("imports", []), record_id)
+            if slug_error:
+                return jsonify({"error": slug_error, "field": "slug"}), 400
+            record["slug"], record["slugAuto"] = wanted_slug, False
+        else:
+            import_slugs.assign(record, data.setdefault("imports", []))
 
         data.setdefault("imports", []).append(record)
         if category == "image":
@@ -705,6 +720,7 @@ def save_import_as(import_id: str):
             },
         }
         record["annotation"] = _build_default_annotation(record)
+        import_slugs.assign(record, data.setdefault("imports", []))
 
         data.setdefault("imports", []).append(record)
         if record["category"] == "image":
@@ -817,6 +833,21 @@ def update_import(import_id: str):
             import_comfy_api_url = _safe_comfy_url(requested_comfy)
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
+
+        # Workflow identifier ("--v <slug>"): typed by the user, or back to
+        # an automatic one when cleared.
+        if "slug" in payload:
+            wanted = str(payload.get("slug") or "").strip().lower()
+            imports_list = data.get("imports", [])
+            if wanted:
+                slug_error = import_slugs.validation_error(wanted, imports_list, import_id)
+                if slug_error:
+                    return jsonify({"error": slug_error, "field": "slug"}), 400
+                record["slug"], record["slugAuto"] = wanted, False
+            else:
+                record.pop("slug", None)
+                record.pop("slugAuto", None)
+                import_slugs.assign(record, imports_list)
 
         record["name"] = name
         record["comfyApiUrl"] = import_comfy_api_url

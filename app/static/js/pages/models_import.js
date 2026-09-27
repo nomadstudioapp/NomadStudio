@@ -6,6 +6,42 @@
   const analyzeBtn = document.getElementById('analyze-workflow-btn');
   const saveBtn = document.getElementById('save-workflow-btn');
   const nameInput = document.getElementById('import-name');
+  // Workflow identifier: "--v <slug>" in a prompt picks this engine
+  // (app/services/import_slugs.py). Checked here too, with translated
+  // messages; the backend refuses the same cases.
+  const slugInput = document.getElementById('import-slug');
+  const slugHint = document.getElementById('import-slug-hint');
+  const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  let knownImports = [];
+  function _i18n(key, fallback) {
+    return window.NomadI18n ? window.NomadI18n.t(key, fallback) : fallback;
+  }
+  function slugProblem() {
+    const slug = slugInput ? slugInput.value.trim() : '';
+    if (!slug) return '';
+    if (slug.length > 32 || !SLUG_RE.test(slug)) {
+      return _i18n('models.import.slugInvalid', 'Use lowercase letters, numbers and dashes (up to 32).');
+    }
+    const owner = knownImports.find((imp) => imp.slug === slug && imp.id !== editingImportId);
+    if (owner) {
+      return _i18n('models.import.slugTaken', 'Already used by {name}.').replace('{name}', owner.name || owner.id);
+    }
+    return '';
+  }
+  function refreshSlugHint() {
+    if (!slugHint) return;
+    const problem = slugProblem();
+    slugHint.classList.toggle('is-error', !!problem);
+    slugHint.textContent = problem || _i18n('models.import.slugHint',
+      'Pick this engine from a prompt with --v and this word. Lowercase letters, numbers and dashes.');
+  }
+  if (slugInput) {
+    slugInput.addEventListener('input', () => {
+      const lowered = slugInput.value.toLowerCase().replace(/[\s_]+/g, '-');
+      if (lowered !== slugInput.value) slugInput.value = lowered;
+      refreshSlugHint();
+    });
+  }
   const statusEl = document.getElementById('import-status');
   const analysisOutput = document.getElementById('analysis-output');
   const savedImportsEl = document.getElementById('saved-imports');
@@ -70,6 +106,7 @@
     rawWorkflow = null;
     lastAnalysis = null;
     if (nameInput) nameInput.value = '';
+    if (slugInput) { slugInput.value = ''; refreshSlugHint(); }
     if (analysisOutput) analysisOutput.innerHTML = '';
     if (saveBtn) saveBtn.disabled = true;
     if (analyzeBtn) analyzeBtn.disabled = true;
@@ -390,6 +427,7 @@
   function renderSavedImports(data) {
     savedImportsEl.innerHTML = '';
     const imports = data.imports || [];
+    knownImports = imports;
     const activeIds = data.activeImportIds || [];
 
     if (!imports.length) {
@@ -408,7 +446,7 @@
       row.className = 'import-item import-item-stacked';
       row.innerHTML = `
         <div>
-          <span class="import-name-row"><strong>${item.name}</strong>${imageInputBadge}</span>
+          <span class="import-name-row"><strong>${item.name}</strong>${imageInputBadge}${item.slug ? `<code class="import-slug">--v ${escapeAttr(item.slug)}</code>` : ''}</span>
           <p class="muted-note import-item-uri" title="${safeUri}">${safeUri || '—'}</p>
           <div class="btn-row" style="margin-top:8px; flex-wrap:wrap; gap:4px;">
             <button type="button" class="btn sm-btn ${isActive ? 'primary active-queue-btn' : ''}" data-toggle-active-id="${item.id}">
@@ -468,6 +506,7 @@
         openImportModal('Edit Import');
         // Clear previous state while loading
         if (nameInput) nameInput.value = '';
+    if (slugInput) { slugInput.value = ''; refreshSlugHint(); }
         analysisOutput.innerHTML = '<p class="muted-note">Loading...</p>';
         saveBtn.disabled = true;
         rawWorkflow = null;
@@ -478,6 +517,7 @@
           const record = data.import;
           if (!record) throw new Error('Not found');
           if (nameInput) nameInput.value = record.name || '';
+          if (slugInput) { slugInput.value = record.slug || ''; refreshSlugHint(); }
           editingAnnotation = record.annotation || null;
           if (record.workflow) {
             rawWorkflow = record.workflow;
@@ -1353,10 +1393,18 @@
         setStatus('ComfyUI URI is required.', true);
         return;
       }
+      const slugError = slugProblem();
+      if (slugError) {
+        refreshSlugHint();
+        setStatus(slugError, true);
+        if (slugInput) slugInput.focus();
+        return;
+      }
       if (editingImportId) {
         const targetImportId = editingImportId;
         await window.openJourneyApi.updateImport(editingImportId, {
           name: nameInput.value.trim() || 'Imported Workflow',
+          slug: slugInput ? slugInput.value.trim() : undefined,
           workflow: rawWorkflow,
           comfyApiUrl: liveComfyUri,
         });
@@ -1383,6 +1431,7 @@
       } else {
         const created = await window.openJourneyApi.createImport({
           name: nameInput.value.trim() || 'Imported Workflow',
+          slug: slugInput ? slugInput.value.trim() : '',
           category: 'image',
           workflow: rawWorkflow,
           comfyApiUrl: liveComfyUri,
@@ -1399,8 +1448,8 @@
       editingImportId = null;
       await refreshImports();
       closeImportModal();
-    } catch {
-      setStatus('Failed to save import.', true);
+    } catch (err) {
+      setStatus((err && err.message) || 'Failed to save import.', true);
     }
   });
 

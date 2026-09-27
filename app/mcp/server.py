@@ -39,6 +39,7 @@ from app.mcp.quantization import (
 )
 from app.mcp import refine_actions
 from app.mcp import session_state
+from app.mcp.regions import MarkedRegion, annotate_data_url
 
 mcp = FastMCP("nomad-studio")
 _client = NomadClient()
@@ -415,6 +416,7 @@ async def _nomad_studio_refine_image_impl(
     position: str | None = None,
     scale: int | None = None,
     expand_percent: int | None = None,
+    regions: list[MarkedRegion] | None = None,
 ) -> list[TextContent | ImageContent]:
     """
     Args:
@@ -447,6 +449,15 @@ async def _nomad_studio_refine_image_impl(
             tamano original de la imagen, en porcentaje (ej. 40 = el lienzo nuevo es un 40%
             mas grande). Si el usuario pide una extension grande, sube este valor; si no dice
             nada, deja vacio (default 40).
+        regions: SOLO para las acciones marcadas [NEEDS 'regions'] en
+            nomad_studio_list_refine_actions (Local Edit, Text Editor...): esas acciones editan
+            zonas concretas que se marcan sobre la imagen con un contorno de color, y son
+            obligatorias. Una entrada por zona, en porcentaje del lienzo: left/top/right/bottom
+            de 0 a 100 (ej. la mitad superior entera = left 0, top 0, right 100, bottom 50), y
+            un color distinto por zona (red, green, blue, yellow, purple, orange). La
+            'instruction' tiene que nombrar cada zona por su color, en ingles: "Replace the text
+            inside the red rectangle with \"SALE\"", "Remove the object in the blue circle".
+            Si no sabes donde esta algo en la imagen, preguntaselo al usuario antes de llamar.
     """
     agent_name = "unknown"
     agent_slug = "unknown"
@@ -458,6 +469,7 @@ async def _nomad_studio_refine_image_impl(
             "position": position,
             "scale": scale,
             "expand_percent": expand_percent,
+            "regions": [r.model_dump() for r in regions] if regions else None,
         }
     }
 
@@ -495,9 +507,40 @@ async def _nomad_studio_refine_image_impl(
             ]
         debug["flow_id"] = refine_action.flow_id
 
+        if refine_action.needs_region:
+            shape_word = "rectangle" if refine_action.region_shape == "rect" else "circle"
+            problem = None
+            if not regions:
+                problem = "esta accion edita zonas marcadas y no se ha pasado ninguna en 'regions'"
+            elif any(r.right == r.left or r.bottom == r.top for r in regions):
+                problem = "alguna zona de 'regions' no tiene ancho o alto (left == right o top == bottom)"
+            elif not (instruction or "").strip():
+                problem = "falta 'instruction': tiene que decir que hacer en cada zona, nombrandola por su color"
+            if problem:
+                return [
+                    TextContent(
+                        type="text",
+                        text=(
+                            f"NO SE HA HECHO NADA TODAVIA: {problem}. Pasa 'regions' (una por zona, en % del "
+                            f"lienzo, cada una con su color) y una 'instruction' en ingles que las nombre, ej. "
+                            f"\"... inside the red {shape_word} ...\". Si no sabes donde esta lo que hay que "
+                            f"editar, preguntaselo al usuario."
+                        ),
+                    )
+                ]
+        elif regions:
+            debug["regions_ignored"] = "esta accion no usa zonas marcadas"
+
         advanced_values: dict[str, Any] = dict(refine_action.extra_advanced_values)
         if refine_action.prompt_adv_key:
             advanced_values[refine_action.prompt_adv_key] = instruction or refine_action.default_prompt
+            if refine_action.needs_region and regions:
+                # Tested: without this the colored outline stays painted in the
+                # result (same fix the pack-cover scripts use).
+                shape_word = "rectangle" if refine_action.region_shape == "rect" else "circle"
+                marks = " and the ".join(dict.fromkeys(f"{r.color} {shape_word}" for r in regions))
+                advanced_values[refine_action.prompt_adv_key] = (
+                    advanced_values[refine_action.prompt_adv_key].rstrip() + f" Remove the {marks}.")
 
         output_dir = await _client.get_output_dir()
 
@@ -540,6 +583,9 @@ async def _nomad_studio_refine_image_impl(
         debug["advancedValues"] = advanced_values
 
         image_data_url = read_full_image_as_data_url(output_dir, agent_slug, resolved_filename)
+        if refine_action.needs_region and regions:
+            image_data_url = annotate_data_url(image_data_url, regions, refine_action.region_shape)
+            debug["regions_drawn"] = f"{len(regions)} x {refine_action.region_shape}"
 
         request_payload = {"workflowFile": refine_action.workflow_file, "advancedValues": advanced_values}
         debug["request"] = request_payload

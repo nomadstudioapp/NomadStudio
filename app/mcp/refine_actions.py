@@ -47,6 +47,15 @@ class RefineAction:
     height_adv_key: str | None = None
     position_adv_key: str | None = None
     scale_adv_key: str | None = None
+    # Flows con paso region_annotate (Local Edit, Text Editor): la imagen que
+    # se manda lleva marcas de color que el prompt nombra ("the red
+    # rectangle"). "rect" si el paso es shape_mode=rectangle, si no "ellipse"
+    # (en la app es trazo libre, un lazo alrededor — el prompt dice "circle").
+    region_shape: str | None = None
+
+    @property
+    def needs_region(self) -> bool:
+        return self.region_shape is not None
 
     @property
     def is_outpaint_shaped(self) -> bool:
@@ -99,6 +108,11 @@ def _classify_flow(flow_entry: dict[str, Any]) -> RefineAction | None:
     image_node = params_step.get("image_node")
     if not workflow_file or not image_node:
         return None
+
+    region_step = next((s for s in steps if s.get("type") == "region_annotate"), None)
+    region_shape = None
+    if region_step is not None:
+        region_shape = "rect" if region_step.get("shape_mode") == "rectangle" else "ellipse"
 
     fields = params_step.get("fields") or []
     extra: dict[str, Any] = {}
@@ -189,6 +203,7 @@ def _classify_flow(flow_entry: dict[str, Any]) -> RefineAction | None:
         height_adv_key=height_key,
         position_adv_key=position_key,
         scale_adv_key=scale_key,
+        region_shape=region_shape,
     )
 
 
@@ -225,5 +240,10 @@ def describe_actions(catalog: dict[str, RefineAction]) -> str:
     for group in sorted(by_group):
         lines.append(f"## {group}")
         for action in sorted(by_group[group], key=lambda a: a.flow_id):
-            lines.append(f"- {action.flow_id}: {action.description}")
+            needs = ""
+            if action.needs_region:
+                shape = "rectangle" if action.region_shape == "rect" else "circle"
+                needs = (f" [NEEDS 'regions': marks the area(s) with colored {shape}s; the instruction "
+                         f"must name them by color, e.g. 'the red {shape}']")
+            lines.append(f"- {action.flow_id}: {action.description}{needs}")
     return "\n".join(lines)

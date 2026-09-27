@@ -496,7 +496,10 @@ def _try_save_image_to_output_dir(
         return None
 
     output_dir = _resolve_output_dir(data)
-    prefix = filename_prefix or "comfy-output"
+    # A graph's SaveImage filename_prefix may carry a ComfyUI subfolder
+    # ("monaco/level-01-quick", Krea2 Monaco): only the name part is ours —
+    # the subfolder doesn't exist in the viewer's folder and the write failed.
+    prefix = re.split(r"[\\/]", filename_prefix or "")[-1] or "comfy-output"
 
     clean_session_subdir = _safe_session_subdir(subdir) if subdir else None
     if clean_session_subdir:

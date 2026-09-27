@@ -613,6 +613,7 @@
       "Installed": "설치됨",
       "Missing files": "누락된 파일",
       "Model files": "모델 파일",
+      "Not installed in ComfyUI": "ComfyUI에 설치되지 않음",
       "Model version — one is enough": "모델 버전 — 하나면 충분합니다",
       "No download address for this file — search for it on Hugging Face": "이 파일은 다운로드 주소가 없습니다 — Hugging Face에서 검색하세요",
       "Only {free} free in the models folder.": "모델 폴더에 남은 공간이 {free}뿐입니다.",

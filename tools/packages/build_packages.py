@@ -466,25 +466,34 @@ def validate(path: Path) -> dict:
 # euler/simple — the settings that actually produced the verified-good
 # outputs; the old Lightning LoRA is 2511-specific and dropped rather than
 # guessed as compatible.
+# Precisions every Qwen Image 2.1 graph offers in Advanced (Comfy-Org/
+# Qwen-Image-2.1): each swaps the diffusion model AND its text encoder.
+# Bare filenames, no subfolder — confirmed against the connected ComfyUI's
+# own UNETLoader object_info (a made-up subfolder prefix here caused "node
+# errors: 55": the quantization switcher would swap in a unet_name that
+# doesn't exist). INT8 first = the default; the Advanced panel disables the
+# ones ComfyUI doesn't have (flow-quantization.js).
+QWEN_IMAGE_21_QUANTIZATION = {
+    "int8": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+             "clip_name": "qwen3vl_8b_int8_convrot.safetensors"},
+    "bf16": {"unet_name": "qwen_image_2.1_bf16.safetensors",
+             "clip_name": "qwen3vl_8b_bf16.safetensors", "label": "BF16"},
+}
+
+
+def _qwen_image_21_config_node(**extra) -> dict:
+    return {
+        "inputs": {"value": json.dumps({**extra, "quantization": QWEN_IMAGE_21_QUANTIZATION})},
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {"title": "config"},
+    }
+
+
 def _qwen_image_21_workflow() -> dict:
     return {
-        "config": {
-            "inputs": {"value": json.dumps({
-                "name": "Qwen Image 2.1",
-                # Bare filename, no subfolder — confirmed against the connected
-                # ComfyUI's own UNETLoader object_info (a made-up subfolder
-                # prefix here caused "node errors: 55": the quantization
-                # switcher would swap in a unet_name that doesn't exist).
-                "quantization": {"int8": "qwen_image_2.1_int8_convrot.safetensors"},
-                # No confirmed download URLs yet for this model (too new to
-                # have a settled HF repo layout at build time) — left empty
-                # rather than guessing a URL that would 404 in the Setup
-                # wizard. Fill in once confirmed.
-                "downloads": "",
-            })},
-            "class_type": "PrimitiveStringMultiline",
-            "_meta": {"title": "config"},
-        },
+        # No download URLs here: the models catalog says where each file
+        # lives (PACKAGE_FORMAT.md §8.2 / D15).
+        "config": _qwen_image_21_config_node(name="Qwen Image 2.1", downloads=""),
         "29": {
             "inputs": {"filename_prefix": "qwen-image-2.1-create-simple", "images": ["54", 0]},
             "class_type": "SaveImage",
@@ -1002,6 +1011,7 @@ def _text_editor_klein9b_flow() -> dict:
 
 def _qwen_image_21_edit_workflow() -> dict:
     return {
+        "config": _qwen_image_21_config_node(),
         "2": {
             "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
             "class_type": "VAELoader",
@@ -1750,6 +1760,7 @@ def _qwen_image_21_outpaint_workflow() -> dict:
             "class_type": "PrimitiveStringMultiline",
             "_meta": {"title": "flow_data"},
         },
+        "config": _qwen_image_21_config_node(),
         "2": {
             "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
             "class_type": "VAELoader",

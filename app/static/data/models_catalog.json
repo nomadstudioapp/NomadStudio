@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-24",
+ "updated": "2026-09-27",
  "models": [
   {
    "sha256": "94d368b633614958f84f335b129fd85abd30200e8fbc575b859ba6762116222b",
@@ -538,6 +538,20 @@
    ]
   },
   {
+   "sha256": "68bdc82bc1b66851162ae656225e7e2068166b603db19bd5d5a3b90eb12669a9",
+   "size": 17534334616,
+   "names": [
+    "qwen3vl_8b_bf16.safetensors"
+   ],
+   "folder": "text_encoders",
+   "sources": [
+    {
+     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_bf16.safetensors",
+     "host": "huggingface"
+    }
+   ]
+  },
+  {
    "sha256": "8bfd0f6e12abf2d2d697ecc888e5e90b0d6741d6708f05799f53afa560452e8f",
    "size": 9350798360,
    "names": [
@@ -648,6 +662,20 @@
    "sources": [
     {
      "url": "https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors",
+     "host": "huggingface"
+    }
+   ]
+  },
+  {
+   "sha256": "89f4158d066cc33906a199fca85634f766892dd78f49b6698dabf187ac86c4bc",
+   "size": 14230280616,
+   "names": [
+    "qwen_image_2.1_bf16.safetensors"
+   ],
+   "folder": "diffusion_models",
+   "sources": [
+    {
+     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_bf16.safetensors",
      "host": "huggingface"
     }
    ]

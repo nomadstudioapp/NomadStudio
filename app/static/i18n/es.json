@@ -613,6 +613,7 @@
       "Installed": "Instalado",
       "Missing files": "Archivos que faltan",
       "Model files": "Archivos de modelo",
+      "Not installed in ComfyUI": "No instalado en ComfyUI",
       "Model version — one is enough": "Versión del modelo — basta con una",
       "No download address for this file — search for it on Hugging Face": "Este archivo no tiene dirección de descarga — búscalo en Hugging Face",
       "Only {free} free in the models folder.": "Solo quedan {free} libres en la carpeta de modelos.",

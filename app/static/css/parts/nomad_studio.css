@@ -5555,6 +5555,20 @@ body.nsc-enhance-page .nsc-inputs::-webkit-scrollbar-thumb:hover {
   color: #fff;
 }
 
+/* Precision whose files ComfyUI doesn't have (flow-quantization.js) */
+.nsc-quality-btn.is-missing,
+.nsc-quality-btn.is-missing:hover {
+  position: relative;
+  cursor: not-allowed;
+  color: inherit;
+}
+
+/* Dim the label only — opacity on the button would also fade its
+   .action-tip ("Not installed in ComfyUI") until tooltips.js floats it. */
+.nsc-quality-btn.is-missing .nsc-quality-copy {
+  opacity: 0.4;
+}
+
 .nsc-quality-dot { display: none; }
 
 .nsc-quality-copy small { display: none; }

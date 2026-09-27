@@ -1,6 +1,49 @@
 'use strict';
 // Quantization presets (INT4/INT8/FP8 diffusion-model variants): buildQuantizationList
 
+// Disable the pills whose files ComfyUI doesn't have (/api/models/quantization/
+// presence) — picking one would only fail at queue time. When the selected
+// option turns out missing, `pick(option)` moves the selection to the first
+// installed one (without saving it: the user's own choice comes back once the
+// file is installed). ComfyUI unreachable → nothing is disabled. Shared with
+// library.js.
+function markQuantizationPresence(listEl, options, getSelectedId, pick) {
+  if (!listEl || !options || !options.length) return;
+  // The Advanced panel keeps its lists detached until it opens, so no
+  // isConnected check — only the newest request for this list may apply.
+  var seq = listEl._quantPresenceSeq = (listEl._quantPresenceSeq || 0) + 1;
+  fetch('/api/models/quantization/presence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ options: options }),
+  })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (res) {
+      var present = res && res.present;
+      if (!present || seq !== listEl._quantPresenceSeq) return;
+      var tip = window.NomadI18n ? window.NomadI18n.tField('Not installed in ComfyUI') : 'Not installed in ComfyUI';
+      listEl.querySelectorAll('[data-quantization-id]').forEach(function (btn) {
+        var missing = present[btn.getAttribute('data-quantization-id')] === false;
+        btn.disabled = missing;
+        btn.classList.toggle('is-missing', missing);
+        // Nomad Studio tooltip (.action-tip, floated by services/tooltips.js)
+        var tipEl = btn.querySelector('.action-tip');
+        if (missing && !tipEl) {
+          tipEl = document.createElement('span');
+          tipEl.className = 'action-tip';
+          tipEl.textContent = tip;
+          btn.appendChild(tipEl);
+        } else if (!missing && tipEl) {
+          tipEl.remove();
+        }
+      });
+      if (present[getSelectedId()] !== false) return;
+      var fallback = options.filter(function (o) { return present[o.id] !== false; })[0];
+      if (fallback) pick(fallback);
+    })
+    .catch(function () {});
+}
+
 function buildQuantizationList(record, listEl, onChange) {
   if (!listEl) return;
   var block = listEl.closest ? listEl.closest('.nsc-param-block') : null;
@@ -35,6 +78,14 @@ function buildQuantizationList(record, listEl, onChange) {
   selectedQuantizationId = initialOpt.id;
   selectedQuantizationValues = valuesFor(initialOpt);
 
+  function select(option, btn) {
+    selectedQuantizationId = option.id;
+    selectedQuantizationValues = valuesFor(option);
+    listEl.querySelectorAll('.nsc-quality-btn').forEach(function (b) {
+      var a = b === btn; b.classList.toggle('is-active', a); b.setAttribute('aria-checked', a ? 'true' : 'false');
+    });
+  }
+
   listEl.innerHTML = '';
   options.forEach(function (opt) {
     var btn = document.createElement('button');
@@ -48,11 +99,7 @@ function buildQuantizationList(record, listEl, onChange) {
       '<span class="nsc-quality-copy"><strong>' + escHtml(opt.label) + '</strong></span>';
     (function (option) {
       btn.addEventListener('click', function () {
-        selectedQuantizationId = option.id;
-        selectedQuantizationValues = valuesFor(option);
-        listEl.querySelectorAll('.nsc-quality-btn').forEach(function (b) {
-          var a = b === btn; b.classList.toggle('is-active', a); b.setAttribute('aria-checked', a ? 'true' : 'false');
-        });
+        select(option, btn);
         saveParams();
         // Some callers (plain workflow_file flows) cache the merged advanced
         // values ahead of submit instead of reading the globals fresh — they
@@ -63,4 +110,11 @@ function buildQuantizationList(record, listEl, onChange) {
     }(opt));
     listEl.appendChild(btn);
   });
+
+  markQuantizationPresence(listEl, options,
+    function () { return selectedQuantizationId; },
+    function (option) {
+      select(option, listEl.querySelector('[data-quantization-id="' + option.id + '"]'));
+      if (typeof onChange === 'function') onChange();
+    });
 }

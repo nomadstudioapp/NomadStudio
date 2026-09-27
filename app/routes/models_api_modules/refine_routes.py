@@ -414,6 +414,28 @@ def _neutral_placeholder_png() -> bytes:
     return _PLACEHOLDER_PNG_CACHE
 
 
+@models_api_bp.post("/models/quantization/presence")
+def quantization_presence():
+    """Which precision options (analysis.quantization.options) ComfyUI has the
+    files for, so the Advanced panel can disable the rest instead of letting a
+    pick fail at queue time. Body: {options: [...]}. Response: {present:
+    {id: bool}}, or {present: null} when ComfyUI can't be asked — then every
+    option stays enabled, as before."""
+    from app.services import flow_requirements as reqs
+
+    payload = request.get_json(silent=True) or {}
+    options = [o for o in (payload.get("options") or []) if isinstance(o, dict)]
+    if not options:
+        return jsonify({"present": {}})
+    data = _ensure_registry()
+    comfy_api_url = str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip() or DEFAULT_COMFY_URL
+    try:
+        info = reqs.object_info(_safe_comfy_url(comfy_api_url), force=bool(payload.get("refresh")))
+    except Exception:  # noqa: BLE001 — ComfyUI down: don't judge
+        return jsonify({"present": None})
+    return jsonify({"present": reqs.quantization_presence(options, info)})
+
+
 @models_api_bp.post("/models/flows/requirements")
 def flow_requirements():
     """Model files and custom nodes a flow's graphs need that ComfyUI does not

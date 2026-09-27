@@ -206,6 +206,18 @@
       }(opt));
       quantList.appendChild(btn);
     });
+
+    // flow-quantization.js — disables the options ComfyUI has no files for;
+    // a missing default moves to the first installed one (and must then be
+    // sent, like a click, or the graph's own missing default would run).
+    if (typeof markQuantizationPresence === 'function') {
+      markQuantizationPresence(quantList, options,
+        function () { return selectedQuantizationId; },
+        function (option) {
+          var btn = quantList.querySelector('[data-quantization-id="' + option.id + '"]');
+          if (btn) btn.click();
+        });
+    }
   }
 
   function loadModelAnalysis(modelId) {

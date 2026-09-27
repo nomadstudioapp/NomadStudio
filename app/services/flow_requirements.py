@@ -126,6 +126,39 @@ def _choices(info: dict[str, Any], class_type: str, input_name: str) -> set[str]
     return None
 
 
+_QUANT_OPTION_INPUTS = ("unet_name", "unet_unconditional_name", "clip_name")
+
+
+def quantization_presence(options: list[dict[str, Any]], info: dict[str, Any]) -> dict[str, bool]:
+    """For the Advanced panel's precision pills (analysis.quantization.options):
+    option id → whether ComfyUI has every file that option loads. A file counts
+    when any loader offers it for that input (UNETLoader, UnetLoaderGGUF, …) —
+    the option names files only, not the loader class. An input no loader
+    lists as files cannot be judged and does not count against the option."""
+    choices: dict[str, set[str] | None] = {}
+    for input_name in ("unet_name", "clip_name"):
+        found: set[str] | None = None
+        for class_type in info:
+            names = _choices(info, class_type, input_name)
+            if names is not None:
+                found = (found or set()) | names
+        choices[input_name] = found
+    choices["unet_unconditional_name"] = choices["unet_name"]
+
+    result: dict[str, bool] = {}
+    for opt in options or []:
+        if not isinstance(opt, dict) or not str(opt.get("id") or "").strip():
+            continue
+        present = True
+        for input_name in _QUANT_OPTION_INPUTS:
+            value = str(opt.get(input_name) or "").strip()
+            names = choices.get(input_name)
+            if value and names is not None and _norm(value) not in names:
+                present = False
+        result[str(opt["id"])] = present
+    return result
+
+
 def _quant_files(config: dict[str, Any]) -> list[dict[str, Any]]:
     quant = config.get("quantization") if isinstance(config, dict) else None
     if not isinstance(quant, dict):

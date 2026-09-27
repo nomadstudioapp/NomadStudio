@@ -43,9 +43,16 @@ from app.mcp.quantization import (
 from app.mcp import refine_actions
 from app.mcp import session_state
 from app.mcp.regions import MarkedRegion, annotate_data_url
+from app.services.prompt_params import MAX_REPEAT as MAX_IMAGES_PER_CALL
 from app.services.prompt_params import parse as parse_prompt_params, size_for_aspect
+from mcp.types import ToolAnnotations
 
 mcp = FastMCP("nomad-studio")
+
+# Codex asks before running tools that write (default_tools_approval_mode =
+# "writes"); consultations are marked read-only so they run straight away.
+_READ_TOOL = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
+_WRITE_TOOL = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False)
 _client = NomadClient()
 
 
@@ -64,6 +71,7 @@ _client = NomadClient()
     # JSON); Claude Desktop entonces prioriza ese JSON y no renderiza el bloque
     # de imagen. La tool debe ser "unstructured" para que la imagen se muestre.
     structured_output=False,
+    annotations=_WRITE_TOOL,
 )
 # Cada argumento lleva su descripcion en Field(description=...): es lo unico
 # que llega al cliente. Con description= en @mcp.tool, un bloque "Args:" en el
@@ -120,6 +128,9 @@ async def nomad_studio_create_image(
         "Semilla exacta, SOLO para repetir o variar una imagen anterior (cada respuesta dice la "
         "semilla usada). Mismo prompt + semilla + modelo + tamano = la misma imagen. Vacio = "
         "aleatoria (lo normal)."))] = None,
+    count: Annotated[int | None, Field(description=(
+        "Cuantas imagenes generar de una vez, 1-4 (lo mismo que '--r' en el prompt, que manda si "
+        "estan los dos). Vacio = 1."))] = None,
 ) -> list[TextContent | ImageContent]:
     agent_name = "unknown"
     agent_slug = "unknown"
@@ -136,8 +147,14 @@ async def nomad_studio_create_image(
             "height": height,
             "negative": negative,
             "seed": seed,
+            "count": count,
         }
     }
+
+    if count is not None and not 1 <= int(count) <= MAX_IMAGES_PER_CALL:
+        return [TextContent(type="text", text=(
+            f"NO SE HA GENERADO NADA TODAVIA. 'count' tiene que ser de 1 a {MAX_IMAGES_PER_CALL} "
+            f"(se ha pedido {count})."))]
 
     # Midjourney-style "--ar 16:9 --no text --seed 1" at the end of the prompt
     # (NomadStudio#27): they win over the separate arguments.
@@ -157,7 +174,11 @@ async def nomad_studio_create_image(
         speed = prompt_params.speed or speed
         quantization = prompt_params.quantization or quantization
         steps = prompt_params.steps or steps
-    num_images = prompt_params.repeat or 1
+    if not prompt.strip():
+        return [TextContent(type="text", text=(
+            "NO SE HA GENERADO NADA TODAVIA. El prompt esta vacio: describe la imagen que quieres "
+            "(los parametros con -- van despues de la descripcion)."))]
+    num_images = prompt_params.repeat or (int(count) if count else 1)
 
     try:
         agent = await ensure_agent_session(_client, ctx)
@@ -334,6 +355,20 @@ async def nomad_studio_create_image(
             return [_debug_text(agent_name, agent_slug, debug)]
         filename = filenames[-1]
         session_state.set_last_image(filename)
+        session_state.set_last_generation({
+            "kind": "create",
+            "model": record.get("name"),
+            "model_id": record.get("slug") or record.get("id"),
+            "prompt": prompt,
+            "negative_prompt": basic_values.get("negative") or None,
+            "seed": result.get("appliedSeed"),
+            "width": width,
+            "height": height,
+            "count": len(filenames),
+            "speed": speed,
+            "quantization": chosen_id or None,
+            "images": [{"id": name, "url": _client.image_url(name, viewer_id=agent_slug)} for name in filenames],
+        })
 
         output_dir = await _client.get_output_dir()
         image_blocks: list[ImageContent] = []
@@ -350,7 +385,7 @@ async def nomad_studio_create_image(
         # Midjourney-only parameters (--stylize...) are dropped silently, as in the app.
         params_note = ""
         if len(filenames) > 1:
-            params_note += (f"\nSe han generado {len(filenames)} imagenes (--r); 'la imagen' en lo siguiente "
+            params_note += (f"\nSe han generado {len(filenames)} imagenes; 'la imagen' en lo siguiente "
                             f"es la ultima, {filename}, salvo que el usuario elija otra por su nombre.")
 
         quant_note = ""
@@ -406,6 +441,7 @@ async def nomad_studio_create_image(
         "sistema de ficheros. No genera ni modifica nada."
     ),
     structured_output=False,
+    annotations=_READ_TOOL,
 )
 async def nomad_studio_list_models(ctx: Context) -> list[TextContent]:
     """Sin argumentos. Devuelve la lista de modelos que el usuario tiene importados en Nomad
@@ -457,6 +493,7 @@ async def nomad_studio_list_models(ctx: Context) -> list[TextContent]:
         "pasar, o cuando el usuario pregunte que retoques/ediciones estan disponibles."
     ),
     structured_output=False,
+    annotations=_READ_TOOL,
 )
 async def nomad_studio_list_refine_actions(ctx: Context) -> list[TextContent]:
     """Sin argumentos. Devuelve el catalogo completo de acciones de Refine (id + descripcion,
@@ -472,6 +509,27 @@ async def nomad_studio_list_refine_actions(ctx: Context) -> list[TextContent]:
             )
         ]
     return [TextContent(type="text", text=refine_actions.describe_actions(catalog))]
+
+
+@mcp.tool(
+    name="nomad_studio_get_last_generation",
+    description=(
+        "Devuelve lo ultimo que se ha generado o retocado con Nomad Studio en esta conversacion: "
+        "prompt, negativo, semilla, tamano, modelo, numero de imagenes y enlace a cada una (o la "
+        "accion de Refine y la imagen de origen). Usa esto para recordar o repetir una imagen, o "
+        "para contestar que parametros se usaron. No genera ni modifica nada."
+    ),
+    structured_output=False,
+    annotations=_READ_TOOL,
+)
+async def nomad_studio_get_last_generation(ctx: Context) -> list[TextContent]:
+    generation = session_state.get_last_generation()
+    if not generation:
+        return [TextContent(type="text", text=(
+            "Todavia no se ha generado ni retocado ninguna imagen en esta conversacion."))]
+    return [TextContent(type="text", text=(
+        "Ultima generacion de esta conversacion:\n"
+        f"```json\n{json.dumps(generation, indent=2, ensure_ascii=False)}\n```"))]
 
 
 _OUTPAINT_POSITIONS = {
@@ -660,6 +718,13 @@ async def _nomad_studio_refine_image_impl(
             debug["error"] = "Nomad Studio no devolvio el nombre del fichero refinado."
             return [_debug_text(agent_name, agent_slug, debug)]
         session_state.set_last_image(saved_filename)
+        session_state.set_last_generation({
+            "kind": "refine",
+            "action": refine_action.flow_id,
+            "source_image": resolved_filename,
+            "instruction": advanced_values.get(refine_action.prompt_adv_key) if refine_action.prompt_adv_key else None,
+            "images": [{"id": saved_filename, "url": _client.image_url(saved_filename, viewer_id=agent_slug)}],
+        })
 
         thumb_bytes, thumb_mime = read_thumbnail(output_dir, agent_slug, saved_filename, THUMBNAIL_WIDTH)
         thumb_b64 = base64.b64encode(thumb_bytes).decode("ascii")
@@ -703,6 +768,7 @@ nomad_studio_refine_image = mcp.tool(
         "una imagen nueva desde cero (para eso usa nomad_studio_create_image)."
     ),
     structured_output=False,
+    annotations=_WRITE_TOOL,
 )(_nomad_studio_refine_image_impl)
 
 

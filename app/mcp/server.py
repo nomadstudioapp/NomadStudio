@@ -78,7 +78,8 @@ async def nomad_studio_create_image(
         prompt: Descripcion de la imagen a generar, en ingles preferiblemente. Puede terminar
             con parametros estilo Midjourney, que se interpretan aqui y mandan sobre los demas
             argumentos: --ar 16:9 (cualquier proporcion), --no people, text (se suma al
-            negativo por defecto), --seed 1234, --v <modelo> (ej. --v krea), --q fast|balanced|max
+            negativo por defecto), --seed 1234, --v <modelo> (ej. --v krea), --anime (el modelo
+            de anime instalado), --q fast|balanced|max
             (o --draft), --steps 20, --quant int8, --r 2 (varias imagenes, hasta 4). Si el
             usuario los escribe, dejalos tal cual al final del prompt — no los traduzcas ni los
             quites. Los de Midjourney sin equivalente (--stylize, --chaos...) se ignoran avisando.

@@ -27,7 +27,7 @@ _ALIASES = {
     "no": "no",
     "seed": "seed", "sameseed": "seed",
     "v": "model", "version": "model", "model": "model", "engine": "model", "m": "model",
-    "niji": "niji",
+    "anime": "anime",
     "q": "speed", "quality": "speed", "speed": "speed",
     "draft": "draft", "fast": "draft", "turbo": "draft",
     "steps": "steps",
@@ -158,7 +158,7 @@ def parse(text: str) -> PromptParams:
                 result.model = value
             else:
                 result.invalid[raw_name] = "no engine name after it"
-        elif key == "niji":
+        elif key == "anime":
             result.model = "anime"
         elif key == "speed":
             speed = _speed(value)

@@ -516,6 +516,38 @@ def prepare_mix_workflow():
     Returns {workflow, clientId, comfyApiUrl} — same contract as refine/prepare.
     """
     payload = request.get_json(silent=True) or {}
+    prepared = _prepare_mix(payload)
+    if not isinstance(prepared, tuple):
+        return prepared
+    prepared_workflow, comfy_api_url, _data, _merged = prepared
+    gpu_coordinator.wait_external("comfy")  # browser submits directly (superqueue)
+    client_id = uuid.uuid4().hex
+    return jsonify({
+        "workflow": prepared_workflow,
+        "clientId": client_id,
+        "comfyApiUrl": comfy_api_url,
+    })
+
+
+@models_api_bp.post("/models/mix/generate")
+def generate_mix_image():
+    """Run a mix workflow end to end on the server and save the result — the
+    mix counterpart of /models/refine/generate, for callers with no browser
+    (the MCP, NomadStudio#25). Same body as /models/mix/prepare; returns
+    {ok, workflowFile, promptId, savedFilename}."""
+    payload = request.get_json(silent=True) or {}
+    prepared = _prepare_mix(payload)
+    if not isinstance(prepared, tuple):
+        return prepared
+    prepared_workflow, comfy_api_url, data, merged_advanced = prepared
+    workflow_file = str(payload.get("workflowFile", "")).strip()
+    return _run_and_save(data, comfy_api_url, prepared_workflow, workflow_file, merged_advanced, "mix")
+
+
+def _prepare_mix(payload: dict):
+    """Load a mix workflow, apply advancedValues and upload each image into its
+    LoadImage node. Returns (workflow, comfyApiUrl, registry, advancedValues),
+    or an error response."""
     workflow_file = str(payload.get("workflowFile", "")).strip()
     images = payload.get("images", [])
     advanced_values = payload.get("advancedValues", {})
@@ -599,13 +631,7 @@ def prepare_mix_workflow():
                 return jsonify({"error": f"No LoadImage node found for nodeId={node_id}"}), 400
 
     _apply_comfy_output_policy(data, prepared_workflow)
-    gpu_coordinator.wait_external("comfy")  # browser submits directly (superqueue)
-    client_id = uuid.uuid4().hex
-    return jsonify({
-        "workflow": prepared_workflow,
-        "clientId": client_id,
-        "comfyApiUrl": comfy_api_url,
-    })
+    return prepared_workflow, comfy_api_url, data, merged_advanced
 
 
 @models_api_bp.post("/models/refine/preprocess-preview")
@@ -788,19 +814,24 @@ def generate_refine_image():
     except Exception as exc:
         return jsonify({"error": f"ComfyUI image upload failed: {exc}"}), 502
 
+    prepared_workflow = deepcopy(raw_workflow)
+    _apply_advanced_values(prepared_workflow, merged_advanced)
+
+    if not _inject_uploaded_image_into_workflow(
+        prepared_workflow, comfy_filename, node_id=image_node_id
+    ):
+        return jsonify(
+            {"error": "Workflow has no LoadImage node for input image"}
+        ), 400
+
+    _apply_comfy_output_policy(data, prepared_workflow)
+    return _run_and_save(data, comfy_api_url, prepared_workflow, workflow_file, merged_advanced, "refine")
+
+
+def _run_and_save(data, comfy_api_url, prepared_workflow, workflow_file, merged_advanced, source):
+    """Queue a prepared workflow on ComfyUI, wait for it and save its first
+    image to the active viewer's output folder (refine/generate, mix/generate)."""
     try:
-        prepared_workflow = deepcopy(raw_workflow)
-        _apply_advanced_values(prepared_workflow, merged_advanced)
-
-        if not _inject_uploaded_image_into_workflow(
-            prepared_workflow, comfy_filename, node_id=image_node_id
-        ):
-            return jsonify(
-                {"error": "Workflow has no LoadImage node for input image"}
-            ), 400
-
-        _apply_comfy_output_policy(data, prepared_workflow)
-
         with gpu_coordinator.held("comfy"):
             prompt_response = http_json(
                 f"{comfy_api_url}/prompt",
@@ -840,17 +871,17 @@ def generate_refine_image():
         image_bytes = http_bytes(f"{comfy_api_url}/view?{query}", timeout=180)
 
         meta: dict[str, str] = {
-            "source": "refine",
+            "source": source,
             "session": prompt_id,
             "workflow_file": workflow_file,
             "advanced_values": json.dumps(merged_advanced, ensure_ascii=False),
             "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
         saved_filename = _try_save_image_to_output_dir(
-            data, image_bytes, meta, "refine", 0
+            data, image_bytes, meta, source, 0
         )
     except Exception as exc:
-        return jsonify({"error": f"ComfyUI refine workflow failed: {exc}"}), 502
+        return jsonify({"error": f"ComfyUI {source} workflow failed: {exc}"}), 502
 
     return jsonify(
         {

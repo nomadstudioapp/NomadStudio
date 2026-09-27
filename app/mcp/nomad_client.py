@@ -104,6 +104,20 @@ class NomadClient:
             payload["advancedValues"] = advanced_values
         return await self._post("/api/models/refine/generate", payload)
 
+    async def submit_mix(
+        self,
+        workflow_file: str,
+        images: list[dict[str, str]],
+        advanced_values: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Ejecuta un flow de Mix entero en el servidor (POST
+        /api/models/mix/generate). ``images``: [{dataUrl, nodeId}], uno por
+        hueco; dataUrl vacio en un hueco opcional = sin imagen."""
+        payload: dict[str, Any] = {"workflowFile": workflow_file, "images": images}
+        if advanced_values:
+            payload["advancedValues"] = advanced_values
+        return await self._post("/api/models/mix/generate", payload)
+
     async def list_flows(
         self, category: str | None = None, available: bool = True, full: bool = True
     ) -> list[dict[str, Any]]:
@@ -117,6 +131,50 @@ class NomadClient:
         data = await self._get("/api/flows", params=params)
         flows = data.get("flows")
         return flows if isinstance(flows, list) else []
+
+    # ── Sessions ──────────────────────────────────────────────────────
+    # Las que ve el agente: las compartidas con todos ("all") y las suyas.
+
+    async def list_sessions(self) -> list[dict[str, Any]]:
+        data = await self._get("/api/sessions")
+        sessions = data.get("sessions")
+        return sessions if isinstance(sessions, list) else []
+
+    async def get_session(self, session_id: str) -> dict[str, Any] | None:
+        try:
+            response = await self._http.get(f"/api/sessions/{session_id}")
+        except httpx.HTTPError as exc:
+            raise NomadClientError(f"GET /api/sessions/{session_id} fallo: {exc}") from exc
+        if response.status_code == 404:
+            return None
+        if response.is_error:
+            raise NomadClientError(f"GET /api/sessions/{session_id} fallo: HTTP {response.status_code}")
+        session = response.json().get("session")
+        return session if isinstance(session, dict) else None
+
+    async def create_session(self, name: str) -> dict[str, Any]:
+        # scope "all": una session privada del agente no la veria el usuario.
+        data = await self._post("/api/sessions", {"name": name, "scope": "all"})
+        return data.get("session", {})
+
+    async def add_session_step(
+        self,
+        session_id: str,
+        step: dict[str, Any],
+        images: list[str],
+        inputs: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Anade un paso (POST /api/sessions/<id>/steps). ``images``/``inputs``
+        son ficheros del album del agente: el servidor los copia a la carpeta
+        de la session. Devuelve el paso creado."""
+        payload: dict[str, Any] = {"step": step, "images": images}
+        if inputs:
+            payload["inputs"] = inputs
+        data = await self._post(f"/api/sessions/{session_id}/steps", payload)
+        return data.get("step", {})
+
+    def absolute_url(self, path: str) -> str:
+        return f"{self._base_url}{path}" if path.startswith("/") else path
 
     async def get_output_dir(self) -> str:
         """Ruta base del Album (``<output_dir>/<viewer-slug>/<filename>`` es

@@ -1,6 +1,6 @@
 # 在 Claude Desktop、ChatGPT 和 Bionic 中使用 Nomad Studio（MCP）
 
-Nomad Studio 自带一个 **MCP**（Model Context Protocol）服务器。有了它，你的 AI 助手只需在聊天中提出请求，就能在你自己的电脑上生成和修改图片——使用你的模型、你的 ComfyUI，无需 API 密钥。
+Nomad Studio 自带一个 **MCP**（Model Context Protocol）服务器。有了它，你的 AI 助手只需在聊天中提出请求，就能在你自己的电脑上生成、修改和合成图片——使用你的模型、你的 ComfyUI，无需 API 密钥——并把它们一步步保存到你的 Sessions 中。
 
 > English: [MCP_SETUP.md](MCP_SETUP.md) · Español: [MCP_SETUP_ES.md](MCP_SETUP_ES.md) · 한국어: [MCP_SETUP_KO.md](MCP_SETUP_KO.md)
 

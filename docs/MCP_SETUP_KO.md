@@ -1,6 +1,6 @@
 # Claude Desktop, ChatGPT, Bionic에서 Nomad Studio 사용하기 (MCP)
 
-Nomad Studio에는 **MCP**(Model Context Protocol) 서버가 포함되어 있습니다. 이를 사용하면 AI 어시스턴트에게 채팅으로 요청하기만 해도 내 PC에서 — 내 모델과 내 ComfyUI로, API 키 없이 — 이미지를 생성하고 수정할 수 있습니다.
+Nomad Studio에는 **MCP**(Model Context Protocol) 서버가 포함되어 있습니다. 이를 사용하면 AI 어시스턴트에게 채팅으로 요청하기만 해도 내 PC에서 — 내 모델과 내 ComfyUI로, API 키 없이 — 이미지를 생성하고 수정하고 합성할 수 있으며, 단계별로 Sessions에 저장할 수도 있습니다.
 
 > English: [MCP_SETUP.md](MCP_SETUP.md) · Español: [MCP_SETUP_ES.md](MCP_SETUP_ES.md) · 中文: [MCP_SETUP_ZH.md](MCP_SETUP_ZH.md)
 

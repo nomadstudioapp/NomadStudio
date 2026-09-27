@@ -1193,8 +1193,23 @@
   window.__nomadOnSessionStepCaptured = function () {
     if (!sessionCurrentSession) return;
     var fresh = Session.find(sessionCurrentSession.id);
-    if (fresh) { sessionCurrentSession = fresh; sessionRenderTree(fresh); }
+    if (!fresh) return;
+    // Copied into the SAME object, not swapped for the fresh one: the name
+    // input and the workspace actions keep a reference to it from
+    // sessionRenderWorkspace, and a stale copy there would push its old step
+    // list — dropping a step that just arrived (MCP, NomadStudio#24).
+    Object.keys(fresh).forEach(function (k) { sessionCurrentSession[k] = fresh[k]; });
+    sessionRenderTree(sessionCurrentSession);
   };
+
+  // Back to this window (e.g. from the chat where an agent added a step
+  // through the MCP): pick up steps added from outside meanwhile.
+  function _sessionRefreshOnReturn() {
+    if (document.visibilityState !== 'visible') return;
+    if (sessionCurrentSession && Session.refreshSession) Session.refreshSession(sessionCurrentSession.id);
+  }
+  window.addEventListener('focus', _sessionRefreshOnReturn);
+  document.addEventListener('visibilitychange', _sessionRefreshOnReturn);
 
   function sessionResolveSlug(step) {
     if (step.flowAction) return step.flowAction.replace(/_/g, '-');

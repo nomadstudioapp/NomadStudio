@@ -196,7 +196,10 @@ def get_flow(flow_id: str):
 @flows_api_bp.get("/sessions")
 def list_sessions():
     viewer_id = _active_viewer_id()
-    return jsonify({"sessions": session_service.list_sessions(viewer_id)})
+    # serverTime: what the client echoes back as syncedAt on its next PUT
+    # (see session_service.upsert_session).
+    server_time = session_service.now_ms()
+    return jsonify({"sessions": session_service.list_sessions(viewer_id), "serverTime": server_time})
 
 
 @flows_api_bp.post("/sessions")
@@ -211,20 +214,121 @@ def create_session():
 @flows_api_bp.get("/sessions/<session_id>")
 def get_session(session_id: str):
     viewer_id = _active_viewer_id()
+    server_time = session_service.now_ms()
     sess = session_service.get_session(session_id, viewer_id)
     if sess is None:
         return jsonify({"ok": False, "error": "not found"}), 404
-    return jsonify({"ok": True, "session": sess})
+    return jsonify({"ok": True, "session": sess, "serverTime": server_time})
 
 
 @flows_api_bp.put("/sessions/<session_id>")
 def update_session(session_id: str):
     viewer_id = _active_viewer_id()
     patch = request.get_json(silent=True) or {}
+    # Taken before the write: the session returned holds every step added
+    # up to here, so a client that absorbs it can safely claim this time.
+    server_time = session_service.now_ms()
     sess = session_service.upsert_session(session_id, patch, viewer_id)
     if sess is None:
         return jsonify({"ok": False, "error": "not found"}), 404
-    return jsonify({"ok": True, "session": sess})
+    return jsonify({"ok": True, "session": sess, "serverTime": server_time})
+
+
+_SAFE_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def _image_into_session(ref: Any, folder: str, output_dir: str) -> str | None:
+    """``/api/images/…`` URL for ``ref`` inside the session's folder.
+
+    A URL that already points into ``session/`` is kept as is; anything else
+    (a plain file of the active viewer — the MCP agent's own album — or its
+    ``input/`` folder) is copied into ``<output>/session/<folder>/`` first:
+    the session is shared, and another viewer's album would not resolve for
+    whoever opens it."""
+    import shutil
+
+    from app.routes.models_api_modules.images_routes import _resolve_image_path_for_filename
+
+    name = unquote(str(ref or "").strip()).split("?", 1)[0]
+    if name.startswith("/api/images/"):
+        name = name[len("/api/images/"):]
+    if not name:
+        return None
+    if name.startswith(("session/", "bundle/", "vault/")):
+        return "/api/images/" + name if _resolve_image_path_for_filename(_ensure_registry(), name) else None
+    src = _resolve_image_path_for_filename(_ensure_registry(), name)
+    if src is None:
+        return None
+    dest_dir = Path(output_dir) / "session" / folder
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / src.name
+    if dest.exists() and dest.stat().st_size != src.stat().st_size:
+        dest = dest_dir / f"{src.stem}-{session_service.now_ms()}{src.suffix}"
+    if not dest.exists():
+        shutil.copy2(src, dest)
+    return f"/api/images/session/{folder}/{dest.name}"
+
+
+@flows_api_bp.post("/sessions/<session_id>/steps")
+def add_session_step(session_id: str):
+    """Append one step (NomadStudio#24, used by the MCP). Body: ``step`` (the
+    usual fields: flowLabel, flowCategory, flowAction, params, parentId),
+    ``images`` (the step's outputs) and optional ``inputs`` ({image picker id:
+    image}) — images as file names of the active viewer or /api/images URLs;
+    they are copied into the session's folder."""
+    viewer_id = _active_viewer_id()
+    body = request.get_json(silent=True) or {}
+    sess = session_service.get_session(session_id, viewer_id)
+    if sess is None:
+        return jsonify({"ok": False, "error": "session not found"}), 404
+    folder = str(sess.get("folder") or "")
+    if not _SAFE_NAME.match(folder):
+        return jsonify({"ok": False, "error": "session has no usable folder"}), 400
+
+    output_dir = _resolve_output_dir(_ensure_registry())
+    images: list[str] = []
+    for ref in body.get("images") or []:
+        url = _image_into_session(ref, folder, output_dir)
+        if url is None:
+            return jsonify({"ok": False, "error": f"image not found: {ref}"}), 400
+        images.append(url)
+    if not images:
+        return jsonify({"ok": False, "error": "images is required"}), 400
+    inputs: dict[str, str] = {}
+    raw_inputs = body.get("inputs") if isinstance(body.get("inputs"), dict) else {}
+    for picker_id, ref in raw_inputs.items():
+        url = _image_into_session(ref, folder, output_dir)
+        if url is None:
+            return jsonify({"ok": False, "error": f"input image not found: {ref}"}), 400
+        inputs[str(picker_id)] = url
+
+    raw = body.get("step") if isinstance(body.get("step"), dict) else {}
+    parent_id = raw.get("parentId") or None
+    if parent_id and not any(s.get("id") == parent_id for s in sess.get("steps") or []):
+        return jsonify({"ok": False, "error": f"parent step not found: {parent_id}"}), 400
+    import secrets
+    from datetime import datetime, timezone
+
+    step = {
+        "id": f"step-{session_service.now_ms()}-{secrets.randbelow(10000)}",
+        "flowLabel": str(raw.get("flowLabel") or "Flow"),
+        "flowCategory": str(raw.get("flowCategory") or "create"),
+        "flowAction": raw.get("flowAction") or None,
+        "params": raw.get("params") if isinstance(raw.get("params"), dict) else None,
+        "imageUrl": images[0],
+        "images": images,
+        "parentId": parent_id,
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+    }
+    if inputs:
+        step["inputs"] = inputs
+    if raw.get("source"):
+        step["source"] = str(raw["source"])[:40]
+    server_time = session_service.now_ms()
+    sess = session_service.append_step(session_id, step, viewer_id)
+    if sess is None:
+        return jsonify({"ok": False, "error": "session not found"}), 404
+    return jsonify({"ok": True, "session": sess, "step": step, "serverTime": server_time})
 
 
 @flows_api_bp.delete("/sessions/<session_id>")

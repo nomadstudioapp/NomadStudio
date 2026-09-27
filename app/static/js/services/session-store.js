@@ -404,11 +404,66 @@
   // Pull the viewer's visible sessions (own + shared-with-all) from the
   // server and merge them into the local cache. Server sessions win on id
   // conflicts; purely-local sessions (not yet synced, e.g. offline) are kept.
+  // Server time ({session id: ms}) of the freshest copy of each session this
+  // browser holds. Sent as syncedAt on every PUT: a step the server got after
+  // that moment (added by an agent through the MCP, NomadStudio#24) is one
+  // this cache never saw, so the server keeps it instead of reading its
+  // absence from the list as a delete.
+  var SYNCED_KEY = 'ns-sessions-synced';
+  function _syncedMap() {
+    try { return JSON.parse(localStorage.getItem(SYNCED_KEY) || '{}') || {}; } catch (_) { return {}; }
+  }
+  function _markSynced(ids, serverTime) {
+    if (!serverTime || !ids.length) return;
+    var map = _syncedMap();
+    ids.forEach(function (id) { if (!map[id] || map[id] < serverTime) map[id] = serverTime; });
+    try { localStorage.setItem(SYNCED_KEY, JSON.stringify(map)); } catch (_) {}
+  }
+
+  // Take the steps of a server copy that the local one lacks and that were
+  // added after this cache's last sync — additive only, so a response racing
+  // a local edit can never undo it.
+  function _absorb(serverSession, serverTime) {
+    if (!serverSession || !serverSession.id) return false;
+    var sessions = load();
+    var i = sessions.findIndex(function (b) { return b.id === serverSession.id; });
+    if (i === -1) return false;
+    var local = sessions[i];
+    var since = _syncedMap()[local.id] || 0;
+    var known = {};
+    (local.steps || []).forEach(function (s) { if (s && s.id) known[s.id] = true; });
+    var extra = (serverSession.steps || []).filter(function (s) {
+      return s && s.id && !known[s.id] && (s.addedAt || 0) > since;
+    });
+    if (extra.length) {
+      local.steps = local.steps || [];
+      if (extra.some(function (s) { return s.selected; })) {
+        local.steps.forEach(function (s) { s.selected = false; });
+      }
+      local.steps = local.steps.concat(extra);
+      sessions[i] = local;
+      save(sessions);
+    }
+    _markSynced([local.id], serverTime);
+    if (extra.length) _notifyStepChange();
+    return extra.length > 0;
+  }
+
+  // Re-read one session (the workspace calls it when the window gets focus
+  // back) and pick up steps added from outside meanwhile.
+  function refreshSession(sessionId) {
+    if (!sessionId) return Promise.resolve(false);
+    return _api('/' + encodeURIComponent(sessionId), { method: 'GET' })
+      .then(function (data) { return data && data.ok ? _absorb(data.session, data.serverTime) : false; })
+      .catch(function () { return false; });
+  }
+
   function syncFromServer() {
     return _api('', { method: 'GET' }).then(function (data) {
       var serverSessions = Array.isArray(data.sessions) ? data.sessions : [];
       var serverIds = {};
       serverSessions.forEach(function (b) { if (b && b.id) serverIds[b.id] = true; });
+      _markSynced(Object.keys(serverIds), data.serverTime);
 
       // Anything deleted locally stays deleted, whichever copy this response
       // happens to carry (see the tombstone comment on deleteRemote). Once the
@@ -472,9 +527,15 @@
   // addStepRemote below.
   function pushUpdate(session) {
     if (!session || !session.id) return Promise.resolve();
+    var body = { name: session.name, steps: session.steps, folder: session.folder };
+    var syncedAt = _syncedMap()[session.id];
+    if (syncedAt) body.syncedAt = syncedAt;
     return _api('/' + encodeURIComponent(session.id), {
       method: 'PUT',
-      body: JSON.stringify({ name: session.name, steps: session.steps, folder: session.folder })
+      body: JSON.stringify(body)
+    }).then(function (data) {
+      if (data && data.ok) _absorb(data.session, data.serverTime);
+      return data;
     }).catch(function () {});
   }
 
@@ -531,7 +592,8 @@
     beginStep: beginStep, settleStep: settleStep,
     slugify: slugify, folderOf: folderOf, subdirOf: subdirOf,
     SCOPE_ALL: SCOPE_ALL, SCOPE_USER: SCOPE_USER,
-    syncFromServer: syncFromServer, createRemote: createRemote, importRemote: importRemote,
+    syncFromServer: syncFromServer, refreshSession: refreshSession,
+    createRemote: createRemote, importRemote: importRemote,
     duplicateRemote: duplicateRemote, pushUpdate: pushUpdate, deleteRemote: deleteRemote,
     persistAsUser: persistAsUser
   };

@@ -11,11 +11,33 @@ depende de el para esto.
 from __future__ import annotations
 
 import io
+import re
 from pathlib import Path
 
 
 class LocalImageNotFoundError(RuntimeError):
     """La imagen no se encontro en disco en la ruta esperada."""
+
+
+_SESSION_PART = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def image_path(output_dir: str, viewer_slug: str, filename: str) -> Path:
+    """Ruta en disco de ``filename``: un fichero del album del agente, o la
+    imagen de un paso de session, ``session/<carpeta>/<fichero>`` (carpeta
+    compartida por todos los viewers, NomadStudio#24)."""
+    if filename.startswith("session/"):
+        parts = filename.split("/")[1:]
+        if len(parts) != 2 or not all(_SESSION_PART.match(p) and p not in (".", "..") for p in parts):
+            raise LocalImageNotFoundError(f"Nombre de fichero invalido: '{filename}'")
+        path = Path(output_dir).joinpath("session", *parts)
+    else:
+        if "/" in filename or "\\" in filename or ".." in filename:
+            raise LocalImageNotFoundError(f"Nombre de fichero invalido: '{filename}'")
+        path = Path(output_dir) / viewer_slug / filename
+    if not path.is_file():
+        raise LocalImageNotFoundError(f"No se encontro '{filename}' en '{path.parent}'.")
+    return path
 
 
 def read_thumbnail(output_dir: str, viewer_slug: str, filename: str, max_size: int) -> tuple[bytes, str]:
@@ -24,11 +46,7 @@ def read_thumbnail(output_dir: str, viewer_slug: str, filename: str, max_size: i
     si ya cabe en max_size — 716KB para un PNG de 1024px), aqui SIEMPRE se
     re-encodea a JPEG: el resultado viaja en base64 dentro de la respuesta
     MCP y cuenta como tokens de vision, asi que el tamano importa."""
-    if "/" in filename or "\\" in filename or ".." in filename:
-        raise LocalImageNotFoundError(f"Nombre de fichero invalido: '{filename}'")
-    path = Path(output_dir) / viewer_slug / filename
-    if not path.is_file():
-        raise LocalImageNotFoundError(f"No se encontro '{filename}' en '{path.parent}'.")
+    path = image_path(output_dir, viewer_slug, filename)
     try:
         from PIL import Image
 
@@ -59,11 +77,7 @@ def read_full_image_as_data_url(output_dir: str, viewer_slug: str, filename: str
     respecto a la miniatura pensada solo para mostrarse en el chat."""
     import base64
 
-    if "/" in filename or "\\" in filename or ".." in filename:
-        raise LocalImageNotFoundError(f"Nombre de fichero invalido: '{filename}'")
-    path = Path(output_dir) / viewer_slug / filename
-    if not path.is_file():
-        raise LocalImageNotFoundError(f"No se encontro '{filename}' en '{path.parent}'.")
+    path = image_path(output_dir, viewer_slug, filename)
     mime = _EXT_TO_MIME.get(path.suffix.lower(), "image/png")
     raw = path.read_bytes()
     b64 = base64.b64encode(raw).decode("ascii")

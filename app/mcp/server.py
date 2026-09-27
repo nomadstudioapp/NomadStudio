@@ -16,7 +16,7 @@ import secrets
 import sys
 from typing import Annotated, Any
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.types import ImageContent, TextContent
@@ -29,6 +29,7 @@ from app.mcp.config import (
 )
 from app.mcp.local_files import (
     LocalImageNotFoundError,
+    image_path,
     read_full_image_as_data_url,
     read_thumbnail,
 )
@@ -40,8 +41,10 @@ from app.mcp.quantization import (
     pick_quantization,
     quantization_file_refs,
 )
+from app.mcp import mix_actions
 from app.mcp import refine_actions
 from app.mcp import session_state
+from app.mcp import sessions as mcp_sessions
 from app.mcp.regions import MarkedRegion, annotate_data_url
 from app.services.prompt_params import MAX_REPEAT as MAX_IMAGES_PER_CALL
 from app.services.prompt_params import parse as parse_prompt_params, size_for_aspect
@@ -369,6 +372,7 @@ async def nomad_studio_create_image(
             "quantization": chosen_id or None,
             "images": [{"id": name, "url": _client.image_url(name, viewer_id=agent_slug)} for name in filenames],
         })
+        session_note = await mcp_sessions.auto_add(_client, agent_slug)
 
         output_dir = await _client.get_output_dir()
         image_blocks: list[ImageContent] = []
@@ -405,7 +409,7 @@ async def nomad_studio_create_image(
                     f"cuantizacion: {chosen_id or 'por defecto del workflow'} "
                     f"(velocidad pedida: {speed}).\n"
                     f"Tamano: {width}x{height}. Semilla usada: {result.get('appliedSeed')} (pasala en 'seed' "
-                    f"para repetir esta imagen o variarla solo con cambios en el prompt).{params_note}\n"
+                    f"para repetir esta imagen o variarla solo con cambios en el prompt).{params_note}{session_note}\n"
                     f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
                     + (f"Todas las imagenes de esta tanda:\n{links}\n" if len(filenames) > 1 else "")
                     + "Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
@@ -532,6 +536,385 @@ async def nomad_studio_get_last_generation(ctx: Context) -> list[TextContent]:
         f"```json\n{json.dumps(generation, indent=2, ensure_ascii=False)}\n```"))]
 
 
+class MixImage(BaseModel):
+    """Una imagen de entrada de un Mix y el hueco (papel) que ocupa."""
+
+    filename: str = Field(..., description=(
+        "Fichero de la imagen, tal y como aparecio en una respuesta anterior (create_image, "
+        "refine_image, mix_images) o 'session/<carpeta>/<fichero>' de nomad_studio_get_session."))
+    slot: str | None = Field(None, description=(
+        "Hueco que ocupa, el id que da nomad_studio_list_mix_actions ('image', 'image_2'...: "
+        "cada uno tiene un papel, ej. fondo, sujeto, referencia de estilo). Vacio = el siguiente "
+        "hueco libre, en el orden del flow."))
+
+
+def _resolve_aspect(value: str | None) -> tuple[int, int] | None:
+    """'wide'/'landscape'... o 'W:H' -> tamano en pixeles (~1 MP); None si vacio."""
+    text = (value or "").strip().lower()
+    if not text:
+        return None
+    if text in ASPECT_RATIO_DIMENSIONS:
+        return ASPECT_RATIO_DIMENSIONS[text]
+    w, sep, h = text.partition(":")
+    if not sep or not (w.isdigit() and h.isdigit()) or not int(w) or not int(h):
+        raise ValueError(f"'{value}' no es un formato valido (usa 16:9, 3:2, square, wide...)")
+    return size_for_aspect((int(w), int(h)))
+
+
+@mcp.tool(
+    name="nomad_studio_list_mix_actions",
+    description=(
+        "Lista los flows de Mix de Nomad Studio (combinar varias imagenes en una: componer un "
+        "sujeto sobre un fondo, pasar el estilo de una imagen a otra...) para usar con "
+        "nomad_studio_mix_images: su id, que hace, y los huecos de imagen de cada uno con su "
+        "papel. Usa esto antes de mezclar imagenes si no sabes que 'action' o que huecos usar."
+    ),
+    structured_output=False,
+    annotations=_READ_TOOL,
+)
+async def nomad_studio_list_mix_actions(ctx: Context) -> list[TextContent]:
+    try:
+        catalog = await mix_actions.get_catalog(_client)
+    except NomadClientError as exc:
+        return [TextContent(type="text", text=(
+            f"No se pudo conectar con Nomad Studio: {exc}. ¿Esta la app abierta y corriendo?"))]
+    return [TextContent(type="text", text=(
+        "Flows de Mix (en la instruction, <image1> es el primer hueco, <image2> el segundo...):\n"
+        + mix_actions.describe_actions(catalog)))]
+
+
+@mcp.tool(
+    name="nomad_studio_mix_images",
+    description=(
+        "Combina 100% en local varias imagenes en una nueva con un flow de Mix de Nomad Studio: "
+        "poner un sujeto sobre un fondo, juntar varias referencias en una escena, o aplicar el "
+        "estilo de una imagen a otra. Cada imagen va en un hueco con su papel (fondo, sujeto, "
+        "referencia de estilo...): los ids de flow y de hueco los da nomad_studio_list_mix_actions. "
+        "Para editar UNA sola imagen usa nomad_studio_refine_image; para crear desde cero, "
+        "nomad_studio_create_image."
+    ),
+    structured_output=False,
+    annotations=_WRITE_TOOL,
+)
+async def nomad_studio_mix_images(
+    action: Annotated[str, Field(description=(
+        "Id exacto del flow de Mix (ej. 'mix.multi_reference_compose_quick', "
+        "'mix.style_transfer_qwen_2511'), de nomad_studio_list_mix_actions."))],
+    images: Annotated[list[MixImage], Field(description=(
+        "Las imagenes de entrada, cada una con su hueco. Hay que llenar todos los huecos no "
+        "opcionales del flow. Si el usuario no dice que papel tiene cada una y no es obvio, "
+        "preguntaselo."))],
+    ctx: Context,
+    instruction: Annotated[str | None, Field(description=(
+        "Que hacer, en ingles, nombrando cada imagen por su hueco: <image1> = el primer hueco "
+        "del flow, <image2> el segundo... (ej. 'Place the person from <image2> into the "
+        "background <image1>, sitting on the bench.'). Vacio = la instruccion por defecto del "
+        "flow, si la tiene."))] = None,
+    aspect_ratio: Annotated[str | None, Field(description=(
+        "Formato de la imagen final, SOLO en los flows marcados 'accepts aspect_ratio': "
+        "'16:9', '3:2', 'square', 'wide', 'tall', 'landscape', 'portrait'... Vacio = el del "
+        "flow."))] = None,
+    seed: Annotated[int | None, Field(description=(
+        "Semilla exacta, SOLO para repetir un resultado anterior. Vacio = aleatoria."))] = None,
+) -> list[TextContent | ImageContent]:
+    agent_name = agent_slug = "unknown"
+    debug: dict[str, Any] = {"input": {
+        "action": action, "images": [i.model_dump() for i in images], "instruction": instruction,
+        "aspect_ratio": aspect_ratio, "seed": seed}}
+    try:
+        agent = await ensure_agent_session(_client, ctx)
+        agent_name, agent_slug = agent.get("name", "unknown"), agent.get("slug", "unknown")
+        catalog = await mix_actions.get_catalog(_client)
+        mix = catalog.get(action.strip())
+        if mix is None:
+            return [TextContent(type="text", text=(
+                f"NO SE HA HECHO NADA TODAVIA. '{action}' no es un flow de Mix valido. Elige uno de "
+                f"estos:\n{mix_actions.describe_actions(catalog)}"))]
+
+        # Cada imagen a su hueco: los que se nombran, y el resto al siguiente
+        # libre en el orden del flow.
+        by_slot = {s.slot: s for s in mix.slots}
+        assigned: dict[str, str] = {}
+        problems: list[str] = []
+        for img in images:
+            if img.slot:
+                if img.slot not in by_slot:
+                    problems.append(f"'{img.slot}' no es un hueco de {mix.flow_id}")
+                elif img.slot in assigned:
+                    problems.append(f"el hueco '{img.slot}' tiene dos imagenes")
+                else:
+                    assigned[img.slot] = img.filename
+        for img in images:
+            if not img.slot:
+                free = next((s.slot for s in mix.slots if s.slot not in assigned), None)
+                if free is None:
+                    problems.append(f"sobra la imagen '{img.filename}': no quedan huecos")
+                else:
+                    assigned[free] = img.filename
+        missing = [s for s in mix.required_slots if s.slot not in assigned]
+        if missing:
+            problems.append("faltan imagenes para: " + ", ".join(f"'{s.slot}' ({s.label})" for s in missing))
+        if problems:
+            slots = "\n".join(f"- '{s.slot}': {s.label}{' (opcional)' if s.optional else ''}" for s in mix.slots)
+            return [TextContent(type="text", text=(
+                "NO SE HA HECHO NADA TODAVIA: " + "; ".join(problems)
+                + f".\nHuecos de {mix.flow_id}, en orden (<image1>, <image2>...):\n{slots}"))]
+
+        try:
+            size = _resolve_aspect(aspect_ratio) if mix.width_key else None
+        except ValueError as exc:
+            return [TextContent(type="text", text=f"NO SE HA HECHO NADA TODAVIA: {exc}.")]
+        if mix.width_key and size is None:
+            size = size_for_aspect(mix.default_aspect)
+        advanced = mix_actions.advanced_values(mix, instruction, size, seed)
+
+        output_dir = await _client.get_output_dir()
+        payload_images = [
+            {"dataUrl": read_full_image_as_data_url(output_dir, agent_slug, assigned[s.slot]) if s.slot in assigned else "",
+             "nodeId": s.node_id}
+            for s in mix.slots
+        ]
+        debug["slots"] = assigned
+        debug["request"] = {"workflowFile": mix.workflow_file, "advancedValues": advanced}
+        _log(f"MIX REQUEST: {json.dumps(debug['request'], ensure_ascii=False)}")
+        result = await _client.submit_mix(mix.workflow_file, payload_images, advanced)
+        debug["response"] = result
+        saved = result.get("savedFilename")
+        if not saved:
+            debug["error"] = "Nomad Studio no devolvio el nombre del fichero."
+            return [_debug_text(agent_name, agent_slug, debug)]
+
+        prompt_used = advanced.get(mix.prompt_key) if mix.prompt_key else None
+        session_state.set_last_image(saved)
+        session_state.set_last_generation({
+            "kind": "mix",
+            "action": mix.flow_id,
+            "flow_label": mix.label,
+            "inputs": assigned,
+            "instruction": prompt_used,
+            "workflow_file": mix.workflow_file,
+            "advanced_values": advanced,
+            "images": [{"id": saved, "url": _client.image_url(saved, viewer_id=agent_slug)}],
+        })
+        session_note = await mcp_sessions.auto_add(_client, agent_slug)
+
+        thumb, mime = read_thumbnail(output_dir, agent_slug, saved, THUMBNAIL_WIDTH)
+        public_url = _client.image_url(saved, viewer_id=agent_slug)
+        used = ", ".join(f"{slot} = {name}" for slot, name in assigned.items())
+        return [
+            ImageContent(type="image", data=base64.b64encode(thumb).decode("ascii"), mimeType=mime),
+            TextContent(type="text", text=(
+                f"Mezclado con Nomad Studio — flow: {mix.label} ({mix.flow_id}). Imagenes: {used}."
+                f"{session_note}\n"
+                f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
+                f"Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
+                f"ensenarsela al usuario directamente en el chat, sin que tenga que pedirlo.\n\n"
+                f"AGENT: {agent_name}\nUSER: {agent_slug}\n\n"
+                f"```json\n{json.dumps(debug, indent=2, ensure_ascii=False)}\n```"
+            )),
+        ]
+    except LocalImageNotFoundError as exc:
+        debug["error"] = str(exc)
+        return [_debug_text(agent_name, agent_slug, debug)]
+    except NomadClientError as exc:
+        debug["error"] = f"No se pudo conectar con Nomad Studio: {exc}. ¿Esta la app abierta y corriendo?"
+        return [_debug_text(agent_name, agent_slug, debug)]
+
+
+def _session_image_ref(url: str) -> str:
+    """"/api/images/session/<carpeta>/<fichero>" -> "session/<carpeta>/<fichero>",
+    lo que aceptan 'filename' de refine_image y add_to_session."""
+    return url[len("/api/images/"):] if url.startswith("/api/images/") else url
+
+
+def _step_prompt(step: dict[str, Any]) -> str:
+    params = step.get("params") if isinstance(step.get("params"), dict) else {}
+    prompt = str(params.get("prompt") or "").strip()
+    return prompt if len(prompt) <= 300 else prompt[:297] + "..."
+
+
+@mcp.tool(
+    name="nomad_studio_list_sessions",
+    description=(
+        "Lista las sessions de Nomad Studio que se pueden ver desde aqui (las compartidas con "
+        "todos): id, nombre, numero de pasos y fecha. Una session es un proyecto de la app que "
+        "guarda, paso a paso, las imagenes creadas y retocadas y como se hizo cada una. Usa "
+        "esto cuando el usuario hable de sus sessions o quiera guardar/continuar algo en una. "
+        "No genera ni modifica nada."
+    ),
+    structured_output=False,
+    annotations=_READ_TOOL,
+)
+async def nomad_studio_list_sessions(ctx: Context) -> list[TextContent]:
+    try:
+        await ensure_agent_session(_client, ctx)
+        sessions = await _client.list_sessions()
+    except NomadClientError as exc:
+        return [TextContent(type="text", text=(
+            f"No se pudo conectar con Nomad Studio: {exc}. ¿Esta la app abierta y corriendo?"))]
+    if not sessions:
+        return [TextContent(type="text", text=(
+            "No hay ninguna session visible. Se puede crear una con nomad_studio_add_to_session "
+            "(argumento 'new_session_name')."))]
+    sessions = sorted(sessions, key=lambda s: str(s.get("createdAt") or ""), reverse=True)
+    following = session_state.get_follow_session()
+    lines = ["Sessions de Nomad Studio (las mas recientes primero):\n"]
+    for sess in sessions[:40]:
+        steps = sess.get("steps") or []
+        mark = "  <- esta conversacion guarda aqui sus imagenes" if sess.get("id") == following else ""
+        lines.append(f"- {sess.get('name') or 'Sin nombre'} — id: {sess.get('id')}, {len(steps)} pasos, "
+                     f"creada {str(sess.get('createdAt') or '')[:10]}{mark}")
+    if len(sessions) > 40:
+        lines.append(f"... y {len(sessions) - 40} mas.")
+    return [TextContent(type="text", text="\n".join(lines))]
+
+
+@mcp.tool(
+    name="nomad_studio_get_session",
+    description=(
+        "Lee una session de Nomad Studio: sus pasos en orden, con el flow usado, de que paso "
+        "sale cada uno, el prompt y sus imagenes, mas una miniatura de la ultima. Usa esto para "
+        "contar que hay en una session o antes de retocar la imagen de uno de sus pasos (pasa "
+        "su 'session/...' en 'filename' de nomad_studio_refine_image). No genera ni modifica nada."
+    ),
+    structured_output=False,
+    annotations=_READ_TOOL,
+)
+async def nomad_studio_get_session(
+    session_id: Annotated[str, Field(description=(
+        "Id de la session ('session-...'), tal y como lo da nomad_studio_list_sessions."))],
+    ctx: Context,
+) -> list[TextContent | ImageContent]:
+    try:
+        await ensure_agent_session(_client, ctx)
+        sess = await _client.get_session(session_id.strip())
+        output_dir = await _client.get_output_dir()
+    except NomadClientError as exc:
+        return [TextContent(type="text", text=(
+            f"No se pudo conectar con Nomad Studio: {exc}. ¿Esta la app abierta y corriendo?"))]
+    if sess is None:
+        return [TextContent(type="text", text=(
+            f"No hay ninguna session visible con id '{session_id}'. Mira los ids reales con "
+            "nomad_studio_list_sessions."))]
+
+    steps = [s for s in sess.get("steps") or [] if isinstance(s, dict)]
+    index = {s.get("id"): n for n, s in enumerate(steps, 1)}
+    lines = [f"Session '{sess.get('name')}' (id: {sess.get('id')}), {len(steps)} pasos:\n"]
+    for n, step in enumerate(steps, 1):
+        parent = index.get(step.get("parentId"))
+        head = f"{n}. {step.get('flowLabel') or 'Paso'} [{step.get('flowCategory')}"
+        head += f": {step.get('flowAction')}]" if step.get("flowAction") else "]"
+        if parent:
+            head += f" — sale del paso {parent}"
+        if step.get("selected"):
+            head += " — SELECCIONADO"
+        if str(step.get("source") or "").startswith("mcp:"):
+            head += " — anadido por un agente"
+        lines.append(head + f"  (id: {step.get('id')})")
+        prompt = _step_prompt(step)
+        if prompt:
+            lines.append(f"   prompt: {prompt}")
+        images = step.get("images") or ([step["imageUrl"]] if step.get("imageUrl") else [])
+        for url in images:
+            lines.append(f"   imagen: {_session_image_ref(url)} — {_client.absolute_url(url)}")
+    blocks: list[TextContent | ImageContent] = []
+    last = next((s for s in reversed(steps) if s.get("imageUrl")), None)
+    if last:
+        try:
+            thumb, mime = read_thumbnail(output_dir, "", _session_image_ref(last["imageUrl"]), THUMBNAIL_WIDTH)
+            blocks.append(ImageContent(type="image", data=base64.b64encode(thumb).decode("ascii"), mimeType=mime))
+        except LocalImageNotFoundError:
+            pass
+    return [*blocks, TextContent(type="text", text="\n".join(lines))]
+
+
+@mcp.tool(
+    name="nomad_studio_add_to_session",
+    description=(
+        "Guarda en una session de Nomad Studio lo ultimo que se ha generado o retocado en esta "
+        "conversacion, como un paso nuevo (con su prompt y ajustes, y colgando del paso de su "
+        "imagen de origen si se retoco una imagen de la session). La session puede ser una que "
+        "ya exista o una nueva. Por defecto, a partir de ahi cada imagen que se genere o retoque "
+        "en esta conversacion se anade sola a esa misma session. Usa esto cuando el usuario pida "
+        "guardar, apuntar o llevar sus imagenes a una session o proyecto."
+    ),
+    structured_output=False,
+    annotations=_WRITE_TOOL,
+)
+async def nomad_studio_add_to_session(
+    ctx: Context,
+    session_id: Annotated[str | None, Field(description=(
+        "Id de una session existente ('session-...', de nomad_studio_list_sessions). Vacio = la "
+        "session donde esta conversacion ya viene guardando, o una nueva si se da "
+        "'new_session_name'."))] = None,
+    new_session_name: Annotated[str | None, Field(description=(
+        "Nombre para crear una session nueva (visible para todos en la app), SOLO si el usuario "
+        "no quiere usar una existente. Se ignora si se pasa 'session_id'."))] = None,
+    filename: Annotated[str | None, Field(description=(
+        "Solo una de las imagenes de la ultima tanda (su fichero, como aparecio en la respuesta). "
+        "Vacio = todas las imagenes de lo ultimo generado o retocado."))] = None,
+    parent_step_id: Annotated[str | None, Field(description=(
+        "Id del paso del que sale este ('step-...', de nomad_studio_get_session), SOLO si el "
+        "usuario lo indica. Vacio = se deduce solo (el paso de la imagen retocada) o ninguno."))] = None,
+    keep_adding: Annotated[bool, Field(description=(
+        "True (lo normal) = a partir de ahora cada imagen nueva de esta conversacion se anade "
+        "sola a esta session. False = anadir solo esta vez."))] = True,
+) -> list[TextContent]:
+    generation = session_state.get_last_generation()
+    if not generation:
+        return [TextContent(type="text", text=(
+            "NO SE HA HECHO NADA TODAVIA. En esta conversacion aun no se ha generado ni retocado "
+            "ninguna imagen: genera una primero con nomad_studio_create_image."))]
+    files = [str(img.get("id")) for img in generation.get("images") or [] if img.get("id")]
+    if filename:
+        if filename not in files:
+            return [TextContent(type="text", text=(
+                f"NO SE HA HECHO NADA TODAVIA. '{filename}' no es de la ultima tanda; sus imagenes "
+                f"son: {', '.join(files)}."))]
+        files = [filename]
+    try:
+        agent = await ensure_agent_session(_client, ctx)
+        agent_slug = agent.get("slug", "unknown")
+        target = (session_id or "").strip() or None
+        created_name = None
+        if target is None and not (new_session_name or "").strip():
+            target = session_state.get_follow_session()
+        if target is None:
+            name = (new_session_name or "").strip()
+            if not name:
+                return [TextContent(type="text", text=(
+                    "NO SE HA HECHO NADA TODAVIA. Falta a que session anadirla: pregunta al usuario "
+                    "si quiere una existente (llama a nomad_studio_list_sessions para ensenarle "
+                    "cuales hay) o una nueva, y con que nombre."))]
+            created = await _client.create_session(name)
+            target, created_name = created.get("id"), name
+        elif await _client.get_session(target) is None:
+            return [TextContent(type="text", text=(
+                f"NO SE HA HECHO NADA TODAVIA. No hay ninguna session visible con id '{target}'. "
+                "Mira los ids reales con nomad_studio_list_sessions."))]
+        already = {session_state.step_for_image(name, target) for name in files}
+        if None not in already:
+            # Ya entro sola (keep_adding de una llamada anterior).
+            session_state.set_follow_session(target if keep_adding else session_state.get_follow_session())
+            return [TextContent(type="text", text=(
+                f"Ya estaba en la session {target} (paso {', '.join(sorted(already))}): no se ha "
+                "anadido otra vez."))]
+        step = await mcp_sessions.add_generation(
+            _client, target, generation, agent_slug, files=files,
+            parent_step_id=(parent_step_id or "").strip() or None)
+    except NomadClientError as exc:
+        return [TextContent(type="text", text=f"No se pudo anadir a la session: {exc}")]
+    session_state.set_follow_session(target if keep_adding else session_state.get_follow_session())
+    text = (f"Anadido a la session {'nueva ' + repr(created_name) + ' ' if created_name else ''}"
+            f"(id: {target}) como paso {step.get('id')}"
+            + (f", colgando del paso {step.get('parentId')}" if step.get("parentId") else "")
+            + f", con {len(files)} imagen(es). El usuario lo ve en Nomad Studio > Session "
+            f"({_client.absolute_url('/nomad-studio/session/' + str(target))}).")
+    if keep_adding:
+        text += " Desde ahora, cada imagen que se genere o retoque en esta conversacion se anade sola ahi."
+    return [TextContent(type="text", text=text)]
+
+
 _OUTPAINT_POSITIONS = {
     "center", "top", "bottom", "left", "right",
     "top-left", "top-right", "bottom-left", "bottom-right",
@@ -547,8 +930,10 @@ async def _nomad_studio_refine_image_impl(
     ctx: Context,
     filename: Annotated[str | None, Field(description=(
         "Fichero de la imagen a editar, tal y como aparecio en una respuesta anterior de esta "
-        "conversacion (create_image o esta tool). Si el usuario dice 'la imagen'/'esta foto' sin "
-        "mas, dejalo vacio: se usa la ultima imagen generada en esta conversacion."))] = None,
+        "conversacion (create_image o esta tool), o la de un paso de una session tal y como la da "
+        "nomad_studio_get_session ('session/<carpeta>/<fichero>'). Si el usuario dice 'la "
+        "imagen'/'esta foto' sin mas, dejalo vacio: se usa la ultima imagen generada en esta "
+        "conversacion."))] = None,
     instruction: Annotated[str | None, Field(description=(
         "Detalle en ingles sobre COMO aplicar la accion (ej. relight: 'backlit rim light'; quitar "
         "un objeto: 'the red car'). Sin detalle del usuario, dejalo vacio: se usa un valor por "
@@ -675,7 +1060,7 @@ async def _nomad_studio_refine_image_impl(
 
             from PIL import Image as _PILImage
 
-            source_path = f"{output_dir}/{agent_slug}/{resolved_filename}"
+            source_path = image_path(output_dir, agent_slug, resolved_filename)
             with _PILImage.open(source_path) as _im:
                 orig_w, orig_h = _im.size
             factor = 1.0 + (expand_pct / 100.0)
@@ -722,9 +1107,13 @@ async def _nomad_studio_refine_image_impl(
             "kind": "refine",
             "action": refine_action.flow_id,
             "source_image": resolved_filename,
+            "flow_label": refine_action.label,
             "instruction": advanced_values.get(refine_action.prompt_adv_key) if refine_action.prompt_adv_key else None,
+            "workflow_file": refine_action.workflow_file,
+            "advanced_values": advanced_values,
             "images": [{"id": saved_filename, "url": _client.image_url(saved_filename, viewer_id=agent_slug)}],
         })
+        session_note = await mcp_sessions.auto_add(_client, agent_slug)
 
         thumb_bytes, thumb_mime = read_thumbnail(output_dir, agent_slug, saved_filename, THUMBNAIL_WIDTH)
         thumb_b64 = base64.b64encode(thumb_bytes).decode("ascii")
@@ -738,7 +1127,7 @@ async def _nomad_studio_refine_image_impl(
             TextContent(
                 type="text",
                 text=(
-                    f"Refinado con Nomad Studio — accion: {action} ({refine_action.flow_id}).\n"
+                    f"Refinado con Nomad Studio — accion: {action} ({refine_action.flow_id}).{session_note}\n"
                     f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
                     f"Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
                     f"ensenarsela al usuario directamente en el chat, sin que tenga que pedirlo.\n\n"

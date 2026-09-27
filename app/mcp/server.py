@@ -80,9 +80,11 @@ async def nomad_studio_create_image(
             argumentos: --ar 16:9 (cualquier proporcion), --no people, text (se suma al
             negativo por defecto), --seed 1234, --v <modelo> (ej. --v krea), --anime (el modelo
             de anime instalado), --q fast|balanced|max
-            (o --draft), --steps 20, --quant int8, --r 2 (varias imagenes, hasta 4). Si el
-            usuario los escribe, dejalos tal cual al final del prompt — no los traduzcas ni los
-            quites. Los de Midjourney sin equivalente (--stylize, --chaos...) se ignoran avisando.
+            (o --draft), --steps 20, --quant int8, --r 2 (varias imagenes, hasta 4). IMPORTANTE:
+            si el usuario escribe parametros con --, copialos LITERALMENTE al final de este
+            'prompt', exactamente como los escribio — no los quites, no los traduzcas y no los
+            pases a otros argumentos (aspect_ratio, model, speed...): se interpretan aqui. Los de
+            Midjourney sin equivalente (--stylize, --chaos...) se ignoran avisando.
         aspect_ratio: 'landscape' (apaisado 3:2), 'portrait' (retrato 2:3), 'square'
             (cuadrado), 'wide' (panoramico 16:9, tipo pantalla/YouTube/cabecera) o 'tall'
             (vertical 9:16, tipo movil/stories/reels). Si el usuario ya lo indico (aunque sea
@@ -221,7 +223,10 @@ async def nomad_studio_create_image(
                         "pregunta al usuario en el chat que opcion prefiere para:\n- "
                         + "\n- ".join(missing)
                         + "\nCuando responda, llama de nuevo a nomad_studio_create_image "
-                        "pasando su eleccion en esos parametros."
+                        "pasando su eleccion en esos parametros.\n"
+                        "EXCEPCION: si en su mensaje el usuario ya escribio parametros con -- (ej. "
+                        "--v monaco, --q max, --ar 16:9), NO le preguntes: vuelve a llamar ahora "
+                        "con el prompt terminado en esos parametros, copiados literalmente."
                     ),
                 )
             ]
@@ -375,8 +380,9 @@ async def nomad_studio_create_image(
                     f"(velocidad pedida: {speed}).\n"
                     f"Tamano: {width}x{height}. Semilla usada: {result.get('appliedSeed')} (pasala en 'seed' "
                     f"para repetir esta imagen o variarla solo con cambios en el prompt).{params_note}\n"
-                    f"Enlace directo (sin login, no requiere sesion):\n{links}\n"
-                    f"Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
+                    f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
+                    + (f"Todas las imagenes de esta tanda:\n{links}\n" if len(filenames) > 1 else "")
+                    + "Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
                     f"ensenarsela al usuario directamente en el chat, sin que tenga que pedirlo."
                     f"{quant_note}\n"
                     f"AGENT: {agent_name}\nUSER: {agent_slug}\n\n"

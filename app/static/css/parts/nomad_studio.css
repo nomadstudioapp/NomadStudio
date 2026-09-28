@@ -11746,6 +11746,17 @@ body.nsc-session-workspace-page .nss-scenes-area {
   opacity: 1;
 }
 
+.nit-send-style-btn {
+  right: 176px;
+}
+.nit-send-style-btn:hover {
+  background: color-mix(in srgb, var(--accent) 80%, #000);
+}
+.nss-card-img-wrap:hover .nit-send-style-btn,
+.nsc-image-tile:hover .nit-send-style-btn {
+  opacity: 1;
+}
+
 .ncf-depot-send-info {
   font-size: var(--fs-sm);
   color: var(--text-muted);

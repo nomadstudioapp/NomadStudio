@@ -696,6 +696,39 @@ def generate_style_from_image():
     )
     user_instruction = "Analyze this image and return the style JSON now."
 
+    # "Send to Style" on a generated result (flow-gallery.js): the prompt that
+    # made the image comes along, so the model can tell what was asked for
+    # (the subject) from how it looks (the style). A Build style is reusable
+    # on any subject: prefix/suffix carry only the look, and prompt is just a
+    # short example subject for its preview images.
+    source_prompt = str(payload.get("sourcePrompt", "") or "").strip()[:4000]
+    if source_prompt:
+        system_prompt = (
+            "Act as a Visual Style Analyst for text-to-image generation. You get an image and the prompt "
+            "that generated it. Separate WHAT is shown (the subject, taken from the prompt) from HOW it "
+            "looks (the style: medium, rendering technique, lighting, color palette and tonality, lens and "
+            "film look or stroke and line work, texture, mood). Build a style that can be reused on any "
+            "other subject.\n"
+            "Return only valid minified JSON with this exact schema: "
+            '{"title":"","category":"","prompt":"","prefix":"","suffix":""}.\n'
+            "- title: a memorable 2-4 word name for this look.\n"
+            "- category: one of photorealistic, anime, illustration, painting, 3d-render, sketch, cinematic, "
+            "fantasy, abstract, other.\n"
+            "- prefix: 10-20 words that open a prompt and set the medium and overall look "
+            "(e.g. 'cinematic 35mm film photograph, warm golden hour light, shallow depth of field'). "
+            "No subject, no scene objects.\n"
+            "- suffix: 12-20 comma-separated precise style terms for palette, lighting, texture and "
+            "rendering (e.g. 'ochre, teal shadows, soft film grain, halation, muted highlights'). "
+            "No subject, no scene objects.\n"
+            "- prompt: a short example subject of 5-12 words, the main subject of the source prompt "
+            "without any style words.\n"
+            "Return only the JSON object: no markdown, no code fences, no extra keys, no prose."
+        )
+        user_instruction = (
+            f"Source prompt of this image:\n{source_prompt}\n\n"
+            "Analyze the image and return the style JSON now."
+        )
+
     prefers_raw_base64 = "qwen" in lmstudio_model.lower()
     image_url_candidates = (
         [image_base64, normalized_data_url]

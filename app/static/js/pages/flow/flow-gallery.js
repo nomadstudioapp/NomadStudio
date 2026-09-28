@@ -548,6 +548,23 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     imgWrap.appendChild(btn);
   });
 
+  // Send to Style — the vision model reads this result plus the prompt that
+  // made it and proposes a reusable Build style (see _openSendToStylePanel).
+  var sendStyleBtn = document.createElement('button');
+  sendStyleBtn.type = 'button';
+  sendStyleBtn.id = 'nit-send-style-btn-' + idx;
+  sendStyleBtn.className = 'nit-send-tray-btn nit-send-style-btn nsc-options-trigger';
+  sendStyleBtn.setAttribute('aria-label', tF('Send to Style'));
+  sendStyleBtn.title = tF('Send to Style');
+  sendStyleBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4.5 4H15a2 2 0 0 0-1.5 3.3A1.6 1.6 0 0 1 12 22z"/>' +
+    '<circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="6.8" r="1.2"/><circle cx="15.5" cy="7.5" r="1.2"/></svg>';
+  sendStyleBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    _openSendToStylePanel(imgUrl, _cardPromptStr, card._params || null);
+  });
+  imgWrap.appendChild(sendStyleBtn);
+
   // Auto-save to the active Depot's Flows section — every generation while
   // a depot is active, no manual picking. Distinct from the button above
   // (which lets the user additionally curate a specific result into
@@ -811,6 +828,162 @@ function _openSendToBuildPanel(kind, imgUrl, prompt, btn) {
   }
 
   openOptionsPanel(title, renderChoose, { wide: true });
+}
+
+// "Send to Style" — a new Build style from a result. The vision model gets the
+// image and the prompt that made it (/api/styles/generate-from-image with
+// sourcePrompt), tells the subject apart from the look, and proposes name,
+// category, prefix/suffix (the reusable style) and a short example subject.
+// Everything is editable in the panel before "Create style"; the result
+// becomes the style's image for the engine that made it, when known.
+function _openSendToStylePanel(imgUrl, prompt, params) {
+  var dataUrlPromise = null;
+  function imageDataUrl() {
+    if (!dataUrlPromise) {
+      dataUrlPromise = fetch(imgUrl).then(function (r) { return r.blob(); }).then(function (blob) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onloadend = function () { resolve(reader.result); };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      });
+    }
+    return dataUrlPromise;
+  }
+
+  function analyze(maxTokens) {
+    return imageDataUrl().then(function (dataUrl) {
+      var payload = { imageDataUrl: dataUrl, sourcePrompt: prompt || '' };
+      if (maxTokens) payload.maxTokens = maxTokens;
+      return window.openJourneyApi.generateStyleFromImage(payload);
+    }).catch(function (err) {
+      // Reasoning ate the token budget: one retry with more room.
+      if (err && err.emptyWithReasoning && !maxTokens) {
+        return analyze(Math.max(2048, (err.currentMaxTokens || 1024) * 2));
+      }
+      throw err;
+    });
+  }
+
+  function field(body, label, value, multiline) {
+    var row = document.createElement('div');
+    row.className = 'nsc-field-row';
+    var lab = document.createElement('label');
+    lab.className = 'nsc-field-label';
+    lab.textContent = tF(label);
+    var input = document.createElement(multiline ? 'textarea' : 'input');
+    input.className = multiline ? 'nsc-textarea' : 'nsc-input';
+    if (multiline) input.rows = 3;
+    else input.type = 'text';
+    input.value = value || '';
+    lab.appendChild(input);
+    row.appendChild(lab);
+    body.appendChild(row);
+    return input;
+  }
+
+  function renderWorking(body) {
+    body.innerHTML = '';
+    var fig = document.createElement('div');
+    fig.className = 'ncf-send-build-pair';
+    var figure = document.createElement('figure');
+    var im = document.createElement('img');
+    im.src = imgUrl;
+    im.alt = '';
+    figure.appendChild(im);
+    fig.appendChild(figure);
+    body.appendChild(fig);
+    var info = document.createElement('p');
+    info.className = 'ncf-depot-send-info';
+    info.textContent = tF('Reading the style with the vision model…');
+    body.appendChild(info);
+    analyze().then(function (data) {
+      renderForm(body, (data && data.style) || data || {});
+    }).catch(function (err) {
+      console.error('[FlowGallery] Style from image failed:', err);
+      info.textContent = tF('The vision model could not read the style:') + ' ' + ((err && err.message) || String(err));
+      var actions = document.createElement('div');
+      actions.className = 'ncf-send-build-actions';
+      var retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'nss-generate-scenes-btn ncf-send-build-ok';
+      retry.textContent = tF('Try again');
+      retry.addEventListener('click', function () { dataUrlPromise = null; renderWorking(body); });
+      actions.appendChild(retry);
+      body.appendChild(actions);
+    });
+  }
+
+  function renderForm(body, style) {
+    body.innerHTML = '';
+    var hint = document.createElement('p');
+    hint.className = 'nsc-step-hint ncf-send-build-hint';
+    hint.textContent = tF('Proposed by the vision model from this image and its prompt. Adjust it and create the style.');
+    body.appendChild(hint);
+    var name = field(body, 'Name', style.title);
+    var category = field(body, 'Category', style.category);
+    var prefix = field(body, 'Prefix', style.prefix, true);
+    var suffix = field(body, 'Suffix', style.suffix, true);
+    var example = field(body, 'Example prompt', style.prompt, true);
+
+    var actions = document.createElement('div');
+    actions.className = 'ncf-send-build-actions';
+    var ok = document.createElement('button');
+    ok.type = 'button';
+    ok.className = 'nss-generate-scenes-btn ncf-send-build-ok';
+    ok.textContent = tF('Create style');
+    var again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'ncf-send-build-back';
+    again.textContent = tF('Analyze again');
+    again.addEventListener('click', function () { renderWorking(body); });
+    ok.addEventListener('click', function () {
+      var styleName = name.value.trim();
+      if (!styleName) { name.focus(); return; }
+      ok.disabled = again.disabled = true;
+      fetch('/api/styles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: styleName, category: category.value.trim(), prefix: prefix.value.trim(),
+          suffix: suffix.value.trim(), prompt: example.value.trim(),
+        }),
+      }).then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error((d && d.error) || 'Create failed');
+          return d.style || d;
+        });
+      }).then(function (created) {
+        // The result is this style's image for the engine that made it
+        // (Build shows style images per engine). Refine/Mix results carry
+        // no engine: the style is created without one.
+        var modelId = params && params.workflowId;
+        if (!modelId || created.id == null) return created;
+        return imageDataUrl().then(function (dataUrl) {
+          return fetch('/api/styles/' + encodeURIComponent(created.id) + '/model-image', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: dataUrl, modelId: modelId }),
+          });
+        }).then(function () { return created; }, function () { return created; });
+      }).then(function (created) {
+        closeOptionsPanel();
+        if (typeof showToast === 'function') {
+          showToast(tF('Style created') + ': ' + (created.name || styleName) + ' — ' + tF('edit it in Build.'), 'info');
+        }
+      }).catch(function (err) {
+        console.error('[FlowGallery] Create style failed:', err);
+        ok.disabled = again.disabled = false;
+        if (typeof showErrorToast === 'function') showErrorToast((err && err.message) || String(err));
+      });
+    });
+    actions.appendChild(ok);
+    actions.appendChild(again);
+    body.appendChild(actions);
+  }
+
+  openOptionsPanel(tF('Send to Style'), renderWorking, { wide: true });
 }
 
 // ── Story project persistence (narrative continuity) ────────────────────────

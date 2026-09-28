@@ -270,6 +270,9 @@ def check(
                 "sources": sources,
                 "gated": bool(first.get("gated")),
                 "licenseUrl": first.get("license_url"),
+                # The model's own license when the catalog notes one worth
+                # knowing before downloading (non-commercial weights, #11).
+                "license": (entry or {}).get("license"),
                 # What the download is checked against: the catalog's current
                 # revision when it knows the file (the publisher may have
                 # replaced the one the package was built with), else the

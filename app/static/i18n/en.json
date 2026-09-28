@@ -318,6 +318,7 @@
       "ComfyUI runs on another computer: files are saved into the models folder set in Settings, which must be that computer's folder.": "ComfyUI runs on another computer: files are saved into the models folder set in Settings, which must be that computer's folder.",
       "Needs its licence accepted and your Hugging Face token (Settings).": "Needs its licence accepted and your Hugging Face token (Settings).",
       "Licence page": "Licence page",
+      "Non-commercial licence ({name}): check what it allows before using it for paid work.": "Non-commercial licence ({name}): check what it allows before using it for paid work.",
       "Verified": "Verified",
       "Not verified": "Not verified",
       "No download address for this file": "No download address for this file",

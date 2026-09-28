@@ -445,10 +445,56 @@ def _add_requirements(name: str, files: dict[str, object]) -> None:
         print(f"  {name}: not in the models catalog (no download address): {', '.join(unknown)}")
 
 
+# Default model file swaps, applied to every package on its way out (#11).
+# FLUX.2 Klein 9B FP8 is gated on Hugging Face (accept its license + token in
+# Settings) — the INT8 build is not, so it is what a graph loads until the
+# user picks another quantization. FP8 stays available as an option.
+DEFAULT_MODEL_SWAPS = {
+    "flux-2-klein-9b-fp8.safetensors": "flux-2-klein-9b-int8-convrot.safetensors",
+}
+
+
+def _swapped_model(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    base = re.split(r"[\\/]", value)[-1]
+    new = DEFAULT_MODEL_SWAPS.get(base)
+    return value[:len(value) - len(base)] + new if new else value
+
+
+def _swap_default_models(files: dict[str, object]) -> None:
+    """Loader values and engine defaults only — never the quantization
+    options or the downloads list, which must keep offering the FP8 file."""
+    def graph(g: dict) -> None:
+        for node in g.values():
+            inputs = node.get("inputs") if isinstance(node, dict) else None
+            if isinstance(inputs, dict):
+                for key, value in inputs.items():
+                    inputs[key] = _swapped_model(value)
+
+    for rel, content in files.items():
+        if not isinstance(content, dict):
+            continue
+        if rel.startswith("workflows/"):
+            graph(content)
+        elif rel.startswith("engines/"):
+            if isinstance(content.get("workflow"), dict):
+                graph(content["workflow"])
+            for key in ("basicValues", "advancedValues"):
+                values = content.get(key)
+                if isinstance(values, dict):
+                    for k, v in values.items():
+                        values[k] = _swapped_model(v)
+            for param in (content.get("analysis") or {}).get("advancedParameters") or []:
+                if isinstance(param, dict) and "value" in param:
+                    param["value"] = _swapped_model(param["value"])
+
+
 def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{name}.zip"
     path.unlink(missing_ok=True)
+    _swap_default_models(files)
     _add_requirements(name, files)
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for rel, content in files.items():
@@ -2342,7 +2388,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.0"
+REFINE_PILOT_VERSION = "0.1.1"  # 0.1.1: Klein 9B defaults to INT8 (#11)
 
 
 # Applied unconditionally to every flow build_refine_pilot/

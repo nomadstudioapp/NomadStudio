@@ -284,6 +284,22 @@ var NcfRequirements = (function () {
       }
       copy.appendChild(lic);
     }
+    // Non-commercial weights (Ideogram 4, FLUX.2 Klein 9B…): whoever
+    // downloads the file accepts its license, so show it at that moment.
+    if (file.license && file.license.non_commercial && !file.present) {
+      var nc = _el('small', 'ncf-req-gated');
+      nc.appendChild(document.createTextNode(
+        _fmt(_t('Non-commercial licence ({name}): check what it allows before using it for paid work.'),
+             { name: file.license.name || '' }) + ' '));
+      if (file.license.url) {
+        var ncLink = _el('a', 'ncf-req-link', _t('Licence page'));
+        ncLink.href = file.license.url;
+        ncLink.target = '_blank';
+        ncLink.rel = 'noopener';
+        nc.appendChild(ncLink);
+      }
+      copy.appendChild(nc);
+    }
     row.appendChild(copy);
 
     var state = _dl[key];

@@ -652,6 +652,7 @@
       "ComfyUI runs on another computer: files are saved into the models folder set in Settings, which must be that computer's folder.": "ComfyUI está en otro equipo: los archivos se guardan en la carpeta de modelos de Ajustes, que debe ser la de ese equipo.",
       "Needs its licence accepted and your Hugging Face token (Settings).": "Hay que aceptar su licencia y poner tu token de Hugging Face (Ajustes).",
       "Licence page": "Página de la licencia",
+      "Non-commercial licence ({name}): check what it allows before using it for paid work.": "Licencia no comercial ({name}): mira qué permite antes de usarlo en trabajos de pago.",
       "Verified": "Verificado",
       "Not verified": "Sin verificar",
       "No download address for this file": "Este archivo no tiene dirección de descarga",

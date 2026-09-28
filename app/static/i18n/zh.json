@@ -651,6 +651,7 @@
       "ComfyUI runs on another computer: files are saved into the models folder set in Settings, which must be that computer's folder.": "ComfyUI 运行在另一台电脑上：文件会保存到设置中的模型文件夹，该文件夹必须是那台电脑的文件夹。",
       "Needs its licence accepted and your Hugging Face token (Settings).": "需要先接受其许可并填写你的 Hugging Face 令牌（设置）。",
       "Licence page": "许可页面",
+      "Non-commercial licence ({name}): check what it allows before using it for paid work.": "非商业许可（{name}）：用于付费工作前，请先查看其允许的范围。",
       "Verified": "已验证",
       "Not verified": "未验证",
       "No download address for this file": "此文件没有下载地址",

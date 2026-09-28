@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27",
+ "updated": "2026-09-28",
  "models": [
   {
    "sha256": "94d368b633614958f84f335b129fd85abd30200e8fbc575b859ba6762116222b",
@@ -42,7 +42,12 @@
      "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "CircleStone Labs Non-Commercial License",
+    "url": "https://huggingface.co/circlestone-labs/Anima/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
@@ -184,7 +189,12 @@
      "gated": true,
      "license_url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8"
     }
-   ]
+   ],
+   "license": {
+    "name": "FLUX Non-Commercial License",
+    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "8daaac4f1e869cea35a051fcc619c515b7ba003d319667c1db6ae798fa1e6db2",
@@ -198,7 +208,12 @@
      "url": "https://huggingface.co/Winnougan/Klein9b-Distilled-Base-INT8-Convrot/resolve/main/flux-2-klein-9b-int8-convrot.safetensors",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "FLUX Non-Commercial License",
+    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "8e91b68084b53a7fc44ed2a3756d821e355ac1a7b6fe29be760c1db532f3d88a",
@@ -212,7 +227,12 @@
      "url": "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "FLUX.1 [dev] Non-Commercial License",
+    "url": "https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "ddb9566f8ff12df0b72794901b252e28c938bb9abf8ade716d804a21c33aff2e",
@@ -240,7 +260,12 @@
      "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/FLUX/Flux2-Klein-9B-w4a8.safetensors",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "FLUX Non-Commercial License",
+    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "ea4273f02d1fafbf8e1d1c2cf6018ed8748652eb0bf34f2dd91171f16f15ab62",
@@ -297,7 +322,12 @@
      "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors?download=true",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "Ideogram Non-Commercial Model Agreement",
+    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "a9164002943463b4c7b2abd88c82a488c088acc35762651e4d8604d6ce4a163d",
@@ -311,7 +341,12 @@
      "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_int8_convrot.safetensors?download=true",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "Ideogram Non-Commercial Model Agreement",
+    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "9b359007dae162cca7591d00868feea733eb7c56e56e3a214a4d5a9a2a07cd60",
@@ -325,7 +360,12 @@
      "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors?download=true",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "Ideogram Non-Commercial Model Agreement",
+    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "cd03ed94f244c9cb705e7d30ca0f40b5f5b004bb20674117adff88d16416c23d",
@@ -339,7 +379,12 @@
      "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_int8_convrot.safetensors?download=true",
      "host": "huggingface"
     }
-   ]
+   ],
+   "license": {
+    "name": "Ideogram Non-Commercial Model Agreement",
+    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "c1978d273eea90aa529234e2a53e3bc6d9696cce5396db5f42031aa2f70ddc40",
@@ -574,7 +619,7 @@
    "folder": "text_encoders",
    "sources": [
     {
-     "url": "https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
      "host": "huggingface"
     }
    ]

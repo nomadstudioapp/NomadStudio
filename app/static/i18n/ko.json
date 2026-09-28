@@ -651,6 +651,7 @@
       "ComfyUI runs on another computer: files are saved into the models folder set in Settings, which must be that computer's folder.": "ComfyUI가 다른 컴퓨터에서 실행 중입니다. 파일은 설정의 모델 폴더에 저장되므로 그 컴퓨터의 폴더여야 합니다.",
       "Needs its licence accepted and your Hugging Face token (Settings).": "라이선스 동의와 Hugging Face 토큰(설정)이 필요합니다.",
       "Licence page": "라이선스 페이지",
+      "Non-commercial licence ({name}): check what it allows before using it for paid work.": "비상업 라이선스({name}): 유료 작업에 사용하기 전에 허용 범위를 확인하세요.",
       "Verified": "확인됨",
       "Not verified": "확인 안 됨",
       "No download address for this file": "이 파일은 다운로드 주소가 없습니다",

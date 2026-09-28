@@ -51,6 +51,9 @@ ACCEPTED_LICENSES = {
     # @Alibaba_Qwen on X, 2026-09-21, replying about Qwen Image 2.1.
     "qwen-research": ("LICENSE is non-commercial for the weights, but Qwen stated that outputs are "
                       "not part of the licensed Materials: users keep the rights to what they generate"),
+    # Read 2026-09-28 (Extract): worldwide, royalty-free, commercial use allowed.
+    "sam-license": ("Meta SAM License: commercial use allowed worldwide (EU included); redistributing "
+                    "the weights requires shipping the license; usual trade-control / weapons exclusions"),
     # Krea 2 model page, "License and Outputs".
     "krea-2-community-license": ("Krea claims no copyright or IP over generated content; users are "
                                  "responsible for their outputs (model use itself: Krea 2 Community License)"),

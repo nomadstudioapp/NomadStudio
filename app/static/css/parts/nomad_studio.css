@@ -3099,6 +3099,23 @@
   cursor: default;
 }
 
+/* display:flex above would beat the hidden attribute. */
+.cs-card-zoom-btn[hidden] {
+  display: none;
+}
+
+/* Build › Styles "Save to Depot": no style open yet. Dimmed but NOT
+   disabled, so its tooltip ("open a style first") still shows on hover. */
+.lib-style-depot-btn.is-waiting {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lib-style-depot-btn.is-saved {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .cs-card-zoom-btn svg {
   width: 16px;
   height: 16px;

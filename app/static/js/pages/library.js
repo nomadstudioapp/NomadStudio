@@ -909,6 +909,7 @@
     grid.style.display = '';
     empty.hidden = true;
     if (gridZoomToolbar) gridZoomToolbar.hidden = false;
+    refreshStyleDepotBtn(true);
     if (toolbar) toolbar.hidden = id !== 'styles';
     if (templatesToolbar) templatesToolbar.hidden = id !== 'templates';
     if (templatesCount && id !== 'templates') templatesCount.textContent = '';
@@ -1084,6 +1085,7 @@
     editStatus.textContent = '';
     editModal.classList.remove('is-closed');
     editModal.setAttribute('aria-hidden', 'false');
+    refreshStyleDepotBtn();
   }
 
   function openCreateModal() {
@@ -1103,6 +1105,7 @@
     editModal.classList.remove('is-closed');
     editModal.setAttribute('aria-hidden', 'false');
     editFields.name.focus();
+    refreshStyleDepotBtn();
   }
 
   function closeEditModal() {
@@ -1111,6 +1114,95 @@
       editModal.setAttribute('aria-hidden', 'true');
     }
     editingStyleId = null;
+    refreshStyleDepotBtn();
+  }
+
+  /* ── Save style to Depot ──────────────────────────────────────────────────
+     Round cube button at the top of the grid's button column (same icon and
+     place as the flows' "Save to Build"): Styles tab only, and only while a
+     Depot is active. Saves the style open in Edit Style into the Depot's
+     Styles section — a reference to the style ({styleId, name…}) plus its
+     current image, not a copy of the style. */
+  var styleDepotBtn = document.getElementById('lib-style-depot-btn');
+  var styleDepotTip = document.getElementById('lib-style-depot-tip');
+  var styleDepot = null;     // the active depot (with its items), or null
+  var styleDepotBusy = false;
+
+  function styleInDepot(styleId) {
+    return !!(styleDepot && (styleDepot.items || []).some(function (it) {
+      return it.category === 'style' && it.ref && String(it.ref.styleId) === String(styleId);
+    }));
+  }
+
+  function renderStyleDepotBtn() {
+    if (!styleDepotBtn) return;
+    var show = activeId === 'styles' && !!styleDepot;
+    styleDepotBtn.hidden = !show;
+    if (!show || styleDepotBusy) return;
+    var name = styleDepot.name;
+    var saved = editingStyleId != null && styleInDepot(editingStyleId);
+    styleDepotBtn.classList.toggle('is-waiting', editingStyleId == null);
+    styleDepotBtn.classList.toggle('is-saved', saved);
+    var tip = editingStyleId == null
+      ? tr('build.styleDepotPick', 'Open a style to save it in the Depot "{name}"')
+      : saved
+        ? tr('build.styleDepotSaved', 'Already in the Depot "{name}"')
+        : tr('build.styleDepotSave', 'Save this style in the Depot "{name}"');
+    if (styleDepotTip) styleDepotTip.textContent = tip.replace('{name}', name);
+    styleDepotBtn.setAttribute('aria-label', tip.replace('{name}', name));
+  }
+
+  // refetch: re-read the active depot (entering the tab — it may have been
+  // activated or changed in another tab meanwhile).
+  function refreshStyleDepotBtn(refetch) {
+    if (!styleDepotBtn) return;
+    if (activeId !== 'styles') { styleDepotBtn.hidden = true; return; }
+    if (!refetch) { renderStyleDepotBtn(); return; }
+    fetch('/api/depots/active')
+      .then(function (r) { return r.json(); })
+      .then(function (data) { styleDepot = (data && data.depot) || null; })
+      .catch(function () { styleDepot = null; })
+      .then(renderStyleDepotBtn);
+  }
+
+  document.addEventListener('nomad-i18n-applied', function () { renderStyleDepotBtn(); });
+
+  if (styleDepotBtn) {
+    styleDepotBtn.addEventListener('click', function () {
+      if (styleDepotBusy || !styleDepot || editingStyleId == null || styleInDepot(editingStyleId)) return;
+      var item = currentItems.find(function (it) { return String(it.id) === String(editingStyleId); });
+      if (!item) return;
+      styleDepotBusy = true;
+      if (styleDepotTip) styleDepotTip.textContent = tr('build.styleDepotSaving', 'Saving…');
+      fetch('/api/depots/active/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'style',
+          url: item.has_image ? item.image_url : '',
+          caption: item.name || '',
+          sourceUrl: '/build',
+          ref: { styleId: item.id, name: item.name || '', category: item.category || '', prompt: item.prompt || '' },
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.error) || 'Save failed');
+          styleDepot.items = (styleDepot.items || []).concat(data.duplicate ? [] : [data.item]);
+          styleDepotBtn.classList.add('is-saved');
+          if (styleDepotTip) {
+            styleDepotTip.textContent = tr('build.styleDepotDone', 'Saved in "{name}" ✓').replace('{name}', styleDepot.name);
+          }
+        })
+        .catch(function (err) {
+          console.error('[Library] Save style to Depot failed:', err);
+          if (styleDepotTip) styleDepotTip.textContent = tr('build.styleDepotFailed', 'Could not save it');
+        })
+        .then(function () {
+          styleDepotBusy = false;
+          setTimeout(renderStyleDepotBtn, 1200);
+        });
+    });
   }
 
   if (grid) {
@@ -2078,7 +2170,8 @@
     { key: 'character', label: 'Characters' },
     { key: 'background', label: 'Backgrounds' },
     { key: 'asset', label: 'Assets' },
-    { key: 'styles', label: 'Styles', disabled: true },
+    // Saved from Build › Styles' cube button (items carry ref.styleId).
+    { key: 'style', label: 'Styles' },
     // key is 'flow' (singular) to match the item category written by
     // flow-gallery.js's addToFeed auto-save — not user-picked like the
     // other three, every generation while a depot is active lands here.

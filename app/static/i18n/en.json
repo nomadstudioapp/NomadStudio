@@ -942,7 +942,13 @@
     "newTemplate": "New Template",
     "emptyCharacters": "No characters yet. Generate an image in Create, Refine or Mix and press \"Send to Character\" on the result to make it a character.",
     "emptyBackgrounds": "No backgrounds yet. Generate an image in Create, Refine or Mix and press \"Send to Background\" on the result to keep it as a background.",
-    "emptyFlows": "No saved flows yet. In any Create, Refine or Mix flow, press \"Save to Build\" in the top bar to keep it here with its settings and images."
+    "emptyFlows": "No saved flows yet. In any Create, Refine or Mix flow, press \"Save to Build\" in the top bar to keep it here with its settings and images.",
+    "styleDepotPick": "Open a style to save it in the Depot \"{name}\"",
+    "styleDepotSave": "Save this style in the Depot \"{name}\"",
+    "styleDepotSaved": "Already in the Depot \"{name}\"",
+    "styleDepotSaving": "Saving…",
+    "styleDepotDone": "Saved in \"{name}\" ✓",
+    "styleDepotFailed": "Could not save it"
   },
   "depot": {
     "badgeTip": "Active Depot — everything you generate is saved here. Opens Build in a new tab."

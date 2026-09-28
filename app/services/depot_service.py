@@ -23,9 +23,9 @@ DEPOTS_PATH = paths.data_file("depots.json")
 # depot. "character"/"background"/"asset" come from the manual "Send to
 # Depot" picker on a result card; "flow" is written automatically for every
 # generation while a depot is active (see flow-gallery.js's addToFeed) — no
-# manual picking involved. "styles" isn't in here — that section exists in
-# the Depot detail view but isn't populated by any send flow yet.
-ITEM_CATEGORIES = ("character", "background", "asset", "flow")
+# manual picking involved. "style" comes from Build › Styles' save-to-Depot
+# button and carries a ``ref`` to the style ({styleId, name, category...}).
+ITEM_CATEGORIES = ("character", "background", "asset", "flow", "style")
 
 
 def _default_depots() -> dict[str, Any]:
@@ -136,6 +136,7 @@ def add_item(
     url: str,
     caption: str = "",
     source_url: str = "",
+    ref: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Attach a generated image to a depot under one of ITEM_CATEGORIES —
     the "Send to Depot" action on a generation result card. Returns the new
@@ -164,10 +165,24 @@ def add_item(
         "sourceUrl": str(source_url or "").strip(),
         "addedAt": _now_iso(),
     }
+    if ref:
+        item["ref"] = ref
     d["items"].append(item)
     data["depots"][idx] = d
     _save_depots(data)
     return item
+
+
+def find_item_by_ref(
+    depot_id: str, viewer_id: str | None, category: str, ref_id: str
+) -> dict[str, Any] | None:
+    """The item of ``category`` whose ``ref`` points at ``ref_id`` (e.g. a
+    style already saved in this depot), or None."""
+    depot = get_depot(depot_id, viewer_id)
+    for item in (depot or {}).get("items") or []:
+        if item.get("category") == category and str((item.get("ref") or {}).get("styleId")) == str(ref_id):
+            return item
+    return None
 
 
 def _now_ms() -> int:

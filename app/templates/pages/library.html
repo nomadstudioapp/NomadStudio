@@ -401,6 +401,13 @@
              magnifying-glass icons) — issue #55 follow-up, matching it
              exactly instead of Build's own slightly different icon set. -->
         <div class="cs-card-zoom" id="lib-grid-zoom-toolbar" hidden>
+          <!-- Save to Depot — Styles tab only, and only while a Depot is
+               active (library.js refreshStyleDepotBtn). Saves the style open
+               in Edit Style. Same cube as the flows' "Save to Build". -->
+          <button class="cs-card-zoom-btn lib-style-depot-btn" type="button" id="lib-style-depot-btn" aria-label="Save style to Depot" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
+            <span class="cs-mode-tip" id="lib-style-depot-tip"></span>
+          </button>
           <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-reset" aria-label="Reset card size">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
             <span class="cs-mode-tip">Reset card size</span>

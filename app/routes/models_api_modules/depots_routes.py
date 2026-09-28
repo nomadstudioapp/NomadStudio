@@ -66,7 +66,22 @@ def add_active_depot_item():
     body = request.get_json(silent=True) or {}
     category = str(body.get("category") or "").strip().lower()
     url = str(body.get("url") or "").strip()
-    if not url:
+    ref = None
+    if category == "style":
+        # Build › Styles: the item points at the style itself. Saving the
+        # same style twice returns the one already there.
+        raw_ref = body.get("ref") if isinstance(body.get("ref"), dict) else {}
+        style_id = str(raw_ref.get("styleId") or "").strip()
+        if not style_id:
+            return jsonify({"ok": False, "error": "ref.styleId is required"}), 400
+        existing = depot_service.find_item_by_ref(depot_id, viewer_id, "style", style_id)
+        if existing is not None:
+            return jsonify({"ok": True, "item": existing, "duplicate": True})
+        ref = {"styleId": style_id}
+        for key in ("name", "category", "prompt"):
+            if raw_ref.get(key):
+                ref[key] = str(raw_ref[key])[:2000]
+    elif not url:
         return jsonify({"ok": False, "error": "url is required"}), 400
     item = depot_service.add_item(
         depot_id,
@@ -75,6 +90,7 @@ def add_active_depot_item():
         url,
         body.get("caption") or "",
         body.get("sourceUrl") or "",
+        ref,
     )
     if item is None:
         return jsonify({"ok": False, "error": "Invalid category or depot"}), 400

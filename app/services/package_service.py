@@ -633,6 +633,12 @@ def texts_for(data_dir: Path, lang: str) -> dict[str, str]:
         if not isinstance(translations, dict):
             continue
         for flow_id, by_path in translations.items():
+            if flow_id == "_texts" and isinstance(by_path, dict):
+                # Already keyed by the original text (flow_engine._apply_texts).
+                for original, translated in by_path.items():
+                    if isinstance(translated, str) and translated.strip():
+                        out.setdefault(str(original), translated)
+                continue
             flow = flows.get(flow_id)
             if not isinstance(by_path, dict) or flow is None:
                 continue

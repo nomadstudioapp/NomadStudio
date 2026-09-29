@@ -1,0 +1,15 @@
+{
+ "Fondo uniforme": "Uniform background",
+ "Matte limpio, luz equilibrada": "Clean matte, balanced light",
+ "Pega un bloque de CivitAI como ancla de estilo y ve evolucionando la escena con instrucciones en chat. El LLM mantiene el estilo fijo y cambia solo lo que tú pidas.": "Paste a CivitAI block as a style anchor and evolve the scene with chat instructions. The LLM keeps the style fixed and changes only what you ask for.",
+ "Pega un bloque de CivitAI como referencia de estilo y deja que el LLM mejore tu idea usando ese estilo como base.": "Paste a CivitAI block as a style reference and let the LLM improve your idea using that style as its base.",
+ "Pega un bloque de CivitAI, detecta modelo, LoRAs y parámetros automáticamente, y genera directamente sin LLM.": "Paste a CivitAI block: it detects the model, LoRAs and parameters automatically and generates directly, with no LLM.",
+ "Prompt directo a imagen. Sin LLM. Control manual completo.": "Prompt straight to image. No LLM. Full manual control.",
+ "Quitar marca de agua / texto": "Remove watermark / text",
+ "Quitar objeto": "Remove object",
+ "Quitar persona, conservar fondo": "Remove person, keep background",
+ "Quitar sujeto principal": "Remove main subject",
+ "Quitar sujeto, conservar fondo": "Remove subject, keep background",
+ "Recuperación de altas luces": "Highlight recovery",
+ "Reencuadra la escena desde otro angulo de camara con el LoRA de multiples angulos de Qwen 2511. No hace upscale, solo cambia el punto de vista.": "Reframes the scene from another camera angle with Qwen 2511's multiple-angles LoRA. It does not upscale, it only changes the viewpoint."
+}

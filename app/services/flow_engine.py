@@ -660,8 +660,9 @@ def _set_by_path(definition: dict[str, Any], path: str, value: str) -> None:
     (PACKAGE_FORMAT.md §7.2): "description",
     "steps.<id>[.fields.<key>].<prop>", "steps.<id>.fields.<key>.options.<value>"."""
     parts = path.split(".")
-    if parts == ["description"]:
-        definition["description"] = value
+    if parts in (["description"], ["label"]):
+        # "label" only for flows with no card to carry it (workflow flow_data)
+        definition[parts[0]] = value
         return
     if len(parts) < 3 or parts[0] != "steps":
         return
@@ -686,6 +687,37 @@ def _set_by_path(definition: dict[str, Any], path: str, value: str) -> None:
             option["label"] = value
 
 
+# Texts a flow shows, wherever they sit (engine pickers, tooltips, option
+# groups, zone colors…): the package's i18n "_texts" table translates them by
+# their original text, for the shapes the §7.2 paths don't reach. Subtrees
+# that end up in a prompt are never touched.
+_DISPLAY_KEYS = {"label", "placeholder", "hint", "note", "tooltip", "title", "help", "text_label",
+                 "empty_text", "button_label", "subtitle", "description"}
+_PROMPT_KEYS = {"system_prompts", "system_prompt", "default", "presets", "template", "context_from",
+                "workflow", "input_map", "value", "text", "prompt", "prompts"}
+
+
+def _apply_texts(node: Any, texts: dict[str, str], parent_key: str = "") -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in _PROMPT_KEYS:
+                continue
+            if key in _DISPLAY_KEYS and isinstance(value, str):
+                if texts.get(value):
+                    node[key] = texts[value]
+            elif key == "options" and parent_key == "groups" and isinstance(value, list):
+                # Compose role pickers: a bare string is both what the prompt
+                # gets and what the menu shows — keep it as the value.
+                node[key] = [{"value": o, "label": texts[o]} if isinstance(o, str) and texts.get(o) else o
+                             for o in value]
+                _apply_texts(node[key], texts, key)
+            else:
+                _apply_texts(value, texts, key)
+    elif isinstance(node, list):
+        for item in node:
+            _apply_texts(item, texts, parent_key)
+
+
 def translate_flow(definition: dict[str, Any], pack_dir: Path, lang: str) -> dict[str, Any]:
     """A package carries its own text (PACKAGE_FORMAT.md §7). The flow is
     translated here, as it is served, so the flow page shows it in the user's
@@ -702,7 +734,12 @@ def translate_flow(definition: dict[str, Any], pack_dir: Path, lang: str) -> dic
         table = json.loads((pack_dir / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return definition
-    by_path = table.get(flow_id) if isinstance(table, dict) else None
+    if not isinstance(table, dict):
+        return definition
+    texts = table.get("_texts")
+    if isinstance(texts, dict):
+        _apply_texts(definition.get("steps") or [], texts, "steps")
+    by_path = table.get(flow_id)
     if not isinstance(by_path, dict):
         return definition
     for key, value in by_path.items():

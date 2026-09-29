@@ -35,6 +35,7 @@ sys.path.insert(0, str(REPO))
 
 from app.routes.models_api_modules.imports_routes import _extract_downloads_from_workflow  # noqa: E402
 from app.services import package_service  # noqa: E402
+from app.services.flow_engine import _DISPLAY_KEYS, _PROMPT_KEYS  # noqa: E402
 
 DIST = REPO / "dist" / "packages"
 # Packages that ship with the app go in DIST — paths.BUNDLED_PACKAGES_DIR
@@ -236,14 +237,19 @@ TEXT_FIELDS = ("label", "placeholder", "hint", "note", "description")
 
 
 def load_translations(source: Path) -> dict[str, dict[str, str]]:
-    """English text → {lang: translation}, from the app dictionary plus the
-    extra table next to this script (texts the dictionary never had)."""
+    """English text → {lang: translation}, from the app dictionaries (the
+    source's and this repo's own, which wins) plus the extra table next to
+    this script (texts no dictionary has)."""
     table: dict[str, dict[str, str]] = {}
-    for lang in LANGS:
-        data = json.loads((source / "app" / "static" / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))
-        for english, translated in (data.get("flow", {}).get("flowLabels") or {}).items():
-            if isinstance(translated, str) and translated.strip():
-                table.setdefault(english, {})[lang] = translated
+    for base in (source, REPO):
+        for lang in LANGS:
+            path = base / "app" / "static" / "i18n" / f"{lang}.json"
+            if not path.is_file():
+                continue
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for english, translated in (data.get("flow", {}).get("flowLabels") or {}).items():
+                if isinstance(translated, str) and translated.strip():
+                    table.setdefault(english, {})[lang] = translated
     extra_path = Path(__file__).with_name("flow_translations.json")
     if extra_path.is_file():
         for english, langs in json.loads(extra_path.read_text(encoding="utf-8")).items():
@@ -291,12 +297,34 @@ def add_card_texts(flow: dict, table: dict[str, dict[str, str]]) -> dict:
     return flow
 
 
+_SOURCE_FIXES_PATH = Path(__file__).with_name("flow_source_fixes.json")
+_SOURCE_FIXES: dict[str, str] = (json.loads(_SOURCE_FIXES_PATH.read_text(encoding="utf-8"))
+                                 if _SOURCE_FIXES_PATH.is_file() else {})
+
+
+def _fix_source_texts(node: object) -> None:
+    """A few source flows still carry Spanish labels and descriptions. The
+    package's own language is English (default_lang), so they are rewritten
+    here, in place, before the translations are looked up by their text."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(value, str):
+                if (key in _DISPLAY_KEYS or key == "description") and value in _SOURCE_FIXES:
+                    node[key] = _SOURCE_FIXES[value]
+            else:
+                _fix_source_texts(value)
+    elif isinstance(node, list):
+        for item in node:
+            _fix_source_texts(item)
+
+
 def flow_i18n(flows: list[dict], table: dict[str, dict[str, str]]) -> tuple[dict[str, dict], dict[str, int]]:
     """{lang: {flow id: {path: text}}} plus how many texts each language covers."""
     files: dict[str, dict] = {lang: {} for lang in LANGS}
     counts = {lang: 0 for lang in LANGS}
     total = 0
     for flow in flows:
+        _fix_source_texts(flow)
         paths = _texts_by_path(flow)
         total += len(paths)
         for lang in LANGS:
@@ -305,8 +333,39 @@ def flow_i18n(flows: list[dict], table: dict[str, dict[str, str]]) -> tuple[dict
             if translated:
                 files[lang][flow["id"]] = translated
                 counts[lang] += len(translated)
+        # Texts in shapes the paths don't reach (engine pickers, tooltips,
+        # option groups…): translated by their own text, "_texts" (see
+        # flow_engine._apply_texts, same rules).
+        for text in display_texts(flow):
+            for lang in LANGS:
+                if lang in (table.get(text) or {}):
+                    files[lang].setdefault("_texts", {})[text] = table[text][lang]
     counts["total"] = total
     return files, counts
+
+
+def display_texts(flow: dict) -> set[str]:
+    """Every text flow_engine._apply_texts can translate in this flow."""
+    out: set[str] = set()
+
+    def walk(node, parent_key=""):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in _PROMPT_KEYS:
+                    continue
+                if key in _DISPLAY_KEYS and isinstance(value, str) and value.strip():
+                    out.add(value)
+                elif key == "options" and parent_key == "groups" and isinstance(value, list):
+                    out.update(o for o in value if isinstance(o, str) and o.strip())
+                    walk(value, key)
+                else:
+                    walk(value, key)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item, parent_key)
+
+    walk(flow.get("steps") or [], "steps")
+    return out
 
 
 def flow_from_source(source: Path, flow_id: str) -> dict:
@@ -1969,7 +2028,7 @@ CORE_CREATE_FLOWS = [
     "create.portraits", "create.posters", "create.describe_image", "create.bulk_vision",
     "create.from_template",
 ]
-CORE_CREATE_VERSION = "0.3.0"
+CORE_CREATE_VERSION = "0.3.1"  # 0.3.1: flow texts in ES/ZH/KO (#1)
 # The source card still describes the single cinematic catalog it started with.
 CORE_CREATE_OVERRIDES = {
     "create.from_template": {
@@ -2027,7 +2086,7 @@ LAYOUT_FLOWS = {
     "create.ideogram_storyboard": "create.layout_storyboard",
     "create.character_sheet": "create.character_sheet",
 }
-LAYOUT_VERSION = "0.3.0"
+LAYOUT_VERSION = "0.3.1"  # 0.3.1: flow texts in ES/ZH/KO (#1)
 
 # Layout Assist on any engine (NomadStudio#18). Tested 2026-09-26 on Krea 2
 # Turbo / Monaco / Roma: they don't read bbox numbers as positions — they
@@ -2259,7 +2318,7 @@ def build_create_layout(source: Path, version: str) -> Path:
 CIVITAI_FLOWS = [
     "create.simple_civitai", "create.enhance_civitai", "create.chat_civitai",
 ]
-CORE_CIVITAI_VERSION = "0.1.0"
+CORE_CIVITAI_VERSION = "0.1.1"  # 0.1.1: flow texts in ES/ZH/KO (#1)
 
 
 def build_core_civitai(source: Path, version: str) -> Path:
@@ -2388,7 +2447,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.1"  # 0.1.1: Klein 9B defaults to INT8 (#11)
+REFINE_PILOT_VERSION = "0.1.2"  # 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/
@@ -4058,7 +4117,9 @@ def build_extract_pack(source: Path, version: str) -> Path:
         _strip_foreign_flow_data(graph)
         files[ref] = graph
 
-    i18n, counts = flow_i18n(flows, table)
+    # The addon's flow is served from this package too (flow_engine translates
+    # it from this i18n/), so its texts are translated with the rest.
+    i18n, counts = flow_i18n(flows + [json.loads(addon_files["addon/flow.json"])], table)
     manifest = {
         "schema_version": 1,
         "id": "nomad.refine-extract",
@@ -4138,7 +4199,22 @@ def build_refine_pilot(source: Path, version: str) -> Path:
         files[pkg_rel] = graph
         workflow_only_rels.append(pkg_rel)
 
-    i18n, counts = flow_i18n(flows, table)
+    # The flow_data-only flows are installed as flows too (their "params"
+    # become a workflow_params step), so their texts get translated like the
+    # authored ones — the label as well, since they have no card to carry it.
+    from app.services.flow_engine import _extract_flow_data_node
+    embedded = []
+    for rel in workflow_only_rels:
+        meta = _extract_flow_data_node(files[rel])
+        if meta:
+            embedded.append({"id": meta["id"], "label": meta.get("label"), "description": meta.get("description"),
+                             "steps": [{"id": "params", "fields": meta.get("params") or []}]})
+    i18n, counts = flow_i18n(flows + embedded, table)
+    for flow in embedded:
+        for lang in LANGS:
+            translated = (table.get(flow["label"]) or {}).get(lang)
+            if translated:
+                i18n[lang].setdefault(flow["id"], {})["label"] = translated
     manifest = {
         "schema_version": 1,
         "id": "nomad.core-refine",

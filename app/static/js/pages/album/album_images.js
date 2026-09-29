@@ -598,7 +598,7 @@ window.albumImagesPage = (function albumImagesModule() {
       const opened = window.open('', '_blank');
       if (!opened) return;
       opened.document.open();
-      opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Full size</title><style>html,body{margin:0;background:#000;height:100%}body{display:grid;place-items:center}img{max-width:100vw;max-height:100vh;object-fit:contain}</style></head><body><img alt="Full size image"></body></html>`);
+      opened.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${tH('Full size')}</title><style>html,body{margin:0;background:#000;height:100%}body{display:grid;place-items:center}img{max-width:100vw;max-height:100vh;object-fit:contain}</style></head><body><img alt="Full size image"></body></html>`);
       opened.document.close();
       const img = opened.document.querySelector('img');
       if (img) {
@@ -987,11 +987,11 @@ window.albumImagesPage = (function albumImagesModule() {
         modal.innerHTML = `
           <div class="create-modal-backdrop"></div>
           <div class="create-modal-shell">
-            <h3 class="album-delete-title">Delete image?</h3>
-            <p class="album-delete-message">This image will be permanently removed from the album.</p>
+            <h3 class="album-delete-title">${tH('Delete image?')}</h3>
+            <p class="album-delete-message">${tH('This image will be permanently removed from the album.')}</p>
             <div class="album-delete-actions">
-              <button type="button" class="btn album-delete-cancel" data-delete-cancel>Cancel</button>
-              <button type="button" class="btn album-delete-confirm" data-delete-confirm>Delete</button>
+              <button type="button" class="btn album-delete-cancel" data-delete-cancel>${tH('Cancel')}</button>
+              <button type="button" class="btn album-delete-confirm" data-delete-confirm>${tH('Delete')}</button>
             </div>
           </div>`;
         document.body.appendChild(modal);

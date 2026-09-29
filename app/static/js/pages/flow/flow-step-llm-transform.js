@@ -66,9 +66,9 @@ function renderLLMTransform(stepDef, el) {
         '<input type="checkbox" class="ncf-chat-ep-input">' +
         '<span class="ncf-chat-ep-track"><span class="ncf-chat-ep-thumb"></span></span>' +
         '<span class="ncf-chat-ep-text">' + escHtml(tF('Think')) + '</span>' +
-        '<span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip">Off: fast, no reasoning. ' +
-        'On: the model jots a brief thinking outline before writing the result — still fast, ' +
-        'this is prompted, not a special reasoning mode.</span>';
+        '<span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip">' +
+        tH('Off: fast, no reasoning. On: the model jots a brief thinking outline before writing the result — still fast, this is prompted, not a special reasoning mode.') +
+        '</span>';
       var thinkInput = thinkLabel.querySelector('input');
       thinkInput.checked = assistThinkMode;
       thinkInput.addEventListener('change', function () {
@@ -111,7 +111,7 @@ function renderLLMTransform(stepDef, el) {
     var genreBlock = document.createElement('div');
     genreBlock.className = 'nse-control-block';
     genreBlock.innerHTML =
-      '<p class="nsc-param-title nsc-param-title--flex">Genre ' +
+      '<p class="nsc-param-title nsc-param-title--flex">' + tH('Genre') + ' ' +
       '<span class="nsc-param-value" id="ncf-genre-label-' + stepDef.id + '">' + escHtml(tF('None')) + '</span>' +
       '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-genre-picker-btn-' + stepDef.id + '" aria-label="' + escHtml(tF('Choose genre')) + '"></button>' +
       '</p>';

@@ -190,8 +190,9 @@ function _openTemplatePickerPanel(onPick, lock) {
       var shown = filtered.slice(0, _TPL_GRID_LIMIT);
       gridEl.innerHTML = shown.map(_tplCardHtml).join('') +
         (filtered.length > shown.length
-          ? '<p class="ncf-tpl-grid-more muted-note">Showing ' + shown.length +
-            ' of ' + filtered.length + '. Search above, or pick a theme, to narrow it down.</p>'
+          ? '<p class="ncf-tpl-grid-more muted-note">' +
+            tH('Showing {shown} of {total}. Search above, or pick a theme, to narrow it down.')
+              .replace('{shown}', shown.length).replace('{total}', filtered.length) + '</p>'
           : '');
       if (window.lucide) window.lucide.createIcons();
     }
@@ -278,8 +279,9 @@ function _openTemplateFillPanel(state, onApply) {
 
     body.innerHTML =
       '<div class="ncf-tplfill-head">' +
-        '<p class="ncf-tplfill-hint">Every field is yours to type in. The chevron ' +
-        'shows what the pack suggests; the dice picks one for you.</p>' +
+        '<p class="ncf-tplfill-hint">' +
+        tH('Every field is yours to type in. The chevron shows what the pack suggests; the dice picks one for you.') +
+        '</p>' +
         '<button type="button" class="nse-modal-secondary ncf-tplfill-randomize">' + escHtml(tF('Randomize all')) + '</button>' +
       '</div>' +
       '<div class="ncf-tplfill-rows">' + placeholders.map(_tplFillRowHtml).join('') + '</div>' +

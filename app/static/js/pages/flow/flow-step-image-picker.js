@@ -46,8 +46,8 @@ function renderImagePicker(stepDef, el) {
         '<circle cx="8.5" cy="8.5" r="1.5"/>' +
         '<path d="M21 15l-5-5L5 21"/>' +
       '</svg>' +
-      '<p>Drop image' + (stepDef.multiple ? 's' : '') + ' here<br><span>or click to choose' +
-      (stepDef.multiple ? ' (multiple allowed)' : '') + '</span></p>' +
+      '<p>' + tH(stepDef.multiple ? 'Drop images here' : 'Drop image here') + '<br><span>' +
+      tH(stepDef.multiple ? 'or click to choose (multiple allowed)' : 'or click to choose') + '</span></p>' +
     '</div>';
   wrap.appendChild(dropZone);
 

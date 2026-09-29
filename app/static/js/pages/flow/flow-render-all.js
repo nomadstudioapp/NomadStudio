@@ -94,7 +94,7 @@ function _renderFixedResUpscaleControl(el) {
   var wrap = document.createElement('div');
   wrap.className = 'nsc-param-block';
   wrap.innerHTML = ownAspect
-    ? '<p class="nsc-param-title nsc-param-title--flex">Upscale output' +
+    ? '<p class="nsc-param-title nsc-param-title--flex">' + tH('Upscale output') +
         '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="' + escHtml(tF('Upscale output')) + '">' +
           '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
         '</button>' +
@@ -1156,7 +1156,7 @@ function _showScenesAnchor(stepId, anchorText, scenesArr) {
       if (s.toLowerCase().indexOf(anchorLower) === 0) beat = s.slice(anchorText.length).replace(/^[,\s]+/, '');
       return '<li>' + escHtml(beat || s) + '</li>';
     }).join('');
-    html += '<p class="ncf-scenes-anchor-title">Story outline (' + scenesArr.length + ' scenes)</p>' +
+    html += '<p class="ncf-scenes-anchor-title">' + tH('Story outline ({n} scenes)').replace('{n}', scenesArr.length) + '</p>' +
       '<ol class="ncf-scenes-anchor-list">' + items + '</ol>';
   }
   box.innerHTML = html;

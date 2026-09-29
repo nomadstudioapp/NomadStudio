@@ -762,7 +762,7 @@ function renderPromptInput(stepDef, el) {
     var restoreBtn = document.createElement('button');
     restoreBtn.type = 'button';
     restoreBtn.className = 'ncf-strip-restore';
-    restoreBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Restore';
+    restoreBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> ' + tH('Restore');
     restoreBtn.hidden = true;
 
     function _syncApplyBtn() {

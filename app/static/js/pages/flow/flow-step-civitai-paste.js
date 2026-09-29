@@ -148,7 +148,7 @@ function renderCivitAIPaste(stepDef, el) {
     _restoreStripBtn = document.createElement('button');
     _restoreStripBtn.type = 'button';
     _restoreStripBtn.className = 'ncf-strip-restore';
-    _restoreStripBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Restore';
+    _restoreStripBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> ' + tH('Restore');
     _restoreStripBtn.hidden = true;
 
     function _syncStripApplyBtn() {
@@ -536,7 +536,7 @@ function renderCivitAIPaste(stepDef, el) {
       matchList.innerHTML = rows.join('');
       matchResults.hidden = false;
     } catch (err) {
-      matchList.innerHTML = '<p class="ncf-civ-error">Match failed: ' + escHtml(String(err)) + '</p>';
+      matchList.innerHTML = '<p class="ncf-civ-error">' + tH('Match failed:') + ' ' + escHtml(String(err)) + '</p>';
       matchResults.hidden = false;
     }
     matchBtn.textContent = tF('Match');

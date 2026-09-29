@@ -254,14 +254,14 @@
       modal.innerHTML = `
         <div class="create-modal-backdrop" id="rename-import-modal-backdrop"></div>
         <div class="create-modal-shell rename-import-modal-shell">
-          <h3 style="margin:0 0 10px;">Rename Import</h3>
+          <h3 style="margin:0 0 10px;">${tH('Rename Import')}</h3>
           <label>
-            Name
+            ${tH('Name')}
             <input type="text" id="rename-import-input" />
           </label>
           <div class="btn-row" style="margin-top:10px; justify-content:flex-end;">
-            <button type="button" class="btn" id="rename-import-cancel">Cancel</button>
-            <button type="button" class="btn primary" id="rename-import-confirm">Rename</button>
+            <button type="button" class="btn" id="rename-import-cancel">${tH('Cancel')}</button>
+            <button type="button" class="btn primary" id="rename-import-confirm">${tH('Rename')}</button>
           </div>
         </div>
       `;
@@ -321,13 +321,13 @@
       modal.innerHTML = `
         <div class="create-modal-backdrop" id="free-memory-confirm-backdrop"></div>
         <div class="create-modal-shell" style="max-width:400px;">
-          <h3 style="margin:0 0 8px;">Switch Model</h3>
+          <h3 style="margin:0 0 8px;">${tH('Switch Model')}</h3>
           <p id="free-memory-confirm-text" class="muted-note" style="margin:0 0 14px;"></p>
           <div class="btn-row" style="justify-content:flex-end; flex-wrap:wrap;">
-            <button type="button" class="btn" id="free-memory-confirm-skip">Just Activate</button>
+            <button type="button" class="btn" id="free-memory-confirm-skip">${tH('Just Activate')}</button>
             <button type="button" class="btn primary" id="free-memory-confirm-ok">
               <i data-lucide="cpu" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>
-              Clean GPU &amp; Activate
+              ${tH('Clean GPU & Activate')}
             </button>
           </div>
         </div>
@@ -374,8 +374,8 @@
         <div class="create-modal-backdrop" id="requirements-modal-backdrop"></div>
         <div class="create-modal-shell requirements-modal-shell">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-            <h3 style="margin:0;">Requirements</h3>
-            <button type="button" class="btn" id="requirements-modal-close">Close</button>
+            <h3 style="margin:0;">${tH('Requirements')}</h3>
+            <button type="button" class="btn" id="requirements-modal-close">${tH('Close')}</button>
           </div>
           <div id="requirements-modal-list" class="stack"></div>
         </div>
@@ -450,13 +450,13 @@
           <p class="muted-note import-item-uri" title="${safeUri}">${safeUri || '—'}</p>
           <div class="btn-row" style="margin-top:8px; flex-wrap:wrap; gap:4px;">
             <button type="button" class="btn sm-btn ${isActive ? 'primary active-queue-btn' : ''}" data-toggle-active-id="${item.id}">
-              ${isActive ? '✓ In Queue' : '+ Queue'}
+              ${isActive ? '✓ ' + tH('In Queue') : '+ ' + tH('Queue')}
             </button>
-            <button type="button" class="btn sm-btn" data-edit-id="${item.id}">Edit</button>
-            <button type="button" class="btn sm-btn" data-reimport-id="${item.id}">Reimport</button>
-            <button type="button" class="btn sm-btn" data-requirements-id="${item.id}">Files</button>
-            <button type="button" class="btn sm-btn" data-export-id="${item.id}">Export</button>
-            <button type="button" class="btn sm-btn" data-delete-id="${item.id}">Delete</button>
+            <button type="button" class="btn sm-btn" data-edit-id="${item.id}">${tH('Edit')}</button>
+            <button type="button" class="btn sm-btn" data-reimport-id="${item.id}">${tH('Reimport')}</button>
+            <button type="button" class="btn sm-btn" data-requirements-id="${item.id}">${tH('Files')}</button>
+            <button type="button" class="btn sm-btn" data-export-id="${item.id}">${tH('Export')}</button>
+            <button type="button" class="btn sm-btn" data-delete-id="${item.id}">${tH('Delete')}</button>
           </div>
         </div>
       `;
@@ -528,7 +528,7 @@
             analysisOutput.innerHTML = '<p class="muted-note">' + tH('No workflow data stored.') + '</p>';
           }
         } catch (err) {
-          analysisOutput.innerHTML = `<p class="muted-note status-error">Failed to load import: ${err.message}</p>`;
+          analysisOutput.innerHTML = `<p class="muted-note status-error">${tH('Failed to load import:')} ${err.message}</p>`;
         }
       });
     });
@@ -645,7 +645,7 @@
       const definedCard = document.createElement('article');
       definedCard.className = 'analysis-card defined-card';
 
-      let html = '<div class="defined-card-header"><span class="defined-badge">DEFINED</span>';
+      let html = '<div class="defined-card-header"><span class="defined-badge">' + tH('DEFINED') + '</span>';
       if (configNode.name) html += `<strong class="defined-name">${escapeAttr(configNode.name)}</strong>`;
       html += '</div><div class="defined-card-body">';
 
@@ -694,19 +694,19 @@
     const summary = document.createElement('article');
     summary.className = 'analysis-card';
     summary.innerHTML = `
-      <h3>Detected</h3>
+      <h3>${tH('Detected')}</h3>
       <div class="analysis-detected-layout">
-        <figure class="analysis-assigned-image-wrap" title="${escapeAttr(assignedImageValue || 'No image assigned')}">
+        <figure class="analysis-assigned-image-wrap" title="${escapeAttr(assignedImageValue || tF('No image assigned'))}">
           ${assignedImageUrl
-    ? `<img class="analysis-assigned-image" src="${escapeAttr(assignedImageUrl)}" alt="Assigned workflow image" />`
+    ? `<img class="analysis-assigned-image" src="${escapeAttr(assignedImageUrl)}" alt="${tH('Assigned workflow image')}" />`
     : '<span class="analysis-assigned-image-placeholder">' + tH('No image') + '</span>'}
         </figure>
         <div class="analysis-detected-copy">
-          <p class="muted-note">Sampler: ${detect.samplerNodeId || 'not found'}</p>
-          <p class="muted-note">SaveImage nodes: ${detect.saveImageCount || 0}</p>
-          <p class="muted-note">Positive node: ${detect.positiveNodeId || 'not found'}</p>
-          <p class="muted-note">Negative node: ${detect.negativeNodeId || 'not found'}</p>
-          <p class="muted-note">Image input: ${detect.hasImageInput ? `Yes (nodes: ${(detect.loadImageNodeIds || []).join(', ')})` : 'No'}</p>
+          <p class="muted-note">${tH('Sampler:')} ${detect.samplerNodeId || tH('not found')}</p>
+          <p class="muted-note">${tH('SaveImage nodes:')} ${detect.saveImageCount || 0}</p>
+          <p class="muted-note">${tH('Positive node:')} ${detect.positiveNodeId || tH('not found')}</p>
+          <p class="muted-note">${tH('Negative node:')} ${detect.negativeNodeId || tH('not found')}</p>
+          <p class="muted-note">${tH('Image input:')} ${detect.hasImageInput ? `${tH('Yes')} (${tH('nodes:')} ${(detect.loadImageNodeIds || []).join(', ')})` : tH('No')}</p>
         </div>
       </div>
     `;
@@ -772,9 +772,9 @@
       lorasCard.className = 'analysis-card';
       lorasCard.innerHTML =
         '<h3>LoRAs</h3>'
-        + '<p class="muted-note">Trigger words are prepended to the prompt when this '
-        + 'workflow generates. Separate several with commas. Leave blank if the LoRA '
-        + 'needs none.</p>';
+        + '<p class="muted-note">'
+        + tH('Trigger words are prepended to the prompt when this workflow generates. Separate several with commas. Leave blank if the LoRA needs none.')
+        + '</p>';
       const lorasGrid = document.createElement('div');
       lorasGrid.className = 'stack';
       const loraInputs = [];
@@ -1269,7 +1269,7 @@
         <span class="active-queue-order">${index + 1}</span>
         <span class="active-queue-name">${escapeAttr(item.name)} ${imageIconHtml}</span>
         <span class="active-queue-url muted-note">${escapeAttr(item.comfyApiUrl || '')}</span>
-        <button type="button" class="btn active-queue-remove-btn" data-deactivate-id="${escapeAttr(id)}" title="Remove from queue">Remove</button>
+        <button type="button" class="btn active-queue-remove-btn" data-deactivate-id="${escapeAttr(id)}" title="${tH('Remove from queue')}">${tH('Remove')}</button>
       `;
       activeImportsQueueEl.appendChild(row);
     });

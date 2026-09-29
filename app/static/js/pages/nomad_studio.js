@@ -2520,7 +2520,7 @@
       } catch (err) {
         if (token !== embedToken) return;
         embedEl.innerHTML =
-          '<p class="cs-settings-detail-error">Couldn’t load this section here. '
+          '<p class="cs-settings-detail-error">' + tH('Couldn’t load this section here.') + ' '
           + '<a href="' + href + '" target="_blank" rel="noopener">' + tH('Open it in a new tab') + '</a> ' + tH('instead.') + '</p>';
       }
     }

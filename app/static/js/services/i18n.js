@@ -29,9 +29,9 @@
   var LANG_KEY = 'oj-lang-v1';
   var LANGUAGES = [
     { id: 'en', label: 'English', ready: true },
+    { id: 'ko', label: '한국어', ready: true },
     { id: 'es', label: 'Español', ready: true },
-    { id: 'zh', label: '中文', ready: true },
-    { id: 'ko', label: '한국어', ready: true }
+    { id: 'zh', label: '中文', ready: true }
   ];
   var cache = {};
   var packTexts = {};  // lang → text the installed packages carry (see mergePackageTexts)

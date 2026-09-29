@@ -35,13 +35,23 @@
   const banner = document.createElement('div');
   banner.id = 'output-dir-gate-banner';
   banner.className = 'output-dir-gate-banner';
-  banner.innerHTML = `
+  function fill() {
+    var h = window.tH || function (s) { return s; };
+    banner.innerHTML = `
     <div class="output-dir-gate-inner">
-      <strong>Setup required</strong>
-      <span>You must configure an Output Folder before using OpenHiker. All generated images will be saved there.</span>
-      <a href="/settings" class="btn primary">Go to Settings</a>
+      <strong>${h('Setup required')}</strong>
+      <span>${h('You must configure an Output Folder before using Nomad Studio. All generated images will be saved there.')}</span>
+      <a href="/settings" class="btn primary">${h('Go to Settings')}</a>
     </div>
   `;
+  }
+  fill();
+  // i18n.js loads after this script: refill once its dictionary is in.
+  function refillWhenReady() {
+    if (window.NomadI18n && window.NomadI18n.ready) window.NomadI18n.ready.then(fill);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refillWhenReady, { once: true });
+  else refillWhenReady();
   document.body.appendChild(banner);
 })();
 

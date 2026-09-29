@@ -36,7 +36,7 @@ function renderIdeogramComposer(stepDef, el) {
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:13px;height:13px">' +
     '<rect x="4.5" y="1.5" width="7" height="2.5" rx="1"/>' +
     '<path d="M4.5 3h-2A1.5 1.5 0 001 4.5v9A1.5 1.5 0 002.5 15h11a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0013.5 3h-2"/>' +
-    '</svg> Paste JSON';
+    '</svg> ' + tH('Paste JSON');
   previewMeta.appendChild(pasteBtn);
   preview.appendChild(previewMeta);
 
@@ -170,7 +170,7 @@ function renderIdeogramComposer(stepDef, el) {
     // paths above paint this line red, and only _flashMetaCount clears the
     // colour again. Otherwise a failed Compose followed by a successful one
     // leaves "4 elements" showing in red.
-    _flashMetaCount(count + ' element' + (count !== 1 ? 's' : ''), false);
+    _flashMetaCount(tF(count === 1 ? '1 element' : '{n} elements').replace('{n}', count), false);
     editBtn.disabled = false;
     refineArea.hidden = false;
     refineStatus.textContent = '';
@@ -1025,7 +1025,7 @@ function renderIdeogramComposer(stepDef, el) {
     setVal(stepDef.id, 'transformed_text', JSON.stringify(_modelForExport(_idgModel), null, 2));
     _renderMiniCanvas(_idgModel);
     var count = (_idgModel.compositional_deconstruction && _idgModel.compositional_deconstruction.elements || []).length;
-    _flashMetaCount(count + ' element' + (count !== 1 ? 's' : ''), false);
+    _flashMetaCount(tF(count === 1 ? '1 element' : '{n} elements').replace('{n}', count), false);
     updateGenerateBtn();
     _closeModal();
   });

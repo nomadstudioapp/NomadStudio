@@ -308,7 +308,7 @@ function renderLetteringBuilder(stepDef, el) {
   var addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'ncf-lettering-add-btn';
-  addBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add text element';
+  addBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ' + tH('Add text element');
   addBtn.addEventListener('click', function () {
     var usedIds = elementList.map(function (it) { return it.id; });
     var nextId = elementIds.find(function (eid) { return usedIds.indexOf(eid) === -1; }) || elementIds[0];

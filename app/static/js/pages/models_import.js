@@ -111,7 +111,7 @@
     if (saveBtn) saveBtn.disabled = true;
     if (analyzeBtn) analyzeBtn.disabled = true;
     if (fileInput) fileInput.value = '';
-    if (statusEl) statusEl.textContent = 'No file loaded.';
+    if (statusEl) statusEl.textContent = tF('No file loaded.');
     openImportModal('Add Import');
   });
   if (closeModalBtn) closeModalBtn.addEventListener('click', closeImportModal);
@@ -169,14 +169,14 @@
       return;
     }
     if (available === true) {
-      comfyAvailabilityTextEl.textContent = 'ComfyUI available';
+      comfyAvailabilityTextEl.textContent = tF('ComfyUI available');
       return;
     }
     if (available === false) {
-      comfyAvailabilityTextEl.textContent = 'ComfyUI unavailable';
+      comfyAvailabilityTextEl.textContent = tF('ComfyUI unavailable');
       return;
     }
-    comfyAvailabilityTextEl.textContent = 'Checking ComfyUI...';
+    comfyAvailabilityTextEl.textContent = tF('Checking ComfyUI...');
   }
 
   async function probeComfyAvailability(uri) {
@@ -293,9 +293,9 @@
         await window.openJourneyApi.renameImport(id, newName);
         modal.classList.remove('open');
         await refreshImports();
-        setStatus('Import renamed.');
+        setStatus(tF('Import renamed.'));
       } catch (error) {
-        setStatus(error.message || 'Failed to rename import.', true);
+        setStatus(error.message || tF('Failed to rename import.'), true);
       }
     }
 
@@ -394,7 +394,7 @@
     listEl.innerHTML = '';
 
     if (!files.length) {
-      listEl.innerHTML = '<p class="muted-note">No model files found in this workflow.</p>';
+      listEl.innerHTML = '<p class="muted-note">' + tH('No model files found in this workflow.') + '</p>';
     } else {
       files.forEach((file) => {
         const row = document.createElement('div');
@@ -405,7 +405,7 @@
         const copyBtn = document.createElement('button');
         copyBtn.type = 'button';
         copyBtn.className = 'btn requirements-copy-btn';
-        copyBtn.title = 'Copy filename';
+        copyBtn.title = tF('Copy filename');
         copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         copyBtn.addEventListener('click', () => {
           navigator.clipboard.writeText(file).then(() => {
@@ -431,7 +431,7 @@
     const activeIds = data.activeImportIds || [];
 
     if (!imports.length) {
-      savedImportsEl.innerHTML = '<p class="muted-note">No imports saved yet.</p>';
+      savedImportsEl.innerHTML = '<p class="muted-note">' + tH('No imports saved yet.') + '</p>';
       return;
     }
 
@@ -470,30 +470,30 @@
         try {
           if (currentlyActive) {
             await window.openJourneyApi.deactivateImport(id);
-            setStatus('Removed from active queue.');
+            setStatus(tF('Removed from active queue.'));
           } else {
             const allImports = data.imports || [];
             const thisItem = allImports.find((i) => i.id === id);
             const thisHasImage = !!(thisItem?.analysis?.detected?.hasImageInput);
             const activeIds = data.activeImportIds || [];
             if (thisHasImage && activeIds.length > 0) {
-              setStatus('Models with image input must be alone in the queue. Remove the current models first.', true);
+              setStatus(tF('Models with image input must be alone in the queue. Remove the current models first.'), true);
               return;
             }
             if (!thisHasImage && activeIds.length > 0) {
               const activeItems = activeIds.map((aid) => allImports.find((i) => i.id === aid)).filter(Boolean);
               const queueHasImageModel = activeItems.some((i) => !!(i.analysis?.detected?.hasImageInput));
               if (queueHasImageModel) {
-                setStatus('Cannot add a text-only model while an image-input model is in the queue. Remove it first.', true);
+                setStatus(tF('Cannot add a text-only model while an image-input model is in the queue. Remove it first.'), true);
                 return;
               }
             }
             await window.openJourneyApi.activateImport(id);
-            setStatus('Added to active queue.');
+            setStatus(tF('Added to active queue.'));
           }
           await refreshImports();
         } catch (err) {
-          setStatus(err.message || 'Failed to update queue.', true);
+          setStatus(err.message || tF('Failed to update queue.'), true);
         }
       });
     });
@@ -507,7 +507,7 @@
         // Clear previous state while loading
         if (nameInput) nameInput.value = '';
     if (slugInput) { slugInput.value = ''; refreshSlugHint(); }
-        analysisOutput.innerHTML = '<p class="muted-note">Loading...</p>';
+        analysisOutput.innerHTML = '<p class="muted-note">' + tH('Loading...') + '</p>';
         saveBtn.disabled = true;
         rawWorkflow = null;
         lastAnalysis = null;
@@ -515,7 +515,7 @@
           const res = await fetch(`/api/models/imports/${encodeURIComponent(id)}`);
           const data = await res.json();
           const record = data.import;
-          if (!record) throw new Error('Not found');
+          if (!record) throw new Error(tF('Not found'));
           if (nameInput) nameInput.value = record.name || '';
           if (slugInput) { slugInput.value = record.slug || ''; refreshSlugHint(); }
           editingAnnotation = record.annotation || null;
@@ -525,7 +525,7 @@
             renderAnalysis(lastAnalysis);
             saveBtn.disabled = false;
           } else {
-            analysisOutput.innerHTML = '<p class="muted-note">No workflow data stored.</p>';
+            analysisOutput.innerHTML = '<p class="muted-note">' + tH('No workflow data stored.') + '</p>';
           }
         } catch (err) {
           analysisOutput.innerHTML = `<p class="muted-note status-error">Failed to load import: ${err.message}</p>`;
@@ -541,7 +541,7 @@
           const result = await window.openJourneyApi.getImportRequirements(id);
           showRequirementsModal(result.files || []);
         } catch (error) {
-          setStatus(error.message || 'Failed to load requirements.', true);
+          setStatus(error.message || tF('Failed to load requirements.'), true);
         }
       });
     });
@@ -557,11 +557,11 @@
         if (!confirmReset) return;
 
         try {
-          setStatus('Resetting import values to workflow defaults...');
+          setStatus(tF('Resetting import values to workflow defaults...'));
           const detail = await window.openJourneyApi.getImport(id);
           const fullImport = detail && detail.import && typeof detail.import === 'object' ? detail.import : null;
           if (!fullImport || !fullImport.workflow || typeof fullImport.workflow !== 'object') {
-            throw new Error('Import workflow not found.');
+            throw new Error(tF('Import workflow not found.'));
           }
 
           const safeName = String(fullImport.name || modelName).trim() || 'Imported Workflow';
@@ -590,7 +590,7 @@
           await refreshImports();
           setStatus(`Defaults restored for "${safeName}".`);
         } catch (error) {
-          setStatus(error?.message || 'Failed to reset import defaults.', true);
+          setStatus(error?.message || tF('Failed to reset import defaults.'), true);
         }
       });
     });
@@ -607,7 +607,7 @@
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-delete-id');
         if (!id) return;
-        const ok = window.confirm('Delete this import? This cannot be undone.');
+        const ok = window.confirm(tF('Delete this import? This cannot be undone.'));
         if (!ok) return;
         try {
           await window.openJourneyApi.deleteImport(id);
@@ -626,9 +626,9 @@
           } catch (_) {}
 
           await refreshImports();
-          setStatus('Import deleted.');
+          setStatus(tF('Import deleted.'));
         } catch (error) {
-          setStatus(error.message || 'Failed to delete import.', true);
+          setStatus(error.message || tF('Failed to delete import.'), true);
         }
       });
     });
@@ -699,7 +699,7 @@
         <figure class="analysis-assigned-image-wrap" title="${escapeAttr(assignedImageValue || 'No image assigned')}">
           ${assignedImageUrl
     ? `<img class="analysis-assigned-image" src="${escapeAttr(assignedImageUrl)}" alt="Assigned workflow image" />`
-    : '<span class="analysis-assigned-image-placeholder">No image</span>'}
+    : '<span class="analysis-assigned-image-placeholder">' + tH('No image') + '</span>'}
         </figure>
         <div class="analysis-detected-copy">
           <p class="muted-note">Sampler: ${detect.samplerNodeId || 'not found'}</p>
@@ -715,14 +715,14 @@
       assignedImgEl.addEventListener('error', () => {
         const figure = assignedImgEl.closest('.analysis-assigned-image-wrap');
         if (!figure) return;
-        figure.innerHTML = '<span class="analysis-assigned-image-placeholder">No image</span>';
+        figure.innerHTML = '<span class="analysis-assigned-image-placeholder">' + tH('No image') + '</span>';
       });
     }
     analysisOutput.appendChild(summary);
 
     const basic = document.createElement('article');
     basic.className = 'analysis-card';
-    basic.innerHTML = '<h3>Basic Parameters</h3>';
+    basic.innerHTML = '<h3>' + tH('Basic Parameters') + '</h3>';
     const basicGrid = document.createElement('div');
     basicGrid.className = 'param-grid';
     (analysis.basicParameters || []).forEach((item) => {
@@ -794,18 +794,18 @@
         link.className = 'lora-civitai-link';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
-        link.textContent = 'Open on CivitAI ↗';
+        link.textContent = tF('Open on CivitAI ↗');
         const bare = String(lora.fileName || '').replace(/\.[^.]+$/, '');
         link.href = lora.uri && /civitai\.com\/models\//.test(lora.uri)
           ? lora.uri
           : `https://civitai.com/search/models?query=${encodeURIComponent(bare)}`;
-        link.title = 'Look this LoRA up by hand and copy its trigger words';
+        link.title = tF('Look this LoRA up by hand and copy its trigger words');
         nameRow.appendChild(link);
         wrap.appendChild(nameRow);
 
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Trigger words, comma separated';
+        input.placeholder = tF('Trigger words, comma separated');
         input.value = lora.triggerWords;
         input.addEventListener('input', () => {
           editableLoras[index].triggerWords = input.value;
@@ -826,7 +826,7 @@
       const lookupBtn = document.createElement('button');
       lookupBtn.type = 'button';
       lookupBtn.className = 'btn';
-      lookupBtn.textContent = 'Look up on CivitAI';
+      lookupBtn.textContent = tF('Look up on CivitAI');
       const lookupNote = document.createElement('p');
       lookupNote.className = 'muted-note';
       lookupRow.appendChild(lookupBtn);
@@ -835,7 +835,7 @@
 
       lookupBtn.addEventListener('click', async () => {
         lookupBtn.disabled = true;
-        lookupNote.textContent = 'Hashing the files and asking CivitAI…';
+        lookupNote.textContent = tF('Hashing the files and asking CivitAI…');
         try {
           const res = await fetch('/api/models/imports/loras/civitai-lookup', {
             method: 'POST',
@@ -867,7 +867,7 @@
             } else {
               // A real answer, not a failure: this LoRA has none.
               noWords += 1;
-              loraInputs[index].placeholder = 'CivitAI lists no trigger words for this one';
+              loraInputs[index].placeholder = tF('CivitAI lists no trigger words for this one');
             }
           });
           const parts = [];
@@ -887,12 +887,12 @@
 
     const advanced = document.createElement('details');
     advanced.className = 'analysis-card';
-    advanced.innerHTML = '<summary>Advanced Parameters</summary>';
+    advanced.innerHTML = '<summary>' + tH('Advanced Parameters') + '</summary>';
     const advList = document.createElement('div');
     advList.className = 'stack';
     const params = analysis.advancedParameters || [];
     if (!params.length) {
-      advList.innerHTML = '<p class="muted-note">No advanced scalar parameters found.</p>';
+      advList.innerHTML = '<p class="muted-note">' + tH('No advanced scalar parameters found.') + '</p>';
     } else {
       params.forEach((item) => {
         const p = document.createElement('p');
@@ -990,7 +990,7 @@
 
               // Stream download with progress
               row.classList.add('downloading');
-              row.title = 'Downloading…';
+              row.title = tF('Downloading…');
               setProgress(0);
               try {
                 const resp = await fetch('/api/models/imports/download-file', {
@@ -1176,7 +1176,7 @@
     if (optionalSubgraphs.length > 0) {
       const sgCard = document.createElement('article');
       sgCard.className = 'analysis-card';
-      sgCard.innerHTML = '<h3>Optional parts</h3><p class="muted-note">Detected ComfyUI Subgraphs that can be switched on/off in Create. Rename them so you remember what each one does.</p>';
+      sgCard.innerHTML = '<h3>' + tH('Optional parts') + '</h3><p class="muted-note">' + tH('Detected ComfyUI Subgraphs that can be switched on/off in Create. Rename them so you remember what each one does.') + '</p>';
       const sgList = document.createElement('div');
       sgList.className = 'stack';
 
@@ -1211,7 +1211,7 @@
         });
         const enabledText = document.createElement('span');
         enabledText.className = 'muted-note';
-        enabledText.textContent = 'On by default';
+        enabledText.textContent = tF('On by default');
         enabledWrap.appendChild(enabledCheck);
         enabledWrap.appendChild(enabledText);
 
@@ -1243,7 +1243,7 @@
       if (anyHasImage && !existingBadge) {
         const badge = document.createElement('span');
         badge.className = 'active-queue-image-badge';
-        badge.title = 'Queue contains a model with image input';
+        badge.title = tF('Queue contains a model with image input');
         badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;opacity:0.75;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
         queueTitleEl.appendChild(badge);
       } else if (!anyHasImage && existingBadge) {
@@ -1252,7 +1252,7 @@
     }
 
     if (!activeIds.length) {
-      activeImportsQueueEl.innerHTML = '<p class="muted-note">No active models. Add one from Saved Imports below.</p>';
+      activeImportsQueueEl.innerHTML = '<p class="muted-note">' + tH('No active models. Add one from Saved Imports below.') + '</p>';
       return;
     }
 
@@ -1280,9 +1280,9 @@
         try {
           await window.openJourneyApi.deactivateImport(id);
           await refreshImports();
-          setStatus('Removed from active queue.');
+          setStatus(tF('Removed from active queue.'));
         } catch (err) {
-          setStatus(err.message || 'Failed to remove from queue.', true);
+          setStatus(err.message || tF('Failed to remove from queue.'), true);
         }
       });
     });
@@ -1327,7 +1327,7 @@
       rawWorkflow = null;
       analyzeBtn.disabled = true;
       saveBtn.disabled = true;
-      setStatus('No file loaded.');
+      setStatus(tF('No file loaded.'));
       return;
     }
 
@@ -1351,21 +1351,21 @@
         if (configName) nameInput.value = configName;
         renderAnalysis(lastAnalysis);
         saveBtn.disabled = false;
-        setStatus('Analysis completed.');
+        setStatus(tF('Analysis completed.'));
       } catch {
-        setStatus('Analysis failed.', true);
+        setStatus(tF('Analysis failed.'), true);
       }
     } catch {
       rawWorkflow = null;
       analyzeBtn.disabled = true;
       saveBtn.disabled = true;
-      setStatus('Invalid JSON file.', true);
+      setStatus(tF('Invalid JSON file.'), true);
     }
   });
 
   analyzeBtn.addEventListener('click', async () => {
     if (!rawWorkflow) {
-      setStatus('Load a valid workflow JSON first.', true);
+      setStatus(tF('Load a valid workflow JSON first.'), true);
       return;
     }
 
@@ -1376,22 +1376,22 @@
       if (configName) nameInput.value = configName;
       renderAnalysis(lastAnalysis);
       saveBtn.disabled = false;
-      setStatus('Analysis completed.');
+      setStatus(tF('Analysis completed.'));
     } catch {
-      setStatus('Analysis failed.', true);
+      setStatus(tF('Analysis failed.'), true);
     }
   });
 
   saveBtn.addEventListener('click', async () => {
     if (!rawWorkflow || !lastAnalysis) {
-      setStatus('Analyze workflow before saving.', true);
+      setStatus(tF('Analyze workflow before saving.'), true);
       return;
     }
 
     try {
       const liveComfyUri = comfyUriEl.value.trim();
       if (!liveComfyUri) {
-        setStatus('ComfyUI URI is required.', true);
+        setStatus(tF('ComfyUI URI is required.'), true);
         return;
       }
       const slugError = slugProblem();
@@ -1429,7 +1429,7 @@
           }
         } catch (_) {}
 
-        setStatus('Import updated.');
+        setStatus(tF('Import updated.'));
       } else {
         const created = await window.openJourneyApi.createImport({
           name: nameInput.value.trim() || 'Imported Workflow',
@@ -1445,13 +1445,13 @@
             loras: editableLoras,
           });
         }
-        setStatus('Import saved and activated.');
+        setStatus(tF('Import saved and activated.'));
       }
       editingImportId = null;
       await refreshImports();
       closeImportModal();
     } catch (err) {
-      setStatus((err && err.message) || 'Failed to save import.', true);
+      setStatus((err && err.message) || tF('Failed to save import.'), true);
     }
   });
 
@@ -1489,12 +1489,12 @@
 
         await window.openJourneyApi.testModelsConnection({ comfyApiUrl: comfyUriEl.value.trim() });
         if (syncedActiveImport) {
-          setStatus('Active import URI updated.');
+          setStatus(tF('Active import URI updated.'));
         }
         setComfyAvailability(true);
       } catch (error) {
         setComfyAvailability(false);
-        setStatus(error.message || 'ComfyUI connection failed.', true);
+        setStatus(error.message || tF('ComfyUI connection failed.'), true);
       }
     });
   }

@@ -6,41 +6,41 @@
 <section class="cc-shell">
 
   <header class="cc-topbar">
-    <a href="{{ url_for('main.nomad_studio_page') }}" class="cs-back-btn cc-back-btn" aria-label="Back to Nomad Studio">
+    <a href="{{ url_for('main.nomad_studio_page') }}" class="cs-back-btn cc-back-btn" aria-label="Back to Nomad Studio" data-i18n-attr="aria-label:tpl.back_to_nomad_studio">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      <span>Back</span>
+      <span data-i18n="tpl.back_2">Back</span>
     </a>
-    <h1 class="cc-title">Canvas Composer</h1>
+    <h1 class="cc-title" data-i18n="tpl.canvas_composer">Canvas Composer</h1>
     <div class="cc-topbar-actions">
       <input type="file" id="cc-file-input" accept="image/png,image/jpeg,image/webp" multiple style="display:none;">
       <button type="button" class="btn cc-btn" id="cc-add-image-btn">
         <i data-lucide="image-plus" class="nav-icon" aria-hidden="true"></i>
-        <span>Add image</span>
+        <span data-i18n="tpl.add_image">Add image</span>
       </button>
       <span class="cc-topbar-divider" aria-hidden="true"></span>
       <!-- Save/Load are fully local: Save downloads a .zip (manifest.json +
            one PNG per layer), Load reads a .zip picked from disk. Nothing
            is ever uploaded to the server — see cc-save.js / cc-zip.js. -->
-      <button type="button" class="btn cc-btn" id="cc-save-btn" title="Download the full composition as a .zip (editable)">
+      <button type="button" class="btn cc-btn" id="cc-save-btn" title="Download the full composition as a .zip (editable)" data-i18n-attr="title:tpl.download_the_full_composition_as_a">
         <i data-lucide="save" class="nav-icon" aria-hidden="true"></i>
-        <span>Save</span>
+        <span data-i18n="tpl.save">Save</span>
       </button>
       <input type="file" id="cc-load-file-input" accept=".zip" style="display:none;">
-      <button type="button" class="btn cc-btn" id="cc-load-btn" title="Load a composition .zip from your computer">
+      <button type="button" class="btn cc-btn" id="cc-load-btn" title="Load a composition .zip from your computer" data-i18n-attr="title:tpl.load_a_composition_zip_from_your">
         <i data-lucide="folder-open" class="nav-icon" aria-hidden="true"></i>
-        <span>Load</span>
+        <span data-i18n="tpl.load">Load</span>
       </button>
       <span class="cc-topbar-divider" aria-hidden="true"></span>
       <!-- On-canvas layers are downscaled for GPU/memory headroom
            (CC.PREVIEW_MAX_DIM, cc-layer.js) — this opts a given export back
            into drawing from each layer's untouched original instead. -->
-      <label class="cc-quality-toggle" title="Draw each layer from its original file instead of the on-canvas proxy — slower, sharper.">
+      <label class="cc-quality-toggle" title="Draw each layer from its original file instead of the on-canvas proxy — slower, sharper." data-i18n-attr="title:tpl.draw_each_layer_from_its_original">
         <input type="checkbox" id="cc-export-max-quality">
-        <span>Maximum quality</span>
+        <span data-i18n="tpl.maximum_quality">Maximum quality</span>
       </label>
       <button type="button" class="btn primary cc-btn" id="cc-export-btn" disabled>
         <i data-lucide="download" class="nav-icon" aria-hidden="true"></i>
-        <span>Export PNG</span>
+        <span data-i18n="tpl.export_png">Export PNG</span>
       </button>
     </div>
   </header>
@@ -48,33 +48,33 @@
   <div class="cc-main-row">
     <aside class="cc-tray-panel" id="cc-tray-panel">
       <div class="cc-canvas-size-section" id="cc-canvas-size-section">
-        <p class="cc-panel-section-title">Canvas</p>
-        <p class="cc-canvas-dims" id="cc-canvas-dims">1080 × 1080 px</p>
-        <div class="cc-canvas-mode-toggle" role="group" aria-label="Canvas growth mode">
-          <button type="button" class="cc-canvas-mode-btn active" id="cc-canvas-mode-auto" data-cc-grow-mode="auto" title="The canvas grows automatically so no image is ever cropped">Auto</button>
-          <button type="button" class="cc-canvas-mode-btn" id="cc-canvas-mode-locked" data-cc-grow-mode="locked" title="Fixed canvas size — anything outside it gets cropped">Locked</button>
+        <p class="cc-panel-section-title" data-i18n="tpl.canvas">Canvas</p>
+        <p class="cc-canvas-dims" id="cc-canvas-dims" data-i18n="tpl.1080_1080_px">1080 × 1080 px</p>
+        <div class="cc-canvas-mode-toggle" role="group" aria-label="Canvas growth mode" data-i18n-attr="aria-label:tpl.canvas_growth_mode">
+          <button type="button" class="cc-canvas-mode-btn active" id="cc-canvas-mode-auto" data-cc-grow-mode="auto" title="The canvas grows automatically so no image is ever cropped" data-i18n="tpl.auto" data-i18n-attr="title:tpl.the_canvas_grows_automatically_so_no">Auto</button>
+          <button type="button" class="cc-canvas-mode-btn" id="cc-canvas-mode-locked" data-cc-grow-mode="locked" title="Fixed canvas size — anything outside it gets cropped" data-i18n="tpl.locked" data-i18n-attr="title:tpl.fixed_canvas_size_anything_outside_it">Locked</button>
         </div>
-        <button type="button" class="cc-crop-to-image-btn" id="cc-crop-to-image-btn" disabled title="Fits the canvas exactly to the selected image">Crop canvas to image</button>
+        <button type="button" class="cc-crop-to-image-btn" id="cc-crop-to-image-btn" disabled title="Fits the canvas exactly to the selected image" data-i18n="tpl.crop_canvas_to_image" data-i18n-attr="title:tpl.fits_the_canvas_exactly_to_the">Crop canvas to image</button>
         <div class="cc-align-row">
-          <button type="button" class="cc-align-btn" id="cc-align-h-btn" disabled title="Center the selected image horizontally on the canvas">Center horizontal</button>
-          <button type="button" class="cc-align-btn" id="cc-align-v-btn" disabled title="Center the selected image vertically on the canvas">Center vertical</button>
+          <button type="button" class="cc-align-btn" id="cc-align-h-btn" disabled title="Center the selected image horizontally on the canvas" data-i18n="tpl.center_horizontal" data-i18n-attr="title:tpl.center_the_selected_image_horizontally_on">Center horizontal</button>
+          <button type="button" class="cc-align-btn" id="cc-align-v-btn" disabled title="Center the selected image vertically on the canvas" data-i18n="tpl.center_vertical" data-i18n-attr="title:tpl.center_the_selected_image_vertically_on">Center vertical</button>
         </div>
       </div>
 
       <div class="cc-tray-panel-header">
-        <span>Tray</span>
-        <button type="button" class="cc-tray-refresh-btn" id="cc-tray-refresh-btn" aria-label="Refresh tray" title="Refresh">
+        <span data-i18n="tpl.tray">Tray</span>
+        <button type="button" class="cc-tray-refresh-btn" id="cc-tray-refresh-btn" aria-label="Refresh tray" title="Refresh" data-i18n-attr="title:tpl.refresh,aria-label:tpl.refresh_tray">
           <i data-lucide="refresh-cw" class="nav-icon" aria-hidden="true"></i>
         </button>
       </div>
       <div class="cc-tray-grid" id="cc-tray-grid"></div>
-      <p class="cc-tray-empty" id="cc-tray-empty" hidden>No images in the tray yet.</p>
+      <p class="cc-tray-empty" id="cc-tray-empty" hidden data-i18n="tpl.no_images_in_the_tray_yet">No images in the tray yet.</p>
     </aside>
 
     <div class="cc-body">
       <div class="cc-stage-viewport" id="cc-stage-viewport">
-        <div class="cc-stage" id="cc-stage" tabindex="0" aria-label="Composition canvas">
-          <p class="cc-stage-empty-hint" id="cc-stage-empty-hint">Drop images here, or click "Add image"</p>
+        <div class="cc-stage" id="cc-stage" tabindex="0" aria-label="Composition canvas" data-i18n-attr="aria-label:tpl.composition_canvas">
+          <p class="cc-stage-empty-hint" id="cc-stage-empty-hint" data-i18n="tpl.drop_images_here_or_click_add">Drop images here, or click "Add image"</p>
         </div>
         <!-- Sibling of #cc-stage, NOT clipped by its overflow:hidden — lock
              badges render here so they stay visible/clickable even when a
@@ -87,31 +87,31 @@
 
   <!-- Context menu — populated/positioned by JS depending on target (layer vs empty canvas) -->
   <div class="cc-ctx-menu" id="cc-ctx-menu" hidden role="menu" aria-hidden="true">
-    <button type="button" class="cc-ctx-item" data-cc-action="bring-front" role="menuitem">Bring to front</button>
-    <button type="button" class="cc-ctx-item" data-cc-action="raise" role="menuitem">Raise one</button>
-    <button type="button" class="cc-ctx-item" data-cc-action="lower" role="menuitem">Lower one</button>
-    <button type="button" class="cc-ctx-item" data-cc-action="send-back" role="menuitem">Send to back</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="bring-front" role="menuitem" data-i18n="tpl.bring_to_front">Bring to front</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="raise" role="menuitem" data-i18n="tpl.raise_one">Raise one</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="lower" role="menuitem" data-i18n="tpl.lower_one">Lower one</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="send-back" role="menuitem" data-i18n="tpl.send_to_back">Send to back</button>
     <p class="cc-ctx-position" id="cc-ctx-position"></p>
     <div class="cc-ctx-sep" role="separator"></div>
-    <button type="button" class="cc-ctx-item" data-cc-action="lock" role="menuitem">Lock</button>
-    <button type="button" class="cc-ctx-item" data-cc-action="unlock" role="menuitem">Unlock</button>
-    <button type="button" class="cc-ctx-item" data-cc-action="lock-others" role="menuitem">Lock all others</button>
-    <button type="button" class="cc-ctx-item" data-cc-action="unlock-all" role="menuitem">Unlock all</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="lock" role="menuitem" data-i18n="tpl.lock">Lock</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="unlock" role="menuitem" data-i18n="tpl.unlock">Unlock</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="lock-others" role="menuitem" data-i18n="tpl.lock_all_others">Lock all others</button>
+    <button type="button" class="cc-ctx-item" data-cc-action="unlock-all" role="menuitem" data-i18n="tpl.unlock_all">Unlock all</button>
     <div class="cc-ctx-sep" role="separator"></div>
     <label class="cc-ctx-slider-row">
-      <span>Corner radius</span>
+      <span data-i18n="tpl.corner_radius">Corner radius</span>
       <input type="range" id="cc-ctx-radius" min="0" max="50" step="1" value="0">
     </label>
     <label class="cc-ctx-slider-row">
-      <span>Rotation</span>
+      <span data-i18n="tpl.rotation">Rotation</span>
       <input type="range" id="cc-ctx-rotation" min="-180" max="180" step="1" value="0">
     </label>
     <label class="cc-ctx-slider-row">
-      <span>Opacity</span>
+      <span data-i18n="tpl.opacity">Opacity</span>
       <input type="range" id="cc-ctx-opacity" min="0" max="100" step="1" value="100">
     </label>
     <div class="cc-ctx-sep" role="separator"></div>
-    <button type="button" class="cc-ctx-item cc-ctx-item--danger" data-cc-action="delete" role="menuitem">Delete</button>
+    <button type="button" class="cc-ctx-item cc-ctx-item--danger" data-cc-action="delete" role="menuitem" data-i18n="tpl.delete">Delete</button>
   </div>
 
   <!-- Hidden canvas used only to rasterize the final flattened PNG on export -->

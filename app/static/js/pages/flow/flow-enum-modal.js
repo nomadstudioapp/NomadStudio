@@ -10,12 +10,12 @@ function openLoraNamePickerPanel(title, options, current, onSelect) {
     var listEl = document.createElement('div');
     listEl.className = 'nse-model-list';
     listEl.setAttribute('role', 'listbox');
-    listEl.setAttribute('aria-label', 'Options');
+    listEl.setAttribute('aria-label', tF('Options'));
     options.forEach(function (opt) {
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'nse-model-item' + (opt === current ? ' is-active' : '');
-      btn.textContent = opt === '__bypass__' ? 'None (bypass)' : opt;
+      btn.textContent = opt === '__bypass__' ? tF('None (bypass)') : opt;
       btn.setAttribute('role', 'option');
       btn.setAttribute('aria-selected', opt === current ? 'true' : 'false');
       btn.addEventListener('click', function () {
@@ -76,7 +76,7 @@ async function enhanceAdvParamsWithOptions(record, containerEl, overridesObj, on
       pickerBtn.style.cssText = 'flex:1;justify-content:space-between;min-width:0;';
       var nameSpan = document.createElement('span');
       nameSpan.className = 'nse-model-hint-name';
-      nameSpan.textContent = currentVal === '__bypass__' ? 'None (bypass)' : currentVal;
+      nameSpan.textContent = currentVal === '__bypass__' ? tF('None (bypass)') : currentVal;
       pickerBtn.appendChild(nameSpan);
       pickerBtn.insertAdjacentHTML('beforeend',
         '<svg class="nse-model-hint-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>');
@@ -84,7 +84,7 @@ async function enhanceAdvParamsWithOptions(record, containerEl, overridesObj, on
       pickerBtn.addEventListener('click', function () {
         openLoraNamePickerPanel(title, opts, selectedRaw, function (chosen) {
           selectedRaw = chosen;
-          nameSpan.textContent = chosen === '__bypass__' ? 'None (bypass)' : chosen;
+          nameSpan.textContent = chosen === '__bypass__' ? tF('None (bypass)') : chosen;
           overridesObj[key] = chosen;
           if (typeof _syncKeywordToggle === 'function') _syncKeywordToggle();
           saveParams();
@@ -113,8 +113,8 @@ async function enhanceAdvParamsWithOptions(record, containerEl, overridesObj, on
           kwLabel.hidden = !file || file === '__bypass__';
           kwBox.disabled = !known;
           kwText.textContent = known
-            ? 'Add trigger words: ' + known
-            : 'No trigger words saved for this LoRA';
+            ? tF('Add trigger words:') + ' ' + known
+            : tF('No trigger words saved for this LoRA');
           kwBox.checked = known ? !(_loraKeywordsOff || {})[file.toLowerCase()] : false;
         };
         kwBox.addEventListener('change', function () {
@@ -147,12 +147,12 @@ function _applyNcfNumericStepper(inp, parentEl) {
   var decBtn = document.createElement('button');
   decBtn.type = 'button';
   decBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-left';
-  decBtn.setAttribute('aria-label', 'Decrease');
+  decBtn.setAttribute('aria-label', tF('Decrease'));
   decBtn.innerHTML = '<span aria-hidden="true">&#9664;</span>';
   var incBtn = document.createElement('button');
   incBtn.type = 'button';
   incBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-right';
-  incBtn.setAttribute('aria-label', 'Increase');
+  incBtn.setAttribute('aria-label', tF('Increase'));
   incBtn.innerHTML = '<span aria-hidden="true">&#9654;</span>';
   wrapper.appendChild(decBtn);
   wrapper.appendChild(inp);
@@ -170,7 +170,7 @@ function buildAdvParams(record, containerEl, overridesObj, idPrefix, onChange) {
   var params = Array.isArray(record && record.analysis && record.analysis.advancedParameters)
     ? record.analysis.advancedParameters : [];
   if (!params.length) {
-    containerEl.innerHTML = '<p class="nsc-adv-empty">No adjustable parameters.</p>'; return;
+    containerEl.innerHTML = '<p class="nsc-adv-empty">' + escHtml(tF('No adjustable parameters.')) + '</p>'; return;
   }
   params.forEach(function (param) {
     var key = String(param.key || '');

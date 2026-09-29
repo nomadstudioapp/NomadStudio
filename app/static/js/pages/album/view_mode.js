@@ -30,8 +30,8 @@
     imagesView.hidden = !isImages;
     document.body.classList.toggle('explore-page-body', isImages);
     toggleBtn.setAttribute('aria-pressed', String(isImages));
-    toggleBtn.setAttribute('aria-label', 'Switch to ' + (isImages ? 'Flows' : 'Images') + ' view');
-    if (tipEl) tipEl.textContent = (isImages ? 'Flows' : 'Images') + ' view';
+    toggleBtn.setAttribute('aria-label', tF(isImages ? 'Switch to Flows view' : 'Switch to Images view'));
+    if (tipEl) tipEl.textContent = tF(isImages ? 'Flows view' : 'Images view');
     if (iconEl) iconEl.innerHTML = isImages ? ICON_FLOWS : ICON_IMAGES;
     if (isImages && !imagesInitialized && window.albumImagesPage) {
       imagesInitialized = true;

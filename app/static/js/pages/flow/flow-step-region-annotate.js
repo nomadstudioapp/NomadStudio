@@ -43,7 +43,7 @@ function renderRegionAnnotate(stepDef, el) {
   editBtn.className = 'nss-generate-scenes-btn ncf-annotate-edit-btn';
   editBtn.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8h8v8H8z" fill="none" stroke="currentColor" stroke-width="2"/></svg>' +
-    '<span>Annotate</span>';
+    '<span>' + escHtml(tF('Annotate')) + '</span>';
   editBtn.disabled = true;
   preview.appendChild(editBtn);
 
@@ -315,7 +315,7 @@ function renderZonePromptBuilder(stepDef, el) {
       clauses.push('the subject from ' + tag + ' in the ' + color + ' rectangle');
     });
     if (!clauses.length) {
-      hint.textContent = 'Pick at least one reference image and its zone color first.';
+      hint.textContent = tF('Pick at least one reference image and its zone color first.');
       return;
     }
     // Join with commas, "and" before the last one — "A, B and C", not
@@ -357,7 +357,7 @@ function renderComposeTemplatePicker(stepDef, el) {
   select.className = 'nsc-select';
   var noneOpt = document.createElement('option');
   noneOpt.value = '';
-  noneOpt.textContent = '— pick a template —';
+  noneOpt.textContent = tF('— pick a template —');
   select.appendChild(noneOpt);
   templates.forEach(function (t, i) {
     var opt = document.createElement('option');

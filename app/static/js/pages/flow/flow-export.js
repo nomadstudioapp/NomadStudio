@@ -71,15 +71,15 @@ function _startFlowExport(url, payload, filename, button) {
 
 function _openFlowExportPanel() {
   var images = _flowExportImages();
-  openOptionsPanel('Export', function (body) {
+  openOptionsPanel(tF('Export'), function (body) {
     body.innerHTML =
       '<div class="nsc-options-menu ncf-export-panel">' +
-        '<p class="ncf-export-panel-hint">Choose what to export from this flow.</p>' +
+        '<p class="ncf-export-panel-hint">' + escHtml(tF('Choose what to export from this flow.')) + '</p>' +
         '<button type="button" class="nsc-options-menu-item ncf-export-option" data-export-kind="flow">' +
-          '<span class="nsc-options-menu-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span><span>Flow</span>' +
+          '<span class="nsc-options-menu-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span><span>' + escHtml(tF('Flow')) + '</span>' +
         '</button>' +
         '<button type="button" class="nsc-options-menu-item ncf-export-option" data-export-kind="images"' + (images.length ? '' : ' disabled') + '>' +
-          '<span class="nsc-options-menu-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span><span>Images</span>' +
+          '<span class="nsc-options-menu-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span><span>' + escHtml(tF('Images')) + '</span>' +
         '</button>' +
       '</div>';
     body.querySelector('[data-export-kind="flow"]').addEventListener('click', function (event) {

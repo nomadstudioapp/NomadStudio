@@ -81,7 +81,7 @@
   function applyIncomingDocument(doc, pathnameForActiveState) {
     const incomingMain = doc.querySelector('.main-wrap');
     if (!incomingMain) {
-      throw new Error('Incoming page has no main container');
+      throw new Error(tF('Incoming page has no main container'));
     }
 
     mainWrap.innerHTML = incomingMain.innerHTML;

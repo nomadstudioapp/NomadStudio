@@ -95,7 +95,7 @@
       sourceImages = Array.isArray(data.images) ? data.images : [];
       applyDiamondFilter();
       if (!allImages.length) {
-        if (viewerStatusEl) viewerStatusEl.textContent = 'No images yet. Generate some in Studio first.';
+        if (viewerStatusEl) viewerStatusEl.textContent = tF('No images yet. Generate some in Studio first.');
         return;
       }
       if (viewerStatusEl) viewerStatusEl.remove();
@@ -322,7 +322,7 @@
   if (counterEl) {
     counterEl.setAttribute('role', 'button');
     counterEl.setAttribute('tabindex', '0');
-    counterEl.setAttribute('aria-label', 'Open quick image carousel');
+    counterEl.setAttribute('aria-label', tF('Open quick image carousel'));
     counterEl.addEventListener('click', () => {
       setThumbstripOpen(!isThumbstripOpen);
       if (isThumbstripOpen) syncThumbstripActive();
@@ -733,7 +733,7 @@
     const min = Number.isFinite(options.min) ? options.min : 2;
     const max = Number.isFinite(options.max) ? options.max : 88;
     const perSec = Number.isFinite(options.perSec) ? options.perSec : 0.45;
-    const label = String(options.label || 'Generating…');
+    const label = tF(String(options.label || 'Generating…'));
     const startTime = Date.now();
     setProgressBar(min);
     progressTimer = setInterval(() => {
@@ -841,7 +841,7 @@
         if (!refineRes.ok) throw new Error(refineData.error || `Server error ${refineRes.status}`);
 
         refinedPrompt = String(refineData.refinedPrompt || '').trim();
-        if (!refinedPrompt) throw new Error('Could not refine prompt.');
+        if (!refinedPrompt) throw new Error(tF('Could not refine prompt.'));
 
         stopProgress(50);
         showStatus('Generating image… 50%');
@@ -933,7 +933,7 @@
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('Could not read image.'));
+      reader.onerror = () => reject(new Error(tF('Could not read image.')));
       reader.readAsDataURL(blob);
     });
   }
@@ -944,7 +944,7 @@
 
     hideResult();
     closeEditPanel(false);
-    showStatus(`${action.label} 0%`);
+    showStatus(`${tF(action.label)} 0%`);
     startProgress({ min: 4, max: 92, perSec: 0.4, label: action.label });
     presetBtns.forEach((b) => { b.disabled = true; });
     if (customInputEl) customInputEl.disabled = true;

@@ -126,8 +126,8 @@ async function loadWorkflows(selectEl, hintEl, recommendedIds) {
     allImportsList = allImports;
 
     if (!allImports.length) {
-      selectEl.innerHTML = '<option value="">No workflows — go to Models › Import</option>';
-      if (hintEl) hintEl.textContent = 'Import a workflow first.';
+      selectEl.innerHTML = '<option value="">' + escHtml(tF('No workflows — go to Models › Import')) + '</option>';
+      if (hintEl) hintEl.textContent = tF('Import a workflow first.');
       return;
     }
 
@@ -198,7 +198,7 @@ async function loadWorkflows(selectEl, hintEl, recommendedIds) {
     await selectImportById(String(def.id || ''), hintEl);
 
   } catch (err) {
-    selectEl.innerHTML = '<option value="">Error loading workflows</option>';
+    selectEl.innerHTML = '<option value="">' + escHtml(tF('Error loading workflows')) + '</option>';
     console.error('[FlowEngine] loadWorkflows:', err);
   }
 }
@@ -215,7 +215,7 @@ async function fetchFullRecord(id) {
 
 async function selectImportById(id, hintEl) {
   if (!id) return;
-  if (hintEl) hintEl.textContent = 'Loading…';
+  if (hintEl) hintEl.textContent = tF('Loading…');
   try {
     var record = await fetchFullRecord(id);
     selectedImportId     = id;
@@ -225,7 +225,7 @@ async function selectImportById(id, hintEl) {
     document.dispatchEvent(new CustomEvent('ncf-workflow-loaded', { detail: record }));
     updateGenerateBtn();
   } catch (err) {
-    if (hintEl) hintEl.textContent = 'Could not load workflow.';
+    if (hintEl) hintEl.textContent = tF('Could not load workflow.');
     console.error('[FlowEngine] selectImportById:', err);
   }
 }

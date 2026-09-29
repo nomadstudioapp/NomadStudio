@@ -516,13 +516,13 @@
         '" data-cat="' + cat.id + '" role="tab" aria-selected="' + active + '">' +
         '<span class="nav-model-left">' +
         (cat.iconSvg || '<i data-lucide="' + cat.icon + '" class="nav-icon" aria-hidden="true"></i>') +
-        '<span>' + escHtml(cat.label) + '</span>' +
+        '<span>' + escHtml(tF(cat.label)) + '</span>' +
         '</span>' +
         (typeof count === 'number' ? '<span class="models-ready-text">' + count + '</span>' : '') +
         '</button>';
       if (cat.id === 'styles' && active && stylesTreeOpen && (styleCategoryTree.flatNames.length || styleCategoryTree.groups.length)) {
-        chip += '<div class="lib-style-cat-tree" role="group" aria-label="Style categories">' +
-          '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === '' ? ' is-active' : '') + '" data-style-cat="">All</button>' +
+        chip += '<div class="lib-style-cat-tree" role="group" aria-label="' + tH('Style categories') + '">' +
+          '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === '' ? ' is-active' : '') + '" data-style-cat="">' + tH('All') + '</button>' +
           styleCategoryTree.flatNames.map(function (name) {
             return '<button type="button" class="lib-style-cat-tree-item' + (selectedStyleCategory === name ? ' is-active' : '') + '" data-style-cat="' + escHtml(name) + '">' + trLit(name) + '</button>';
           }).join('') +
@@ -543,8 +543,8 @@
         '</div>';
       }
       if (cat.id === 'templates' && active && templatesTreeOpen && (templateThemeTree.flatNames.length || templateThemeTree.groups.length)) {
-        chip += '<div class="lib-template-cat-tree" role="group" aria-label="Template themes">' +
-          '<button type="button" class="lib-template-cat-tree-item' + (selectedTemplateTheme === '' ? ' is-active' : '') + '" data-template-theme="">All</button>' +
+        chip += '<div class="lib-template-cat-tree" role="group" aria-label="' + tH('Template themes') + '">' +
+          '<button type="button" class="lib-template-cat-tree-item' + (selectedTemplateTheme === '' ? ' is-active' : '') + '" data-template-theme="">' + tH('All') + '</button>' +
           templateThemeTree.flatNames.map(function (name) {
             return '<button type="button" class="lib-template-cat-tree-item' + (selectedTemplateTheme === name ? ' is-active' : '') + '" data-template-theme="' + escHtml(name) + '">' + escHtml(name) + '</button>';
           }).join('') +
@@ -578,7 +578,7 @@
           '</button>' +
         '</div>'
       : '';
-    nav.innerHTML = '<p class="group-label">Build</p><nav class="nav-block">' + items + '</nav>' + footer;
+    nav.innerHTML = '<p class="group-label">' + tH('Build') + '</p><nav class="nav-block">' + items + '</nav>' + footer;
     if (window.lucide) window.lucide.createIcons();
   }
 
@@ -681,7 +681,7 @@
     return (
       '<div class="lib-style-card-outer">' +
         '<div class="rp-card lib-style-card lib-card--depot-open" data-lib-depot-open-id="' + escHtml(String(depot.id)) + '">' +
-          '<button type="button" class="lib-depot-card-edit-btn" data-lib-depot-edit-id="' + escHtml(String(depot.id)) + '" aria-label="Edit Depot">' +
+          '<button type="button" class="lib-depot-card-edit-btn" data-lib-depot-edit-id="' + escHtml(String(depot.id)) + '" aria-label="' + tH('Edit Depot') + '">' +
             '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
           '</button>' +
           '<div class="rp-card-media lib-style-card-img-wrap' + (img ? '' : ' lib-style-card-img-wrap--fallback') + '">' +
@@ -800,7 +800,7 @@
       empty.textContent = searchQuery.trim()
         ? tr('build.noMatch', 'Nothing matches your search.')
         : hint ? tr(hint[0], hint[1])
-        : 'No ' + cat.label.toLowerCase() + ' saved yet.';
+        : tF('No {items} saved yet.').replace('{items}', tF(cat.label).toLowerCase());
       return;
     }
     empty.hidden = true;
@@ -903,7 +903,7 @@
     if (!cat) return;
     activeId = id;
     try { localStorage.setItem(LIB_ACTIVE_TAB_KEY, id); } catch (_) {}
-    if (breadcrumbCurrent) breadcrumbCurrent.textContent = cat.label;
+    if (breadcrumbCurrent) breadcrumbCurrent.textContent = tF(cat.label);
     renderNav();
     grid.innerHTML = '';
     grid.style.display = '';
@@ -943,7 +943,7 @@
       if (activeId === id) {
         grid.style.display = 'none';
         empty.hidden = false;
-        empty.textContent = 'Could not load ' + cat.label.toLowerCase() + '.';
+        empty.textContent = tF('Could not load {items}.').replace('{items}', tF(cat.label).toLowerCase());
       }
     });
   }
@@ -1073,7 +1073,7 @@
     if (!item || !editModal) return;
     editingStyleId = styleId;
     editMode = 'edit';
-    if (editTitle) editTitle.textContent = 'Edit Style';
+    if (editTitle) editTitle.textContent = tF('Edit Style');
     if (editDelBtn) editDelBtn.hidden = false;
     if (editImageStep) editImageStep.hidden = false;
     setEditImage(item.has_image ? item.image_url : '');
@@ -1092,7 +1092,7 @@
     if (!editModal) return;
     editingStyleId = null;
     editMode = 'create';
-    if (editTitle) editTitle.textContent = 'Create Style';
+    if (editTitle) editTitle.textContent = tF('Create Style');
     if (editDelBtn) editDelBtn.hidden = true;
     // A style needs to exist before an image can be attached to it.
     if (editImageStep) editImageStep.hidden = true;
@@ -1235,7 +1235,7 @@
       var formData = new FormData();
       formData.append('file', file);
       stylesImportBtn.disabled = true;
-      if (stylesImportStatus) { stylesImportStatus.hidden = false; stylesImportStatus.textContent = 'Importing…'; }
+      if (stylesImportStatus) { stylesImportStatus.hidden = false; stylesImportStatus.textContent = tF('Importing…'); }
 
       fetch('/api/styles/import-zip', { method: 'POST', body: formData })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
@@ -1273,13 +1273,13 @@
       editImageInput.value = '';
       if (!file || !editingStyleId) return;
       if (!selectedModelId) {
-        editStatus.textContent = 'Select a model first.';
+        editStatus.textContent = tF('Select a model first.');
         return;
       }
       var reader = new FileReader();
       reader.onload = function () {
         editImageBtn.disabled = true;
-        editStatus.textContent = 'Uploading…';
+        editStatus.textContent = tF('Uploading…');
         fetch('/api/styles/' + encodeURIComponent(editingStyleId) + '/model-image', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -1296,7 +1296,7 @@
           editStatus.textContent = '';
         }).catch(function (err) {
           console.error('[Library] Style image upload failed:', err);
-          editStatus.textContent = 'Image upload failed.';
+          editStatus.textContent = tF('Image upload failed.');
         }).finally(function () {
           editImageBtn.disabled = false;
         });
@@ -1309,9 +1309,9 @@
     editSaveBtn.addEventListener('click', function () {
       if (editMode === 'create') {
         var name = editFields.name.value.trim();
-        if (!name) { editStatus.textContent = 'Name is required.'; return; }
+        if (!name) { editStatus.textContent = tF('Name is required.'); return; }
         editSaveBtn.disabled = true;
-        editStatus.textContent = 'Creating…';
+        editStatus.textContent = tF('Creating…');
         fetch('/api/styles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1323,14 +1323,14 @@
             suffix: editFields.suffix.value.trim(),
           }),
         }).then(function (r) {
-          if (!r.ok) throw new Error('Create failed (' + r.status + ')');
+          if (!r.ok) throw new Error(tF('Create failed.') + ' (' + r.status + ')');
           return r.json();
         }).then(function () {
           closeEditModal();
           loadCategory('styles');
         }).catch(function (err) {
           console.error('[Library] Style create failed:', err);
-          editStatus.textContent = 'Create failed.';
+          editStatus.textContent = tF('Create failed.');
         }).finally(function () {
           editSaveBtn.disabled = false;
         });
@@ -1339,7 +1339,7 @@
 
       if (!editingStyleId) return;
       editSaveBtn.disabled = true;
-      editStatus.textContent = 'Saving…';
+      editStatus.textContent = tF('Saving…');
       fetch('/api/styles/' + encodeURIComponent(editingStyleId), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1351,14 +1351,14 @@
           suffix: editFields.suffix.value.trim(),
         }),
       }).then(function (r) {
-        if (!r.ok) throw new Error('Save failed (' + r.status + ')');
+        if (!r.ok) throw new Error(tF('Save failed.') + ' (' + r.status + ')');
         return r.json();
       }).then(function () {
         closeEditModal();
         loadCategory('styles');
       }).catch(function (err) {
         console.error('[Library] Style save failed:', err);
-        editStatus.textContent = 'Save failed.';
+        editStatus.textContent = tF('Save failed.');
       }).finally(function () {
         editSaveBtn.disabled = false;
       });
@@ -1368,7 +1368,7 @@
   if (editDelBtn) {
     editDelBtn.addEventListener('click', function () {
       if (!editingStyleId) return;
-      if (!window.confirm('Delete this style? This cannot be undone.')) return;
+      if (!window.confirm(tF('Delete this style? This cannot be undone.'))) return;
       editDelBtn.disabled = true;
       fetch('/api/styles/' + encodeURIComponent(editingStyleId), { method: 'DELETE' })
         .then(function (r) {
@@ -1378,7 +1378,7 @@
         })
         .catch(function (err) {
           console.error('[Library] Style delete failed:', err);
-          editStatus.textContent = 'Delete failed.';
+          editStatus.textContent = tF('Delete failed.');
         })
         .finally(function () {
           editDelBtn.disabled = false;
@@ -1458,7 +1458,7 @@
       var reader = new FileReader();
       reader.onload = function () {
         templateEditImageBtn.disabled = true;
-        templateEditStatus.textContent = 'Uploading…';
+        templateEditStatus.textContent = tF('Uploading…');
         var item = currentItems.find(function (it) { return String(it.id) === String(editingTemplateId); });
         var hasExisting = !!(item && item.images && item.images.length);
         var removeExisting = hasExisting
@@ -1478,7 +1478,7 @@
           templateEditStatus.textContent = '';
         }).catch(function (err) {
           console.error('[Library] Template image upload failed:', err);
-          templateEditStatus.textContent = 'Image upload failed.';
+          templateEditStatus.textContent = tF('Image upload failed.');
         }).finally(function () {
           templateEditImageBtn.disabled = false;
         });
@@ -1519,7 +1519,7 @@
   function fieldValueGroupHtml(key, values) {
     var chips = values.map(function (v, idx) {
       return '<span class="lib-template-value-chip"><span class="lib-template-value-text">' + escHtml(v) + '</span>' +
-        '<button type="button" class="lib-template-value-remove" data-field-key="' + escHtml(key) + '" data-field-idx="' + idx + '" aria-label="Remove value">&times;</button>' +
+        '<button type="button" class="lib-template-value-remove" data-field-key="' + escHtml(key) + '" data-field-idx="' + idx + '" aria-label="' + tH('Remove value') + '">&times;</button>' +
       '</span>';
     }).join('');
     return (
@@ -1527,8 +1527,8 @@
         '<p class="lib-template-value-label">' + escHtml(key) + '</p>' +
         '<div class="lib-template-value-chips">' + chips + '</div>' +
         '<div class="lib-template-value-add-row">' +
-          '<input type="text" class="nsc-input lib-template-value-input" data-field-key="' + escHtml(key) + '" placeholder="Add a value…">' +
-          '<button type="button" class="lib-style-edit-panel-secondary lib-template-value-add-btn" data-field-key="' + escHtml(key) + '">Add</button>' +
+          '<input type="text" class="nsc-input lib-template-value-input" data-field-key="' + escHtml(key) + '" placeholder="' + tH('Add a value…') + '">' +
+          '<button type="button" class="lib-style-edit-panel-secondary lib-template-value-add-btn" data-field-key="' + escHtml(key) + '">' + tH('Add') + '</button>' +
         '</div>' +
       '</div>'
     );
@@ -1699,7 +1699,7 @@
     templateEditActiveField = '';
     editingTemplateId = templateId;
     templateEditMode = 'edit';
-    if (templateEditTitle) templateEditTitle.textContent = 'Edit Template';
+    if (templateEditTitle) templateEditTitle.textContent = tF('Edit Template');
     if (templateEditDelBtn) templateEditDelBtn.hidden = false;
     if (templateEditImageStep) templateEditImageStep.hidden = false;
     var firstImg = item.images && item.images[0];
@@ -1718,7 +1718,7 @@
     if (!templateEditModal) return;
     editingTemplateId = null;
     templateEditMode = 'create';
-    if (templateEditTitle) templateEditTitle.textContent = 'Create Template';
+    if (templateEditTitle) templateEditTitle.textContent = tF('Create Template');
     if (templateEditDelBtn) templateEditDelBtn.hidden = true;
     // No id yet to attach an image to — same reasoning as the Style panel
     // hiding its image step until the entity's been saved once.
@@ -1760,15 +1760,15 @@
         template: templateEditFields.template.value.trim(),
       };
       if (templateEditMode === 'create') {
-        if (!payload.name) { templateEditStatus.textContent = 'Name is required.'; return; }
+        if (!payload.name) { templateEditStatus.textContent = tF('Name is required.'); return; }
         templateEditSaveBtn.disabled = true;
-        templateEditStatus.textContent = 'Creating…';
+        templateEditStatus.textContent = tF('Creating…');
         window.openJourneyApi.createTemplatePack(payload).then(function () {
           closeTemplateEditModal();
           loadCategory('templates');
         }).catch(function (err) {
           console.error('[Library] Template create failed:', err);
-          templateEditStatus.textContent = 'Create failed.';
+          templateEditStatus.textContent = tF('Create failed.');
         }).finally(function () {
           templateEditSaveBtn.disabled = false;
         });
@@ -1777,7 +1777,7 @@
 
       if (!editingTemplateId) return;
       templateEditSaveBtn.disabled = true;
-      templateEditStatus.textContent = 'Saving…';
+      templateEditStatus.textContent = tF('Saving…');
       var saveOps = [window.openJourneyApi.updateTemplatePack(editingTemplateId, payload)];
       // Field values are shared by the whole pack, not this one template —
       // saved alongside it (same button) whenever the panel has a values
@@ -1790,7 +1790,7 @@
         loadCategory('templates');
       }).catch(function (err) {
         console.error('[Library] Template save failed:', err);
-        templateEditStatus.textContent = 'Save failed.';
+        templateEditStatus.textContent = tF('Save failed.');
       }).finally(function () {
         templateEditSaveBtn.disabled = false;
       });
@@ -1800,14 +1800,14 @@
   if (templateEditDelBtn) {
     templateEditDelBtn.addEventListener('click', function () {
       if (!editingTemplateId) return;
-      if (!window.confirm('Delete this template? This cannot be undone.')) return;
+      if (!window.confirm(tF('Delete this template? This cannot be undone.'))) return;
       templateEditDelBtn.disabled = true;
       window.openJourneyApi.deleteTemplatePack(editingTemplateId).then(function () {
         closeTemplateEditModal();
         loadCategory('templates');
       }).catch(function (err) {
         console.error('[Library] Template delete failed:', err);
-        templateEditStatus.textContent = 'Delete failed.';
+        templateEditStatus.textContent = tF('Delete failed.');
       }).finally(function () {
         templateEditDelBtn.disabled = false;
       });
@@ -1833,9 +1833,9 @@
   function openCreateDepotModal() {
     if (!depotEditModal) return;
     editingDepotId = null;
-    if (depotEditTitle) depotEditTitle.textContent = 'Create Depot';
+    if (depotEditTitle) depotEditTitle.textContent = tF('Create Depot');
     if (depotEditDelBtn) depotEditDelBtn.hidden = true;
-    if (depotEditSaveBtn) depotEditSaveBtn.querySelector('.lib-btn-label').textContent = 'Create';
+    if (depotEditSaveBtn) depotEditSaveBtn.querySelector('.lib-btn-label').textContent = tF('Create');
     depotEditName.value = '';
     depotEditDesc.value = '';
     depotEditStatus.textContent = '';
@@ -1853,9 +1853,9 @@
       var item = data && data.depot;
       if (!item) return;
       editingDepotId = depotId;
-      if (depotEditTitle) depotEditTitle.textContent = 'Edit Depot';
+      if (depotEditTitle) depotEditTitle.textContent = tF('Edit Depot');
       if (depotEditDelBtn) depotEditDelBtn.hidden = false;
-      if (depotEditSaveBtn) depotEditSaveBtn.querySelector('.lib-btn-label').textContent = 'Save';
+      if (depotEditSaveBtn) depotEditSaveBtn.querySelector('.lib-btn-label').textContent = tF('Save');
       depotEditName.value = item.name || '';
       depotEditDesc.value = item.description || '';
       depotEditStatus.textContent = '';
@@ -1903,7 +1903,7 @@
   if (depotEditSaveBtn) {
     depotEditSaveBtn.addEventListener('click', function () {
       var name = depotEditName.value.trim();
-      if (!name) { depotEditStatus.textContent = 'Name is required.'; return; }
+      if (!name) { depotEditStatus.textContent = tF('Name is required.'); return; }
       var description = depotEditDesc.value.trim();
       depotEditSaveBtn.disabled = true;
       depotEditStatus.textContent = editingDepotId ? 'Saving…' : 'Creating…';
@@ -1931,7 +1931,7 @@
   if (depotEditDelBtn) {
     depotEditDelBtn.addEventListener('click', function () {
       if (!editingDepotId) return;
-      if (!window.confirm('Delete this depot? This cannot be undone.')) return;
+      if (!window.confirm(tF('Delete this depot? This cannot be undone.'))) return;
       var deletingOpenDetail = editingDepotId === depotDetailId;
       depotEditDelBtn.disabled = true;
       fetch('/api/depots/' + encodeURIComponent(editingDepotId), { method: 'DELETE' })
@@ -1944,7 +1944,7 @@
         })
         .catch(function (err) {
           console.error('[Library] Depot delete failed:', err);
-          depotEditStatus.textContent = 'Delete failed.';
+          depotEditStatus.textContent = tF('Delete failed.');
         })
         .finally(function () {
           depotEditDelBtn.disabled = false;
@@ -2021,7 +2021,7 @@
     if (!item) return;
     editingItemCat = cat;
     editingItemKeyword = keyword;
-    if (itemEditTitle) itemEditTitle.textContent = 'Edit ' + (cat.itemKey === 'character' ? 'Character' : 'Background');
+    if (itemEditTitle) itemEditTitle.textContent = tF(cat.itemKey === 'character' ? 'Edit Character' : 'Edit Background');
     if (itemEditKeywordInput) itemEditKeywordInput.value = keyword;
     setItemEditImage(cat.imageUrl(item));
     itemEditDescription.value = item.description || '';
@@ -2072,7 +2072,7 @@
       var reader = new FileReader();
       reader.onload = function () {
         itemEditImageBtn.disabled = true;
-        itemEditStatus.textContent = 'Uploading…';
+        itemEditStatus.textContent = tF('Uploading…');
         fetch(editingItemCat.apiBase + '/' + encodeURIComponent(editingItemKeyword) + '/image', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -2088,7 +2088,7 @@
           itemEditStatus.textContent = '';
         }).catch(function (err) {
           console.error('[Library] Item image upload failed:', err);
-          itemEditStatus.textContent = 'Image upload failed.';
+          itemEditStatus.textContent = tF('Image upload failed.');
         }).finally(function () {
           itemEditImageBtn.disabled = false;
         });
@@ -2102,11 +2102,11 @@
       if (!editingItemCat || !editingItemKeyword) return;
       var newKeyword = (itemEditKeywordInput.value || '').trim().toLowerCase();
       if (!newKeyword) {
-        itemEditStatus.textContent = 'Identifier is required.';
+        itemEditStatus.textContent = tF('Identifier is required.');
         return;
       }
       itemEditSaveBtn.disabled = true;
-      itemEditStatus.textContent = 'Saving…';
+      itemEditStatus.textContent = tF('Saving…');
       fetch(editingItemCat.apiBase + '/' + encodeURIComponent(editingItemKeyword), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -2134,7 +2134,7 @@
   if (itemEditDelBtn) {
     itemEditDelBtn.addEventListener('click', function () {
       if (!editingItemCat || !editingItemKeyword) return;
-      if (!window.confirm('Delete "' + editingItemKeyword + '"? This cannot be undone.')) return;
+      if (!window.confirm(tF('Delete "{name}"? This cannot be undone.').replace('{name}', editingItemKeyword))) return;
       itemEditDelBtn.disabled = true;
       fetch(editingItemCat.apiBase + '/' + encodeURIComponent(editingItemKeyword), { method: 'DELETE' })
         .then(function (r) {
@@ -2144,7 +2144,7 @@
         })
         .catch(function (err) {
           console.error('[Library] Item delete failed:', err);
-          itemEditStatus.textContent = 'Delete failed.';
+          itemEditStatus.textContent = tF('Delete failed.');
         })
         .finally(function () {
           itemEditDelBtn.disabled = false;
@@ -2205,15 +2205,15 @@
   function depotDetailSectionHtml(section, items) {
     var body;
     if (section.disabled) {
-      body = '<p class="lib-depot-section-empty muted-note">Coming soon.</p>';
+      body = '<p class="lib-depot-section-empty muted-note">' + tH('Coming soon.') + '</p>';
     } else if (!items.length) {
-      body = '<p class="lib-depot-section-empty muted-note">Nothing sent yet.</p>';
+      body = '<p class="lib-depot-section-empty muted-note">' + tH('Nothing sent yet.') + '</p>';
     } else {
       body = '<div class="lib-depot-section-grid">' + items.map(depotItemCardHtml).join('') + '</div>';
     }
     return (
       '<div class="lib-depot-section">' +
-        '<p class="lib-depot-section-title">' + escHtml(section.label) + '<span class="lib-depot-section-count">' + items.length + '</span></p>' +
+        '<p class="lib-depot-section-title">' + escHtml(tF(section.label)) + '<span class="lib-depot-section-count">' + items.length + '</span></p>' +
         body +
       '</div>'
     );
@@ -2249,7 +2249,7 @@
         ? '<img src="' + escHtml(item.url) + '" alt="">'
         : '';
     }
-    if (depotItemDetailCategory) depotItemDetailCategory.textContent = DEPOT_SECTION_LABEL[item.category] || item.category || '';
+    if (depotItemDetailCategory) depotItemDetailCategory.textContent = tF(DEPOT_SECTION_LABEL[item.category] || item.category || '');
     if (depotItemDetailCaption) {
       depotItemDetailCaption.hidden = !item.caption;
       depotItemDetailCaption.textContent = item.caption || '';
@@ -2302,7 +2302,7 @@
         return (
           '<div class="lib-depot-counter">' +
             '<span class="lib-depot-counter-count">' + (itemsByCategory[s.key] || []).length + '</span>' +
-            '<span class="lib-depot-counter-label">' + escHtml(s.label) + '</span>' +
+            '<span class="lib-depot-counter-label">' + escHtml(tF(s.label)) + '</span>' +
           '</div>'
         );
       }).join('');
@@ -2406,7 +2406,7 @@
       .then(function (data) {
         var imports = Array.isArray(data.imports) ? data.imports : [];
         if (!imports.length) {
-          modelSelect.innerHTML = '<option value="">No models imported</option>';
+          modelSelect.innerHTML = '<option value="">' + tH('No models imported') + '</option>';
           return;
         }
         modelSelect.innerHTML = imports.map(function (imp) {
@@ -2418,7 +2418,7 @@
       })
       .catch(function (err) {
         console.error('[Library] Failed to load models:', err);
-        modelSelect.innerHTML = '<option value="">Could not load models</option>';
+        modelSelect.innerHTML = '<option value="">' + tH('Could not load models') + '</option>';
       });
   }
 
@@ -2553,7 +2553,7 @@
           }
           return false;
         });
-        if (!filename) throw new Error('ComfyUI finished but returned no image.');
+        if (!filename) throw new Error(tF('ComfyUI finished but returned no image.'));
         return comfyUrl + '/view?filename=' + encodeURIComponent(filename) +
           '&subfolder=' + encodeURIComponent(subfolder) + '&type=' + encodeURIComponent(type);
       }
@@ -2567,7 +2567,7 @@
       }
       await new Promise(function (r) { setTimeout(r, 1000); });
     }
-    throw new Error('Generation timed out.');
+    throw new Error(tF('Generation timed out.'));
   }
 
   // The SSE progress stream only relays events the *server* is connected in
@@ -2642,8 +2642,8 @@
       body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
     });
     var submitData = await submitRes.json();
-    if (!submitRes.ok || submitData.error) throw new Error('ComfyUI queue rejected the job');
-    if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+    if (!submitRes.ok || submitData.error) throw new Error(tF('ComfyUI queue rejected the job'));
+    if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
     var rawUrl = await waitForComfyImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id,
       function (value, max) {
@@ -2653,11 +2653,11 @@
         var stepsEl = card && card.querySelector('.lib-style-card-img-wrap--generating .nsc-ring-steps');
         if (stepsEl && !/\//.test(stepsEl.textContent)) stepsEl.textContent = tr('build.starting', 'Starting…');
       });
-    if (!rawUrl) throw new Error('No image returned');
+    if (!rawUrl) throw new Error(tF('No image returned'));
 
     var u = new URL(rawUrl);
     var filename = u.searchParams.get('filename');
-    if (!filename) throw new Error('Could not read the generated filename');
+    if (!filename) throw new Error(tF('Could not read the generated filename'));
 
     var saveRes = await window.openJourneyApi.saveComfyImages({
       comfyApiUrl: prepData.comfyApiUrl,
@@ -2667,7 +2667,7 @@
       metadata: { source: 'library-style-preview', style_id: String(style.id), model_id: modelId },
     });
     var savedFilename = saveRes && Array.isArray(saveRes.savedFilenames) && saveRes.savedFilenames[0];
-    if (!savedFilename) throw new Error('Saving the generated image failed');
+    if (!savedFilename) throw new Error(tF('Saving the generated image failed'));
     var imageUrl = window.openJourneyApi.getImageUrl(savedFilename);
 
     var patchRes = await fetch('/api/styles/' + encodeURIComponent(style.id) + '/model-image', {
@@ -2703,7 +2703,7 @@
       var labelSpan = generateBtn.querySelector('.lib-toolbar-generate-btn-label');
       var missing = currentItems.filter(function (it) { return !it.has_image; });
       if (!missing.length) {
-        labelSpan.textContent = 'Nothing missing';
+        labelSpan.textContent = tF('Nothing missing');
         setTimeout(function () { labelSpan.textContent = tr('build.generate', 'Generate'); }, 1500);
         return;
       }
@@ -2733,7 +2733,7 @@
         if (done >= total) { finish(false); return; }
         var style = missing[done];
         currentStyleId = style.id;
-        labelSpan.textContent = 'Stop (' + (done + 1) + '/' + total + ')';
+        labelSpan.textContent = tF('Stop') + ' (' + (done + 1) + '/' + total + ')';
         setCardGenerating(style.id, true);
         generateStyleImageForModel(style, selectedModelId)
           .then(function (url) { setCardImage(style.id, url); })

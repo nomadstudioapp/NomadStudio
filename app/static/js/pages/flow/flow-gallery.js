@@ -254,18 +254,18 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
       var applyBtn = document.createElement('button');
       applyBtn.type = 'button';
       applyBtn.className = 'nss-card-apply-params';
-      applyBtn.title = 'Apply these parameters';
-      applyBtn.setAttribute('aria-label', 'Apply these parameters');
+      applyBtn.title = tF('Apply these parameters');
+      applyBtn.setAttribute('aria-label', tF('Apply these parameters'));
       applyBtn.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" ' +
         'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 9a8 8 0 0 0-14-3L4 8M4 15a8 8 0 0 0 14 3l2-2"/>' +
-        '</svg><span>Apply params</span>';
+        '</svg><span>' + escHtml(tF('Apply params')) + '</span>';
       applyBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         if (typeof applyParamsSnapshot === 'function') applyParamsSnapshot(card._params);
         applyBtn.classList.add('is-applied');
-        if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = '✓ Parameters applied';
+        if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = tF('✓ Parameters applied');
         setTimeout(function () { applyBtn.classList.remove('is-applied'); }, 1200);
       });
       footer.appendChild(applyBtn);
@@ -309,8 +309,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   openBtn.type = 'button';
   openBtn.id = 'nss-card-open-btn-' + idx;
   openBtn.className = 'nss-card-select-btn';
-  openBtn.setAttribute('aria-label', 'Open in new tab');
-  openBtn.title = 'Open in new tab';
+  openBtn.setAttribute('aria-label', tF('Open in new tab'));
+  openBtn.title = tF('Open in new tab');
   openBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 2h4v4M14 2l-6 6M6 14H2v-4M2 14l6-6"/></svg>';
   openBtn.addEventListener('click', function (e) { e.stopPropagation(); window.open(imgUrl, '_blank'); });
   header.appendChild(openBtn);
@@ -353,8 +353,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     heartBtn.type = 'button';
     heartBtn.id = 'nss-card-heart-btn-' + idx;
     heartBtn.className = 'nss-card-heart';
-    heartBtn.setAttribute('aria-label', 'Toggle favorite');
-    heartBtn.title = 'Favorite';
+    heartBtn.setAttribute('aria-label', tF('Toggle favorite'));
+    heartBtn.title = tF('Favorite');
     heartBtn.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7-4.35-9.5-8.5C.9 9 2.4 5.5 6 5.5c2.1 0 3.4 1.1 4.6 2.6C11.8 6.6 13.1 5.5 15.2 5.5c3.6 0 5.1 3.5 3.5 6.5C21 16.15 12 20.5 12 20.5z"/></svg>';
     heartBtn.addEventListener('click', function (e) {
@@ -371,8 +371,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     diamondBtn.type = 'button';
     diamondBtn.id = 'nss-card-diamond-btn-' + idx;
     diamondBtn.className = 'nss-card-diamond';
-    diamondBtn.setAttribute('aria-label', 'Toggle diamond');
-    diamondBtn.title = 'Diamond';
+    diamondBtn.setAttribute('aria-label', tF('Toggle diamond'));
+    diamondBtn.title = tF('Diamond');
     diamondBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 9-9 9-9-9z"/></svg>';
     diamondBtn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -389,8 +389,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   downloadBtn.type = 'button';
   downloadBtn.id = 'nss-card-download-btn-' + idx;
   downloadBtn.className = 'nss-card-img-download';
-  downloadBtn.setAttribute('aria-label', 'Download image');
-  downloadBtn.title = 'Download';
+  downloadBtn.setAttribute('aria-label', tF('Download image'));
+  downloadBtn.title = tF('Download');
   downloadBtn.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M12 3v13m0 0l-4.5-4.5M12 16l4.5-4.5"/><path d="M4 20h16"/>' +
@@ -414,8 +414,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   shareBtn.type = 'button';
   shareBtn.id = 'nss-card-share-btn-' + idx;
   shareBtn.className = 'nss-card-img-share';
-  shareBtn.setAttribute('aria-label', 'Share');
-  shareBtn.title = 'Share';
+  shareBtn.setAttribute('aria-label', tF('Share'));
+  shareBtn.title = tF('Share');
   shareBtn.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>' +
@@ -439,8 +439,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     useInputBtn.type = 'button';
     useInputBtn.id = 'nss-card-use-input-btn-' + idx;
     useInputBtn.className = 'nss-card-img-use-input';
-    useInputBtn.setAttribute('aria-label', 'Use as input');
-    useInputBtn.title = 'Use as input for this flow';
+    useInputBtn.setAttribute('aria-label', tF('Use as input'));
+    useInputBtn.title = tF('Use as input for this flow');
     useInputBtn.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a5 5 0 015 5v1"/>' +
@@ -452,7 +452,7 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
       reg.loadUrlAsImage(imgUrl);
       if (reg.wrap && reg.wrap.scrollIntoView) reg.wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
       useInputBtn.classList.add('is-applied');
-      if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = '✓ Set as new source image';
+      if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = tF('✓ Set as new source image');
       setTimeout(function () { useInputBtn.classList.remove('is-applied'); }, 1200);
     });
     imgWrap.appendChild(useInputBtn);
@@ -462,8 +462,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   overlayBtn.type = 'button';
   overlayBtn.id = 'nss-card-open-full-btn-' + idx;
   overlayBtn.className = 'nss-card-img-open';
-  overlayBtn.setAttribute('aria-label', 'View full size');
-  overlayBtn.title = 'View full size';
+  overlayBtn.setAttribute('aria-label', tF('View full size'));
+  overlayBtn.title = tF('View full size');
   overlayBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
   imgWrap.appendChild(overlayBtn);
   var resLabel = document.createElement('span');
@@ -495,8 +495,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   sendTrayBtn.type = 'button';
   sendTrayBtn.id = 'nit-send-tray-btn-' + idx;
   sendTrayBtn.className = 'nit-send-tray-btn';
-  sendTrayBtn.setAttribute('aria-label', 'Send to tray');
-  sendTrayBtn.title = 'Send to tray';
+  sendTrayBtn.setAttribute('aria-label', tF('Send to tray'));
+  sendTrayBtn.title = tF('Send to tray');
   sendTrayBtn.setAttribute('data-tray-img-url', imgUrl);
   sendTrayBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>';
   imgWrap.appendChild(sendTrayBtn);
@@ -509,8 +509,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   sendDepotBtn.type = 'button';
   sendDepotBtn.id = 'nit-send-depot-btn-' + idx;
   sendDepotBtn.className = 'nit-send-tray-btn nit-send-depot-btn nsc-options-trigger';
-  sendDepotBtn.setAttribute('aria-label', 'Send to Depot');
-  sendDepotBtn.title = 'Send to Depot';
+  sendDepotBtn.setAttribute('aria-label', tF('Send to Depot'));
+  sendDepotBtn.title = tF('Send to Depot');
   sendDepotBtn.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>' +
@@ -581,8 +581,8 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   deleteImgBtn.type = 'button';
   deleteImgBtn.id = 'nit-delete-img-btn-' + idx;
   deleteImgBtn.className = 'nit-send-tray-btn nit-delete-img-btn';
-  deleteImgBtn.setAttribute('aria-label', 'Delete image');
-  deleteImgBtn.title = 'Delete image';
+  deleteImgBtn.setAttribute('aria-label', tF('Delete image'));
+  deleteImgBtn.title = tF('Delete image');
   deleteImgBtn.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<polyline points="3,6 21,6"/>' +
@@ -595,7 +595,7 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     // relying on bubble-order between sibling/parent listeners.
     e.stopPropagation();
     e.preventDefault();
-    if (window.confirm('Delete this image from the session?')) {
+    if (window.confirm(tF('Delete this image from the session?'))) {
       _removeSessionImageForCard(card);
       card.remove();
     }
@@ -627,25 +627,25 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
 function _openSendToDepotPanel(imgUrl, caption) {
   fetch('/api/depots/active').then(function (r) { return r.json(); }).then(function (data) {
     var depot = data && data.depot;
-    openOptionsPanel('Send to Depot', function (body) {
+    openOptionsPanel(tF('Send to Depot'), function (body) {
       var info = document.createElement('p');
       info.className = 'ncf-depot-send-info';
       body.appendChild(info);
 
       if (!depot) {
-        info.textContent = 'No active Depot. Open a Depot from Build and hit Activate first.';
+        info.textContent = tF('No active Depot. Open a Depot from Build and hit Activate first.');
         return;
       }
-      info.textContent = 'Sending to "' + depot.name + '":';
+      info.textContent = tF('Sending to "{name}":').replace('{name}', depot.name);
 
       var optionsWrap = document.createElement('div');
       optionsWrap.className = 'ncf-depot-send-options';
       body.appendChild(optionsWrap);
 
       [
-        { key: 'background', label: 'Background' },
-        { key: 'character', label: 'Character' },
-        { key: 'asset', label: 'Asset' },
+        { key: 'background', label: tF('Background') },
+        { key: 'character', label: tF('Character') },
+        { key: 'asset', label: tF('Asset') },
       ].forEach(function (opt) {
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -661,11 +661,11 @@ function _openSendToDepotPanel(imgUrl, caption) {
             return r.json().then(function (d) { return { ok: r.ok, data: d }; });
           }).then(function (res) {
             if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed');
-            info.textContent = 'Sent to "' + depot.name + '" as ' + opt.label + '.';
+            info.textContent = tF('Sent to "{name}" as {kind}.').replace('{name}', depot.name).replace('{kind}', opt.label);
             setTimeout(closeOptionsPanel, 900);
           }).catch(function (err) {
             console.error('[FlowGallery] Send to depot failed:', err);
-            info.textContent = 'Failed to send: ' + (err && err.message ? err.message : err);
+            info.textContent = tF('Failed to send:') + ' ' + (err && err.message ? err.message : err);
             optionsWrap.querySelectorAll('.ncf-depot-category-btn').forEach(function (b) { b.disabled = false; });
           });
         });
@@ -1046,7 +1046,7 @@ function _persistStoryScene(fields) {
 // A refresh icon re-fetches, since scenes get appended while the panel is
 // still open (the user is generating the next scene).
 function _openStoryJsonPanel() {
-  openOptionsPanel('Story JSON', function (body) {
+  openOptionsPanel(tF('Story JSON'), function (body) {
     var pre = document.createElement('pre');
     pre.className = 'ncf-story-json-pre';
     body.appendChild(pre);
@@ -1055,13 +1055,13 @@ function _openStoryJsonPanel() {
       var storyId = sessionState.story_project_id;
       if (!storyId) {
         pre.remove();
-        body.innerHTML = '<p class="ncf-story-json-empty">No scene has finished generating yet — the story JSON is created after the first image.</p>';
+        body.innerHTML = '<p class="ncf-story-json-empty">' + escHtml(tF('No scene has finished generating yet — the story JSON is created after the first image.')) + '</p>';
         return;
       }
       fetch('/api/stories/' + storyId).then(function (r) { return r.json(); }).then(function (data) {
         pre.textContent = JSON.stringify(data, null, 2);
       }).catch(function (err) {
-        pre.textContent = 'Failed to load story JSON: ' + (err && err.message || err);
+        pre.textContent = tF('Failed to load story JSON:') + ' ' + (err && err.message || err);
       });
     }
     render();
@@ -1069,7 +1069,7 @@ function _openStoryJsonPanel() {
     setOptionsPanelAction(
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
       render,
-      { icon: true, label: 'Refresh' }
+      { icon: true, label: tF('Refresh') }
     );
   });
 }
@@ -1177,7 +1177,7 @@ function _syncChatSceneSelect() {
   sessionImages.forEach(function (_img, i) {
     var opt = document.createElement('option');
     opt.value = String(i);
-    opt.textContent = 'Scene ' + (i + 1) + (i === sessionImages.length - 1 ? ' (latest)' : '');
+    opt.textContent = tF(i === sessionImages.length - 1 ? 'Scene {n} (latest)' : 'Scene {n}').replace('{n}', i + 1);
     sceneSelect.appendChild(opt);
   });
 
@@ -1275,16 +1275,16 @@ function _showChatBar(actionStepDef) {
   // _runRefine so it updates that card in place instead of creating its own
   // (much) later, once prepare/submit have both round-tripped.
   function _chatRunRefine(refineFlowId, promptText, card) {
-    if (!sessionImages.length) return Promise.reject(new Error('No image to edit yet'));
+    if (!sessionImages.length) return Promise.reject(new Error(tF('No image to edit yet')));
     var sceneSelect = document.getElementById('ncf-chat-scene-select');
     var sceneIdx = sceneSelect && sceneSelect.value !== '' ? parseInt(sceneSelect.value, 10) : NaN;
     if (isNaN(sceneIdx) || sceneIdx < 0 || sceneIdx >= sessionImages.length || !sessionImages[sceneIdx]) {
       sceneIdx = _lastValidSessionImageIdx();
     }
-    if (sceneIdx < 0) return Promise.reject(new Error('No image to edit yet'));
+    if (sceneIdx < 0) return Promise.reject(new Error(tF('No image to edit yet')));
     var lastUrl = sessionImages[sceneIdx].url;
 
-    if (chatHint) chatHint.textContent = 'Loading image…';
+    if (chatHint) chatHint.textContent = tF('Loading image…');
     return _toDataUrl(lastUrl).then(function (imageDataUrl) {
       // Fetch the full flow definition to extract workflow_file from the workflow_params step
       return fetch('/api/flows/' + encodeURIComponent(refineFlowId)).then(function (r) { return r.json(); }).then(function (data) {
@@ -1307,7 +1307,7 @@ function _showChatBar(actionStepDef) {
 
         if (!workflowFile) return Promise.reject(new Error('No workflow_file found for ' + refineFlowId));
 
-        if (chatHint) chatHint.textContent = 'Editing image…';
+        if (chatHint) chatHint.textContent = tF('Editing image…');
         var synthStepDef = { id: 'chat_refine', type: 'action', calls: 'generation.submit_refine' };
         var snapshot = {
           workflowFile:   workflowFile,
@@ -1371,7 +1371,7 @@ function _showChatBar(actionStepDef) {
       _markCardGenerating(item.card);
     }
     if (chatHint) {
-      chatHint.textContent = _chatQueue.length ? 'Editing prompt… (' + _chatQueue.length + ' queued)' : 'Editing prompt…';
+      chatHint.textContent = _chatQueue.length ? tF('Editing prompt… ({n} queued)').replace('{n}', _chatQueue.length) : tF('Editing prompt…');
     }
 
     _runChatItem(item).then(function () {
@@ -1413,17 +1413,17 @@ function _showChatBar(actionStepDef) {
           var ep = (data.editedPrompt || '').trim();
           // Fallback: if model just echoed back the instruction, combine manually
           var refined = (ep && ep.toLowerCase() !== text.toLowerCase()) ? ep : ((basePromptEP ? basePromptEP + ', ' : '') + text);
-          if (chatHint) chatHint.textContent = 'Editing image…';
+          if (chatHint) chatHint.textContent = tF('Editing image…');
           return _chatRunRefine(selectedWf, refined, chatCard);
         });
       }
       // Pass the chat text directly as the prompt to the refine workflow
-      if (chatHint) chatHint.textContent = 'Editing image…';
+      if (chatHint) chatHint.textContent = tF('Editing image…');
       return _chatRunRefine(selectedWf, text, chatCard);
     }
 
     // No edit workflow — call edit-prompt LLM then fresh generate
-    if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = 'LLM processing…';
+    if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = tF('LLM processing…');
 
     var scenePromptTa = document.getElementById('ncf-input-scene_prompt');
     var worldTa = document.getElementById('ncf-input-world');
@@ -1436,8 +1436,8 @@ function _showChatBar(actionStepDef) {
       || '';
 
     if (!currentPrompt) {
-      if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = '✗ No base prompt found';
-      return Promise.reject(new Error('No base prompt found'));
+      if (typeof generateStatus !== 'undefined' && generateStatus) generateStatus.textContent = tF('✗ No base prompt found');
+      return Promise.reject(new Error(tF('No base prompt found')));
     }
 
     return fetch('/api/models/chat/edit-prompt', {
@@ -1473,9 +1473,9 @@ function _showChatBar(actionStepDef) {
 
       // Find the generate action step to pass into runGenerate directly
       var actionStep = allSteps && allSteps.find(function (s) { return s.type === 'action'; });
-      if (!actionStep) throw new Error('Generate step not found');
+      if (!actionStep) throw new Error(tF('Generate step not found'));
 
-      if (chatHint) chatHint.textContent = 'Generating…';
+      if (chatHint) chatHint.textContent = tF('Generating…');
       // Ensure button is enabled for updateGenerateBtn called inside runGenerate
       if (generateBtn && generateBtn.disabled) generateBtn.removeAttribute('disabled');
 
@@ -1658,7 +1658,7 @@ function _showStoryBar(actionStepDef) {
     var scenePromptTa = document.getElementById('ncf-input-scene_prompt');
 
     if (!actionStep) {
-      if (generateStatus) generateStatus.textContent = '✗ Generate step not found';
+      if (generateStatus) generateStatus.textContent = tF('✗ Generate step not found');
       return;
     }
 
@@ -1687,18 +1687,18 @@ function _showStoryBar(actionStepDef) {
         if (visionOn) {
           _setSendBtnState('vision');
           if (typeof _setBusyStatus === 'function') {
-            _setBusyStatus(generateStatus, 'Looking at the last scene…' + sceneLabel);
+            _setBusyStatus(generateStatus, tF('Looking at the last scene…') + sceneLabel);
           } else if (generateStatus) {
-            generateStatus.textContent = 'Looking at the last scene…' + sceneLabel;
+            generateStatus.textContent = tF('Looking at the last scene…') + sceneLabel;
           }
           visionContext = await _visionDescribeLastImage();
         }
 
         _setSendBtnState('composing');
         if (typeof _setBusyStatus === 'function') {
-          _setBusyStatus(generateStatus, 'Writing next scene…' + sceneLabel);
+          _setBusyStatus(generateStatus, tF('Writing next scene…') + sceneLabel);
         } else if (generateStatus) {
-          generateStatus.textContent = 'Writing next scene…' + sceneLabel;
+          generateStatus.textContent = tF('Writing next scene…') + sceneLabel;
         }
 
         var worldCtx = sessionState.world_context
@@ -1747,7 +1747,7 @@ function _showStoryBar(actionStepDef) {
         var data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'LLM error');
         var sceneText = data.scene || (Array.isArray(data.scenes) && data.scenes[0]) || '';
-        if (!sceneText) throw new Error('No scene returned');
+        if (!sceneText) throw new Error(tF('No scene returned'));
         var narrativeSummary = data.narrativeSummary || '';
         // Without this, every call in this loop lacked characterAnchor, so
         // the backend re-triggered "derive a NEW anchor" mode (scene_count===1
@@ -1768,9 +1768,9 @@ function _showStoryBar(actionStepDef) {
         setVal('scene_prompt', 'prompt_text', sceneText);
 
         if (typeof _setBusyStatus === 'function') {
-          _setBusyStatus(generateStatus, 'Generating scene…' + sceneLabel);
+          _setBusyStatus(generateStatus, tF('Generating scene…') + sceneLabel);
         } else if (generateStatus) {
-          generateStatus.textContent = 'Generating scene…' + sceneLabel;
+          generateStatus.textContent = tF('Generating scene…') + sceneLabel;
         }
 
         await runGenerate(genStepDef);
@@ -1926,7 +1926,7 @@ function _refineFlowRowHtml(f) {
 }
 
 function _openRefinePickerPanel() {
-  openOptionsPanel('Choose a Refine Flow', function (body) {
+  openOptionsPanel(tF('Choose a Refine Flow'), function (body) {
     // "Create Session" is only offered when this tab isn't already tracking
     // a pending session (Session.getPending()) — a flow mounted inside an
     // existing Session (via "Add Flow"/reopening a step) already appends its
@@ -1947,11 +1947,11 @@ function _openRefinePickerPanel() {
       : '';
     body.innerHTML =
       '<div class="ncf-style-picker-search-row">' +
-        '<input type="text" class="nsc-input ncf-style-picker-search" placeholder="Search refine flows…" aria-label="Search refine flows">' +
+        '<input type="text" class="nsc-input ncf-style-picker-search" placeholder="' + escHtml(tF('Search refine flows…')) + '" aria-label="' + escHtml(tF('Search refine flows')) + '">' +
       '</div>' +
       sessionRowHtml +
       '<div class="ncf-style-picker-layout">' +
-        '<nav class="ncf-style-picker-tree ncf-style-picker-tree--narrow" aria-label="Refine categories"></nav>' +
+        '<nav class="ncf-style-picker-tree ncf-style-picker-tree--narrow" aria-label="' + escHtml(tF('Refine categories')) + '"></nav>' +
         '<div class="ncf-style-picker-grid ncf-style-picker-grid--list"></div>' +
       '</div>';
     var searchInput = body.querySelector('.ncf-style-picker-search');
@@ -1977,7 +1977,7 @@ function _openRefinePickerPanel() {
     var query = '';
 
     function renderTree() {
-      var items = '<button type="button" class="lib-style-cat-tree-item' + (selectedGroup === '' ? ' is-active' : '') + '" data-group="">All</button>';
+      var items = '<button type="button" class="lib-style-cat-tree-item' + (selectedGroup === '' ? ' is-active' : '') + '" data-group="">' + escHtml(tF('All')) + '</button>';
       items += groups.map(function (g) {
         return '<button type="button" class="lib-style-cat-tree-item' + (selectedGroup === g.id ? ' is-active' : '') + '" data-group="' + escHtml(g.id) + '">' + escHtml(g.label) + '</button>';
       }).join('');
@@ -1996,7 +1996,7 @@ function _openRefinePickerPanel() {
       });
       if (!filtered.length) {
         gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">' +
-          (allFlows.length ? 'No refine flows match.' : 'No refine flows available.') +
+          escHtml(tF(allFlows.length ? 'No refine flows match.' : 'No refine flows available.')) +
           '</p>';
         return;
       }
@@ -2046,7 +2046,7 @@ function _openRefinePickerPanel() {
       afterLoad(_refineFlowsCache);
       return;
     }
-    gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">Loading…</p>';
+    gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">' + escHtml(tF('Loading…')) + '</p>';
     fetch('/api/flows?category=refine&status=active&available=true')
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -2054,7 +2054,7 @@ function _openRefinePickerPanel() {
         afterLoad(_refineFlowsCache);
       })
       .catch(function () {
-        gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">Could not load refine flows.</p>';
+        gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">' + escHtml(tF('Could not load refine flows.')) + '</p>';
       });
   // 'xl' (720px) was sized for the old card grid; a plain scan-down list
   // doesn't need that width — 'wide' (420px, still room for the category
@@ -2182,17 +2182,17 @@ function _ensureShareModal() {
   backdrop.innerHTML =
     '<div class="nse-modal nss-share-modal">' +
       '<div class="nse-modal-header">' +
-        '<span class="nse-modal-title">Share</span>' +
-        '<button type="button" class="nse-modal-close" id="nss-share-close" aria-label="Close">' +
+        '<span class="nse-modal-title">' + escHtml(tF('Share')) + '</span>' +
+        '<button type="button" class="nse-modal-close" id="nss-share-close" aria-label="' + escHtml(tF('Close')) + '">' +
           '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
         '</button>' +
       '</div>' +
       '<div class="nse-modal-body">' +
         '<div class="nss-share-tabs">' +
-          '<button type="button" class="nss-share-tab is-active" id="nss-share-tab-img" aria-label="Share image">' +
+          '<button type="button" class="nss-share-tab is-active" id="nss-share-tab-img" aria-label="' + escHtml(tF('Share image')) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg>' +
           '</button>' +
-          '<button type="button" class="nss-share-tab" id="nss-share-tab-vid" aria-label="Share video">' +
+          '<button type="button" class="nss-share-tab" id="nss-share-tab-vid" aria-label="' + escHtml(tF('Share video')) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 9l5-3v12l-5-3"/></svg>' +
           '</button>' +
         '</div>' +
@@ -2210,12 +2210,12 @@ function _ensureShareModal() {
             '<canvas id="nss-share-canvas" class="nss-share-canvas-hidden" width="600" height="600"></canvas>' +
             '<div id="nss-share-vid-placeholder" class="nss-share-vid-placeholder">' +
               '<svg class="nss-share-spin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="28 56" stroke-linecap="round"/></svg>' +
-              '<span id="nss-share-vid-status">Recording…</span>' +
+              '<span id="nss-share-vid-status">' + escHtml(tF('Recording…')) + '</span>' +
             '</div>' +
             '<video id="nss-share-video" controls loop hidden></video>' +
           '</div>' +
-          '<button type="button" class="nse-modal-secondary nss-share-rerecord" id="nss-share-record" aria-label="Re-record video">' +
-            '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg><span>Re-record</span>' +
+          '<button type="button" class="nse-modal-secondary nss-share-rerecord" id="nss-share-record" aria-label="' + escHtml(tF('Re-record video')) + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg><span>' + escHtml(tF('Re-record')) + '</span>' +
           '</button>' +
         '</div>' +
         // Quick-share row — X and WhatsApp have real web "compose" intents
@@ -2225,25 +2225,25 @@ function _ensureShareModal() {
         // intent at all; those two just copy the caption and open the
         // upload page so the already-downloaded file can be dropped in.
         '<div class="nss-share-quick-row">' +
-          '<button type="button" class="nss-share-quick-btn" data-platform="x" aria-label="Share to X" title="Share to X">' +
+          '<button type="button" class="nss-share-quick-btn" data-platform="x" aria-label="' + escHtml(tF('Share to X')) + '" title="' + escHtml(tF('Share to X')) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M4 3l7.2 9.4L4.3 21h2.3l6-6.9L17.4 21H20l-7.6-9.9L19.4 3h-2.3l-5.6 6.4L8 3H4z"/></svg>' +
           '</button>' +
-          '<button type="button" class="nss-share-quick-btn" data-platform="whatsapp" aria-label="Share to WhatsApp" title="Share to WhatsApp">' +
+          '<button type="button" class="nss-share-quick-btn" data-platform="whatsapp" aria-label="' + escHtml(tF('Share to WhatsApp')) + '" title="' + escHtml(tF('Share to WhatsApp')) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 10-14.6 4.6L4 21l4.6-1.2A8 8 0 0020 12z"/><path d="M9 10c0 3 2 5 5 5"/><circle cx="9" cy="10" r=".6" fill="currentColor"/><circle cx="12.5" cy="14.5" r=".6" fill="currentColor"/></svg>' +
           '</button>' +
-          '<button type="button" class="nss-share-quick-btn" data-platform="instagram" aria-label="Share to Instagram" title="Share to Instagram">' +
+          '<button type="button" class="nss-share-quick-btn" data-platform="instagram" aria-label="' + escHtml(tF('Share to Instagram')) + '" title="' + escHtml(tF('Share to Instagram')) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>' +
           '</button>' +
-          '<button type="button" class="nss-share-quick-btn" data-platform="tiktok" aria-label="Share to TikTok" title="Share to TikTok">' +
+          '<button type="button" class="nss-share-quick-btn" data-platform="tiktok" aria-label="' + escHtml(tF('Share to TikTok')) + '" title="' + escHtml(tF('Share to TikTok')) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M14 3v10.5a2.5 2.5 0 11-2-2.45V9a4.5 4.5 0 104.5 4.5V9.8a6 6 0 003.5 1.2V8.9a4 4 0 01-2.9-1.6A4 4 0 0116.2 5H14z"/></svg>' +
           '</button>' +
         '</div>' +
       '</div>' +
       '<div class="nse-modal-footer">' +
-        '<button type="button" class="nse-modal-secondary" id="nss-share-download" aria-label="Download">' +
+        '<button type="button" class="nse-modal-secondary" id="nss-share-download" aria-label="' + escHtml(tF('Download')) + '">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0l-4.5-4.5M12 16l4.5-4.5"/><path d="M4 20h16"/></svg>' +
         '</button>' +
-        '<button type="button" class="nse-modal-apply" id="nss-share-native" aria-label="Share">' +
+        '<button type="button" class="nse-modal-apply" id="nss-share-native" aria-label="' + escHtml(tF('Share')) + '">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>' +
         '</button>' +
       '</div>' +
@@ -2428,7 +2428,7 @@ function _recordFadeVideo() {
     video.hidden = false;
     placeholder.hidden = true;
     recordBtn.classList.remove('is-recording');
-    _setShareVidStatus(_shareState.videoExt === 'mp4' ? 'Ready ✓ (mp4)' : 'Ready ✓ (webm — your browser can\'t record mp4 directly; X/Twitter won\'t accept this file)');
+    _setShareVidStatus(_shareState.videoExt === 'mp4' ? tF('Ready ✓ (mp4)') : tF('Ready ✓ (webm — your browser can\'t record mp4 directly; X/Twitter won\'t accept this file)'));
     if (_activeShareTabIsVideo()) _setShareActionsEnabled(true);
   };
   recorder.start();
@@ -2489,7 +2489,7 @@ async function _nativeShareAsset() {
 //                    the caption to the clipboard and land on the upload
 //                    page so it's paste + drop the file, not retype it.
 function _currentShareCaption() {
-  var base = _shareState.promptStr ? _shareState.promptStr + ' — made with Nomad Studio 🦝' : 'Made with Nomad Studio 🦝';
+  var base = _shareState.promptStr ? _shareState.promptStr + ' — ' + tF('made with Nomad Studio') + ' 🦝' : tF('Made with Nomad Studio') + ' 🦝';
   return base;
 }
 

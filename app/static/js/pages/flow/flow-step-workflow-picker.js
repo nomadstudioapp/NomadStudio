@@ -9,7 +9,7 @@ function renderWorkflowMultiList() {
   if (!_wpMultiListEl) return;
   _wpMultiListEl.innerHTML = '';
   if (!allImportsList.length) {
-    _wpMultiListEl.innerHTML = '<p class="nse-model-empty">No workflows available.</p>';
+    _wpMultiListEl.innerHTML = '<p class="nse-model-empty">' + escHtml(tF('No workflows available.')) + '</p>';
     return;
   }
   var ids = getGlobalWorkflows();
@@ -57,7 +57,7 @@ function renderWorkflowPicker(stepDef, el) {
   var select = document.createElement('select');
   select.className = 'nsc-select';
   select.id = 'ncf-workflow-select';
-  select.innerHTML = '<option value="">Loading workflows…</option>';
+  select.innerHTML = '<option value="">' + escHtml(tF('Loading workflows…')) + '</option>';
   wrapper.appendChild(select);
   wrapper.insertAdjacentHTML('beforeend',
     '<svg class="nsc-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
@@ -71,7 +71,7 @@ function renderWorkflowPicker(stepDef, el) {
   multiWrap.className = 'nse-model-list ncf-workflow-multi-list';
   multiWrap.setAttribute('role', 'listbox');
   multiWrap.setAttribute('aria-multiselectable', 'true');
-  multiWrap.setAttribute('aria-label', 'Available workflows');
+  multiWrap.setAttribute('aria-label', tF('Available workflows'));
   el.appendChild(multiWrap);
   _wpMultiListEl = multiWrap;
 

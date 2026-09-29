@@ -40,7 +40,7 @@ async function _saveModelSettings(model) {
     }
   } catch (err) {
     console.error('[FlowEngine] saveModelSettings:', err);
-    showErrorToast('Could not save model settings');
+    showErrorToast(tF('Could not save model settings'));
   }
 }
 
@@ -58,7 +58,7 @@ async function _toggleModelFavorite(m) {
     _pickerSettings = data.settings || _pickerSettings;
   } catch (err) {
     console.error('[FlowEngine] toggleModelFavorite:', err);
-    showErrorToast('Could not update favorites');
+    showErrorToast(tF('Could not update favorites'));
   }
 }
 
@@ -97,7 +97,7 @@ async function openModelOptionsPanel() {
     _pickerSettings = data.settings || _pickerSettings;
   } catch (e) { /* fall through with whatever _pickerSettings already had */ }
 
-  openOptionsPanel('Model', function (body) {
+  openOptionsPanel(tF('Model'), function (body) {
     // This panel used to carry a "Context size" section in its advanced block —
     // 4K/8K/16K/32K presets plus a free-form number. It is gone along with the
     // Assist panel's slider: the window is derived from the text being sent
@@ -134,20 +134,20 @@ async function openModelOptionsPanel() {
           _pickerSettings = res.data.settings || _pickerSettings;
           models = _pickerSettings.lmStudioModels || [];
           renderModelList();
-          if (typeof showToast === 'function') showToast('Model list refreshed (' + models.length + ')', 'info');
+          if (typeof showToast === 'function') showToast(tF('Model list refreshed ({n})').replace('{n}', models.length), 'info');
         })
         .catch(function (err) {
-          if (typeof showErrorToast === 'function') showErrorToast(err.message || 'Could not refresh models');
+          if (typeof showErrorToast === 'function') showErrorToast(err.message || tF('Could not refresh models'));
         })
         .finally(function () {
           var el = document.getElementById('ncf-options-panel-action');
           if (el) el.classList.remove('is-spinning');
         });
-    }, { icon: true, label: 'Refresh model list from LM Studio' });
+    }, { icon: true, label: tF('Refresh model list from LM Studio') });
 
     function renderModelList() {
       if (!models.length) {
-        listEl.innerHTML = '<p class="nse-model-empty">No models found — is LM Studio running?</p>';
+        listEl.innerHTML = '<p class="nse-model-empty">' + escHtml(tF('No models found — is LM Studio running?')) + '</p>';
         return;
       }
       _withVram(_loadModelScores()).then(function (scoreData) {
@@ -174,7 +174,7 @@ async function openModelOptionsPanel() {
             var star = document.createElement('span');
             star.className = 'ncf-model-fav-star';
             star.textContent = '★';
-            star.setAttribute('aria-label', 'Favorite');
+            star.setAttribute('aria-label', tF('Favorite'));
             btn.appendChild(star);
           }
           _appendModelBadges(btn, m, scoreData);
@@ -190,7 +190,7 @@ async function openModelOptionsPanel() {
           btn.addEventListener('contextmenu', function (e) {
             e.preventDefault();
             var nowFav = (_pickerSettings.lmStudioFavoriteModels || []).indexOf(m) >= 0;
-            _showModelContextMenu(e.clientX, e.clientY, nowFav ? 'Remove from favorites' : 'Add to favorite', function () {
+            _showModelContextMenu(e.clientX, e.clientY, tF(nowFav ? 'Remove from favorites' : 'Add to favorites'), function () {
               _toggleModelFavorite(m).then(renderModelList);
             });
           });

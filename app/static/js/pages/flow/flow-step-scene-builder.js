@@ -5,13 +5,13 @@ function renderSceneBuilder(stepDef, el) {
   var CHAR_COLORS = ['#6aa9ff','#4ade80','#fbbf24','#f87171','#c084fc',
                      '#34d399','#fb923c','#a78bfa','#38bdf8','#f472b6'];
   var ORIENT_PRESETS = [
-    { id: 'frontal',   label: 'Frontal',      desc: 'facing the camera directly, frontal pose' },
+    { id: 'frontal',   get label() { return tF('Frontal'); },      desc: 'facing the camera directly, frontal pose' },
     { id: 'q3_left',   label: '3/4 L',        desc: 'three-quarter view from the left' },
     { id: 'q3_right',  label: '3/4 R',        desc: 'three-quarter view from the right' },
-    { id: 'prof_left', label: 'Profile L',    desc: 'side profile facing left' },
-    { id: 'prof_right',label: 'Profile R',    desc: 'side profile facing right' },
-    { id: 'back',      label: 'Back',         desc: 'seen from behind, back to camera' },
-    { id: 'free',      label: 'Custom…',      desc: '' },
+    { id: 'prof_left', get label() { return tF('Profile L'); },    desc: 'side profile facing left' },
+    { id: 'prof_right', get label() { return tF('Profile R'); },    desc: 'side profile facing right' },
+    { id: 'back',      get label() { return tF('Back'); },         desc: 'seen from behind, back to camera' },
+    { id: 'free',      get label() { return tF('Custom…'); },      desc: '' },
   ];
 
   // ── local state ──────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ function renderSceneBuilder(stepDef, el) {
   if (sceneStepLabel && typeof makeVisionModelBtn === 'function') {
     var sceneVisionBtn = makeVisionModelBtn();
     sceneVisionBtn.className = 'nsc-history-btn nsc-options-trigger ncf-vision-model-btn';
-    sceneVisionBtn.setAttribute('aria-label', 'Change vision model');
+    sceneVisionBtn.setAttribute('aria-label', tF('Change vision model'));
     var sceneVisionName = sceneVisionBtn.querySelector('.ncf-model-icon-name');
     if (sceneVisionName) sceneVisionName.remove();
     var sceneVisionIcon = sceneVisionBtn.querySelector('svg');
@@ -234,7 +234,7 @@ function renderSceneBuilder(stepDef, el) {
     if (_debounce) clearTimeout(_debounce);
     var mechanicalJson = buildJson();
     buildBtn.disabled = true;
-    buildHint.textContent = 'Composing…';
+    buildHint.textContent = tF('Composing…');
     try {
       var res = await fetch('/api/models/chat/studio-ideogram-refine', {
         method: 'POST',
@@ -248,15 +248,15 @@ function renderSceneBuilder(stepDef, el) {
       var data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || 'Compose failed');
       pushJsonToComposer(data.ideogramJson);
-      buildHint.textContent = '✓ Sent to Composition';
+      buildHint.textContent = tF('✓ Sent to Composition');
     } catch (e) {
       // Fallback: LLM unavailable (model unloaded, etc.) — still push the
       // mechanical JSON rather than leaving the button do nothing.
       pushJsonToComposer(mechanicalJson);
-      buildHint.textContent = '⚠ Composed without merge (' + e.message + ')';
+      buildHint.textContent = tF('⚠ Composed without merge') + ' (' + e.message + ')';
     } finally {
       buildBtn.disabled = false;
-      setTimeout(function () { buildHint.textContent = 'Pushes to the Composition step below'; }, 3000);
+      setTimeout(function () { buildHint.textContent = tF('Pushes to the Composition step below'); }, 3000);
     }
   }
 
@@ -416,7 +416,7 @@ function renderSceneBuilder(stepDef, el) {
   });
 
   var bgRow = makeTriggerRow('Background Image', 'Background image options', function () {
-    openOptionsPanel('Background Image', function (body) { body.appendChild(sceneDrop); });
+    openOptionsPanel(tF('Background Image'), function (body) { body.appendChild(sceneDrop); });
   });
   sceneSection.appendChild(bgRow.row);
 
@@ -425,7 +425,7 @@ function renderSceneBuilder(stepDef, el) {
   // concept and the background. Leave blank to auto-generate from
   // character labels alone.
   var hlTa = mkEl('textarea', 'nsb-textarea');
-  hlTa.rows = 4; hlTa.placeholder = 'Describe scene and background…';
+  hlTa.rows = 4; hlTa.placeholder = tF('Describe scene and background…');
   hlTa.addEventListener('input', function () {
     sceneData.highlevel = hlTa.value;
     hlRow.statusEl.textContent = previewText(hlTa.value, 40);
@@ -433,7 +433,7 @@ function renderSceneBuilder(stepDef, el) {
   });
 
   var hlRow = makeTriggerRow('Scene Idea', 'Scene idea options', function () {
-    openOptionsPanel('Scene Idea', function (body) { body.appendChild(hlTa); });
+    openOptionsPanel(tF('Scene Idea'), function (body) { body.appendChild(hlTa); });
   });
   sceneSection.appendChild(hlRow.row);
 
@@ -457,7 +457,7 @@ function renderSceneBuilder(stepDef, el) {
   poseToggle.className = 'create-basic-similarity-toggle';
   poseToggle.setAttribute('aria-pressed', 'true');
   poseToggle.innerHTML =
-    '<span class="create-basic-similarity-label">Include pose</span>' +
+    '<span class="create-basic-similarity-label">' + escHtml(tF('Include pose')) + '</span>' +
     '<div class="create-basic-switch" aria-hidden="true"><div class="create-basic-switch-thumb"></div></div>';
   poseToggle.addEventListener('click', function () {
     includeCharacterPose = !includeCharacterPose;
@@ -472,7 +472,7 @@ function renderSceneBuilder(stepDef, el) {
   });
 
   var charsRow = makeTriggerRow('Characters', 'Characters options', function () {
-    openOptionsPanel('Characters', function (body) {
+    openOptionsPanel(tF('Characters'), function (body) {
       body.appendChild(poseToggle);
       body.appendChild(addBtn);
       body.appendChild(charList);
@@ -502,7 +502,7 @@ function renderSceneBuilder(stepDef, el) {
     var colorIdx = characters.length % CHAR_COLORS.length;
     var total = characters.length + 1;
     var c = {
-      id: id, label: 'Character ' + charIdSeq, color: CHAR_COLORS[colorIdx],
+      id: id, label: tF('Character {n}').replace('{n}', charIdSeq), color: CHAR_COLORS[colorIdx],
       orientId: '', orientFree: '', desc: '', manualPose: '', imageDataUrl: null, imageDesc: '',
       bbox: defaultBboxForIndex(characters.length, total)
     };
@@ -538,14 +538,14 @@ function renderSceneBuilder(stepDef, el) {
 
     var nameInput = document.createElement('input');
     nameInput.type = 'text'; nameInput.className = 'nsb-char-name-input';
-    nameInput.value = c.label; nameInput.placeholder = 'Character name';
+    nameInput.value = c.label; nameInput.placeholder = tF('Character name');
     nameInput.addEventListener('input', function () {
       c.label = nameInput.value;
       schedulePush();
     });
 
     var rmBtn = mkEl('button', 'nsb-char-rm', '✕');
-    rmBtn.type = 'button'; rmBtn.title = 'Remove character';
+    rmBtn.type = 'button'; rmBtn.title = tF('Remove character');
 
     cardHdr.appendChild(dot);
     cardHdr.appendChild(nameInput);
@@ -596,7 +596,7 @@ function renderSceneBuilder(stepDef, el) {
     freeRow.style.display = 'none';
     var freeIn = document.createElement('input');
     freeIn.type = 'text'; freeIn.className = 'nsb-free-input';
-    freeIn.placeholder = 'e.g. kneeling, looking up at camera';
+    freeIn.placeholder = tF('e.g. kneeling, looking up at camera');
     freeIn.addEventListener('input', function () { c.orientFree = freeIn.value; schedulePush(); });
     freeRow.appendChild(freeIn);
     body.appendChild(freeRow);
@@ -610,7 +610,7 @@ function renderSceneBuilder(stepDef, el) {
     var poseLabel = mkEl('p', 'nsb-field-label', 'Pose');
     poseRow.appendChild(poseLabel);
     var poseTa = mkEl('textarea', 'nsb-textarea');
-    poseTa.rows = 2; poseTa.placeholder = 'e.g. cross-legged, hands resting near her hips…';
+    poseTa.rows = 2; poseTa.placeholder = tF('e.g. cross-legged, hands resting near her hips…');
     poseTa.addEventListener('input', function () { c.manualPose = poseTa.value; schedulePush(); });
     poseRow.appendChild(poseTa);
     body.appendChild(poseRow);
@@ -619,7 +619,7 @@ function renderSceneBuilder(stepDef, el) {
     var descLabel = mkEl('p', 'nsb-field-label', 'Description');
     body.appendChild(descLabel);
     var descTa = mkEl('textarea', 'nsb-textarea');
-    descTa.rows = 2; descTa.placeholder = 'Appearance, clothing…';
+    descTa.rows = 2; descTa.placeholder = tF('Appearance, clothing…');
     descTa.addEventListener('input', function () { c.desc = descTa.value; schedulePush(); });
     body.appendChild(descTa);
 

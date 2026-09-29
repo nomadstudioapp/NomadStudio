@@ -128,9 +128,9 @@
     sidebarQueueCountEl.textContent = String(total);
 
     if (!total) {
-      sidebarQueueProgressEl.textContent = 'Idle';
+      sidebarQueueProgressEl.textContent = tF('Idle');
       sidebarQueueProgressBarEl.style.width = '0%';
-      sidebarQueueListEl.innerHTML = '<p class="sidebar-queue-empty">No pending tasks.</p>';
+      sidebarQueueListEl.innerHTML = '<p class="sidebar-queue-empty">' + tH('No pending tasks.') + '</p>';
       return;
     }
 
@@ -173,7 +173,7 @@
     }).join('');
 
     if (!items.length) {
-      sidebarQueueListEl.innerHTML = '<p class="sidebar-queue-empty">No pending tasks.</p>';
+      sidebarQueueListEl.innerHTML = '<p class="sidebar-queue-empty">' + tH('No pending tasks.') + '</p>';
     }
   }
 

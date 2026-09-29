@@ -62,7 +62,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
     advBtnRW = document.createElement('button');
     advBtnRW.type = 'button';
     advBtnRW.className = 'nsc-history-btn nsc-options-trigger';
-    advBtnRW.setAttribute('aria-label', 'Advanced options');
+    advBtnRW.setAttribute('aria-label', tF('Advanced options'));
     advBtnRW.innerHTML =
       '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M3 4.5h10M3 8h10M3 11.5h10"/><circle cx="6" cy="4.5" r="1.3" fill="currentColor" stroke="none"/>' +
@@ -75,7 +75,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
     if (advFieldsRW.length) {
       var paramsBlockRW = document.createElement('div');
       paramsBlockRW.className = 'nsc-param-block';
-      paramsBlockRW.innerHTML = '<p class="nsc-param-title">Parameters</p>';
+      paramsBlockRW.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Parameters')) + '</p>';
       paramsBodyRW = document.createElement('div');
       paramsBodyRW.className = 'nsc-adv-params';
       paramsBlockRW.appendChild(paramsBodyRW);
@@ -86,7 +86,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
     if (_quantEligibleRW) {
       quantBlockRW = document.createElement('div');
       quantBlockRW.className = 'nsc-param-block';
-      quantBlockRW.innerHTML = '<p class="nsc-param-title">Quantization</p>';
+      quantBlockRW.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Quantization')) + '</p>';
       quantListElRW = document.createElement('div');
       quantListElRW.className = 'nsc-quality-list';
       quantListElRW.setAttribute('role', 'radiogroup');
@@ -446,7 +446,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var phHistBtn = document.createElement('button');
         phHistBtn.type = 'button';
         phHistBtn.className = 'nsc-history-btn nsc-options-trigger';
-        phHistBtn.setAttribute('aria-label', 'Prompt history');
+        phHistBtn.setAttribute('aria-label', tF('Prompt history'));
         phHistBtn.innerHTML =
           '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
             '<circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2 1.5"/>' +
@@ -457,8 +457,8 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           var phEditBtn = document.createElement('button');
           phEditBtn.type = 'button';
           phEditBtn.className = 'nsc-history-btn nsc-options-trigger';
-          phEditBtn.setAttribute('aria-label', 'Edit prompt');
-          phEditBtn.title = 'Edit prompt (prefix / idea / suffix)';
+          phEditBtn.setAttribute('aria-label', tF('Edit prompt'));
+          phEditBtn.title = tF('Edit prompt (prefix / idea / suffix)');
           phEditBtn.innerHTML =
             '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
               '<path d="M11 2l3 3-8 8-3.5 1 1-3.5z"/>' +
@@ -528,8 +528,8 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var spPickBtn = document.createElement('button');
         spPickBtn.type = 'button';
         spPickBtn.className = 'nsc-history-btn nsc-options-trigger';
-        spPickBtn.setAttribute('aria-label', 'Choose a Style');
-        spPickBtn.title = 'Choose a Style';
+        spPickBtn.setAttribute('aria-label', tF('Choose a Style'));
+        spPickBtn.title = tF('Choose a Style');
         spPickBtn.innerHTML =
           '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
             '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/>' +
@@ -601,7 +601,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         arBlock.innerHTML =
           '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(f.label || 'Aspect ratio') +
             ' <span class="nsc-param-value" id="' + arFieldId + '-label">' + escHtml(arPresets[arIdx].label) + '</span>' +
-            '<button type="button" class="nsc-history-btn nsc-options-trigger" id="' + arFieldId + '-btn" aria-label="Choose aspect ratio">' +
+            '<button type="button" class="nsc-history-btn nsc-options-trigger" id="' + arFieldId + '-btn" aria-label="' + escHtml(tF('Choose aspect ratio')) + '">' +
               '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="15" height="15" rx="2"/></svg>' +
             '</button>' +
           '</p>';
@@ -610,8 +610,8 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var arResBlock = document.createElement('div');
         arResBlock.className = 'nsc-param-block';
         arResBlock.innerHTML =
-          '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="' + arFieldId + '-res-label">—</span>' +
-            '<button type="button" class="nsc-history-btn nsc-options-trigger" id="' + arFieldId + '-res-btn" aria-label="Choose resolution">' +
+          '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(tF('Resolution')) + ' <span class="nsc-param-value" id="' + arFieldId + '-res-label">—</span>' +
+            '<button type="button" class="nsc-history-btn nsc-options-trigger" id="' + arFieldId + '-res-btn" aria-label="' + escHtml(tF('Choose resolution')) + '">' +
               '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
             '</button>' +
           '</p>';
@@ -738,7 +738,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           var minusBtn = document.createElement('button');
           minusBtn.type = 'button';
           minusBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-left';
-          minusBtn.setAttribute('aria-label', 'Decrease ' + axisLabel + ' offset');
+          minusBtn.setAttribute('aria-label', tF('Decrease {axis} offset').replace('{axis}', axisLabel));
 
           var inp = document.createElement('input');
           inp.type = 'number';
@@ -748,7 +748,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           var plusBtn = document.createElement('button');
           plusBtn.type = 'button';
           plusBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-right';
-          plusBtn.setAttribute('aria-label', 'Increase ' + axisLabel + ' offset');
+          plusBtn.setAttribute('aria-label', tF('Increase {axis} offset').replace('{axis}', axisLabel));
 
           function commit(v) {
             v = Math.round(Number(v)) || 0;
@@ -1049,7 +1049,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           var sdBtn = document.createElement('button');
           sdBtn.type = 'button';
           sdBtn.className = 'nsc-icon-btn';
-          sdBtn.title = 'New random seed';
+          sdBtn.title = tF('New random seed');
           sdBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>';
 
           (function (inp, sel, btn) {
@@ -1088,7 +1088,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var sdBtn = document.createElement('button');
         sdBtn.type = 'button';
         sdBtn.className = 'nsc-icon-btn';
-        sdBtn.title = 'New random seed';
+        sdBtn.title = tF('New random seed');
         sdBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>';
 
         (function (inp) {
@@ -1263,7 +1263,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
 
         var pvPlaceholder = document.createElement('div');
         pvPlaceholder.className = 'nsc-outpaint-preview nsc-outpaint-preview--placeholder';
-        pvPlaceholder.textContent = 'Select an image to preview';
+        pvPlaceholder.textContent = tF('Select an image to preview');
 
         pvWrap.appendChild(pvCanvas);
         pvWrap.appendChild(pvPlaceholder);
@@ -1632,7 +1632,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             _populateSelect(input, f.options, initVal);
           } else {
             var placeholder = document.createElement('option');
-            placeholder.textContent = 'Loading…';
+            placeholder.textContent = tF('Loading…');
             placeholder.disabled = true;
             input.appendChild(placeholder);
             input.disabled = true;
@@ -1688,8 +1688,8 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           var presetBtn = document.createElement('button');
           presetBtn.type = 'button';
           presetBtn.className = 'nsc-icon-btn nsc-options-trigger';
-          presetBtn.setAttribute('aria-label', 'Presets');
-          presetBtn.title = 'Presets';
+          presetBtn.setAttribute('aria-label', tF('Presets'));
+          presetBtn.title = tF('Presets');
           presetBtn.innerHTML =
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
             'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -1700,7 +1700,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
           (function (field, inp) {
             presetBtn.addEventListener('click', function (e) {
               e.stopPropagation();
-              openOptionsPanel('Presets', function (panelBody) {
+              openOptionsPanel(tF('Presets'), function (panelBody) {
                 var listEl = document.createElement('div');
                 listEl.className = 'nse-model-list';
                 field.presets.forEach(function (p) {
@@ -1766,12 +1766,12 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             var imgUrl = getVal('image', 'image_data_url') || '';
             var origText = f.detect_button_label || 'Detect';
             if (!imgUrl) {
-              btn.textContent = 'Pick an image first';
+              btn.textContent = tF('Pick an image first');
               setTimeout(function () { btn.textContent = origText; }, 1500);
               return;
             }
             btn.disabled = true;
-            btn.textContent = 'Detecting…';
+            btn.textContent = tF('Detecting…');
             try {
               var res = await fetch(field.detect_endpoint, {
                 method: 'POST',
@@ -1789,7 +1789,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
               btn.textContent = origText;
             } catch (err) {
               console.error('[FlowEngine] detect:', err);
-              btn.textContent = 'Failed';
+              btn.textContent = tF('Failed');
               setTimeout(function () { btn.textContent = origText; }, 1500);
             } finally {
               btn.disabled = false;
@@ -1874,7 +1874,7 @@ async function _maybeDefringeImage(imgUrl, advancedValues, persist) {
     var dataUrl = await new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () { resolve(String(reader.result || '')); };
-      reader.onerror = function () { reject(new Error('Could not read image')); };
+      reader.onerror = function () { reject(new Error(tF('Could not read image'))); };
       reader.readAsDataURL(blob);
     });
     var res = await fetch('/api/models/edge-defringe/process', {
@@ -1910,14 +1910,14 @@ async function _maybeUpscaleOutput(imgUrl, card) {
   var modelName = UPSCALE_OUTPUT_MODELS[mode];
   if (!seedvr2 && !modelName) return imgUrl;
 
-  if (generateStatus) _setBusyStatus(generateStatus, 'Upscaling…');
+  if (generateStatus) _setBusyStatus(generateStatus, tF('Upscaling…'));
   var ringPctEl = null, ringStepsEl = null, ringEtaEl = null;
   if (card && card.querySelector) {
     ringPctEl   = card.querySelector('.nsc-ring-pct');
     ringStepsEl = card.querySelector('.nsc-ring-steps');
     ringEtaEl   = card.querySelector('.nsc-ring-eta');
   }
-  if (ringPctEl)   ringPctEl.textContent   = 'Upscaling…';
+  if (ringPctEl)   ringPctEl.textContent   = tF('Upscaling…');
   if (ringStepsEl) ringStepsEl.textContent = '';
   if (ringEtaEl)   ringEtaEl.textContent   = '';
 
@@ -1926,7 +1926,7 @@ async function _maybeUpscaleOutput(imgUrl, card) {
     var dataUrl = await new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () { resolve(String(reader.result || '')); };
-      reader.onerror = function () { reject(new Error('Could not read image')); };
+      reader.onerror = function () { reject(new Error(tF('Could not read image'))); };
       reader.readAsDataURL(blob);
     });
 
@@ -1993,11 +1993,11 @@ function _warnUpscaleOutputFailed(detail) {
 // it stays easy to read/maintain on its own.
 function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
   var BG_OPTIONS = [
-    { id: 'checkers', label: 'Checkers' },
-    { id: 'magenta',  label: 'Magenta' },
-    { id: 'green',    label: 'Green' },
-    { id: 'black',    label: 'Black' },
-    { id: 'white',    label: 'White' },
+    { id: 'checkers', get label() { return tF('Checkers'); } },
+    { id: 'magenta',  get label() { return tF('Magenta'); } },
+    { id: 'green',    get label() { return tF('Green'); } },
+    { id: 'black',    get label() { return tF('Black'); } },
+    { id: 'white',    get label() { return tF('White'); } },
   ];
 
   // parentEl is the dedicated #ncf-live-preview-aside column itself —
@@ -2006,7 +2006,7 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
 
   var title = document.createElement('p');
   title.className = 'nsc-param-title';
-  title.textContent = 'Live Preview';
+  title.textContent = tF('Live Preview');
   panel.appendChild(title);
 
   var bgRow = document.createElement('div');
@@ -2037,13 +2037,13 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
 
   var img = document.createElement('img');
   img.className = 'nsc-lp-img';
-  img.alt = 'Live preview';
+  img.alt = tF('Live preview');
   img.style.display = 'none';
   imgWrap.appendChild(img);
 
   var placeholder = document.createElement('p');
   placeholder.className = 'nsc-lp-placeholder';
-  placeholder.textContent = 'Pick a source image to see a live preview';
+  placeholder.textContent = tF('Pick a source image to see a live preview');
   imgWrap.appendChild(placeholder);
 
   var spinner = document.createElement('div');
@@ -2086,7 +2086,7 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
 
   var hint = document.createElement('p');
   hint.className = 'nsc-lp-hint';
-  hint.textContent = 'Scroll to inspect at 100% · drag the navigator to pan';
+  hint.textContent = tF('Scroll to inspect at 100% · drag the navigator to pan');
   panel.appendChild(hint);
 
   var NAVI_MAX = 180;
@@ -2190,7 +2190,7 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
         if (localToken !== _runToken) return; // superseded by a newer edit
         if (!localRes.ok || localData.error) throw new Error(localData.error || 'Preview failed');
         var localImgUrl = localData.dataUrl || localData.imageUrl;
-        if (!localImgUrl) throw new Error('No preview image returned');
+        if (!localImgUrl) throw new Error(tF('No preview image returned'));
         _setImage(localImgUrl, keepLeft, keepTop);
       } catch (err) {
         if (localToken === _runToken) _setState('error', err.message || 'Preview failed');
@@ -2226,7 +2226,7 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
       var submitData = await submitRes.json();
       if (myToken !== _runToken) return;
       if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
-      if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+      if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
       var imgUrl = await waitForImageLocal(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, null, function (note) {
         if (myToken !== _runToken) return;
@@ -2234,7 +2234,7 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
         downloadNote.hidden = !note;
       });
       if (myToken !== _runToken) return; // a newer edit already superseded this result
-      if (!imgUrl) throw new Error('No preview image returned');
+      if (!imgUrl) throw new Error(tF('No preview image returned'));
       imgUrl = await _maybeDefringeImage(imgUrl, advancedValues);
       if (myToken !== _runToken) return;
       _setImage(imgUrl, keepLeft, keepTop);
@@ -2268,8 +2268,8 @@ function renderParamGroup(stepDef, el, stepNum) {
   var aspectWrap = document.createElement('div');
   aspectWrap.className = 'nsc-param-block nss-aspect-guided';
   aspectWrap.innerHTML =
-    '<p class="nsc-param-title nsc-param-title--flex">Aspect ratio <span class="nsc-param-value" id="ncf-aspect-label">1:1</span>' +
-      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-aspect-picker-btn" aria-label="Choose aspect ratio">' +
+    '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(tF('Aspect ratio')) + ' <span class="nsc-param-value" id="ncf-aspect-label">1:1</span>' +
+      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-aspect-picker-btn" aria-label="' + escHtml(tF('Choose aspect ratio')) + '">' +
         '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="15" height="15" rx="2"/></svg>' +
       '</button>' +
     '</p>';
@@ -2285,8 +2285,8 @@ function renderParamGroup(stepDef, el, stepNum) {
   var resTierWrap = document.createElement('div');
   resTierWrap.className = 'nsc-param-block';
   resTierWrap.innerHTML =
-    '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="ncf-res-tier-label">MD</span>' +
-      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-res-tier-picker-btn" aria-label="Choose resolution">' +
+    '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(tF('Resolution')) + ' <span class="nsc-param-value" id="ncf-res-tier-label">MD</span>' +
+      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-res-tier-picker-btn" aria-label="' + escHtml(tF('Choose resolution')) + '">' +
         '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
       '</button>' +
     '</p>';
@@ -2334,7 +2334,7 @@ function renderParamGroup(stepDef, el, stepNum) {
       selectedAspectIdx = idx;
       if (aspectLabelEl) aspectLabelEl.textContent = ASPECT_PRESETS[idx].label;
     } else if (aspectLabelEl) {
-      aspectLabelEl.textContent = 'Custom';
+      aspectLabelEl.textContent = tF('Custom');
     }
   }
 
@@ -2433,9 +2433,9 @@ function renderParamGroup(stepDef, el, stepNum) {
   customResRow.className = 'nsc-field-row ncf-custom-res-row';
   customResRow.style.marginTop = '0.5rem';
   customResRow.innerHTML =
-    '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="Width" id="ncf-custom-res-w">' +
+    '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="' + escHtml(tF('Width')) + '" id="ncf-custom-res-w">' +
     '<span style="color:var(--muted);flex-shrink:0;">×</span>' +
-    '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="Height" id="ncf-custom-res-h">';
+    '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="' + escHtml(tF('Height')) + '" id="ncf-custom-res-h">';
   guidedEl.appendChild(customResRow);
   var customWInput = customResRow.querySelector('#ncf-custom-res-w');
   var customHInput = customResRow.querySelector('#ncf-custom-res-h');
@@ -2479,7 +2479,7 @@ function renderParamGroup(stepDef, el, stepNum) {
   var advPickerBtn = document.createElement('button');
   advPickerBtn.type = 'button';
   advPickerBtn.className = 'nsc-history-btn nsc-options-trigger';
-  advPickerBtn.setAttribute('aria-label', 'Advanced options');
+  advPickerBtn.setAttribute('aria-label', tF('Advanced options'));
   advPickerBtn.innerHTML =
     '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M3 4.5h10M3 8h10M3 11.5h10"/><circle cx="6" cy="4.5" r="1.3" fill="currentColor" stroke="none"/>' +
@@ -2504,7 +2504,7 @@ function renderParamGroup(stepDef, el, stepNum) {
   var quantBlock = document.createElement('div');
   quantBlock.className = 'nsc-param-block';
   quantBlock.style.display = 'none';
-  quantBlock.innerHTML = '<p class="nsc-param-title">Quantization</p>';
+  quantBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Quantization')) + '</p>';
   var quantListEl = document.createElement('div');
   quantListEl.className = 'nsc-quality-list';
   quantListEl.setAttribute('role', 'radiogroup');
@@ -2513,7 +2513,7 @@ function renderParamGroup(stepDef, el, stepNum) {
   // Quality list
   var qualBlock = document.createElement('div');
   qualBlock.className = 'nsc-param-block';
-  qualBlock.innerHTML = '<p class="nsc-param-title">Quality</p>';
+  qualBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Quality')) + '</p>';
   var qualListEl = document.createElement('div');
   qualListEl.className = 'nsc-quality-list';
   qualListEl.setAttribute('role', 'radiogroup');
@@ -2530,7 +2530,7 @@ function renderParamGroup(stepDef, el, stepNum) {
   simToggle.setAttribute('aria-pressed', 'false');
   simToggle.classList.add('off');
   simToggle.innerHTML =
-    '<span class="create-basic-similarity-label">Visual similarity</span>' +
+    '<span class="create-basic-similarity-label">' + escHtml(tF('Visual similarity')) + '</span>' +
     '<div class="create-basic-switch"><div class="create-basic-switch-thumb"></div></div>';
   simBlock.appendChild(simToggle);
 
@@ -2561,12 +2561,12 @@ function renderParamGroup(stepDef, el, stepNum) {
   var negBlock = document.createElement('div');
   negBlock.className = 'nsc-param-block';
   negBlock.style.marginTop = '1rem';
-  negBlock.innerHTML = '<p class="nsc-param-title">Negative prompt</p>';
+  negBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Negative prompt')) + '</p>';
   var negTa = document.createElement('textarea');
   negTa.className = 'nsc-textarea';
   negTa.id = 'ncf-negative-prompt';
   negTa.rows = 3;
-  negTa.placeholder = 'ugly, blurry, low quality…';
+  negTa.placeholder = tF('ugly, blurry, low quality…');
   negTa.value = selectedNegativePrompt || '';
   negTa.addEventListener('input', function () {
     selectedNegativePrompt = negTa.value;
@@ -2594,7 +2594,7 @@ function renderParamGroup(stepDef, el, stepNum) {
     containerEl.innerHTML = '';
     if (!items.length) { sgBlock.style.display = 'none'; return; }
     sgBlock.style.display = '';
-    containerEl.insertAdjacentHTML('afterbegin', '<p class="nsc-param-title">Optional parts</p>');
+    containerEl.insertAdjacentHTML('afterbegin', '<p class="nsc-param-title">' + escHtml(tF('Optional parts')) + '</p>');
 
     var savedDisabled = Array.isArray(_sp.disabledSubgraphs) ? _sp.disabledSubgraphs : null;
     selectedDisabledSubgraphs = items
@@ -2943,13 +2943,13 @@ function _stylePickerCardHtml(s) {
 }
 
 function _openStylePickerPanel(onPick) {
-  openOptionsPanel('Choose a Style', function (body) {
+  openOptionsPanel(tF('Choose a Style'), function (body) {
     body.innerHTML =
       '<div class="ncf-style-picker-search-row">' +
-        '<input type="text" class="nsc-input ncf-style-picker-search" placeholder="Search styles…" aria-label="Search styles">' +
+        '<input type="text" class="nsc-input ncf-style-picker-search" placeholder="' + escHtml(tF('Search styles…')) + '" aria-label="' + escHtml(tF('Search styles')) + '">' +
       '</div>' +
       '<div class="ncf-style-picker-layout">' +
-        '<nav class="ncf-style-picker-tree" aria-label="Style categories"></nav>' +
+        '<nav class="ncf-style-picker-tree" aria-label="' + escHtml(tF('Style categories')) + '"></nav>' +
         '<div class="ncf-style-picker-grid"></div>' +
       '</div>';
     var searchInput = body.querySelector('.ncf-style-picker-search');
@@ -2963,7 +2963,7 @@ function _openStylePickerPanel(onPick) {
     var query = '';
 
     function renderTree() {
-      var items = '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === '' ? ' is-active' : '') + '" data-cat="">All</button>';
+      var items = '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === '' ? ' is-active' : '') + '" data-cat="">' + escHtml(tF('All')) + '</button>';
       items += tree.flatNames.map(function (name) {
         return '<button type="button" class="lib-style-cat-tree-item' + (selectedCategory === name ? ' is-active' : '') + '" data-cat="' + escHtml(name) + '">' + escHtml(tF(name)) + '</button>';
       }).join('');
@@ -3038,7 +3038,7 @@ function _openStylePickerPanel(onPick) {
       closeOptionsPanel();
     });
 
-    gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">Loading…</p>';
+    gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">' + escHtml(tF('Loading…')) + '</p>';
     window.openJourneyApi.getStyles().then(function (data) {
       allStyles = (data && data.styles) || [];
       tree = _stylePickerCategoryTree(allStyles);
@@ -3046,7 +3046,7 @@ function _openStylePickerPanel(onPick) {
       renderGrid();
     }).catch(function (err) {
       console.error('[StylePicker] Failed to load styles:', err);
-      gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">Could not load styles.</p>';
+      gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">' + escHtml(tF('Could not load styles.')) + '</p>';
     });
   }, { wide: 'xl', flexBody: true });
 }

@@ -43,7 +43,7 @@ function renderLLMTransform(stepDef, el) {
     // every one of these chips renames itself the moment a model is picked.
     llmModelBtn.className = 'nsc-history-btn nsc-history-btn--named nsc-options-trigger ncf-llm-model-btn';
     llmModelBtn.setAttribute('aria-haspopup', 'dialog');
-    llmModelBtn.setAttribute('aria-label', 'Change LLM model');
+    llmModelBtn.setAttribute('aria-label', tF('Change LLM model'));
     llmModelBtn.innerHTML =
       '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="2" y="5" width="14" height="9" rx="1.5"/>' +
@@ -65,7 +65,7 @@ function renderLLMTransform(stepDef, el) {
       thinkLabel.innerHTML =
         '<input type="checkbox" class="ncf-chat-ep-input">' +
         '<span class="ncf-chat-ep-track"><span class="ncf-chat-ep-thumb"></span></span>' +
-        '<span class="ncf-chat-ep-text">Think</span>' +
+        '<span class="ncf-chat-ep-text">' + escHtml(tF('Think')) + '</span>' +
         '<span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip">Off: fast, no reasoning. ' +
         'On: the model jots a brief thinking outline before writing the result — still fast, ' +
         'this is prompted, not a special reasoning mode.</span>';
@@ -85,7 +85,7 @@ function renderLLMTransform(stepDef, el) {
       var llmOptionsBtn = document.createElement('button');
       llmOptionsBtn.type = 'button';
       llmOptionsBtn.className = 'nsc-history-btn nsc-options-trigger';
-      llmOptionsBtn.setAttribute('aria-label', 'Assist options');
+      llmOptionsBtn.setAttribute('aria-label', tF('Assist options'));
       llmOptionsBtn.innerHTML =
         '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
           '<line x1="3" y1="5" x2="15" y2="5"/><circle cx="11" cy="5" r="1.6" fill="currentColor" stroke="none"/>' +
@@ -112,8 +112,8 @@ function renderLLMTransform(stepDef, el) {
     genreBlock.className = 'nse-control-block';
     genreBlock.innerHTML =
       '<p class="nsc-param-title nsc-param-title--flex">Genre ' +
-      '<span class="nsc-param-value" id="ncf-genre-label-' + stepDef.id + '">None</span>' +
-      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-genre-picker-btn-' + stepDef.id + '" aria-label="Choose genre"></button>' +
+      '<span class="nsc-param-value" id="ncf-genre-label-' + stepDef.id + '">' + escHtml(tF('None')) + '</span>' +
+      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-genre-picker-btn-' + stepDef.id + '" aria-label="' + escHtml(tF('Choose genre')) + '"></button>' +
       '</p>';
     el.appendChild(genreBlock);
     var genreLabelEl  = genreBlock.querySelector('#ncf-genre-label-' + stepDef.id);
@@ -125,7 +125,7 @@ function renderLLMTransform(stepDef, el) {
 
     function updateGenreLabel() {
       if (!genreLabelEl) return;
-      if (!selectedGenre) { genreLabelEl.textContent = 'None'; return; }
+      if (!selectedGenre) { genreLabelEl.textContent = tF('None'); return; }
       var found = (_genresCache || []).find(function (g) { return g.id === selectedGenre; });
       genreLabelEl.textContent = found ? (found.label || found.id) : selectedGenre;
     }
@@ -138,7 +138,7 @@ function renderLLMTransform(stepDef, el) {
       noneCard.type = 'button';
       noneCard.className = 'nse-genre-card' + (!selectedGenre ? ' is-active' : '');
       noneCard.dataset.genre = '';
-      noneCard.innerHTML = '<span class="nse-genre-icon">—</span><span class="nse-genre-label">None</span>';
+      noneCard.innerHTML = '<span class="nse-genre-icon">—</span><span class="nse-genre-label">' + escHtml(tF('None')) + '</span>';
       noneCard.addEventListener('click', function () {
         selectedGenre = '';
         updateGenreLabel();
@@ -171,7 +171,7 @@ function renderLLMTransform(stepDef, el) {
     }
 
     genrePickerBtn.addEventListener('click', function () {
-      openOptionsPanel('Genre', function (panelBody) {
+      openOptionsPanel(tF('Genre'), function (panelBody) {
         var cardsEl = document.createElement('div');
         cardsEl.className = 'nse-genre-cards';
         cardsEl.setAttribute('role', 'group');
@@ -179,7 +179,7 @@ function renderLLMTransform(stepDef, el) {
         if (_genresCache) {
           renderGenreCards(cardsEl, _genresCache);
         } else {
-          cardsEl.innerHTML = '<span class="nse-genre-loading">Loading genres…</span>';
+          cardsEl.innerHTML = '<span class="nse-genre-loading">' + escHtml(tF('Loading genres…')) + '</span>';
           fetch('/api/flows/genres')
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -187,7 +187,7 @@ function renderLLMTransform(stepDef, el) {
               renderGenreCards(cardsEl, _genresCache);
             })
             .catch(function () {
-              cardsEl.innerHTML = '<span class="nse-genre-loading">Could not load genres.</span>';
+              cardsEl.innerHTML = '<span class="nse-genre-loading">' + escHtml(tF('Could not load genres.')) + '</span>';
             });
         }
       });
@@ -236,7 +236,7 @@ function renderLLMTransform(stepDef, el) {
       if (paramDef.required === false) {
         var anyOpt = document.createElement('option');
         anyOpt.value = '';
-        anyOpt.textContent = '— any —';
+        anyOpt.textContent = tF('— any —');
         sel.appendChild(anyOpt);
       }
       paramDef.options.forEach(function (opt) {
@@ -282,7 +282,7 @@ function renderLLMTransform(stepDef, el) {
       var minusBtn = document.createElement('button');
       minusBtn.type = 'button';
       minusBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-left';
-      minusBtn.setAttribute('aria-label', 'Decrease');
+      minusBtn.setAttribute('aria-label', tF('Decrease'));
       minusBtn.innerHTML = '<span aria-hidden="true">&#9664;</span>';
 
       var numInput = document.createElement('input');
@@ -297,7 +297,7 @@ function renderLLMTransform(stepDef, el) {
       var plusBtn = document.createElement('button');
       plusBtn.type = 'button';
       plusBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-right';
-      plusBtn.setAttribute('aria-label', 'Increase');
+      plusBtn.setAttribute('aria-label', tF('Increase'));
       plusBtn.innerHTML = '<span aria-hidden="true">&#9654;</span>';
 
       stepper.appendChild(minusBtn);
@@ -356,7 +356,7 @@ function renderLLMTransform(stepDef, el) {
     outputTa.className = 'nsc-textarea';
     outputTa.id = 'ncf-llm-output-' + stepDef.id;
     outputTa.rows = 4;
-    outputTa.placeholder = 'AI-generated scene will appear here…';
+    outputTa.placeholder = tF('AI-generated scene will appear here…');
     el.appendChild(outputTa);
     outputTa.addEventListener('input', function () {
       setVal(stepDef.id, 'transformed_text', outputTa.value.trim());

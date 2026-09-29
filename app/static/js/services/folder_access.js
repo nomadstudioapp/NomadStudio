@@ -17,7 +17,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
       }
 
       const request = window.indexedDB.open(DB_NAME, DB_VERSION);
-      request.onerror = () => reject(request.error || new Error('Cannot open IndexedDB.'));
+      request.onerror = () => reject(request.error || new Error(tF('Cannot open IndexedDB.')));
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -37,7 +37,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
 
       req.onerror = () => {
         db.close();
-        reject(req.error || new Error('Failed saving folder handle.'));
+        reject(req.error || new Error(tF('Failed saving folder handle.')));
       };
       tx.oncomplete = () => {
         db.close();
@@ -45,7 +45,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
       };
       tx.onerror = () => {
         db.close();
-        reject(tx.error || new Error('Folder handle transaction failed.'));
+        reject(tx.error || new Error(tF('Folder handle transaction failed.')));
       };
     });
   }
@@ -59,7 +59,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
 
       req.onerror = () => {
         db.close();
-        reject(req.error || new Error('Failed reading folder handle.'));
+        reject(req.error || new Error(tF('Failed reading folder handle.')));
       };
       req.onsuccess = () => {
         db.close();
@@ -77,7 +77,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
 
       req.onerror = () => {
         db.close();
-        reject(req.error || new Error('Failed clearing folder handle.'));
+        reject(req.error || new Error(tF('Failed clearing folder handle.')));
       };
       tx.oncomplete = () => {
         db.close();
@@ -85,7 +85,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
       };
       tx.onerror = () => {
         db.close();
-        reject(tx.error || new Error('Clear transaction failed.'));
+        reject(tx.error || new Error(tF('Clear transaction failed.')));
       };
     });
   }
@@ -124,7 +124,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
   async function writeDataUrlFile(fileName, dataUrl) {
     const handle = await getHandle();
     if (!handle) {
-      throw new Error('No folder selected. Please choose a folder in Settings.');
+      throw new Error(tF('No folder selected. Please choose a folder in Settings.'));
     }
 
     let permission = await queryPermission(handle, 'readwrite');
@@ -132,7 +132,7 @@ window.openJourneyFolderAccess = (function folderAccessService() {
       permission = await requestPermission(handle, 'readwrite');
     }
     if (permission !== 'granted') {
-      throw new Error('Folder permission denied by browser.');
+      throw new Error(tF('Folder permission denied by browser.'));
     }
 
     const blob = await dataUrlToBlob(dataUrl);

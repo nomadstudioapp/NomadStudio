@@ -11,24 +11,24 @@
 
   <!-- Single-image gallery viewer -->
   <div class="mobile-viewer" id="mobile-viewer">
-    <p class="mobile-viewer-status" id="mobile-viewer-status">Loading...</p>
+    <p class="mobile-viewer-status" id="mobile-viewer-status" data-i18n="tpl.loading">Loading...</p>
 
     <div class="mobile-slide" id="mobile-slide" hidden>
       <img class="mobile-slide-image" id="mobile-slide-image" alt="" />
 
       <!-- Prev / Next arrows (always visible) -->
-      <button type="button" class="mobile-slide-nav prev" id="mobile-prev-btn" aria-label="Previous image">
+      <button type="button" class="mobile-slide-nav prev" id="mobile-prev-btn" aria-label="Previous image" data-i18n-attr="aria-label:tpl.previous_image">
         <i data-lucide="chevron-left" class="nav-icon" aria-hidden="true"></i>
       </button>
-      <button type="button" class="mobile-slide-nav next" id="mobile-next-btn" aria-label="Next image">
+      <button type="button" class="mobile-slide-nav next" id="mobile-next-btn" aria-label="Next image" data-i18n-attr="aria-label:tpl.next_image">
         <i data-lucide="chevron-right" class="nav-icon" aria-hidden="true"></i>
       </button>
 
       <!-- Bottom actions (always visible) -->
       <div class="mobile-slide-actions">
-        <button type="button" class="mobile-slide-action-btn" id="mobile-edit-btn" aria-label="Edit image">
+        <button type="button" class="mobile-slide-action-btn" id="mobile-edit-btn" aria-label="Edit image" data-i18n-attr="aria-label:tpl.edit_image">
           <i data-lucide="wand-2" class="nav-icon" aria-hidden="true"></i>
-          <span>Edit</span>
+          <span data-i18n="tpl.edit">Edit</span>
         </button>
         <button
           type="button"
@@ -36,10 +36,9 @@
           id="mobile-move-lock-btn"
           aria-label="Toggle image movement lock"
           aria-pressed="false"
-          title="Lock image movement"
-        >
+          title="Lock image movement" data-i18n-attr="title:tpl.lock_image_movement,aria-label:tpl.toggle_image_movement_lock">
           <i data-lucide="move-horizontal" class="nav-icon" aria-hidden="true"></i>
-          <span>Lock</span>
+          <span data-i18n="tpl.lock">Lock</span>
         </button>
         <button
           type="button"
@@ -47,14 +46,13 @@
           id="mobile-diamond-toggle-btn"
           aria-label="Hide diamond images"
           aria-pressed="false"
-          title="Hide diamond images"
-        >
+          title="Hide diamond images" data-i18n-attr="title:tpl.hide_diamond_images,aria-label:tpl.hide_diamond_images">
           <span class="mobile-diamond-glyph" aria-hidden="true">◇</span>
-          <span>Diamond</span>
+          <span data-i18n="tpl.diamond">Diamond</span>
         </button>
-        <a class="mobile-slide-action-btn" id="mobile-save-btn" aria-label="Download image" download>
+        <a class="mobile-slide-action-btn" id="mobile-save-btn" aria-label="Download image" download data-i18n-attr="aria-label:tpl.download_image">
           <i data-lucide="download" class="nav-icon" aria-hidden="true"></i>
-          <span>Save</span>
+          <span data-i18n="tpl.save">Save</span>
         </a>
       </div>
 
@@ -63,7 +61,7 @@
 
       <!-- Mini carousel (opens from counter tap) -->
       <div class="mobile-thumbstrip" id="mobile-thumbstrip" hidden aria-hidden="true">
-        <div class="mobile-thumbstrip-track" id="mobile-thumbstrip-track" role="listbox" aria-label="Image quick picker"></div>
+        <div class="mobile-thumbstrip-track" id="mobile-thumbstrip-track" role="listbox" aria-label="Image quick picker" data-i18n-attr="aria-label:tpl.image_quick_picker"></div>
       </div>
 
       <!-- Floating progress while generating (keeps visible outside edit panel) -->
@@ -79,18 +77,18 @@
   <!-- Edit panel (slides up from bottom) -->
   <div class="mobile-edit-panel" id="mobile-edit-panel" aria-hidden="true">
     <div class="mobile-edit-backdrop" id="mobile-edit-backdrop"></div>
-    <div class="mobile-edit-shell" role="dialog" aria-modal="true" aria-label="Edit image">
+    <div class="mobile-edit-shell" role="dialog" aria-modal="true" aria-label="Edit image" data-i18n-attr="aria-label:tpl.edit_image">
 
       <!-- Handle bar -->
       <div class="mobile-edit-handle" id="mobile-edit-handle" aria-hidden="true"><span></span></div>
 
       <!-- Result image (hidden until generated) -->
       <div class="mobile-edit-result-wrap" id="mobile-edit-result-wrap" hidden>
-        <img class="mobile-edit-result-image" id="mobile-edit-result-image" alt="Generated result" />
+        <img class="mobile-edit-result-image" id="mobile-edit-result-image" alt="Generated result" data-i18n-attr="alt:tpl.generated_result" />
         <div class="mobile-edit-result-actions">
           <a class="btn mobile-edit-result-download" id="mobile-edit-result-download" download>
             <i data-lucide="download" class="nav-icon" aria-hidden="true"></i>
-            Save
+            <span data-i18n="tpl.save">Save</span>
           </a>
         </div>
       </div>
@@ -102,10 +100,9 @@
           id="mobile-seed-randomize-toggle"
           aria-label="Toggle random seed for edits"
           aria-pressed="false"
-          title="Random seed for edits: Off"
-        >
+          title="Random seed for edits: Off" data-i18n-attr="title:tpl.random_seed_for_edits_off,aria-label:tpl.toggle_random_seed_for_edits">
           <i data-lucide="dice-5" class="nav-icon" aria-hidden="true"></i>
-          <span id="mobile-seed-randomize-label">Off</span>
+          <span id="mobile-seed-randomize-label" data-i18n="tpl.off">Off</span>
         </button>
         <button
           type="button"
@@ -113,30 +110,29 @@
           id="mobile-think-toggle"
           aria-label="Toggle Think mode for LLM"
           aria-pressed="false"
-          title="Think mode: Off"
-        >
+          title="Think mode: Off" data-i18n-attr="title:tpl.think_mode_off,aria-label:tpl.toggle_think_mode_for_llm">
           <i data-lucide="brain" class="nav-icon" aria-hidden="true"></i>
-          <span id="mobile-think-label">Off</span>
+          <span id="mobile-think-label" data-i18n="tpl.off">Off</span>
         </button>
       </div>
 
       <!-- Preset buttons -->
       <div class="mobile-edit-presets">
-        <button type="button" class="btn mobile-preset-btn" id="mobile-prompt-toggle-btn" data-edit-type="prompt" aria-label="Edit with custom prompt instruction">
+        <button type="button" class="btn mobile-preset-btn" id="mobile-prompt-toggle-btn" data-edit-type="prompt" aria-label="Edit with custom prompt instruction" data-i18n-attr="aria-label:tpl.edit_with_custom_prompt_instruction">
           <i data-lucide="message-square" class="nav-icon" aria-hidden="true"></i>
-          <span>Prompt</span>
+          <span data-i18n="tpl.prompt">Prompt</span>
         </button>
-        <button type="button" class="btn mobile-preset-btn" data-edit-type="person" aria-label="Change person">
+        <button type="button" class="btn mobile-preset-btn" data-edit-type="person" aria-label="Change person" data-i18n-attr="aria-label:tpl.change_person">
           <i data-lucide="user" class="nav-icon" aria-hidden="true"></i>
-          <span>Person</span>
+          <span data-i18n="tpl.person">Person</span>
         </button>
-        <button type="button" class="btn mobile-preset-btn" data-edit-type="background" aria-label="Change background">
+        <button type="button" class="btn mobile-preset-btn" data-edit-type="background" aria-label="Change background" data-i18n-attr="aria-label:tpl.change_background">
           <i data-lucide="image" class="nav-icon" aria-hidden="true"></i>
-          <span>Background</span>
+          <span data-i18n="tpl.background">Background</span>
         </button>
-        <button type="button" class="btn mobile-preset-btn" data-edit-type="pose" aria-label="Change pose">
+        <button type="button" class="btn mobile-preset-btn" data-edit-type="pose" aria-label="Change pose" data-i18n-attr="aria-label:tpl.change_pose">
           <i data-lucide="activity" class="nav-icon" aria-hidden="true"></i>
-          <span>Pose</span>
+          <span data-i18n="tpl.pose">Pose</span>
         </button>
         <button
           type="button"
@@ -144,10 +140,9 @@
           id="mobile-seed-action-btn"
           data-edit-type="seed"
           aria-label="Regenerate with random seed"
-          title="Same image with new random seed"
-        >
+          title="Same image with new random seed" data-i18n-attr="title:tpl.same_image_with_new_random_seed,aria-label:tpl.regenerate_with_random_seed">
           <i data-lucide="sprout" class="nav-icon" aria-hidden="true"></i>
-          <span>Seed</span>
+          <span data-i18n="tpl.seed">Seed</span>
         </button>
 
         <!-- Divider: presets above rewrite the prompt (LM Studio) and
@@ -155,13 +150,13 @@
              flow engine and edit the existing pixels directly. -->
         <div class="mobile-preset-divider" aria-hidden="true"></div>
 
-        <button type="button" class="btn mobile-preset-btn" data-refine-action="relight" aria-label="Relight image">
+        <button type="button" class="btn mobile-preset-btn" data-refine-action="relight" aria-label="Relight image" data-i18n-attr="aria-label:tpl.relight_image">
           <i data-lucide="sun" class="nav-icon" aria-hidden="true"></i>
-          <span>Relight</span>
+          <span data-i18n="tpl.relight">Relight</span>
         </button>
-        <button type="button" class="btn mobile-preset-btn" data-refine-action="remove_background" aria-label="Remove background">
+        <button type="button" class="btn mobile-preset-btn" data-refine-action="remove_background" aria-label="Remove background" data-i18n-attr="aria-label:tpl.remove_background">
           <i data-lucide="scissors" class="nav-icon" aria-hidden="true"></i>
-          <span>Remove BG</span>
+          <span data-i18n="tpl.remove_bg">Remove BG</span>
         </button>
       </div>
 
@@ -171,11 +166,10 @@
           id="mobile-edit-custom-input"
           rows="3"
           placeholder="Describe the change you want..."
-          aria-label="Custom prompt instruction"
-        ></textarea>
-        <button type="button" class="btn mobile-edit-send-wide" id="mobile-edit-custom-send" aria-label="Send custom prompt">
+          aria-label="Custom prompt instruction" data-i18n-attr="placeholder:tpl.describe_the_change_you_want,aria-label:tpl.custom_prompt_instruction"></textarea>
+        <button type="button" class="btn mobile-edit-send-wide" id="mobile-edit-custom-send" aria-label="Send custom prompt" data-i18n-attr="aria-label:tpl.send_custom_prompt">
           <i data-lucide="send" class="nav-icon" aria-hidden="true"></i>
-          <span>Send</span>
+          <span data-i18n="tpl.send">Send</span>
         </button>
       </div>
 

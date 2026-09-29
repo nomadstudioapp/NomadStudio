@@ -154,7 +154,7 @@
           var delBtn = document.createElement('button');
           delBtn.type = 'button';
           delBtn.className = 'nit-tray-del-btn';
-          delBtn.setAttribute('aria-label', 'Remove from tray');
+          delBtn.setAttribute('aria-label', tF('Remove from tray'));
           delBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>';
           (function (fn, el) {
             delBtn.addEventListener('click', function (e) {
@@ -168,7 +168,7 @@
         });
       })
       .catch(function () {
-        if (trayGrid) trayGrid.innerHTML = '<p class="nse-model-empty">Error loading tray.</p>';
+        if (trayGrid) trayGrid.innerHTML = '<p class="nse-model-empty">' + tH('Error loading tray.') + '</p>';
       });
   }
 

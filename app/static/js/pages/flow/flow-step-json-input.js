@@ -27,7 +27,7 @@ function renderJsonInput(stepDef, el) {
     var histBtn = document.createElement('button');
     histBtn.type = 'button';
     histBtn.className = 'nsc-history-btn nsc-options-trigger';
-    histBtn.setAttribute('aria-label', 'JSON history');
+    histBtn.setAttribute('aria-label', tF('JSON history'));
     histBtn.innerHTML =
       '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="8" cy="8" r="6"/>' +
@@ -43,7 +43,7 @@ function renderJsonInput(stepDef, el) {
     var editHeaderBtn = document.createElement('button');
     editHeaderBtn.type = 'button';
     editHeaderBtn.className = 'nsc-history-btn nsc-options-trigger';
-    editHeaderBtn.setAttribute('aria-label', 'Edit JSON variables');
+    editHeaderBtn.setAttribute('aria-label', tF('Edit JSON variables'));
     editHeaderBtn.innerHTML =
       '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" ' +
         'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -75,14 +75,14 @@ function renderJsonInput(stepDef, el) {
 
   var ideaLabel = document.createElement('p');
   ideaLabel.className = 'nsc-param-title ncf-json-idea-label';
-  ideaLabel.textContent = 'Text idea';
+  ideaLabel.textContent = tF('Text idea');
   place(ideaLabel);
 
   var ideaTa = document.createElement('textarea');
   ideaTa.className = 'nsc-textarea ncf-json-idea-ta';
   ideaTa.id = 'ncf-json-idea-' + stepDef.id;
   ideaTa.rows = 2;
-  ideaTa.placeholder = 'A rough line is enough — the AI turns it into the JSON below.';
+  ideaTa.placeholder = tF('A rough line is enough — the AI turns it into the JSON below.');
   place(ideaTa);
 
   var convertBtn = document.createElement('button');
@@ -127,8 +127,8 @@ function renderJsonInput(stepDef, el) {
     var fileIconBtn = document.createElement('button');
     fileIconBtn.type = 'button';
     fileIconBtn.className = 'nsc-history-btn';
-    fileIconBtn.setAttribute('aria-label', 'Load a .json file');
-    fileIconBtn.title = 'Load a .json file';
+    fileIconBtn.setAttribute('aria-label', tF('Load a .json file'));
+    fileIconBtn.title = tF('Load a .json file');
     fileIconBtn.innerHTML =
       '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" ' +
         'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
@@ -173,7 +173,7 @@ function renderJsonInput(stepDef, el) {
     if (!t) return;
     try {
       var obj = JSON.parse(t);
-      if (typeof obj !== 'object' || Array.isArray(obj) || !obj) throw new Error('must be a JSON object {}');
+      if (typeof obj !== 'object' || Array.isArray(obj) || !obj) throw new Error(tF('must be a JSON object {}'));
       applyParsed(obj);
     } catch (e) {
       errMsg.textContent = e.message;
@@ -219,7 +219,7 @@ function renderJsonInput(stepDef, el) {
       if (!res.ok || data.error) throw new Error(data.error || 'Conversion failed');
       var parsed = data.json;
       if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('LM Studio returned an invalid JSON object');
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(tF('LM Studio returned an invalid JSON object'));
       ta.value = JSON.stringify(parsed, null, 2);
       applyParsed(parsed);
     } catch (e) {

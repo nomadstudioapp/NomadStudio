@@ -373,7 +373,7 @@
     if (validIds.length !== ids.length) setGlobalWorkflows(validIds);
     _csWfChips.innerHTML = '';
     if (!validIds.length) {
-      _csWfChips.innerHTML = '<span class="cs-workflow-chip cs-workflow-chip--empty">None selected</span>';
+      _csWfChips.innerHTML = '<span class="cs-workflow-chip cs-workflow-chip--empty">' + tH('None selected') + '</span>';
     } else {
       validIds.forEach(function (id) {
         var rec = _csAllImports.find(function (r) { return String(r.id) === id; });
@@ -393,7 +393,7 @@
     if (!_csWfModal || !_csWfMList) return;
     _csWfMList.innerHTML = '';
     if (!_csAllImports.length) {
-      _csWfMList.innerHTML = '<p class="nse-model-empty">Loading…</p>';
+      _csWfMList.innerHTML = '<p class="nse-model-empty">' + tH('Loading…') + '</p>';
       loadImportsList().then(function () { openCsWorkflowModal(); });
       return;
     }
@@ -745,7 +745,7 @@
           card.className = 'rp-card cs-session-recent-card';
           card.setAttribute('role', 'button');
           card.setAttribute('tabindex', '0');
-          card.setAttribute('aria-label', 'Open ' + (b.name || 'Untitled Session'));
+          card.setAttribute('aria-label', tF('Open {name}').replace('{name}', b.name || tF('Untitled Session')));
 
           var media = document.createElement('div');
           media.className = 'rp-card-media';
@@ -766,8 +766,8 @@
           var del = document.createElement('button');
           del.type = 'button';
           del.className = 'cs-session-recent-del';
-          del.title = 'Delete session';
-          del.setAttribute('aria-label', 'Delete session');
+          del.title = tF('Delete session');
+          del.setAttribute('aria-label', tF('Delete session'));
           del.innerHTML =
             '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
             'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -775,7 +775,7 @@
               '<line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
           del.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (!window.confirm('Delete "' + (b.name || 'this session') + '"? This removes the session and its history. This cannot be undone.')) return;
+            if (!window.confirm(tF('Delete "{name}"? This removes the session and its history. This cannot be undone.').replace('{name}', b.name || tF('this session')))) return;
             // Drop the card now (the local list is already updated) and only
             // re-sync once the server has confirmed the delete.
             card.remove();
@@ -871,7 +871,7 @@
     if (!session.steps || session.steps.length === 0) {
       var empty = document.createElement('p');
       empty.className = 'cs-session-tree-empty';
-      empty.textContent = 'No images yet — start by adding a flow.';
+      empty.textContent = tF('No images yet — start by adding a flow.');
       tree.appendChild(empty);
       return;
     }
@@ -909,7 +909,7 @@
       var outputsHtml = imgs.length > 1
         ? '<div class="cs-session-node-outputs">' +
             imgs.map(function (u) {
-              return '<a class="cs-session-node-output" href="' + u + '" target="_blank" rel="noopener" title="Open full image">' +
+              return '<a class="cs-session-node-output" href="' + u + '" target="_blank" rel="noopener" title="' + tH('Open full image') + '">' +
                        '<img src="' + u + '" alt="' + escHtml(step.flowLabel || 'Output') + '" loading="lazy">' +
                      '</a>';
             }).join('') +
@@ -919,14 +919,14 @@
       var canOpen = step.flowCategory === 'create' || step.flowCategory === 'refine' || step.flowCategory === 'mix';
       var openBtnHtml = canOpen
         ? '<button type="button" class="cs-session-node-open" data-cs-open-flow="1" ' +
-            'aria-label="Open this flow" title="Open this flow">' +
+            'aria-label="' + tH('Open this flow') + '" title="' + tH('Open this flow') + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>' +
-            '<span>Open</span>' +
+            '<span>' + tH('Open') + '</span>' +
           '</button>'
         : '';
 
       var delBtnHtml =
-        '<button type="button" class="cs-session-node-del" aria-label="Delete this step" title="Delete this step">' +
+        '<button type="button" class="cs-session-node-del" aria-label="' + tH('Delete this step') + '" title="' + tH('Delete this step') + '">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" ' +
           'stroke-linecap="round" stroke-linejoin="round">' +
             '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>' +
@@ -959,8 +959,8 @@
             '<span class="cs-session-node-index">' + (stepIdx + 1) + '</span>' +
             '<span class="cs-session-node-name">' + escHtml(step.flowLabel || 'Step') + '</span>' +
             (isGenerating
-              ? '<span class="cs-session-node-badge cs-session-node-badge--generating">Generating…</span>'
-              : (isSelected ? '<span class="cs-session-node-badge">Selected</span>' : '')) +
+              ? '<span class="cs-session-node-badge cs-session-node-badge--generating">' + tH('Generating…') + '</span>'
+              : (isSelected ? '<span class="cs-session-node-badge">' + tH('Selected') + '</span>' : '')) +
           '</div>' +
         '</div>' +
         openBtnHtml +
@@ -977,7 +977,7 @@
       if (delBtn) {
         delBtn.addEventListener('click', function (ev) {
           ev.stopPropagation();
-          if (!window.confirm('Delete this step ("' + (step.flowLabel || 'Step') + '")? This cannot be undone.')) return;
+          if (!window.confirm(tF('Delete this step ("{name}")? This cannot be undone.').replace('{name}', step.flowLabel || tF('Step')))) return;
           sessionDeleteStep(session, step.id);
         });
       }
@@ -999,7 +999,7 @@
         if (body && !node.querySelector('.cs-session-node-badge')) {
           var b = document.createElement('span');
           b.className = 'cs-session-node-badge';
-          b.textContent = 'Selected';
+          b.textContent = tF('Selected');
           body.appendChild(b);
         }
         session.steps.forEach(function (s) { s.selected = s.id === step.id; });
@@ -1224,7 +1224,7 @@
     var category = step.flowCategory;
     if (category !== 'create' && category !== 'refine' && category !== 'mix') return;
     var slug = sessionResolveSlug(step);
-    if (!slug) { alert('No se pudo resolver el flow de este paso.'); return; }
+    if (!slug) { alert(tF('Could not work out which flow made this step.')); return; }
 
     var parent = step.parentId
       ? (session.steps || []).find(function (s) { return s.id === step.parentId; })
@@ -1316,10 +1316,10 @@
     var hasBase = !!(step && step.imageUrl);
     if (hasBase) {
       thumb.innerHTML = '<img src="' + step.imageUrl + '" alt="">';
-      label.textContent = 'Base: ' + (step.flowLabel || 'previous step');
+      label.textContent = tF('Base:') + ' ' + (step.flowLabel || tF('previous step'));
     } else {
       thumb.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>';
-      label.textContent = 'New image';
+      label.textContent = tF('New image');
     }
     // Show/hide Mix section depending on whether there is a base image
     var grid = document.getElementById('cs-session-flow-grid');
@@ -1444,7 +1444,7 @@
         var baseImg = sessionStepImage(step);
 
         if (needsBase && !baseImg) {
-          alert('Import or generate an image in this session first — Refine flows run on the selected image.');
+          alert(tF('Import or generate an image in this session first — Refine flows run on the selected image.'));
           return;
         }
 
@@ -1609,7 +1609,7 @@
           ok = !!(check && check.steps && check.steps.some(function (s) { return s.id === step.id; }));
         } catch (_) {}
         if (!ok && /^data:/.test(finalUrl)) {
-          alert('The image was added but could not be saved permanently (storage is full). It will stay until you reload.');
+          alert(tF('The image was added but could not be saved permanently (storage is full). It will stay until you reload.'));
         }
         sessionRenderWorkspace(session);
       }
@@ -1638,7 +1638,7 @@
         reader.onload = function (e) { sessionImportDataUrl(String(e.target.result || '')); };
         reader.readAsDataURL(blob);
       })
-      .catch(function () { alert('Could not load that image.'); });
+      .catch(function () { alert(tF('Could not load that image.')); });
   }
 
   if (sessionImageInput) {
@@ -1647,7 +1647,7 @@
       sessionImageInput.value = '';
       window.__sessionPickingImage = false;
       if (!file || !sessionActiveSession()) return;
-      if (!/^image\//.test(file.type)) { alert('Please choose an image file.'); return; }
+      if (!/^image\//.test(file.type)) { alert(tF('Please choose an image file.')); return; }
       var reader = new FileReader();
       reader.onload = function (e) { sessionImportDataUrl(e.target.result); };
       reader.readAsDataURL(file);
@@ -1710,8 +1710,8 @@
 
     if (deleteBtn) {
       deleteBtn.onclick = function () {
-        var name = session.name || 'this session';
-        if (!window.confirm('Delete "' + name + '"? This removes the session and its history. This cannot be undone.')) return;
+        var name = session.name || tF('this session');
+        if (!window.confirm(tF('Delete "{name}"? This removes the session and its history. This cannot be undone.').replace('{name}', name))) return;
         // Navigate only once the server has confirmed: leaving the page
         // immediately could cancel the DELETE that was still in flight, and
         // the session then came back on the next sync.
@@ -1750,7 +1750,7 @@
           URL.revokeObjectURL(url);
         })
         .catch(function (err) {
-          alert('Could not export this session: ' + (err && err.message || err));
+          alert(tF('Could not export this session:') + ' ' + (err && err.message || err));
         })
         .finally(function () {
           exportBtn.disabled = false;
@@ -1906,7 +1906,7 @@
             sessionOpenImportScopeModal(r.body);
           })
           .catch(function (err) {
-            alert('Could not read session file: ' + err.message);
+            alert(tF('Could not read session file:') + ' ' + err.message);
           });
       } else {
         var reader = new FileReader();
@@ -1915,7 +1915,7 @@
             var session = JSON.parse(e.target.result);
             sessionOpenImportScopeModal(session);
           } catch (err) {
-            alert('Could not read session file: ' + err.message);
+            alert(tF('Could not read session file:') + ' ' + err.message);
           }
         };
         reader.readAsText(file);
@@ -2162,7 +2162,7 @@
     if (!sessions.length) {
       const empty = document.createElement('div');
       empty.className = 'cs-session-empty';
-      empty.textContent = 'Todavía no hay sesiones guardadas. Genera algo en Scenes, Simple o Enhance y aparecerán aquí.';
+      empty.textContent = tF('No saved sessions yet. Generate something in Scenes, Simple or Enhance and they will show up here.');
       container.appendChild(empty);
       return;
     }
@@ -2250,7 +2250,7 @@
 
   if (historyClear) {
     historyClear.addEventListener('click', function () {
-      if (!window.confirm('Clear all history? This cannot be undone.')) return;
+      if (!window.confirm(tF('Clear all history? This cannot be undone.'))) return;
       try { localStorage.removeItem('oj-create-sessions-history-v1'); } catch (_) {}
       renderSessionsHistory();
     });
@@ -2355,7 +2355,7 @@
         toggle.className = 'cs-row-menu-toggle';
         toggle.setAttribute('aria-haspopup', 'true');
         toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-label', 'More actions');
+        toggle.setAttribute('aria-label', tF('More actions'));
         toggle.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg>';
 
         var menu = document.createElement('div');
@@ -2436,7 +2436,7 @@
         teardownRowMenuObserver();
         clearEmbedScripts();
         stripEmbeddedBodyClasses();
-        if (embedEl) embedEl.innerHTML = '<p class="cs-settings-detail-loading">Select an item on the left.</p>';
+        if (embedEl) embedEl.innerHTML = '<p class="cs-settings-detail-loading">' + tH('Select an item on the left.') + '</p>';
       }
     }
 
@@ -2458,7 +2458,7 @@
       teardownRowMenuObserver();
       clearEmbedScripts();
       stripEmbeddedBodyClasses();
-      embedEl.innerHTML = '<p class="cs-settings-detail-loading">Loading…</p>';
+      embedEl.innerHTML = '<p class="cs-settings-detail-loading">' + tH('Loading…') + '</p>';
 
       try {
         var res = await fetch(href, {
@@ -2472,7 +2472,7 @@
 
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var incomingMain = doc.querySelector('.main-wrap');
-        if (!incomingMain) throw new Error('Unexpected response');
+        if (!incomingMain) throw new Error(tF('Unexpected response'));
 
         // A target fragment (e.g. "…/settings#packages") means "just that
         // section", not "the whole page, scrolled" — Settings is nine
@@ -2521,7 +2521,7 @@
         if (token !== embedToken) return;
         embedEl.innerHTML =
           '<p class="cs-settings-detail-error">Couldn’t load this section here. '
-          + '<a href="' + href + '" target="_blank" rel="noopener">Open it in a new tab</a> instead.</p>';
+          + '<a href="' + href + '" target="_blank" rel="noopener">' + tH('Open it in a new tab') + '</a> ' + tH('instead.') + '</p>';
       }
     }
 

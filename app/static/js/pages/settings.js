@@ -89,7 +89,7 @@ function t(key, fallback, vars) {
 
   try {
     const res = await fetch('/api/models/settings');
-    if (!res.ok) throw new Error('Failed to load settings');
+    if (!res.ok) throw new Error(tF('Failed to load settings'));
     const json = await res.json();
     const dir = String(json?.settings?.outputDir || '').trim();
     inputEl.value = dir;
@@ -236,7 +236,7 @@ function t(key, fallback, vars) {
 
   try {
     const res = await fetch('/api/models/settings');
-    if (!res.ok) throw new Error('Failed to load settings');
+    if (!res.ok) throw new Error(tF('Failed to load settings'));
     const json = await res.json();
     const folder = String(json?.settings?.comfyModelsFolder || '').trim();
     inputEl.value = folder;
@@ -488,7 +488,7 @@ function t(key, fallback, vars) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'settings-prompt-group-btn' + (i === _activeGroupIndex ? ' is-active' : '');
-        btn.textContent = g.label;
+        btn.textContent = tF(g.label);
         btn.addEventListener('click', () => { _activeGroupIndex = i; renderTabs(); });
         switcherEl.appendChild(btn);
       });
@@ -736,7 +736,7 @@ function t(key, fallback, vars) {
 
   try {
     const res = await fetch('/api/models/settings/prompts');
-    if (!res.ok) throw new Error('Failed to load prompts.');
+    if (!res.ok) throw new Error(tF('Failed to load prompts.'));
 
     const json = await res.json();
     state.defaults = json.defaults || {};
@@ -1079,7 +1079,7 @@ function t(key, fallback, vars) {
         updateActivePromptPanel();
         setStatus(t('settings.promptEditor.promptsSaved', 'Prompts saved.'));
       } else {
-        setStatus(json.error || 'Failed to save prompts.', true);
+        setStatus(json.error || tF('Failed to save prompts.'), true);
       }
     } catch (error) {
       setStatus(t('settings.promptEditor.saveFailed', 'Failed to save prompts: ' + error.message, { reason: error.message }), true);
@@ -1101,7 +1101,7 @@ function t(key, fallback, vars) {
 
   try {
     const res = await fetch('/api/models/settings/studio-prompts');
-    if (!res.ok) throw new Error('Failed to load studio prompts.');
+    if (!res.ok) throw new Error(tF('Failed to load studio prompts.'));
     const json = await res.json();
     state.defaults = json.defaults || {};
     state.labels = json.labels || {};
@@ -1114,14 +1114,14 @@ function t(key, fallback, vars) {
       if (typeof state.promptActiveVariants[key] !== 'string') state.promptActiveVariants[key] = '';
       if (!(key in state.values)) state.values[key] = '';
     }
-    if (!state.keys.length) { setStatus('No studio prompts available.', true); return; }
+    if (!state.keys.length) { setStatus(tF('No studio prompts available.'), true); return; }
     state.activeKey = state.keys[0];
     updateSummary();
     renderTabs();
     updateActivePromptPanel();
     setStatus('');
   } catch (error) {
-    setStatus('Failed to load studio prompts: ' + error.message, true);
+    setStatus(tF('Failed to load studio prompts.') + ' ' + error.message, true);
   }
 })();
 
@@ -1342,7 +1342,7 @@ function t(key, fallback, vars) {
         updatePanel();
         setStatus(t('settings.promptEditor.composeSaved', 'Compose prompt saved.'));
       } else {
-        setStatus(json.error || 'Failed to save.', true);
+        setStatus(json.error || tF('Failed to save.'), true);
       }
     } catch (err) {
       setStatus(t('settings.promptEditor.composeSaveFailed', 'Failed to save: ' + err.message, { reason: err.message }), true);
@@ -1361,7 +1361,7 @@ function t(key, fallback, vars) {
 
   try {
     const res = await fetch('/api/models/settings/compose-prompts');
-    if (!res.ok) throw new Error('Failed to load compose prompts.');
+    if (!res.ok) throw new Error(tF('Failed to load compose prompts.'));
     const json = await res.json();
     state.defaultText = (json.defaults && json.defaults[KEY]) || '';
     state.label = (json.labels && json.labels[KEY]) || 'Compose Prompt';
@@ -1372,7 +1372,7 @@ function t(key, fallback, vars) {
     updatePanel();
     setStatus('');
   } catch (err) {
-    setStatus('Failed to load compose prompts: ' + err.message, true);
+    setStatus(tF('Failed to load compose prompts.') + ' ' + err.message, true);
   }
 })();
 

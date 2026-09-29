@@ -31,14 +31,14 @@ var _wfSaveBaseline = {};
 // folder-per-model naming convention (users' actual lora folders are rarely
 // that tidy). onPick(fullPath) fires when a leaf is clicked.
 function _fillLoraTreePanel(panelBody, onPick) {
-  panelBody.innerHTML = '<p class="nsc-step-hint">Loading…</p>';
+  panelBody.innerHTML = '<p class="nsc-step-hint">' + escHtml(tF('Loading…')) + '</p>';
   fetch('/api/models/comfy/loras')
     .then(function (r) { return r.json(); })
     .then(function (data) {
       var loras = Array.isArray(data.loras) ? data.loras : [];
       panelBody.innerHTML = '';
       if (!loras.length) {
-        panelBody.innerHTML = '<p class="nsc-step-hint">No LoRAs found — check ComfyUI is running and reachable.</p>';
+        panelBody.innerHTML = '<p class="nsc-step-hint">' + escHtml(tF('No LoRAs found — check ComfyUI is running and reachable.')) + '</p>';
         return;
       }
       var root = {};
@@ -62,7 +62,7 @@ function _fillLoraTreePanel(panelBody, onPick) {
       panelBody.appendChild(treeEl);
     })
     .catch(function () {
-      panelBody.innerHTML = '<p class="nsc-step-hint">Failed to load LoRA list.</p>';
+      panelBody.innerHTML = '<p class="nsc-step-hint">' + escHtml(tF('Failed to load LoRA list.')) + '</p>';
     });
 }
 
@@ -150,7 +150,7 @@ function _createWfTab(id) {
   _wfActivePreset[id] = (sp.wfActivePreset && sp.wfActivePreset[id]) || null;
   _wfSaveBaseline[id] = Object.assign({}, _wfAdvOverrides[id]);
 
-  body.innerHTML = '<p class="nse-model-empty">Loading…</p>';
+  body.innerHTML = '<p class="nse-model-empty">' + escHtml(tF('Loading…')) + '</p>';
   fetchFullRecord(id).then(function (record) {
     body.innerHTML = '';
     var nameEl = document.createElement('p');
@@ -172,15 +172,15 @@ function _createWfTab(id) {
     var headerEl = document.createElement('p');
     headerEl.className = 'nsc-param-title nsc-param-title--flex ncf-wf-adv-header';
     var headerLabel = document.createElement('span');
-    headerLabel.textContent = 'Custom params';
+    headerLabel.textContent = tF('Custom params');
     // Lights up once a manual edit makes the values below diverge from
     // whatever was last applied (a preset, Reset, or a previous save) —
     // see _syncSaveBtn(). Clicking it reveals the name field below.
     var saveBtn = document.createElement('button');
     saveBtn.type = 'button';
     saveBtn.className = 'ncf-wf-save-btn';
-    saveBtn.title = 'Save as new engine';
-    saveBtn.setAttribute('aria-label', 'Save as new engine');
+    saveBtn.title = tF('Save as new engine');
+    saveBtn.setAttribute('aria-label', tF('Save as new engine'));
     saveBtn.hidden = true;
     saveBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>';
     var stateLabel = document.createElement('span');
@@ -188,7 +188,7 @@ function _createWfTab(id) {
     var resetBtn = document.createElement('button');
     resetBtn.type = 'button';
     resetBtn.className = 'nse-modal-secondary ncf-wf-preset-reset';
-    resetBtn.textContent = 'Reset';
+    resetBtn.textContent = tF('Reset');
     headerEl.appendChild(headerLabel);
     headerEl.appendChild(saveBtn);
     headerEl.appendChild(stateLabel);
@@ -203,15 +203,15 @@ function _createWfTab(id) {
     var saveNameInput = document.createElement('input');
     saveNameInput.type = 'text';
     saveNameInput.className = 'nsc-input';
-    saveNameInput.placeholder = 'Name this engine…';
+    saveNameInput.placeholder = tF('Name this engine…');
     var saveConfirmBtn = document.createElement('button');
     saveConfirmBtn.type = 'button';
     saveConfirmBtn.className = 'nse-modal-apply ncf-wf-save-confirm';
-    saveConfirmBtn.textContent = 'Save';
+    saveConfirmBtn.textContent = tF('Save');
     var saveCancelBtn = document.createElement('button');
     saveCancelBtn.type = 'button';
     saveCancelBtn.className = 'nsc-icon-btn';
-    saveCancelBtn.setAttribute('aria-label', 'Cancel');
+    saveCancelBtn.setAttribute('aria-label', tF('Cancel'));
     saveCancelBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
     saveFormEl.appendChild(saveNameInput);
     saveFormEl.appendChild(saveConfirmBtn);
@@ -246,16 +246,16 @@ function _createWfTab(id) {
         })
         .then(function (res) {
           saveConfirmBtn.disabled = false;
-          if (!res.ok) { showToast((res.data && res.data.error) || 'Could not save engine.', 'error'); return; }
+          if (!res.ok) { showToast((res.data && res.data.error) || tF('Could not save engine.'), 'error'); return; }
           _wfSaveBaseline[id] = Object.assign({}, _wfAdvOverrides[id]);
           saveFormEl.hidden = true;
           saveNameInput.value = '';
           _syncSaveBtn();
-          showToast('Saved as "' + name + '".', 'success');
+          showToast(tF('Saved as "{name}".').replace('{name}', name), 'success');
         })
         .catch(function () {
           saveConfirmBtn.disabled = false;
-          showToast('Could not save engine.', 'error');
+          showToast(tF('Could not save engine.'), 'error');
         });
     }
     saveConfirmBtn.addEventListener('click', _submitSaveAs);
@@ -307,8 +307,8 @@ function _createWfTab(id) {
       var loraClearBtn = document.createElement('button');
       loraClearBtn.type = 'button';
       loraClearBtn.className = 'nsc-history-btn ncf-wf-lora-clear';
-      loraClearBtn.setAttribute('aria-label', 'Remove LoRA');
-      loraClearBtn.title = 'Remove LoRA';
+      loraClearBtn.setAttribute('aria-label', tF('Remove LoRA'));
+      loraClearBtn.title = tF('Remove LoRA');
       loraClearBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>';
       loraClearBtn.hidden = true;
 
@@ -332,7 +332,7 @@ function _createWfTab(id) {
           loraBtn.innerHTML = '<span>LoRA: ' + escHtml(_loraFileLabel(picked)) + '</span>';
           loraClearBtn.hidden = false;
         } else {
-          loraBtn.innerHTML = '<span>Choose a LoRA</span>';
+          loraBtn.innerHTML = '<span>' + escHtml(tF('Choose a LoRA')) + '</span>';
           loraClearBtn.hidden = true;
         }
       }
@@ -343,7 +343,7 @@ function _createWfTab(id) {
         _syncSaveBtn();
       });
       loraBtn.addEventListener('click', function () {
-        openOptionsPanel('Choose a LoRA', function (panelBody) {
+        openOptionsPanel(tF('Choose a LoRA'), function (panelBody) {
           _fillLoraTreePanel(panelBody, function (pickedPath) {
             _wfAdvOverrides[id][insertKey] = existingLoraNodeId
               ? [{ lora_name: pickedPath }]
@@ -426,7 +426,7 @@ function _createWfTab(id) {
     updateStateLabel();
     renderAdvInputs();
   }).catch(function () {
-    body.innerHTML = '<p class="nse-model-empty">Could not load workflow.</p>';
+    body.innerHTML = '<p class="nse-model-empty">' + escHtml(tF('Could not load workflow.')) + '</p>';
   });
 }
 

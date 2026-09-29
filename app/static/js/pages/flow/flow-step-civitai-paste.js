@@ -23,7 +23,7 @@ function renderCivitAIPaste(stepDef, el) {
   var openBtn = document.createElement('button');
   openBtn.type = 'button';
   openBtn.className = 'nsc-history-btn nsc-options-trigger';
-  openBtn.setAttribute('aria-label', 'Import from CivitAI');
+  openBtn.setAttribute('aria-label', tF('Import from CivitAI'));
   openBtn.innerHTML =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M5 3V1.5M11 3V1.5M1 7h14"/></svg>';
@@ -49,17 +49,17 @@ function renderCivitAIPaste(stepDef, el) {
   if (Array.isArray(stepDef.strip_buttons) && stepDef.strip_buttons.length) {
     var _STRIP_CFG = {
       remove_elements: {
-        label: 'No elements',
+        label: tF('No elements'),
         icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="17" x2="21" y2="17"/><line x1="17.5" y1="13.5" x2="17.5" y2="20.5"/></svg>',
         removeDesc: 'physical scene objects and props: furniture, vehicles (ship, boat, car...), weapons, tools, storage containers (crate, box...), navigational items (compass, map...), food, and any other tangible object placed in the scene.',
       },
       remove_characters: {
-        label: 'No characters',
+        label: tF('No characters'),
         icon: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="4" y1="4" x2="20" y2="20"/></svg>',
         removeDesc: 'characters and everything tied to them: people (1girl, solo...), body descriptions, clothing, accessories, hairstyles, poses, expressions, emotions, and character names.',
       },
       remove_background: {
-        label: 'No background',
+        label: tF('No background'),
         icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-5 4 5"/><line x1="3" y1="3" x2="21" y2="21"/></svg>',
         removeDesc: 'background and environment: settings, locations (outdoors, forest, city...), sky, ground, water, architecture, nature elements (trees, grass...), and weather conditions.',
       },
@@ -74,7 +74,7 @@ function renderCivitAIPaste(stepDef, el) {
     _styleAnchorTa.className = 'nsc-textarea';
     _styleAnchorTa.id = 'ncf-civitai-style-ta-' + stepId;
     _styleAnchorTa.rows = 3;
-    _styleAnchorTa.placeholder = 'Style anchor prompt…';
+    _styleAnchorTa.placeholder = tF('Style anchor prompt…');
     _styleAnchorTa.addEventListener('input', function () {
       setVal(stepId, 'positive_prompt', _styleAnchorTa.value.trim());
     });
@@ -142,7 +142,7 @@ function renderCivitAIPaste(stepDef, el) {
     _applyStripBtn = document.createElement('button');
     _applyStripBtn.type = 'button';
     _applyStripBtn.className = 'ncf-strip-apply';
-    _applyStripBtn.textContent = 'Apply';
+    _applyStripBtn.textContent = tF('Apply');
     _applyStripBtn.disabled = true;
 
     _restoreStripBtn = document.createElement('button');
@@ -219,7 +219,7 @@ function renderCivitAIPaste(stepDef, el) {
         console.warn('[civitai strip]', err);
       } finally {
         _applyStripBtn.classList.remove('is-loading');
-        _applyStripBtn.textContent = 'Apply';
+        _applyStripBtn.textContent = tF('Apply');
         _stripRow.querySelectorAll('.ncf-strip-btn').forEach(function (b) { b.disabled = false; });
       }
     });
@@ -290,19 +290,19 @@ function renderCivitAIPaste(stepDef, el) {
     applyBtn.disabled    = true;
     _matchedWfId         = null;
 
-    openOptionsPanel('CivitAI generation', function (body) {
+    openOptionsPanel(tF('CivitAI generation'), function (body) {
       panelContent.hidden = false;
       body.appendChild(panelContent);
     });
 
     if (!allImportsList.length) {
       // Imports not yet loaded — fetch now then re-populate
-      wfSelect.innerHTML = '<option value="">Loading workflows…</option>';
+      wfSelect.innerHTML = '<option value="">' + escHtml(tF('Loading workflows…')) + '</option>';
       fetch('/api/models/imports').then(function (r) { return r.json(); }).then(function (data) {
         allImportsList = Array.isArray(data.imports) ? data.imports : [];
         _populateWfSelect();
       }).catch(function () {
-        wfSelect.innerHTML = '<option value="">Failed to load — refresh page</option>';
+        wfSelect.innerHTML = '<option value="">' + escHtml(tF('Failed to load — refresh page')) + '</option>';
       });
     } else {
       _populateWfSelect();
@@ -367,7 +367,7 @@ function renderCivitAIPaste(stepDef, el) {
       html += _detRow('For reference', escHtml(reference.join(' · ')) +
         ' <em>— sampler settings apply only if the model matches; size comes from your aspect ratio</em>');
     }
-    detectedList.innerHTML = html || '<em>Nothing detected.</em>';
+    detectedList.innerHTML = html || '<em>' + escHtml(tF('Nothing detected.')) + '</em>';
     detectedEl.hidden = false;
   }
 
@@ -388,18 +388,18 @@ function renderCivitAIPaste(stepDef, el) {
 
   matchBtn.addEventListener('click', async function () {
     if (!_pending) {
-      matchList.innerHTML = '<p class="ncf-civ-error">Paste a CivitAI generation block first.</p>';
+      matchList.innerHTML = '<p class="ncf-civ-error">' + escHtml(tF('Paste a CivitAI generation block first.')) + '</p>';
       matchResults.hidden = false;
       return;
     }
     if (!wfSelect.value) {
-      matchList.innerHTML = '<p class="ncf-civ-error">Select a workflow from the dropdown above.</p>';
+      matchList.innerHTML = '<p class="ncf-civ-error">' + escHtml(tF('Select a workflow from the dropdown above.')) + '</p>';
       matchResults.hidden = false;
       return;
     }
     var wfId = wfSelect.value;
     matchBtn.disabled = true;
-    matchBtn.textContent = 'Matching…';
+    matchBtn.textContent = tF('Matching…');
     _ckptAdvancedKeys      = [];
     _loraAdvancedKeys      = [];
     _clipSkipAdvancedKeys  = [];
@@ -513,7 +513,7 @@ function renderCivitAIPaste(stepDef, el) {
       var samplerNote = pp.length
         ? (applyingSampler
             ? escHtml(pp.join(', ')) + ' — will be applied'
-            : escHtml(pp.join(', ')) + ' — <strong>not applied</strong>: without the model '
+            : escHtml(pp.join(', ')) + ' — <strong>' + escHtml(tF('not applied')) + '</strong>: without the model '
               + 'they were recorded on they would fight this engine. Keeping this '
               + 'flow&rsquo;s own quality preset instead.')
         : '';
@@ -539,7 +539,7 @@ function renderCivitAIPaste(stepDef, el) {
       matchList.innerHTML = '<p class="ncf-civ-error">Match failed: ' + escHtml(String(err)) + '</p>';
       matchResults.hidden = false;
     }
-    matchBtn.textContent = 'Match';
+    matchBtn.textContent = tF('Match');
     matchBtn.disabled = false;
   });
 

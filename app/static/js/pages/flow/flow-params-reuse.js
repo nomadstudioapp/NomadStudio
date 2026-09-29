@@ -254,7 +254,7 @@ function _reRenderWorkflowParamsStep(s) {
     // reopening a Session step, which restores params through this
     // same path.
     var stepsFooterEl = document.getElementById('ncf-steps-footer');
-    var newAdvBtn = contentEl.querySelector('button[aria-label="Advanced options"]');
+    var newAdvBtn = contentEl.querySelector('button[aria-label="' + escHtml(tF('Advanced options')) + '"]');
     var newAdvRow = newAdvBtn && newAdvBtn.closest('.nsc-param-title');
     if (newAdvRow && stepsFooterEl) {
       var stalePinned = stepsFooterEl.querySelector('.ncf-advanced-row--pinned');

@@ -84,7 +84,7 @@ window.CC = window.CC || {};
       .then(function (buf) {
         var entries = CC.zipRead(buf);
         var manifestBytes = entries['manifest.json'];
-        if (!manifestBytes) throw new Error('manifest.json not found in the .zip');
+        if (!manifestBytes) throw new Error(tF('manifest.json not found in the .zip'));
         var manifest = JSON.parse(new TextDecoder().decode(manifestBytes));
 
         CC.clearAll();
@@ -120,7 +120,7 @@ window.CC = window.CC || {};
         if (CC.fitStage) CC.fitStage();
       })
       .catch(function (err) {
-        window.alert('Could not load composition: ' + (err && err.message ? err.message : err));
+        window.alert(tF('Could not load composition:') + ' ' + (err && err.message ? err.message : err));
       });
   }
 

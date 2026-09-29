@@ -8,26 +8,26 @@
 <div class="rp-page-shell">
 
   <div class="nsc-topbar">
-    <a href="/nomad-studio#refine" class="cs-back-btn" aria-label="Back to Refine">
+    <a href="/nomad-studio#refine" class="cs-back-btn" aria-label="Back to Refine" data-i18n-attr="aria-label:tpl.back_to_refine">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      <span>BACK</span>
+      <span data-i18n="tpl.back">BACK</span>
     </a>
     <p class="cs-breadcrumb">
       <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       <a href="/nomad-studio#refine">Refine</a>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      <span>Presets</span>
+      <span data-i18n="tpl.presets">Presets</span>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      <span class="cs-breadcrumb-current">Photo Packs</span>
+      <span class="cs-breadcrumb-current" data-i18n="tpl.photo_packs">Photo Packs</span>
     </p>
   </div>
 
   <section class="rp-shell">
 
     <header class="rp-topbar">
-      <h1 class="rp-title">Photo Packs</h1>
-      <p class="rp-subtitle">Curated one-click looks. Pick a pack, drop your photo, done.</p>
+      <h1 class="rp-title" data-i18n="tpl.photo_packs">Photo Packs</h1>
+      <p class="rp-subtitle" data-i18n="tpl.curated_one_click_looks_pick_a">Curated one-click looks. Pick a pack, drop your photo, done.</p>
     </header>
 
     <div class="rp-grid">
@@ -45,7 +45,7 @@
       </a>
       {% endfor %}
       {% if not presets %}
-      <p class="rp-empty">No presets installed yet.</p>
+      <p class="rp-empty" data-i18n="tpl.no_presets_installed_yet">No presets installed yet.</p>
       {% endif %}
     </div>
 

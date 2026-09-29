@@ -14,73 +14,73 @@
     <p class="cs-breadcrumb">
       <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      <span class="cs-breadcrumb-current">Compose Import</span>
+      <span class="cs-breadcrumb-current" data-i18n="tpl.compose_import">Compose Import</span>
     </p>
   </div>
 
 <section class="models-import-layout">
   <article class="panel import-panel">
-    <h2 class="page-title">Compose Import</h2>
-    <p class="muted-note">Configure ComfyUI and import compose workflow JSON files.</p>
+    <h2 class="page-title" data-i18n="tpl.compose_import">Compose Import</h2>
+    <p class="muted-note" data-i18n="tpl.configure_comfyui_and_import_compose_workflow">Configure ComfyUI and import compose workflow JSON files.</p>
 
     <div class="import-subtitle-row import-subtitle-row-status">
-      <h3 class="import-subtitle">ComfyUI Server</h3>
+      <h3 class="import-subtitle" data-i18n="tpl.comfyui_server">ComfyUI Server</h3>
       <div class="subtitle-status-right">
-        <span class="info-tip" tabindex="0" aria-label="Set the ComfyUI API URI used by Compose workflows.">i
-          <span class="info-tip-text">Set the ComfyUI API URI used by Compose workflows.</span>
+        <span class="info-tip" tabindex="0" aria-label="Set the ComfyUI API URI used by Compose workflows." data-i18n-attr="aria-label:tpl.set_the_comfyui_api_uri_used">i
+          <span class="info-tip-text" data-i18n="tpl.set_the_comfyui_api_uri_used">Set the ComfyUI API URI used by Compose workflows.</span>
         </span>
         <div class="availability-chip" id="compose-import-availability-chip" aria-hidden="true">
           <span class="availability-led" id="compose-import-availability-led" aria-hidden="true"></span>
         </div>
-        <span class="availability-text" id="compose-import-availability-text" aria-live="polite">Checking ComfyUI...</span>
+        <span class="availability-text" id="compose-import-availability-text" aria-live="polite" data-i18n="tpl.checking_comfyui">Checking ComfyUI...</span>
       </div>
     </div>
 
     <div class="stack">
       <label>
-        ComfyUI URI
-        <input type="text" id="compose-import-comfy-uri" placeholder="http://127.0.0.1:8188" />
+        <span data-i18n="tpl.comfyui_uri">ComfyUI URI</span>
+        <input type="text" id="compose-import-comfy-uri" placeholder="http://127.0.0.1:8188" data-i18n-attr="placeholder:tpl.http_127_0_0_1_8188" />
       </label>
       <div class="btn-row">
-        <button type="button" class="btn" id="compose-import-test-connection">Test Connection</button>
+        <button type="button" class="btn" id="compose-import-test-connection" data-i18n="tpl.test_connection">Test Connection</button>
       </div>
-      <div class="preview" id="compose-import-comfy-status">Loading settings...</div>
+      <div class="preview" id="compose-import-comfy-status" data-i18n="tpl.loading_settings">Loading settings...</div>
     </div>
 
     <div class="import-subtitle-row">
-      <h3 class="import-subtitle">ComfyUI Workflow</h3>
-      <span class="info-tip" tabindex="0" aria-label="Import a compose workflow JSON and detect parameters automatically.">i
-        <span class="info-tip-text">Import a compose workflow JSON and detect parameters automatically.</span>
+      <h3 class="import-subtitle" data-i18n="tpl.comfyui_workflow">ComfyUI Workflow</h3>
+      <span class="info-tip" tabindex="0" aria-label="Import a compose workflow JSON and detect parameters automatically." data-i18n-attr="aria-label:tpl.import_a_compose_workflow_json_and">i
+        <span class="info-tip-text" data-i18n="tpl.import_a_compose_workflow_json_and">Import a compose workflow JSON and detect parameters automatically.</span>
       </span>
     </div>
 
     <div class="stack">
       <label>
-        Workflow Name
-        <input type="text" id="compose-import-name" placeholder="flux compose workflow" />
+        <span data-i18n="tpl.workflow_name">Workflow Name</span>
+        <input type="text" id="compose-import-name" placeholder="flux compose workflow" data-i18n-attr="placeholder:tpl.flux_compose_workflow" />
       </label>
 
       <label>
-        Workflow JSON
+        <span data-i18n="tpl.workflow_json">Workflow JSON</span>
         <input type="file" id="compose-workflow-file" class="hidden-file-input" accept=".json,application/json" />
       </label>
 
       <div class="btn-row">
-        <button type="button" class="btn" id="compose-workflow-file-trigger">Choose File</button>
-        <button type="button" class="btn primary" id="compose-save-workflow-btn" disabled>Save Import</button>
+        <button type="button" class="btn" id="compose-workflow-file-trigger" data-i18n="tpl.choose_file">Choose File</button>
+        <button type="button" class="btn primary" id="compose-save-workflow-btn" disabled data-i18n="tpl.save_import">Save Import</button>
       </div>
 
-      <div class="preview" id="compose-import-status">No file loaded.</div>
+      <div class="preview" id="compose-import-status" data-i18n="tpl.no_file_loaded">No file loaded.</div>
     </div>
   </article>
 
   <article class="panel import-panel">
-    <h2 class="page-title">Analysis</h2>
+    <h2 class="page-title" data-i18n="tpl.analysis">Analysis</h2>
     <div id="compose-analysis-output" class="stack"></div>
   </article>
 
   <article class="panel import-panel">
-    <h2 class="page-title">Saved Compose Imports</h2>
+    <h2 class="page-title" data-i18n="tpl.saved_compose_imports">Saved Compose Imports</h2>
     <div id="compose-saved-imports" class="stack"></div>
   </article>
 </section>

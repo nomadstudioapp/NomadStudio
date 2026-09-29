@@ -450,13 +450,13 @@
     const leftBtn = document.createElement('button');
     leftBtn.type = 'button';
     leftBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-left';
-    leftBtn.setAttribute('aria-label', 'Decrease value');
+    leftBtn.setAttribute('aria-label', tF('Decrease value'));
     leftBtn.innerHTML = '<span aria-hidden="true">&#9664;</span>';
 
     const rightBtn = document.createElement('button');
     rightBtn.type = 'button';
     rightBtn.className = 'btn numeric-stepper-btn numeric-stepper-btn-right';
-    rightBtn.setAttribute('aria-label', 'Increase value');
+    rightBtn.setAttribute('aria-label', tF('Increase value'));
     rightBtn.innerHTML = '<span aria-hidden="true">&#9654;</span>';
 
     const parent = inputEl.parentNode;

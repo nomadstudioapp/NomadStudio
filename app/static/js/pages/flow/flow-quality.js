@@ -26,9 +26,9 @@ function buildPresetsFromWorkflow(record) {
 
   function v(s) { var o = {}; if (key) o[key] = s; return o; }
   return [
-    { id: 'fast',     label: 'Fast',     sub: fast + ' steps' + cfgSuffix,   values: v(fast) },
-    { id: 'balanced', label: 'Balanced', sub: def  + ' steps' + cfgSuffix,   values: v(def)  },
-    { id: 'quality',  label: 'Max',      sub: qual + ' steps' + cfgSuffix,   values: v(qual) },
+    { id: 'fast',     label: tF('Fast'),     sub: tF('{n} steps').replace('{n}', fast) + cfgSuffix,   values: v(fast) },
+    { id: 'balanced', label: tF('Balanced'), sub: tF('{n} steps').replace('{n}', def) + cfgSuffix,   values: v(def)  },
+    { id: 'quality',  label: tF('Max'),      sub: tF('{n} steps').replace('{n}', qual) + cfgSuffix,   values: v(qual) },
   ];
 }
 

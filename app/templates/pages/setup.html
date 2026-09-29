@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nomad Studio — Setup</title>
+    <title data-i18n="tpl.nomad_studio_setup">Nomad Studio — Setup</title>
     <meta name="theme-color" content="#101014" />
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo/raccoon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/variables.css') }}?v={{ asset_v }}" />
@@ -52,7 +52,7 @@
       <h1 class="ns-title su-title" data-i18n="setup.title">Let's set up Nomad Studio</h1>
 
       <div class="su-layout">
-        <nav class="su-steps" id="su-steps" aria-label="Setup steps"></nav>
+        <nav class="su-steps" id="su-steps" aria-label="Setup steps" data-i18n-attr="aria-label:tpl.setup_steps"></nav>
 
         <section class="su-panel" aria-live="polite">
           <div class="su-panel-body" id="su-body"></div>

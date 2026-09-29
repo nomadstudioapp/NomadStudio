@@ -184,8 +184,8 @@ function showToast(message, type) {
       icon +
     '</svg>' +
     '<span class="ncf-toast-msg"></span>' +
-    '<button type="button" class="ncf-toast-close" aria-label="Dismiss">&times;</button>';
-  toast.querySelector('.ncf-toast-msg').textContent = String(message || (isError ? 'Something went wrong' : ''));
+    '<button type="button" class="ncf-toast-close" aria-label="' + escHtml(tF('Dismiss')) + '">&times;</button>';
+  toast.querySelector('.ncf-toast-msg').textContent = String(message || (isError ? tF('Something went wrong') : ''));
   var timer = setTimeout(remove, 7000);
   function remove() {
     clearTimeout(timer);

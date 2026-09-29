@@ -651,7 +651,7 @@
     var btn = document.createElement('button');
     btn.id = 'ns-session-return-btn';
     btn.type = 'button';
-    btn.textContent = '\u2190 Back to session';
+    btn.textContent = tF('\u2190 Back to session');
     btn.style.cssText = [
       'position:fixed', 'left:50%', 'bottom:22px', 'transform:translateX(-50%)',
       'z-index:9999', 'display:inline-flex', 'align-items:center', 'gap:8px',
@@ -685,7 +685,7 @@
     // promote the button to a positive "Done" state.
     var iv = setInterval(function () {
       if (!getPending() && wantsReturn()) {
-        btn.textContent = '\u2713 Done \u2014 back to session';
+        btn.textContent = tF('\u2713 Done \u2014 back to session');
         btn.style.background = '#f0c060';
         btn.style.color = '#1a1200';
         btn.style.borderColor = '#f0c060';

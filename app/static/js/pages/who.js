@@ -103,7 +103,7 @@
         }
       })
       .catch(function () {
-        pinError.textContent = 'No se pudo verificar el PIN, intenta de nuevo';
+        pinError.textContent = tF('Could not check the PIN, please try again');
         pinError.classList.add('ns-show');
         resetPin();
       });
@@ -160,11 +160,11 @@
   document.getElementById('ns-add-save').addEventListener('click', function () {
     const name = addName.value.trim();
     if (!name) { addName.focus(); return; }
-    if (!selectedAvatar) { alert('Elige un avatar para el perfil'); return; }
+    if (!selectedAvatar) { alert(tF('Choose an avatar for the profile')); return; }
 
     const pin = pinToggle.checked ? pinInput.value.trim() : null;
     if (pinToggle.checked && pin.length !== 4) {
-      alert('El PIN debe tener 4 dígitos');
+      alert(tF('The PIN must have 4 digits'));
       return;
     }
 

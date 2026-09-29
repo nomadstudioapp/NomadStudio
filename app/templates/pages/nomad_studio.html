@@ -13,20 +13,20 @@
   <!-- ── VIEW: Main category selection ───────────────────────────────────── -->
   <div class="cs-view cs-view--main" id="cs-view-main">
 
-    <a href="{{ url_for('viewers.who_screen') }}" id="cs-logo-btn" class="cs-logo-btn cs-icon-btn" aria-label="Switch viewer">
+    <a href="{{ url_for('viewers.who_screen') }}" id="cs-logo-btn" class="cs-logo-btn cs-icon-btn" aria-label="Switch viewer" data-i18n-attr="aria-label:tpl.switch_viewer">
       <img id="cs-logo-btn-avatar" src="{{ viewer_avatar_url }}" alt="{{ viewer_name or 'NomadStudio' }}" class="cs-logo-btn-img">
       <span class="cs-mode-tip" id="cs-logo-btn-tip">{{ viewer_name or 'Switch viewer' }}</span>
     </a>
 
-    <a href="{{ url_for('main.mobile_page') }}" class="cs-mobile-mode-btn cs-icon-btn" id="cs-mobile-mode-btn" aria-label="Mobile mode">
+    <a href="{{ url_for('main.mobile_page') }}" class="cs-mobile-mode-btn cs-icon-btn" id="cs-mobile-mode-btn" aria-label="Mobile mode" data-i18n-attr="aria-label:tpl.mobile_mode">
       <i data-lucide="smartphone" aria-hidden="true"></i>
       <span class="cs-mode-tip" data-i18n="hub.mobileModeTip">Mobile mode</span>
     </a>
 
     <header class="cs-header" id="cs-header">
-      <h1 class="cs-title" id="cs-title">Nomad<span>&nbsp;Studio</span></h1>
+      <h1 class="cs-title" id="cs-title"><span data-i18n="tpl.nomad">Nomad</span><span>&nbsp;<span data-i18n="tpl.studio">Studio</span></span></h1>
       <p class="cs-subtitle" id="cs-subtitle" data-i18n="hub.subtitle">What do you want to create today?</p>
-      <div class="cs-mode-toggle" id="cs-mode-toggle" role="group" aria-label="Interface mode">
+      <div class="cs-mode-toggle" id="cs-mode-toggle" role="group" aria-label="Interface mode" data-i18n-attr="aria-label:tpl.interface_mode">
         <button class="cs-mode-btn" id="cs-mode-simple" data-mode="simple" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           <span data-i18n="hub.mode.simple">Simple</span>
@@ -45,7 +45,7 @@
       </div>
     </header>
 
-    <nav class="cs-grid cs-grid--hero" aria-label="Nomad Studio categories">
+    <nav class="cs-grid cs-grid--hero" aria-label="Nomad Studio categories" data-i18n-attr="aria-label:tpl.nomad_studio_categories">
 
       <a href="#" class="cs-card cs-card--create" data-cs-category="create" aria-label="Create">
         <div class="cs-card-icon" aria-hidden="true">
@@ -55,10 +55,10 @@
           <p class="cs-card-name" data-i18n="hub.cards.create.name">Create</p>
           <p class="cs-card-desc" data-i18n="hub.cards.create.desc">Generate images from an idea, a brief, or a prompt, with or without AI guidance.</p>
           <div class="cs-card-tag-row">
-            <span class="cs-tag">Simple</span>
-            <span class="cs-tag">Assist</span>
-            <span class="cs-tag">+ Style</span>
-            <span class="cs-tag">From Brief</span>
+            <span class="cs-tag" data-i18n="tpl.simple">Simple</span>
+            <span class="cs-tag" data-i18n="tpl.assist">Assist</span>
+            <span class="cs-tag" data-i18n="tpl.style">+ Style</span>
+            <span class="cs-tag" data-i18n="tpl.from_brief">From Brief</span>
           </div>
         </div>
       </a>
@@ -71,9 +71,9 @@
           <p class="cs-card-name" data-i18n="hub.cards.refine.name">Refine</p>
           <p class="cs-card-desc" data-i18n="hub.cards.refine.desc">Improve, upscale, or transform an existing image. Start from what you already have.</p>
           <div class="cs-card-tag-row">
-            <span class="cs-tag">Upscale</span>
-            <span class="cs-tag">Upscale + Detail</span>
-            <span class="cs-tag">Edit</span>
+            <span class="cs-tag" data-i18n="tpl.upscale">Upscale</span>
+            <span class="cs-tag" data-i18n="tpl.upscale_detail">Upscale + Detail</span>
+            <span class="cs-tag" data-i18n="tpl.edit">Edit</span>
           </div>
         </div>
       </a>
@@ -86,14 +86,14 @@
           <p class="cs-card-name" data-i18n="hub.cards.mix.name">Mix</p>
           <p class="cs-card-desc" data-i18n="hub.cards.mix.desc">Blend styles, merge references, or cross-pollinate images to create something new.</p>
           <div class="cs-card-tag-row">
-            <span class="cs-tag">Style Transfer</span>
-            <span class="cs-tag">Blend</span>
-            <span class="cs-tag">Variations</span>
+            <span class="cs-tag" data-i18n="tpl.style_transfer">Style Transfer</span>
+            <span class="cs-tag" data-i18n="tpl.blend">Blend</span>
+            <span class="cs-tag" data-i18n="tpl.variations">Variations</span>
           </div>
         </div>
       </a>
 
-      <a href="/album" class="cs-card cs-card--album" data-cs-category="album" aria-label="Album">
+      <a href="/album" class="cs-card cs-card--album" data-cs-category="album" aria-label="Album" data-i18n-attr="aria-label:tpl.album">
         <div class="cs-card-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M18 22H4a2 2 0 0 1-2-2V6"/><rect x="6" y="2" width="16" height="16" rx="2"/><circle cx="11" cy="8" r="2"/><path d="m22 14-1.9-1.9a2 2 0 0 0-2.8 0L10 18"/></svg>
         </div>
@@ -101,14 +101,14 @@
           <p class="cs-card-name" data-i18n="hub.cards.album.name">Album</p>
           <p class="cs-card-desc" data-i18n="hub.cards.album.desc">Browse your generated images, organize collections, and revisit your creative history.</p>
           <div class="cs-card-tag-row">
-            <span class="cs-tag">Gallery</span>
-            <span class="cs-tag">Collections</span>
-            <span class="cs-tag">History</span>
+            <span class="cs-tag" data-i18n="tpl.gallery">Gallery</span>
+            <span class="cs-tag" data-i18n="tpl.collections">Collections</span>
+            <span class="cs-tag" data-i18n="tpl.history">History</span>
           </div>
         </div>
       </a>
 
-      <a href="#" class="cs-card cs-card--session" data-cs-category="session" aria-label="Session">
+      <a href="#" class="cs-card cs-card--session" data-cs-category="session" aria-label="Session" data-i18n-attr="aria-label:tpl.session">
         <div class="cs-card-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>
         </div>
@@ -116,9 +116,9 @@
           <p class="cs-card-name" data-i18n="hub.cards.session.name">Session</p>
           <p class="cs-card-desc" data-i18n="hub.cards.session.desc">Build creative campaigns as Sessions, bundling images, flows and history into one portable package.</p>
           <div class="cs-card-tag-row">
-            <span class="cs-tag">Sessions</span>
-            <span class="cs-tag">Campaigns</span>
-            <span class="cs-tag">Export</span>
+            <span class="cs-tag" data-i18n="tpl.sessions">Sessions</span>
+            <span class="cs-tag" data-i18n="tpl.campaigns">Campaigns</span>
+            <span class="cs-tag" data-i18n="tpl.export">Export</span>
           </div>
         </div>
       </a>
@@ -131,8 +131,8 @@
           <p class="cs-card-name" data-i18n="hub.cards.build.name">Build</p>
           <p class="cs-card-desc" data-i18n="hub.cards.build.desc">Store reference characters and backgrounds, each with a name and notes, ready to reuse across flows.</p>
           <div class="cs-card-tag-row">
-            <span class="cs-tag">Characters</span>
-            <span class="cs-tag">Backgrounds</span>
+            <span class="cs-tag" data-i18n="tpl.characters">Characters</span>
+            <span class="cs-tag" data-i18n="tpl.backgrounds">Backgrounds</span>
             <span class="cs-tag">Depot</span>
           </div>
         </div>
@@ -146,7 +146,7 @@
   <div class="cs-view cs-view--create" id="cs-view-create" aria-hidden="true">
 
     <div class="cs-sub-header">
-      <button class="cs-back-btn" id="cs-back-btn" aria-label="Back to Nomad Studio">
+      <button class="cs-back-btn" id="cs-back-btn" aria-label="Back to Nomad Studio" data-i18n-attr="aria-label:tpl.back_to_nomad_studio">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         <span data-i18n="common.back">BACK</span>
       </button>
@@ -156,12 +156,12 @@
         <span class="cs-breadcrumb-current" id="cs-breadcrumb-current-main">Create</span>
       </p>
       {% if viewer_is_vanish %}
-      <a class="nsc-topbar-viewer nsc-topbar-vanish" href="{{ url_for('viewers.switch_viewer') }}" title="Vanish Session — nothing is saved. Click to end it.">
+      <a class="nsc-topbar-viewer nsc-topbar-vanish" href="{{ url_for('viewers.switch_viewer') }}" title="Vanish Session — nothing is saved. Click to end it." data-i18n-attr="title:tpl.vanish_session_nothing_is_saved_click">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 21c0-3 2-4 4-4s4 1 4 4M12 3a5 5 0 0 0-5 5v7l2-1.5 1.5 1.5L12 14l1.5 1.5L15 14l2 1.5V8a5 5 0 0 0-5-5z"/></svg>
-        <span>Vanish Session — nothing is saved</span>
+        <span data-i18n="tpl.vanish_session_nothing_is_saved">Vanish Session — nothing is saved</span>
       </a>
       {% elif viewer_name %}
-      <p class="nsc-topbar-viewer" title="Current session">
+      <p class="nsc-topbar-viewer" title="Current session" data-i18n-attr="title:tpl.current_session">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>{{ viewer_name }}</span>
       </p>
@@ -171,9 +171,9 @@
     <!-- ── Global workflow strip (Custom mode only) ─────────────────────── -->
     <div class="cs-workflow-strip" id="cs-workflow-strip" hidden>
       <svg class="cs-workflow-strip-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v6M14.5 17h6"/></svg>
-      <span class="cs-workflow-strip-label">Workflows:</span>
+      <span class="cs-workflow-strip-label" data-i18n="tpl.workflows">Workflows:</span>
       <div class="cs-workflow-chips" id="cs-workflow-chips"></div>
-      <button class="cs-workflow-edit-btn" id="cs-workflow-edit-btn" type="button">Edit</button>
+      <button class="cs-workflow-edit-btn" id="cs-workflow-edit-btn" type="button" data-i18n="tpl.edit">Edit</button>
     </div>
 
     {%- macro flow_icon(action) -%}
@@ -245,11 +245,11 @@
     {#- Real model brand marks (LobeHub Icons mono set), tinted via the card's
         accent color like every other icon — filled shapes, no stroke. -#}
     {%- macro qwen_logo() -%}
-      <svg viewBox="0 0 24 24" style="fill: var(--cs-card-accent, var(--accent)); stroke: none;" fill-rule="evenodd"><title>Qwen</title><path d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z"/></svg>
+      <svg viewBox="0 0 24 24" style="fill: var(--cs-card-accent, var(--accent)); stroke: none;" fill-rule="evenodd"><title data-i18n="tpl.qwen">Qwen</title><path d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z"/></svg>
     {%- endmacro -%}
 
     {%- macro flux_logo() -%}
-      <svg viewBox="0 0 24 24" style="fill: var(--cs-card-accent, var(--accent)); stroke: none;" fill-rule="evenodd"><title>Flux</title><path d="M0 20.683L12.01 2.5 24 20.683h-2.233L12.009 5.878 3.471 18.806h12.122l1.239 1.877H0z"/><path d="M8.069 16.724l2.073-3.115 2.074 3.115H8.069zM18.24 20.683l-5.668-8.707h2.177l5.686 8.707h-2.196zM19.74 11.676l2.13-3.19 2.13 3.19h-4.26z"/></svg>
+      <svg viewBox="0 0 24 24" style="fill: var(--cs-card-accent, var(--accent)); stroke: none;" fill-rule="evenodd"><title data-i18n="tpl.flux">Flux</title><path d="M0 20.683L12.01 2.5 24 20.683h-2.233L12.009 5.878 3.471 18.806h12.122l1.239 1.877H0z"/><path d="M8.069 16.724l2.073-3.115 2.074 3.115H8.069zM18.24 20.683l-5.668-8.707h2.177l5.686 8.707h-2.196zM19.74 11.676l2.13-3.19 2.13 3.19h-4.26z"/></svg>
     {%- endmacro -%}
 
     {%- macro refine_icon(action, group=none) -%}
@@ -331,7 +331,7 @@
 
     <div class="cs-create-body" id="cs-create-body">
 
-      <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-create" role="group" aria-label="Filter create flows by tag" hidden></aside>
+      <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-create" role="group" aria-label="Filter create flows by tag" hidden data-i18n-attr="aria-label:tpl.filter_create_flows_by_tag"></aside>
 
       <div class="cs-create-main">
 
@@ -341,7 +341,7 @@
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-create" hidden>No flows match.</p>
 
-        <div class="cs-sub-grid-groups" id="cs-sub-grid-create" aria-label="Create modes">
+        <div class="cs-sub-grid-groups" id="cs-sub-grid-create" aria-label="Create modes" data-i18n-attr="aria-label:tpl.create_modes">
           {% for group in create_flow_groups %}
           <div class="cs-group-block">
           <div class="cs-group-header" data-cs-group="{{ group.id }}">
@@ -383,7 +383,7 @@
           <div class="cs-group-header" data-cs-group="template-packs">
             <span class="cs-group-header-label" data-i18n-literal="Template Packs">Template Packs</span>
           </div>
-          <nav class="cs-sub-grid cs-sub-grid--hero" aria-label="Template Packs">
+          <nav class="cs-sub-grid cs-sub-grid--hero" aria-label="Template Packs" data-i18n-attr="aria-label:tpl.template_packs">
           {% for pack in template_packs %}
           <a href="{{ url_for('main.ns_create_pack_gallery_page', pack_slug=pack.slug) }}"
              class="cs-card cs-card--presets-hub cs-card--pack{% if not pack.cover_url %} cs-card--pack-nocover{% endif %}"
@@ -414,7 +414,7 @@
   <div class="cs-view cs-view--refine" id="cs-view-refine" aria-hidden="true">
 
     <div class="cs-sub-header">
-      <button class="cs-back-btn" id="cs-refine-back-btn" aria-label="Back to Nomad Studio">
+      <button class="cs-back-btn" id="cs-refine-back-btn" aria-label="Back to Nomad Studio" data-i18n-attr="aria-label:tpl.back_to_nomad_studio">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         <span data-i18n="common.back">Back</span>
       </button>
@@ -424,7 +424,7 @@
         <span class="cs-breadcrumb-current">Refine</span>
       </p>
       {% if viewer_name %}
-      <p class="nsc-topbar-viewer" title="Current session">
+      <p class="nsc-topbar-viewer" title="Current session" data-i18n-attr="title:tpl.current_session">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>{{ viewer_name }}</span>
       </p>
@@ -433,7 +433,7 @@
 
     <div class="cs-create-body" id="cs-refine-body">
 
-      <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-refine" role="group" aria-label="Filter refine flows by tag" hidden></aside>
+      <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-refine" role="group" aria-label="Filter refine flows by tag" hidden data-i18n-attr="aria-label:tpl.filter_refine_flows_by_tag"></aside>
 
       <div class="cs-create-main">
 
@@ -443,7 +443,7 @@
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-refine" hidden>No flows match.</p>
 
-        <div class="cs-sub-grid-groups" id="cs-sub-grid-refine" aria-label="Refine modes">
+        <div class="cs-sub-grid-groups" id="cs-sub-grid-refine" aria-label="Refine modes" data-i18n-attr="aria-label:tpl.refine_modes">
           {% for group in refine_flow_groups %}
           <div class="cs-group-block">
           <div class="cs-group-header" data-cs-group="{{ group.id }}">
@@ -514,7 +514,7 @@
   <div class="cs-view cs-view--mix" id="cs-view-mix" aria-hidden="true">
 
     <div class="cs-sub-header">
-      <button class="cs-back-btn" id="cs-mix-back-btn" aria-label="Back to Nomad Studio">
+      <button class="cs-back-btn" id="cs-mix-back-btn" aria-label="Back to Nomad Studio" data-i18n-attr="aria-label:tpl.back_to_nomad_studio">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         <span data-i18n="common.back">Back</span>
       </button>
@@ -524,7 +524,7 @@
         <span class="cs-breadcrumb-current">Mix</span>
       </p>
       {% if viewer_name %}
-      <p class="nsc-topbar-viewer" title="Current session">
+      <p class="nsc-topbar-viewer" title="Current session" data-i18n-attr="title:tpl.current_session">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>{{ viewer_name }}</span>
       </p>
@@ -533,7 +533,7 @@
 
     <div class="cs-create-body" id="cs-mix-body">
 
-      <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-mix" role="group" aria-label="Filter mix flows by tag" hidden></aside>
+      <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-mix" role="group" aria-label="Filter mix flows by tag" hidden data-i18n-attr="aria-label:tpl.filter_mix_flows_by_tag"></aside>
 
       <div class="cs-create-main">
 
@@ -543,7 +543,7 @@
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-mix" hidden>No flows match.</p>
 
-        <div class="cs-sub-grid-groups" id="cs-sub-grid-mix" aria-label="Mix modes">
+        <div class="cs-sub-grid-groups" id="cs-sub-grid-mix" aria-label="Mix modes" data-i18n-attr="aria-label:tpl.mix_modes">
           {% for group in mix_flow_groups %}
           <div class="cs-group-block">
           <div class="cs-group-header" data-cs-group="{{ group.id }}">
@@ -587,17 +587,17 @@
   <div class="cs-view cs-view--session" id="cs-view-session" aria-hidden="true">
 
     <div class="cs-sub-header">
-      <button class="cs-back-btn" id="cs-session-back-btn" aria-label="Back to Nomad Studio">
+      <button class="cs-back-btn" id="cs-session-back-btn" aria-label="Back to Nomad Studio" data-i18n-attr="aria-label:tpl.back_to_nomad_studio">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         <span data-i18n="common.back">Back</span>
       </button>
       <p class="cs-breadcrumb">
         <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-        <span class="cs-breadcrumb-current" id="cs-session-breadcrumb">Session</span>
+        <span class="cs-breadcrumb-current" id="cs-session-breadcrumb" data-i18n="tpl.session">Session</span>
       </p>
       {% if viewer_name %}
-      <p class="nsc-topbar-viewer" title="Current session">
+      <p class="nsc-topbar-viewer" title="Current session" data-i18n-attr="title:tpl.current_session">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>{{ viewer_name }}</span>
       </p>
@@ -610,20 +610,20 @@
       <!-- New/Import — same round-button widget language as .cs-card-zoom
            (right side), mirrored on the left instead of two full hero
            cards that dwarfed the actual content (Recent sessions). -->
-      <div class="cs-card-zoom cs-session-entry-actions" aria-label="Session entry">
-        <button class="cs-card-zoom-btn" id="cs-session-create-btn" type="button" aria-label="New Session">
+      <div class="cs-card-zoom cs-session-entry-actions" aria-label="Session entry" data-i18n-attr="aria-label:tpl.session_entry">
+        <button class="cs-card-zoom-btn" id="cs-session-create-btn" type="button" aria-label="New Session" data-i18n-attr="aria-label:tpl.new_session_2">
           <svg viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
-          <span class="cs-mode-tip">New session</span>
+          <span class="cs-mode-tip" data-i18n="tpl.new_session">New session</span>
         </button>
-        <button class="cs-card-zoom-btn" id="cs-session-import-btn" type="button" aria-label="Import Session">
+        <button class="cs-card-zoom-btn" id="cs-session-import-btn" type="button" aria-label="Import Session" data-i18n-attr="aria-label:tpl.import_session">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span class="cs-mode-tip">Import session (.zip)</span>
+          <span class="cs-mode-tip" data-i18n="tpl.import_session_zip">Import session (.zip)</span>
         </button>
       </div>
 
       <!-- Recent sessions -->
       <div class="cs-session-recent" id="cs-session-recent" hidden>
-        <nav class="rp-grid cs-session-recent-list" id="cs-session-recent-list" aria-label="Sessions"></nav>
+        <nav class="rp-grid cs-session-recent-list" id="cs-session-recent-list" aria-label="Sessions" data-i18n-attr="aria-label:tpl.sessions"></nav>
       </div>
 
     </div><!-- /cs-session-entry -->
@@ -651,26 +651,26 @@
   <div class="nse-modal-backdrop nse-modal-backdrop--panel" id="cs-session-new-modal" role="dialog" aria-modal="true" aria-labelledby="cs-session-modal-title" hidden>
     <div class="nse-modal nse-modal--panel nse-modal--session-new">
       <header class="nse-modal-header">
-        <span class="nse-modal-title" id="cs-session-modal-title">New Session</span>
-        <button class="nse-modal-close" id="cs-session-modal-close" aria-label="Close">
+        <span class="nse-modal-title" id="cs-session-modal-title" data-i18n="tpl.new_session_2">New Session</span>
+        <button class="nse-modal-close" id="cs-session-modal-close" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </header>
       <div class="nse-modal-body cs-session-modal-body">
-        <p class="cs-session-modal-hint">Give your Session a name. You can always change it later.</p>
+        <p class="cs-session-modal-hint" data-i18n="tpl.give_your_session_a_name_you">Give your Session a name. You can always change it later.</p>
         <!-- .nsc-step-label, not .nsc-field-label: this panel's section
              headings have to read like a flow's steps panel (uppercase, xs,
              0.12em) — the field label is the small inline kind used inside a
              parameters row. -->
         <div class="nsc-field-row nsc-field-row--compose cs-session-modal-field">
-          <label class="nsc-step-label" for="cs-session-modal-name-input">Session name</label>
-          <input class="nsc-input" id="cs-session-modal-name-input" type="text" placeholder="e.g. Cologne Campaign" maxlength="80" autocomplete="off">
+          <label class="nsc-step-label" for="cs-session-modal-name-input" data-i18n="tpl.session_name">Session name</label>
+          <input class="nsc-input" id="cs-session-modal-name-input" type="text" placeholder="e.g. Cologne Campaign" maxlength="80" autocomplete="off" data-i18n-attr="placeholder:tpl.e_g_cologne_campaign">
         </div>
         <!-- One toggle instead of two radios. The checkbox keeps the radios'
              name/value, so sessionSelectedScope() reads it unchanged: checked
              is "all", unchecked falls back to "user". -->
         <div class="nsc-field-row cs-session-modal-field cs-session-scope-row" id="cs-session-modal-scope-row">
-          <label class="nsc-step-label" for="cs-session-modal-scope-input">Who can see it?</label>
+          <label class="nsc-step-label" for="cs-session-modal-scope-input" data-i18n="tpl.who_can_see_it">Who can see it?</label>
           <label class="nsc-toggle-wrap cs-session-scope-toggle">
             <input class="nsc-toggle-input" id="cs-session-modal-scope-input" type="checkbox" name="cs-session-modal-scope" value="all">
             <span class="nsc-toggle-track"></span>
@@ -682,7 +682,7 @@
         <!-- Same button as a flow's "Generate Image" (.nss-generate-scenes-btn:
              pill, 700, uppercase-ish tracking, accent fill) so the primary
              action of a panel looks the same wherever the panel is. -->
-        <button class="nss-generate-scenes-btn cs-session-modal-apply" id="cs-session-modal-confirm" type="button" style="--nss-accent:var(--accent)">Create Session</button>
+        <button class="nss-generate-scenes-btn cs-session-modal-apply" id="cs-session-modal-confirm" type="button" style="--nss-accent:var(--accent)" data-i18n="tpl.create_session">Create Session</button>
       </footer>
     </div>
   </div>
@@ -691,26 +691,26 @@
   <div class="nse-modal-backdrop" id="cs-session-import-scope-modal" role="dialog" aria-modal="true" aria-labelledby="cs-session-import-scope-title" hidden>
     <div class="nse-modal nse-modal--session-new">
       <header class="nse-modal-header">
-        <span class="nse-modal-title" id="cs-session-import-scope-title">Import Session</span>
-        <button class="nse-modal-close" id="cs-session-import-scope-close" aria-label="Close">
+        <span class="nse-modal-title" id="cs-session-import-scope-title" data-i18n="tpl.import_session">Import Session</span>
+        <button class="nse-modal-close" id="cs-session-import-scope-close" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </header>
       <div class="nse-modal-body cs-session-modal-body">
-        <p class="cs-session-modal-hint">Who should be able to see this imported Session?</p>
+        <p class="cs-session-modal-hint" data-i18n="tpl.who_should_be_able_to_see">Who should be able to see this imported Session?</p>
         <div class="nsc-field-row cs-session-modal-field cs-session-scope-row">
           <label class="cs-session-scope-option">
             <input type="radio" name="cs-session-import-scope" value="user" checked>
-            <span>Just me</span>
+            <span data-i18n="tpl.just_me">Just me</span>
           </label>
           <label class="cs-session-scope-option">
             <input type="radio" name="cs-session-import-scope" value="all">
-            <span>Everyone</span>
+            <span data-i18n="tpl.everyone">Everyone</span>
           </label>
         </div>
       </div>
       <footer class="nse-modal-footer">
-        <button class="nse-modal-apply cs-session-modal-apply" id="cs-session-import-scope-confirm" type="button">Import</button>
+        <button class="nse-modal-apply cs-session-modal-apply" id="cs-session-import-scope-confirm" type="button" data-i18n="tpl.import">Import</button>
       </footer>
     </div>
   </div>
@@ -719,27 +719,27 @@
   <div class="cs-settings-panel" id="cs-settings-panel">
     <div class="cs-settings-content" id="cs-settings-content">
       <div class="cs-settings-header">
-        <h3>Settings</h3>
-        <button class="cs-settings-close" id="cs-settings-close" aria-label="Close settings">
+        <h3 data-i18n="tpl.settings">Settings</h3>
+        <button class="cs-settings-close" id="cs-settings-close" aria-label="Close settings" data-i18n-attr="aria-label:tpl.close_settings">
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="cs-settings-body" id="cs-settings-body">
 
         <div class="cs-settings-group">
-          <p class="cs-settings-group-label">General</p>
+          <p class="cs-settings-group-label" data-i18n="tpl.general">General</p>
           <a href="{{ url_for('main.settings_page') }}" class="cs-settings-item" data-cs-settings-href="{{ url_for('main.settings_page') }}">
             <span class="cs-settings-item-icon" aria-hidden="true"><i data-lucide="settings"></i></span>
             <span class="cs-settings-item-text">
-              <span class="cs-settings-item-name">Settings</span>
-              <span class="cs-settings-item-desc">ComfyUI connection and Output folder</span>
+              <span class="cs-settings-item-name" data-i18n="tpl.settings">Settings</span>
+              <span class="cs-settings-item-desc" data-i18n="tpl.comfyui_connection_and_output_folder">ComfyUI connection and Output folder</span>
             </span>
           </a>
           <a href="{{ url_for('main.settings_page') }}#packages" class="cs-settings-item" data-cs-settings-href="{{ url_for('main.settings_page') }}#packages">
             <span class="cs-settings-item-icon" aria-hidden="true"><i data-lucide="package"></i></span>
             <span class="cs-settings-item-text">
-              <span class="cs-settings-item-name">Packages</span>
-              <span class="cs-settings-item-desc">Install and manage engine &amp; flow packages</span>
+              <span class="cs-settings-item-name" data-i18n="tpl.packages">Packages</span>
+              <span class="cs-settings-item-desc"><span data-i18n="tpl.install_and_manage_packages">Install and manage engine &amp; flow packages</span></span>
             </span>
           </a>
           <a href="{{ url_for('main.settings_page') }}#agents" class="cs-settings-item" data-cs-settings-href="{{ url_for('main.settings_page') }}#agents">
@@ -752,26 +752,26 @@
         </div>
 
         <div class="cs-settings-group">
-          <p class="cs-settings-group-label">Models</p>
+          <p class="cs-settings-group-label" data-i18n="tpl.models_2">Models</p>
           <a href="{{ url_for('main.models_import_page') }}" class="cs-settings-item cs-settings-item--model" data-cs-settings-href="{{ url_for('main.models_import_page') }}">
             <span class="cs-settings-item-led" data-cs-led-mirror="nav-led-images" aria-hidden="true"></span>
             <span class="cs-settings-item-text">
-              <span class="cs-settings-item-name">Images</span>
-              <span class="cs-settings-item-desc">Import checkpoints, LoRAs &amp; ComfyUI models</span>
+              <span class="cs-settings-item-name" data-i18n="tpl.images">Images</span>
+              <span class="cs-settings-item-desc"><span data-i18n="tpl.import_checkpoints_loras_models">Import checkpoints, LoRAs &amp; ComfyUI models</span></span>
             </span>
           </a>
           <a href="{{ url_for('main.models_chat_page') }}" class="cs-settings-item cs-settings-item--model" data-cs-settings-href="{{ url_for('main.models_chat_page') }}">
             <span class="cs-settings-item-led" data-cs-led-mirror="nav-led-chat" aria-hidden="true"></span>
             <span class="cs-settings-item-text">
-              <span class="cs-settings-item-name">Prompts</span>
-              <span class="cs-settings-item-desc">Prompt-assist model configuration</span>
+              <span class="cs-settings-item-name" data-i18n="tpl.prompts">Prompts</span>
+              <span class="cs-settings-item-desc" data-i18n="tpl.prompt_assist_model_configuration">Prompt-assist model configuration</span>
             </span>
           </a>
           <a href="{{ url_for('main.models_vision_page') }}" class="cs-settings-item cs-settings-item--model" data-cs-settings-href="{{ url_for('main.models_vision_page') }}">
             <span class="cs-settings-item-led" data-cs-led-mirror="nav-led-vision" aria-hidden="true"></span>
             <span class="cs-settings-item-text">
-              <span class="cs-settings-item-name">Vision</span>
-              <span class="cs-settings-item-desc">Vision / describe model configuration</span>
+              <span class="cs-settings-item-name" data-i18n="tpl.vision">Vision</span>
+              <span class="cs-settings-item-desc" data-i18n="tpl.vision_describe_model_configuration">Vision / describe model configuration</span>
             </span>
           </a>
         </div>
@@ -783,13 +783,13 @@
   <!-- ── Settings detail flyout (opens to the right of the settings panel) ── -->
   <div class="cs-settings-detail" id="cs-settings-detail">
     <div class="cs-settings-detail-header">
-      <span class="cs-settings-detail-title" id="cs-settings-detail-title">Settings</span>
-      <button class="cs-settings-detail-close" id="cs-settings-detail-close" aria-label="Close">
+      <span class="cs-settings-detail-title" id="cs-settings-detail-title" data-i18n="tpl.settings">Settings</span>
+      <button class="cs-settings-detail-close" id="cs-settings-detail-close" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
         <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="cs-settings-detail-body" id="cs-settings-detail-embed">
-      <p class="cs-settings-detail-loading">Select an item on the left.</p>
+      <p class="cs-settings-detail-loading" data-i18n="tpl.select_an_item_on_the_left">Select an item on the left.</p>
     </div>
   </div>
 
@@ -798,40 +798,40 @@
 
   <!-- ── Card size zoom (reset/+/-, right side, under History) ──────────── -->
   <div class="cs-card-zoom" id="cs-card-zoom" hidden>
-    <button class="cs-card-zoom-btn" id="cs-card-zoom-reset" type="button" aria-label="Reset card size">
+    <button class="cs-card-zoom-btn" id="cs-card-zoom-reset" type="button" aria-label="Reset card size" data-i18n-attr="aria-label:tpl.reset_card_size">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-      <span class="cs-mode-tip">Reset card size</span>
+      <span class="cs-mode-tip" data-i18n="tpl.reset_card_size">Reset card size</span>
     </button>
-    <button class="cs-card-zoom-btn" id="cs-card-zoom-in" type="button" aria-label="Larger cards">
+    <button class="cs-card-zoom-btn" id="cs-card-zoom-in" type="button" aria-label="Larger cards" data-i18n-attr="aria-label:tpl.larger_cards">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-      <span class="cs-mode-tip">Larger cards</span>
+      <span class="cs-mode-tip" data-i18n="tpl.larger_cards">Larger cards</span>
     </button>
-    <button class="cs-card-zoom-btn" id="cs-card-zoom-out" type="button" aria-label="Smaller cards">
+    <button class="cs-card-zoom-btn" id="cs-card-zoom-out" type="button" aria-label="Smaller cards" data-i18n-attr="aria-label:tpl.smaller_cards">
       <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
-      <span class="cs-mode-tip">Smaller cards</span>
+      <span class="cs-mode-tip" data-i18n="tpl.smaller_cards">Smaller cards</span>
     </button>
   </div>
 
   <!-- ── Filter sidebar toggle (left side, mirrors the card-zoom widget) ─── -->
   <div class="cs-card-zoom cs-filter-toggle" id="cs-filter-toggle" hidden>
     <button class="cs-card-zoom-btn" id="cs-filter-toggle-btn" type="button"
-            aria-label="Hide filters" aria-pressed="false">
+            aria-label="Hide filters" aria-pressed="false" data-i18n-attr="aria-label:tpl.hide_filters">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
-      <span class="cs-mode-tip" data-cs-filter-tip>Hide filters</span>
+      <span class="cs-mode-tip" data-cs-filter-tip data-i18n="tpl.hide_filters">Hide filters</span>
     </button>
   </div>
 
   <!-- ── Language panel (collapsible, right side — sits left of History) ── -->
   <div class="cs-lang-panel" id="cs-lang-panel">
     <button class="cs-lang-toggle" id="cs-lang-toggle" aria-label="Change language" aria-expanded="false"
-            data-i18n-lang-toggle="cs-lang-panel" data-i18n-lang-overlay="cs-lang-overlay">
-      <span data-i18n-lang-current>EN</span>
+            data-i18n-lang-toggle="cs-lang-panel" data-i18n-lang-overlay="cs-lang-overlay" data-i18n-attr="aria-label:tpl.change_language">
+      <span data-i18n-lang-current data-i18n="tpl.en">EN</span>
       <span class="cs-lang-tip" data-i18n="lang.panelTitle">Language</span>
     </button>
     <div class="cs-lang-content">
       <div class="cs-lang-header">
         <h3 data-i18n="lang.panelTitle">Language</h3>
-        <button class="cs-lang-close" data-i18n-lang-close aria-label="Close language panel">
+        <button class="cs-lang-close" data-i18n-lang-close aria-label="Close language panel" data-i18n-attr="aria-label:tpl.close_language_panel">
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -842,20 +842,20 @@
 
   <!-- ── History panel (collapsible, right side) ───────────────────────── -->
   <div class="cs-history-panel" id="cs-history-panel">
-    <button class="cs-history-toggle cs-icon-btn" id="cs-history-toggle" aria-label="Toggle history" aria-expanded="false">
+    <button class="cs-history-toggle cs-icon-btn" id="cs-history-toggle" aria-label="Toggle history" aria-expanded="false" data-i18n-attr="aria-label:tpl.toggle_history">
       <i data-lucide="scroll-text" aria-hidden="true"></i>
-      <span class="cs-mode-tip" id="cs-history-toggle-tip">Show history</span>
+      <span class="cs-mode-tip" id="cs-history-toggle-tip" data-i18n="tpl.show_history">Show history</span>
     </button>
     <div class="cs-history-content" id="cs-history-content">
       <div class="cs-history-header">
         <h3 data-i18n="hub.historyTitle">History</h3>
-        <button class="cs-history-clear" id="cs-history-clear" type="button" aria-label="Clear history">
+        <button class="cs-history-clear" id="cs-history-clear" type="button" aria-label="Clear history" data-i18n-attr="aria-label:tpl.clear_history">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
           </svg>
-          <span class="cs-mode-tip">Clear history</span>
+          <span class="cs-mode-tip" data-i18n="tpl.clear_history">Clear history</span>
         </button>
-        <button class="cs-history-close" id="cs-history-close" aria-label="Close history">
+        <button class="cs-history-close" id="cs-history-close" aria-label="Close history" data-i18n-attr="aria-label:tpl.close_history">
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -867,13 +867,13 @@
   <div class="cs-history-overlay" id="cs-history-overlay"></div>
 
   <!-- ── Settings button (bottom left, stacked above Theme) ─────────────── -->
-  <button type="button" class="cs-settings-btn cs-icon-btn" id="cs-settings-btn" aria-label="Open settings" aria-haspopup="true" aria-expanded="false" aria-controls="cs-settings-panel">
+  <button type="button" class="cs-settings-btn cs-icon-btn" id="cs-settings-btn" aria-label="Open settings" aria-haspopup="true" aria-expanded="false" aria-controls="cs-settings-panel" data-i18n-attr="aria-label:tpl.open_settings">
     <i data-lucide="settings" aria-hidden="true"></i>
     <span class="cs-mode-tip cs-mode-tip--above" data-i18n="hub.settingsTip">Settings</span>
   </button>
 
   <!-- ── Theme cycle button (bottom left) ────────────────────────────────── -->
-  <button type="button" id="cs-theme-cycle-btn" class="cs-theme-cycle-btn cs-icon-btn" aria-label="Cycle theme">
+  <button type="button" id="cs-theme-cycle-btn" class="cs-theme-cycle-btn cs-icon-btn" aria-label="Cycle theme" data-i18n-attr="aria-label:tpl.cycle_theme">
     <span id="cs-theme-cycle-icon" class="cs-theme-icon" aria-hidden="true">🌑</span>
     <span class="cs-mode-tip cs-mode-tip--above" data-i18n="hub.themeTip">Theme</span>
   </button>

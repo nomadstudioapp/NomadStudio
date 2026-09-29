@@ -64,7 +64,7 @@ async function waitForImage(comfyUrl, clientId, promptId, card, readyLabel) {
     // issue #73: this used to flip to "Generating…" the moment /prompt
     // returned a prompt_id, well before real execution began).
     var executionStarted = false;
-    if (generateStatus) _setBusyStatus(generateStatus, 'Queued — waiting for ComfyUI…');
+    if (generateStatus) _setBusyStatus(generateStatus, tF('Queued — waiting for ComfyUI…'));
 
     // See waitForImageLocal's comment for why this is a heuristic (no real
     // download progress is exposed by ComfyUI for custom-node model fetches):
@@ -83,9 +83,9 @@ async function waitForImage(comfyUrl, clientId, promptId, card, readyLabel) {
         // a while, so acknowledging it finished reads less like the status
         // just got stuck/reset.
         if (generateStatus) {
-          _setBusyStatus(generateStatus, 'Model initialization complete!');
+          _setBusyStatus(generateStatus, tF('Model initialization complete!'));
           setTimeout(function () {
-            if (generateStatus) _setBusyStatus(generateStatus, statusBeforeNote || 'Generating…');
+            if (generateStatus) _setBusyStatus(generateStatus, statusBeforeNote || tF('Generating…'));
           }, 1200);
         }
       }
@@ -101,7 +101,7 @@ async function waitForImage(comfyUrl, clientId, promptId, card, readyLabel) {
           // internet download — "Downloading model" was misleading most of
           // the time. There's no signal from ComfyUI to tell the two apart,
           // so this now defaults to the more common, more honest case.
-          _setBusyStatus(generateStatus, 'Model initializing… this can take a while');
+          _setBusyStatus(generateStatus, tF('Model initializing… this can take a while'));
         }
       }, DOWNLOAD_STALL_MS);
     }
@@ -114,12 +114,12 @@ async function waitForImage(comfyUrl, clientId, promptId, card, readyLabel) {
           clearNote(); armDownloadNote();
           if (!executionStarted) {
             executionStarted = true;
-            if (generateStatus) _setBusyStatus(generateStatus, readyLabel || 'Generating…');
+            if (generateStatus) _setBusyStatus(generateStatus, readyLabel || tF('Generating…'));
           }
         } else if (t === 'progress' && msg.max > 0) {
           clearNote();
           var pct = Math.max(1, Math.min(99, Math.round((msg.value / msg.max) * 100)));
-          if (generateStatus) generateStatus.textContent = 'Generating… ' + pct + '%';
+          if (generateStatus) generateStatus.textContent = tF('Generating…') + ' ' + pct + '%';
           updateCardProgress(card, msg.value, msg.max);
         } else if (t === 'executed' || t === 'execution_cached') {
           clearNote();
@@ -246,7 +246,7 @@ async function submitWorkflowAndWait(wfId, positivePrompt, seedVal, card, dims) 
     var ce = submitData.error;
     throw new Error(typeof ce === 'object' ? (ce.message || ce.type || JSON.stringify(ce)) : String(ce || 'Queue rejected'));
   }
-  if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+  if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
   var _params = buildParamsSnapshot({ kind: 'generate', positive: positivePrompt, seed: seedVal, width: dims.w, height: dims.h, workflowId: wfId });
   if (card) card._params = _params;
   var rawUrl = await waitForImageLocal(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, card);
@@ -270,7 +270,7 @@ async function pollComfy(promptId, comfyUrl) {
               '&type=' + encodeURIComponent(img.type || 'output') });
           });
         });
-        if (!images.length) throw new Error('ComfyUI finished but no images.');
+        if (!images.length) throw new Error(tF('ComfyUI finished but no images.'));
         return images;
       }
       failures = 0;
@@ -279,7 +279,7 @@ async function pollComfy(promptId, comfyUrl) {
     }
     await sleep(1000);
   }
-  throw new Error('Generation timed out.');
+  throw new Error(tF('Generation timed out.'));
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -363,7 +363,7 @@ function _markCardGenerating(card) {
   var dot = card.querySelector('.nss-card-status-dot');
   var lbl = card.querySelector('.nss-card-status-label');
   if (dot) dot.setAttribute('data-status', 'generating');
-  if (lbl) lbl.textContent = 'generating…';
+  if (lbl) lbl.textContent = tF('generating…');
   var imgWrap = card.querySelector('.nss-card-img-wrap');
   if (imgWrap) {
     imgWrap.innerHTML =
@@ -542,7 +542,7 @@ function addGeneratingCard(idx, promptText) {
   statusDot.setAttribute('data-status', 'generating');
   var statusLabel = document.createElement('span');
   statusLabel.className = 'nss-card-status-label';
-  statusLabel.textContent = 'generating…';
+  statusLabel.textContent = tF('generating…');
   footer.appendChild(statusDot);
   footer.appendChild(statusLabel);
   card.appendChild(footer);
@@ -597,14 +597,14 @@ function buildPromptCard(text, idx, onEdit) {
   header.className = 'nss-card-header';
   var numBadge = document.createElement('span');
   numBadge.className = 'nss-card-num';
-  numBadge.textContent = 'Variation ' + (idx + 1);
+  numBadge.textContent = tF('Variation {n}').replace('{n}', idx + 1);
   header.appendChild(numBadge);
   
   var delBtn = document.createElement('button');
   delBtn.type = 'button';
   delBtn.className = 'nss-card-select-btn nss-card-delete-btn';
-  delBtn.setAttribute('aria-label', 'Delete card');
-  delBtn.title = 'Delete card';
+  delBtn.setAttribute('aria-label', tF('Delete card'));
+  delBtn.title = tF('Delete card');
   delBtn.innerHTML =
     '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<polyline points="2,4 14,4"/>' +
@@ -612,7 +612,7 @@ function buildPromptCard(text, idx, onEdit) {
       '<path d="M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9"/>' +
     '</svg>';
   delBtn.addEventListener('click', function () {
-    if (confirm('Delete this card from the flow?')) {
+    if (confirm(tF('Delete this card from the flow?'))) {
       card.remove();
       // Notice: editing prompt array on variations not strictly handled by this click but UI will update
     }
@@ -658,7 +658,7 @@ function buildPromptCard(text, idx, onEdit) {
   var queueBtn = document.createElement('button');
   queueBtn.className = 'nss-card-queue-btn';
   queueBtn.type = 'button';
-  queueBtn.textContent = 'Queue';
+  queueBtn.textContent = tF('Queue');
 
   footer.appendChild(statusDot);
   footer.appendChild(statusLabel);
@@ -726,7 +726,7 @@ async function _generateOneCard(card, ta, statusDot, statusLabel, queueBtn) {
     });
     var submitData = await submitRes.json();
     if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
-    if (!submitData.prompt_id) throw new Error('No prompt_id');
+    if (!submitData.prompt_id) throw new Error(tF('No prompt_id'));
 
     var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, card, 'Generating…');
     var _cardParams = buildParamsSnapshot({ kind: 'generate', positive: prompt, seed: seedVal, width: dims.w, height: dims.h, workflowId: effectiveWfId });

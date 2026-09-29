@@ -14,7 +14,7 @@
     <p class="cs-breadcrumb">
       <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-      <span class="cs-breadcrumb-current">Imports</span>
+      <span class="cs-breadcrumb-current" data-i18n="tpl.imports">Imports</span>
     </p>
   </div>
 
@@ -23,10 +23,10 @@
   <!-- Left: Imports list -->
   <div class="import-col import-col-imports">
     <div class="import-col-header">
-      <h2 class="page-title">Imports</h2>
-      <button type="button" class="btn import-add-btn" id="open-import-modal-btn" title="Add new import">
+      <h2 class="page-title" data-i18n="tpl.imports">Imports</h2>
+      <button type="button" class="btn import-add-btn" id="open-import-modal-btn" title="Add new import" data-i18n-attr="title:tpl.add_new_import">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add
+        <span data-i18n="tpl.add">Add</span>
       </button>
     </div>
     <div id="saved-imports" class="stack import-col-body"></div>
@@ -35,10 +35,10 @@
   <!-- Right: Active Imports -->
   <div class="import-col import-col-queue">
     <div class="import-col-header">
-      <h2 class="page-title">Active Imports</h2>
-      <label class="queue-free-memory-toggle" title="When ON, each model's GPU memory is freed automatically after its generation completes, before the next model is loaded.">
+      <h2 class="page-title" data-i18n="tpl.active_imports">Active Imports</h2>
+      <label class="queue-free-memory-toggle" title="When ON, each model's GPU memory is freed automatically after its generation completes, before the next model is loaded." data-i18n-attr="title:tpl.when_on_each_model_s_gpu">
         <input type="checkbox" id="queue-free-memory-toggle" />
-        <span>Deactivate after run</span>
+        <span data-i18n="tpl.deactivate_after_run">Deactivate after run</span>
       </label>
     </div>
     <div id="active-imports-queue" class="stack import-col-body"></div>
@@ -51,8 +51,8 @@
 <div class="import-modal-backdrop" id="import-modal-backdrop" aria-hidden="true">
   <div class="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
     <div class="import-modal-header">
-      <h2 class="page-title" id="import-modal-title">Add Import</h2>
-      <button type="button" class="btn icon-btn import-modal-close" id="close-import-modal-btn" title="Close">
+      <h2 class="page-title" id="import-modal-title" data-i18n="tpl.add_import">Add Import</h2>
+      <button type="button" class="btn icon-btn import-modal-close" id="close-import-modal-btn" title="Close" data-i18n-attr="title:tpl.close">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -63,41 +63,41 @@
 
         <div class="import-config-col import-config-col-workflow">
           <div class="import-subtitle-row import-subtitle-row-status">
-            <h3 class="import-subtitle">ComfyUI Workflow</h3>
+            <h3 class="import-subtitle" data-i18n="tpl.comfyui_workflow">ComfyUI Workflow</h3>
             <div class="subtitle-status-right">
               <div class="availability-chip" id="comfy-availability-chip" aria-hidden="true">
                 <span class="availability-led" id="comfy-availability-led" aria-hidden="true"></span>
               </div>
-              <span class="availability-text" id="comfy-availability-text" aria-live="polite">Checking ComfyUI...</span>
+              <span class="availability-text" id="comfy-availability-text" aria-live="polite" data-i18n="tpl.checking_comfyui">Checking ComfyUI...</span>
             </div>
           </div>
-          <p class="field-hint">ComfyUI Models Folder is configured once for all workflows in <a href="/settings">Settings → ComfyUI</a>.</p>
+          <p class="field-hint"><span data-i18n="tpl.comfyui_models_folder_is_configured_once">ComfyUI Models Folder is configured once for all workflows in</span> <a href="/settings" data-i18n="tpl.settings_comfyui">Settings → ComfyUI</a>.</p>
           <div class="stack">
             <label>
-              ComfyUI URI
-              <input type="text" id="comfy-uri" placeholder="http://127.0.0.1:8188" />
+              <span data-i18n="tpl.comfyui_uri">ComfyUI URI</span>
+              <input type="text" id="comfy-uri" placeholder="http://127.0.0.1:8188" data-i18n-attr="placeholder:tpl.http_127_0_0_1_8188" />
             </label>
             <div class="btn-row">
-              <button type="button" class="btn" id="test-comfy-connection">Test Connection</button>
+              <button type="button" class="btn" id="test-comfy-connection" data-i18n="tpl.test_connection">Test Connection</button>
             </div>
             <label>
-              Workflow Name
-              <input type="text" id="import-name" placeholder="z-image turbo" />
+              <span data-i18n="tpl.workflow_name">Workflow Name</span>
+              <input type="text" id="import-name" placeholder="z-image turbo" data-i18n-attr="placeholder:tpl.z_image_turbo" />
             </label>
             <label>
               <span data-i18n="models.import.slugLabel">Workflow identifier</span>
-              <input type="text" id="import-slug" placeholder="monaco" maxlength="32" autocomplete="off" spellcheck="false" />
+              <input type="text" id="import-slug" placeholder="monaco" maxlength="32" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:tpl.monaco" />
               <span class="muted-note import-slug-hint" id="import-slug-hint" data-i18n="models.import.slugHint">Pick this engine from a prompt with --v and this word. Lowercase letters, numbers and dashes.</span>
             </label>
             <label>
-              Workflow JSON
+              <span data-i18n="tpl.workflow_json">Workflow JSON</span>
               <input type="file" id="workflow-file" class="hidden-file-input" accept=".json,application/json" />
             </label>
             <div class="btn-row">
-              <button type="button" class="btn" id="workflow-file-trigger">Choose File</button>
-              <button type="button" class="btn" id="analyze-workflow-btn" disabled>Analyze</button>
+              <button type="button" class="btn" id="workflow-file-trigger" data-i18n="tpl.choose_file">Choose File</button>
+              <button type="button" class="btn" id="analyze-workflow-btn" disabled data-i18n="tpl.analyze">Analyze</button>
             </div>
-            <div class="preview" id="import-status">No file loaded.</div>
+            <div class="preview" id="import-status" data-i18n="tpl.no_file_loaded">No file loaded.</div>
           </div>
         </div>
 
@@ -105,13 +105,13 @@
 
       <!-- Analysis -->
       <div class="import-modal-analysis">
-        <h3 class="import-subtitle">Analysis</h3>
+        <h3 class="import-subtitle" data-i18n="tpl.analysis">Analysis</h3>
         <div id="analysis-output" class="stack"></div>
       </div>
 
     </div>
     <div class="import-modal-footer">
-      <button type="button" class="btn primary" id="save-workflow-btn" disabled>Save Import</button>
+      <button type="button" class="btn primary" id="save-workflow-btn" disabled data-i18n="tpl.save_import">Save Import</button>
     </div>
   </div>
 </div>

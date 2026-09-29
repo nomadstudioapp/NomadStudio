@@ -8,7 +8,7 @@ var _jsonPanelRowsEl = null;
 
 function openJsonModal(stepDef) {
   _jsonActiveStep = stepDef;
-  openOptionsPanel(stepDef.label || 'JSON Prompt', function (body) {
+  openOptionsPanel(stepDef.label || tF('JSON Prompt'), function (body) {
     _renderJsonRows(stepDef, body);
   });
 }
@@ -209,7 +209,7 @@ async function _jsonRerollField(stepDef, path, kind, control, btn) {
     _jsonSetAtPath(_jsonWorking, path, _jsonReadControl(control));
   } catch (err) {
     if (typeof showErrorToast === 'function') {
-      showErrorToast('Could not regenerate ' + path + ': ' + (err.message || 'LM Studio error'));
+      showErrorToast(tF('Could not regenerate {field}:').replace('{field}', path) + ' ' + (err.message || 'LM Studio error'));
     }
   } finally {
     btn.disabled = false;
@@ -324,7 +324,7 @@ function _renderJsonRows(stepDef, bodyEl, keepWorking) {
   var current = _jsonWorking;
 
   if (!current || !Object.keys(current).length) {
-    rowsEl.innerHTML = '<p style="padding:0.8rem 1rem;font-size:0.74rem;color:var(--muted)">Paste or load a JSON first.</p>';
+    rowsEl.innerHTML = '<p style="padding:0.8rem 1rem;font-size:0.74rem;color:var(--muted)">' + escHtml(tF('Paste or load a JSON first.')) + '</p>';
     bodyEl.appendChild(rowsEl);
     _jsonPanelRowsEl = rowsEl;
     return;
@@ -388,12 +388,12 @@ function _renderJsonRows(stepDef, bodyEl, keepWorking) {
   var resetBtn = document.createElement('button');
   resetBtn.type = 'button';
   resetBtn.className = 'nse-modal-secondary';
-  resetBtn.textContent = 'Reset';
+  resetBtn.textContent = tF('Reset');
   resetBtn.addEventListener('click', _resetJsonModal);
   var applyBtn = document.createElement('button');
   applyBtn.type = 'button';
   applyBtn.className = 'nse-modal-apply';
-  applyBtn.textContent = 'Apply';
+  applyBtn.textContent = tF('Apply');
   applyBtn.addEventListener('click', _applyJsonModal);
   footer.appendChild(resetBtn);
   footer.appendChild(applyBtn);

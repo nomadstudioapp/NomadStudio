@@ -7,7 +7,7 @@ function renderUpscalePicker(stepDef, el) {
   var select = document.createElement('select');
   select.className = 'nsc-select';
   select.id = 'ncf-upscale-select-' + stepDef.id;
-  select.innerHTML = '<option value="">Loading upscale workflows…</option>';
+  select.innerHTML = '<option value="">' + escHtml(tF('Loading upscale workflows…')) + '</option>';
   wrapper.appendChild(select);
   wrapper.insertAdjacentHTML('beforeend',
     '<svg class="nsc-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
@@ -27,15 +27,15 @@ function renderUpscalePicker(stepDef, el) {
     .then(function (data) {
       var models = Array.isArray(data.models) ? data.models : [];
       if (!models.length) {
-        select.innerHTML = '<option value="">No upscale workflows — import one first</option>';
-        hint.textContent = 'Import an upscale ComfyUI workflow from Models › Import.';
+        select.innerHTML = '<option value="">' + escHtml(tF('No upscale workflows — import one first')) + '</option>';
+        hint.textContent = tF('Import an upscale ComfyUI workflow from Models › Import.');
         return;
       }
       select.innerHTML = '';
       if (models.length > 1) {
         var blank = document.createElement('option');
         blank.value = '';
-        blank.textContent = 'Select upscale workflow…';
+        blank.textContent = tF('Select upscale workflow…');
         select.appendChild(blank);
       }
       models.forEach(function (m) {
@@ -43,7 +43,7 @@ function renderUpscalePicker(stepDef, el) {
         opt.value = m.id;
         opt.textContent = m.name || m.id;
         var scale = m.fixedScale || m.defaultScale || '';
-        if (scale) opt.dataset.hint = 'Scale: ' + scale + '×';
+        if (scale) opt.dataset.hint = tF('Scale:') + ' ' + scale + '×';
         select.appendChild(opt);
       });
 
@@ -62,12 +62,12 @@ function renderUpscalePicker(stepDef, el) {
         select.value = toSelect.id;
         setVal(stepDef.id, 'model_id', toSelect.id);
         var scale = toSelect.fixedScale || toSelect.defaultScale || '';
-        if (scale) hint.textContent = 'Scale: ' + scale + '×';
+        if (scale) hint.textContent = tF('Scale:') + ' ' + scale + '×';
         updateGenerateBtn();
       }
     })
     .catch(function () {
-      select.innerHTML = '<option value="">Failed to load upscale workflows</option>';
+      select.innerHTML = '<option value="">' + escHtml(tF('Failed to load upscale workflows')) + '</option>';
     });
 }
 

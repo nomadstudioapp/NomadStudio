@@ -29,7 +29,7 @@ function renderVisionDescribe(stepDef, el) {
   if (stepLabel && typeof makeVisionModelBtn === 'function') {
     var vModelBtn = makeVisionModelBtn();
     vModelBtn.className = 'nsc-history-btn nsc-options-trigger ncf-vision-model-btn nsc-history-btn--named';
-    vModelBtn.setAttribute('aria-label', 'Change vision model');
+    vModelBtn.setAttribute('aria-label', tF('Change vision model'));
     // The name used to be stripped here, leaving a bare eye. In the one flow
     // whose entire premise is "a model looks at your picture", that made the
     // model doing the looking the only thing on screen you couldn't see —
@@ -65,7 +65,7 @@ function renderVisionDescribe(stepDef, el) {
   descBtn.disabled = true;
 
   var descBtnLbl = document.createElement('span');
-  descBtnLbl.textContent = 'Describe reference';
+  descBtnLbl.textContent = tF('Describe reference');
   descBtn.insertAdjacentHTML('afterbegin', _VD_ICON_SVG);
   descBtn.appendChild(descBtnLbl);
   // Say why it's dead. The button starts disabled and, until now, gave no
@@ -79,7 +79,7 @@ function renderVisionDescribe(stepDef, el) {
   // Set here, not only in _syncBtn: that function returns early when the
   // resolved image URL hasn't changed, and on first render it hasn't ('' to
   // ''), so the very state this tip exists to explain would ship without it.
-  descBtnTip.textContent = 'Add a reference image first';
+  descBtnTip.textContent = tF('Add a reference image first');
   descBtn.appendChild(descBtnTip);
   el.appendChild(descBtn);
 
@@ -129,7 +129,7 @@ function renderVisionDescribe(stepDef, el) {
 
     descBtn.disabled = true;
     descBtn.classList.add('is-composing');
-    descBtnLbl.textContent = 'Describing…';
+    descBtnLbl.textContent = tF('Describing…');
     statusEl.textContent = '';
 
     try {
@@ -173,7 +173,7 @@ function renderVisionDescribe(stepDef, el) {
       if (ringEl) ringEl.outerHTML = _VD_ICON_SVG;
 
       descBtn.classList.remove('is-composing');
-      descBtnLbl.textContent = 'Describe reference';
+      descBtnLbl.textContent = tF('Describe reference');
       descBtn.disabled = !resolveRef(imageFrom);
     }
   }

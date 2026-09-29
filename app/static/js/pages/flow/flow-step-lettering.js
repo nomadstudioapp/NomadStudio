@@ -92,7 +92,7 @@ function renderLetteringBuilder(stepDef, el) {
     var textInput = document.createElement('input');
     textInput.type = 'text';
     textInput.className = 'ncf-lettering-text-input nsc-input';
-    textInput.placeholder = 'Text content…';
+    textInput.placeholder = tF('Text content…');
     textInput.value = item.text || '';
     textInput.addEventListener('input', function () { item.text = textInput.value; syncOutput(); });
     header.appendChild(textInput);
@@ -100,7 +100,7 @@ function renderLetteringBuilder(stepDef, el) {
     var removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'ncf-lettering-remove-btn';
-    removeBtn.title = 'Remove';
+    removeBtn.title = tF('Remove');
     removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     removeBtn.addEventListener('click', function () { elementList = elementList.filter(function (it) { return it !== item; }); card.remove(); syncOutput(); });
     header.appendChild(removeBtn);
@@ -129,7 +129,7 @@ function renderLetteringBuilder(stepDef, el) {
     refPlaceholder.style.display = item.referenceImage ? 'none' : 'flex';
     refPlaceholder.innerHTML =
       '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
-      '<span>Drop or click to add a style reference image</span>';
+      '<span>' + escHtml(tF('Drop or click to add a style reference image')) + '</span>';
     refZone.appendChild(refPlaceholder);
 
     var refStatus = document.createElement('div');
@@ -141,7 +141,7 @@ function renderLetteringBuilder(stepDef, el) {
     // analyze reference image via vision model
     function analyzeRefImage(dataUrl) {
       refStatus.style.display = 'block';
-      refStatus.textContent = 'Analyzing style…';
+      refStatus.textContent = tF('Analyzing style…');
       fetch('/api/models/chat/describe-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,10 +156,10 @@ function renderLetteringBuilder(stepDef, el) {
             item.stylePrompt = desc;
             stylePromptTa.value = desc;
           }
-          refStatus.textContent = '✓ Style analyzed';
+          refStatus.textContent = tF('✓ Style analyzed');
           syncOutput();
         })
-        .catch(function (err) { refStatus.textContent = '⚠ Analysis failed'; });
+        .catch(function (err) { refStatus.textContent = tF('⚠ Analysis failed'); });
     }
 
     function loadRefFile(file) {
@@ -253,12 +253,12 @@ function renderLetteringBuilder(stepDef, el) {
     styleRow.className = 'ncf-lettering-style-row';
     var styleLbl = document.createElement('span');
     styleLbl.className = 'ncf-lettering-style-lbl';
-    styleLbl.textContent = 'Letter style';
+    styleLbl.textContent = tF('Letter style');
     var resetBtn = document.createElement('button');
     resetBtn.type = 'button';
     resetBtn.className = 'ncf-lettering-style-reset';
-    resetBtn.textContent = 'Reset';
-    resetBtn.title = 'Regenerate from reference / properties';
+    resetBtn.textContent = tF('Reset');
+    resetBtn.title = tF('Regenerate from reference / properties');
     resetBtn.addEventListener('click', function () {
       item._promptDirty = false;
       item.stylePrompt = item.referenceDesc || buildDesc(item.attrs);
@@ -272,7 +272,7 @@ function renderLetteringBuilder(stepDef, el) {
     var stylePromptTa = document.createElement('textarea');
     stylePromptTa.className = 'ncf-lettering-style-prompt';
     stylePromptTa.rows = 2;
-    stylePromptTa.placeholder = 'Letter style description (auto-filled from reference or properties)…';
+    stylePromptTa.placeholder = tF('Letter style description (auto-filled from reference or properties)…');
     stylePromptTa.value = item.stylePrompt || '';
     stylePromptTa.addEventListener('input', function () {
       item.stylePrompt = stylePromptTa.value;

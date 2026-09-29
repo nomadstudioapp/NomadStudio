@@ -62,13 +62,13 @@ function _applyThinkCompatToToggle(el, state) {
   if (!el) return;
   if (state === 'unsupported') {
     el.disabled = true;
-    el.title = 'This model does not support disabling thinking.';
+    el.title = tF('This model does not support disabling thinking.');
   } else if (state === 'no_thinking') {
     el.disabled = true;
-    el.title = 'This model has no thinking/reasoning capability — nothing for this toggle to do.';
+    el.title = tF('This model has no thinking/reasoning capability — nothing for this toggle to do.');
   } else if (state === 'unchecked') {
     el.disabled = true;
-    el.title = 'Check this model’s think compatibility in Settings > Prompts.';
+    el.title = tF('Check this model’s think compatibility in Settings > Prompts.');
   } else {
     el.disabled = false;
     el.removeAttribute('title');
@@ -123,7 +123,7 @@ window.openJourneyApi = {
 
   async deleteStylePage(pageId) {
     const target = String(pageId || '').trim();
-    if (!target) throw new Error('Page id is required');
+    if (!target) throw new Error(tF('Page id is required'));
     const res = await fetch(`/api/styles/pages/${encodeURIComponent(target)}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to delete style page');
@@ -1090,7 +1090,7 @@ window.openJourneyApi = {
   async getComfyServerState(options = {}) {
     const comfyApiUrl = String(options.comfyApiUrl || '').trim();
     if (!comfyApiUrl) {
-      throw new Error('comfyApiUrl is required');
+      throw new Error(tF('comfyApiUrl is required'));
     }
     const params = new URLSearchParams({ comfyApiUrl });
     const res = await fetch(`/api/images/comfy/server-state?${params}`);

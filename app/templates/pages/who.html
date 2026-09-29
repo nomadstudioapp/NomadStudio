@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nomad Studio — ¿Quién genera?</title>
+    <title data-i18n="tpl.nomad_studio_who_is_generating">Nomad Studio — Who&#x27;s generating?</title>
     <meta name="theme-color" content="#101014" />
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo/raccoon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/variables.css') }}?v={{ asset_v }}" />
@@ -38,14 +38,14 @@
          sidesteps that cascade entirely. -->
     <div class="cs-lang-panel" id="cs-lang-panel">
       <button class="cs-lang-toggle cs-lang-toggle--flush" id="cs-lang-toggle" aria-label="Change language" aria-expanded="false"
-              data-i18n-lang-toggle="cs-lang-panel" data-i18n-lang-overlay="cs-lang-overlay">
-        <span data-i18n-lang-current>EN</span>
+              data-i18n-lang-toggle="cs-lang-panel" data-i18n-lang-overlay="cs-lang-overlay" data-i18n-attr="aria-label:tpl.change_language">
+        <span data-i18n-lang-current data-i18n="tpl.en">EN</span>
         <span class="cs-lang-tip" data-i18n="lang.panelTitle">Language</span>
       </button>
       <div class="cs-lang-content">
         <div class="cs-lang-header">
           <h3 data-i18n="lang.panelTitle">Language</h3>
-          <button class="cs-lang-close" data-i18n-lang-close aria-label="Close language panel">
+          <button class="cs-lang-close" data-i18n-lang-close aria-label="Close language panel" data-i18n-attr="aria-label:tpl.close_language_panel">
             <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -81,7 +81,7 @@
           </div>
           <div class="ns-name">{{ viewer.name }}</div>
           {% if viewer.has_pin %}
-          <div class="ns-lock"><i data-lucide="lock" class="ns-lock-icon"></i> PIN</div>
+          <div class="ns-lock"><i data-lucide="lock" class="ns-lock-icon"></i> <span data-i18n="tpl.pin">PIN</span></div>
           {% endif %}
         </div>
         {% endfor %}

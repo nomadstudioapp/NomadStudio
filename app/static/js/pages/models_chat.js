@@ -55,16 +55,16 @@
     if (!model) {
       thinkCompatStatusEl.textContent = '';
     } else if (state === 'supported') {
-      thinkCompatStatusEl.textContent = '✓ Respects "don\'t think" requests.';
+      thinkCompatStatusEl.textContent = tF('✓ Respects "don\'t think" requests.');
       thinkCompatStatusEl.classList.add('models-chat-think-compat-status--supported');
     } else if (state === 'unsupported') {
-      thinkCompatStatusEl.textContent = '⚠ Ignores "don\'t think" — can exhaust its token budget reasoning.';
+      thinkCompatStatusEl.textContent = tF('⚠ Ignores "don\'t think" — can exhaust its token budget reasoning.');
       thinkCompatStatusEl.classList.add('models-chat-think-compat-status--unsupported');
     } else if (state === 'no_thinking') {
-      thinkCompatStatusEl.textContent = '◐ No thinking/reasoning capability — nothing to toggle.';
+      thinkCompatStatusEl.textContent = tF('◐ No thinking/reasoning capability — nothing to toggle.');
       thinkCompatStatusEl.classList.add('models-chat-think-compat-status--no_thinking');
     } else {
-      thinkCompatStatusEl.textContent = 'Not checked yet.';
+      thinkCompatStatusEl.textContent = tF('Not checked yet.');
     }
   }
 
@@ -98,7 +98,7 @@
   function renderModelBrowserList() {
     if (!modelBrowserListEl) return;
     if (!loadedModels.length) {
-      modelBrowserListEl.innerHTML = '<p class="nse-model-empty">No models found — is LM Studio running?</p>';
+      modelBrowserListEl.innerHTML = '<p class="nse-model-empty">' + tH('No models found — is LM Studio running?') + '</p>';
       return;
     }
     loadModelScores().then((scoreData) => {
@@ -146,7 +146,7 @@
           const scoreBadge = document.createElement('span');
           scoreBadge.className = 'nse-model-score ' + scoreTierClass(entry.average);
           scoreBadge.textContent = entry.average.toFixed(1);
-          scoreBadge.title = 'Story benchmark score';
+          scoreBadge.title = tF('Story benchmark score');
           badges.appendChild(scoreBadge);
           if (scoreData.fastestDurationSec && entry.durationSec) {
             // Relative SPEED (fastest / duration) — see flow-model-picker.js
@@ -190,8 +190,8 @@
     }
     modelBrowserPanelEl.innerHTML =
       '<div class="cs-prompt-model-browser-header">' +
-        '<h3>Model</h3>' +
-        '<button type="button" class="cs-prompt-model-browser-close" aria-label="Close">' +
+        '<h3>' + tH('Model') + '</h3>' +
+        '<button type="button" class="cs-prompt-model-browser-close" aria-label="' + tH('Close') + '">' +
           '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
         '</button>' +
       '</div>' +
@@ -238,14 +238,14 @@
       // worth the plumbing here — worst case it finishes one extra model).
       if (bulkCheckRunning) {
         bulkCheckCancelled = true;
-        checkAllPendingBtn.textContent = 'Stopping…';
+        checkAllPendingBtn.textContent = tF('Stopping…');
         checkAllPendingBtn.disabled = true;
         return;
       }
 
       const pending = loadedModels.filter((m) => !thinkCompat[m]);
       if (!pending.length) {
-        setStatus('No pending models — every loaded model has already been checked.');
+        setStatus(tF('No pending models — every loaded model has already been checked.'));
         return;
       }
       bulkCheckRunning = true;
@@ -261,7 +261,7 @@
           const result = await window.openJourneyApi.checkThinkCompatibility(model);
           thinkCompat = { ...thinkCompat, [result.model]: { state: result.state, checkedAt: result.checkedAt } };
         } catch (error) {
-          setStatus(`Failed to check ${model}: ${error.message || 'unknown error'}`, true);
+          setStatus(`Failed to check ${model}: ${error.message || tF('unknown error')}`, true);
         }
         renderThinkCompatStatus();
         renderModelBrowserList();
@@ -291,7 +291,7 @@
       // longer per model.
       if (benchmarkRunning) {
         benchmarkCancelled = true;
-        benchmarkNewModelsBtn.textContent = 'Stopping…';
+        benchmarkNewModelsBtn.textContent = tF('Stopping…');
         benchmarkNewModelsBtn.disabled = true;
         return;
       }
@@ -301,11 +301,11 @@
         const result = await window.openJourneyApi.listBenchmarkPendingModels();
         pending = result.pending || [];
       } catch (error) {
-        setStatus(error.message || 'Failed to list pending models.', true);
+        setStatus(error.message || tF('Failed to list pending models.'), true);
         return;
       }
       if (!pending.length) {
-        if (benchmarkStatusEl) benchmarkStatusEl.textContent = 'No new models to benchmark.';
+        if (benchmarkStatusEl) benchmarkStatusEl.textContent = tF('No new models to benchmark.');
         return;
       }
 
@@ -327,7 +327,7 @@
             modelScoresCache = null; // force a fresh fetch — this model just got a new entry
           } else {
             failed += 1;
-            setStatus(`${model}: ${result.error || 'benchmark failed'}`, true);
+            setStatus(`${model}: ${result.error || tF('benchmark failed')}`, true);
             // LM Studio's engine died and didn't come back (the server
             // already waited for it): every remaining model would fail in
             // under a second, so stop the run instead (NomadStudio#12).
@@ -339,7 +339,7 @@
           }
         } catch (error) {
           failed += 1;
-          setStatus(`Failed to benchmark ${model}: ${error.message || 'unknown error'}`, true);
+          setStatus(`Failed to benchmark ${model}: ${error.message || tF('unknown error')}`, true);
         }
         renderModelBrowserList();
       }
@@ -407,7 +407,7 @@
     const selected = String(promptModelSelectEl.value || '').trim();
     if (!selected) {
       promptFavoriteToggleBtn.disabled = true;
-      promptFavoriteToggleBtn.textContent = 'Add to favorites';
+      promptFavoriteToggleBtn.textContent = tF('Add to favorites');
       return;
     }
     promptFavoriteToggleBtn.disabled = false;
@@ -419,7 +419,7 @@
     const selected = String(visionModelSelectEl.value || '').trim();
     if (!selected) {
       visionFavoriteToggleBtn.disabled = true;
-      visionFavoriteToggleBtn.textContent = 'Add to favorites';
+      visionFavoriteToggleBtn.textContent = tF('Add to favorites');
       return;
     }
     visionFavoriteToggleBtn.disabled = false;
@@ -447,7 +447,7 @@
     const available = new Set(list);
     const favorites = promptFavoriteModels.filter((name) => available.has(name));
     if (!favorites.length) {
-      promptFavoritesQuickEl.innerHTML = '<p class="muted-note">No prompt favorites yet.</p>';
+      promptFavoritesQuickEl.innerHTML = '<p class="muted-note">' + tH('No prompt favorites yet.') + '</p>';
       return;
     }
 
@@ -489,17 +489,17 @@
       removeBtn.type = 'button';
       removeBtn.className = 'models-chat-favorite-remove';
       removeBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-      removeBtn.setAttribute('aria-label', 'Remove from favorites');
-      removeBtn.title = 'Remove from favorites';
+      removeBtn.setAttribute('aria-label', tF('Remove from favorites'));
+      removeBtn.title = tF('Remove from favorites');
       removeBtn.addEventListener('click', async (event) => {
         event.stopPropagation();
         promptFavoriteModels = promptFavoriteModels.filter((item) => item !== name);
         try {
           const response = await persistFavoriteSettings();
           hydrateFromSettings(response.settings || {}, loadedModels, detectedVisionModels);
-          setStatus('Favorite removed.');
+          setStatus(tF('Favorite removed.'));
         } catch (error) {
-          setStatus(error.message || 'Failed to update favorites.', true);
+          setStatus(error.message || tF('Failed to update favorites.'), true);
         }
       });
       row.appendChild(removeBtn);
@@ -515,7 +515,7 @@
     const available = new Set(list);
     const favorites = visionFavoriteModels.filter((name) => available.has(name));
     if (!favorites.length) {
-      visionFavoritesQuickEl.innerHTML = '<p class="muted-note">No vision favorites yet.</p>';
+      visionFavoritesQuickEl.innerHTML = '<p class="muted-note">' + tH('No vision favorites yet.') + '</p>';
       return;
     }
 
@@ -551,17 +551,17 @@
       removeBtn.type = 'button';
       removeBtn.className = 'models-chat-favorite-remove';
       removeBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-      removeBtn.setAttribute('aria-label', 'Remove from favorites');
-      removeBtn.title = 'Remove from favorites';
+      removeBtn.setAttribute('aria-label', tF('Remove from favorites'));
+      removeBtn.title = tF('Remove from favorites');
       removeBtn.addEventListener('click', async (event) => {
         event.stopPropagation();
         visionFavoriteModels = visionFavoriteModels.filter((item) => item !== name);
         try {
           const response = await persistFavoriteSettings();
           hydrateFromSettings(response.settings || {}, loadedModels, detectedVisionModels);
-          setStatus('Favorite removed.');
+          setStatus(tF('Favorite removed.'));
         } catch (error) {
-          setStatus(error.message || 'Failed to update vision favorites.', true);
+          setStatus(error.message || tF('Failed to update vision favorites.'), true);
         }
       });
       row.appendChild(removeBtn);
@@ -634,11 +634,11 @@
 
     if (visionFilterNoteEl) {
       if (!allList.length) {
-        visionFilterNoteEl.textContent = 'Load LM Studio models first.';
+        visionFilterNoteEl.textContent = tF('Load LM Studio models first.');
       } else if (detectedList.length) {
         visionFilterNoteEl.textContent = `Showing ${detectedList.length} detected vision-capable model(s).`;
       } else {
-        visionFilterNoteEl.textContent = 'LM Studio did not expose vision metadata. Showing all models as fallback.';
+        visionFilterNoteEl.textContent = tF('LM Studio did not expose vision metadata. Showing all models as fallback.');
       }
     }
 
@@ -692,7 +692,7 @@
     const list = Array.isArray(items) ? items : [];
     if (!list.length) {
       outputLogEl.value = '';
-      outputLogEl.placeholder = 'No output log yet';
+      outputLogEl.placeholder = tF('No output log yet');
       return;
     }
 
@@ -746,7 +746,7 @@
       setStatus(`LM Studio ${roleLabel} settings loaded.`);
       probeLmStudioAvailability(uriEl.value);
     } catch (error) {
-      setStatus(error.message || 'Failed to load settings.', true);
+      setStatus(error.message || tF('Failed to load settings.'), true);
       setLmStudioAvailability(false, 'LM Studio unavailable');
     }
   }
@@ -770,7 +770,7 @@
   }
 
   loadModelsBtn.addEventListener('click', async () => {
-    setStatus('Loading models from LM Studio...');
+    setStatus(tF('Loading models from LM Studio...'));
     try {
       const response = await window.openJourneyApi.loadLmStudioModels({ lmStudioApiUrl: uriEl.value.trim() });
       const settings = response.settings || {};
@@ -780,7 +780,7 @@
       setStatus(`Loaded ${allModels.length} model(s), ${detectedVisionModels.length || visionModels.length || 0} vision candidate(s).`);
       setLmStudioAvailability(true, 'LM Studio available');
     } catch (error) {
-      setStatus(error.message || 'Failed to load models.', true);
+      setStatus(error.message || tF('Failed to load models.'), true);
       setLmStudioAvailability(false, 'LM Studio unavailable');
     }
   });
@@ -789,13 +789,13 @@
     checkThinkCompatBtn.addEventListener('click', async () => {
       const model = String(promptModelSelectEl.value || '').trim();
       if (!model) {
-        setStatus('Select a Prompt LLM model first.', true);
+        setStatus(tF('Select a Prompt LLM model first.'), true);
         return;
       }
       checkThinkCompatBtn.disabled = true;
       const originalLabel = checkThinkCompatBtn.textContent;
-      checkThinkCompatBtn.textContent = 'Checking…';
-      if (thinkCompatStatusEl) thinkCompatStatusEl.textContent = 'Running a live test against LM Studio…';
+      checkThinkCompatBtn.textContent = tF('Checking…');
+      if (thinkCompatStatusEl) thinkCompatStatusEl.textContent = tF('Running a live test against LM Studio…');
       try {
         const result = await window.openJourneyApi.checkThinkCompatibility(model);
         thinkCompat = { ...thinkCompat, [result.model]: { state: result.state, checkedAt: result.checkedAt } };
@@ -804,7 +804,7 @@
         setStatus(`Think compatibility checked for ${model}.`);
       } catch (error) {
         renderThinkCompatStatus();
-        setStatus(error.message || 'Failed to check think compatibility.', true);
+        setStatus(error.message || tF('Failed to check think compatibility.'), true);
       } finally {
         checkThinkCompatBtn.disabled = false;
         checkThinkCompatBtn.textContent = originalLabel;
@@ -818,7 +818,7 @@
         await persistAllSettings(`LM Studio ${roleLabel} settings saved.`);
         probeLmStudioAvailability(uriEl.value);
       } catch (error) {
-        setStatus(error.message || 'Failed to save settings.', true);
+        setStatus(error.message || tF('Failed to save settings.'), true);
         setLmStudioAvailability(false, 'LM Studio unavailable');
       }
     });
@@ -828,7 +828,7 @@
     try {
       await persistAllSettings('Auto-disconnect setting saved.');
     } catch (error) {
-      setStatus(error.message || 'Failed to save auto-disconnect setting.', true);
+      setStatus(error.message || tF('Failed to save auto-disconnect setting.'), true);
     }
   });
 
@@ -883,13 +883,13 @@
     promptFavoriteToggleBtn.addEventListener('click', async () => {
       const selected = String(promptModelSelectEl.value || '').trim();
       if (!selected) {
-        setStatus('Select a prompt model first.', true);
+        setStatus(tF('Select a prompt model first.'), true);
         return;
       }
 
       const wasFavorite = isPromptFavoriteModel(selected);
       if (wasFavorite) {
-        setStatus('Model is already in favorites.');
+        setStatus(tF('Model is already in favorites.'));
         return;
       }
 
@@ -898,9 +898,9 @@
       try {
         const response = await persistFavoriteSettings();
         hydrateFromSettings(response.settings || {}, loadedModels, detectedVisionModels);
-        setStatus('Added to prompt favorites.');
+        setStatus(tF('Added to prompt favorites.'));
       } catch (error) {
-        setStatus(error.message || 'Failed to update favorites.', true);
+        setStatus(error.message || tF('Failed to update favorites.'), true);
       }
     });
   }
@@ -909,13 +909,13 @@
     visionFavoriteToggleBtn.addEventListener('click', async () => {
       const selected = String(visionModelSelectEl.value || '').trim();
       if (!selected) {
-        setStatus('Select a vision model first.', true);
+        setStatus(tF('Select a vision model first.'), true);
         return;
       }
 
       const wasFavorite = isVisionFavoriteModel(selected);
       if (wasFavorite) {
-        setStatus('Model is already in favorites.');
+        setStatus(tF('Model is already in favorites.'));
         return;
       }
 
@@ -924,9 +924,9 @@
       try {
         const response = await persistFavoriteSettings();
         hydrateFromSettings(response.settings || {}, loadedModels, detectedVisionModels);
-        setStatus('Added to vision favorites.');
+        setStatus(tF('Added to vision favorites.'));
       } catch (error) {
-        setStatus(error.message || 'Failed to update vision favorites.', true);
+        setStatus(error.message || tF('Failed to update vision favorites.'), true);
       }
     });
   }
@@ -966,9 +966,9 @@
       });
       const settings = response.settings || {};
       renderOutputLog(settings.lmStudioOutputLog || []);
-      setStatus('LM Studio output log cleared.');
+      setStatus(tF('LM Studio output log cleared.'));
     } catch (error) {
-      setStatus(error.message || 'Failed to clear output log.', true);
+      setStatus(error.message || tF('Failed to clear output log.'), true);
     }
   });
 

@@ -312,7 +312,7 @@ window.CC = window.CC || {};
       badge.type = 'button';
       badge.className = 'cc-lock-badge';
       badge.dataset.ccLayerId = String(layer.id);
-      badge.setAttribute('aria-label', 'Unlock layer');
+      badge.setAttribute('aria-label', tF('Unlock layer'));
       badge.style.left = left + 'px';
       badge.style.top = top + 'px';
       badge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';

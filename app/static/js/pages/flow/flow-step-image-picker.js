@@ -38,7 +38,7 @@ function renderImagePicker(stepDef, el) {
   dropZone.className = 'nsc-image-drop-zone';
   dropZone.setAttribute('role', 'button');
   dropZone.setAttribute('tabindex', '0');
-  dropZone.setAttribute('aria-label', 'Drop image or click to choose');
+  dropZone.setAttribute('aria-label', tF('Drop image or click to choose'));
   dropZone.innerHTML =
     '<div class="nsc-image-drop-placeholder">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -60,7 +60,7 @@ function renderImagePicker(stepDef, el) {
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" ' +
       'stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13l-3-3M3 7l3 3"/>' +
       '<rect x="14" y="13" width="7" height="7" rx="1.5"/></svg>' +
-      '<span>From flow</span>';
+      '<span>' + escHtml(tF('From flow')) + '</span>';
     prevBtn.addEventListener('click', openPrevFlowModal);
     wrap.appendChild(prevBtn);
   }
@@ -100,8 +100,8 @@ function renderImagePicker(stepDef, el) {
   var downscaleWrap = document.createElement('div');
   downscaleWrap.className = 'nsc-param-block nsc-picker-downscale';
   downscaleWrap.innerHTML =
-    '<p class="nsc-param-title nsc-param-title--flex">Downscale Source <span class="nsc-param-value" id="ncf-downscale-label-' + stepDef.id + '">1x</span>' +
-      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-downscale-picker-btn-' + stepDef.id + '" aria-label="Choose downscale">' +
+    '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(tF('Downscale Source')) + ' <span class="nsc-param-value" id="ncf-downscale-label-' + stepDef.id + '">1x</span>' +
+      '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-downscale-picker-btn-' + stepDef.id + '" aria-label="' + escHtml(tF('Choose downscale')) + '">' +
         '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h10M9 4v10"/></svg>' +
       '</button>' +
     '</p>';
@@ -128,7 +128,7 @@ function renderImagePicker(stepDef, el) {
   // small resulting-dimensions line, since this is the same kind of choice
   // (pick a tier, see the pixel result) just for downscale instead of res.
   downscalePickerBtn.addEventListener('click', function () {
-    openOptionsPanel('Downscale', function (body) {
+    openOptionsPanel(tF('Downscale'), function (body) {
       var list = document.createElement('div');
       list.className = 'nsc-quality-list';
       list.setAttribute('role', 'radiogroup');
@@ -166,8 +166,8 @@ function renderImagePicker(stepDef, el) {
     var stylesBtn = document.createElement('button');
     stylesBtn.type = 'button';
     stylesBtn.className = 'nsc-history-btn nsc-options-trigger';
-    stylesBtn.setAttribute('aria-label', 'Choose a Style');
-    stylesBtn.title = 'Choose a Style';
+    stylesBtn.setAttribute('aria-label', tF('Choose a Style'));
+    stylesBtn.title = tF('Choose a Style');
     stylesBtn.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/>' +
@@ -191,8 +191,8 @@ function renderImagePicker(stepDef, el) {
     var describeBtn = document.createElement('button');
     describeBtn.type = 'button';
     describeBtn.className = 'nsc-history-btn ncf-describe-style-btn';
-    describeBtn.setAttribute('aria-label', 'Describe style');
-    describeBtn.title = 'Describe this image\'s style with the vision model';
+    describeBtn.setAttribute('aria-label', tF('Describe style'));
+    describeBtn.title = tF('Describe this image\'s style with the vision model');
     var _describeIcon =
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' +
@@ -332,12 +332,12 @@ function renderImagePicker(stepDef, el) {
     previewEl.className = 'nsc-image-preview';
     previewEl.id = 'nsc-ip-' + stepDef.id;
     previewEl.src = dataUrl;
-    previewEl.alt = 'Selected image';
+    previewEl.alt = tF('Selected image');
     dropZone.appendChild(previewEl);
     clearBtn = document.createElement('button');
     clearBtn.type = 'button';
     clearBtn.className = 'nsc-image-clear-btn';
-    clearBtn.setAttribute('aria-label', 'Remove image');
+    clearBtn.setAttribute('aria-label', tF('Remove image'));
     clearBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
     clearBtn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -374,7 +374,7 @@ function renderImagePicker(stepDef, el) {
           '<circle cx="8.5" cy="8.5" r="1.5"/>' +
           '<path d="M21 15l-5-5L5 21"/>' +
         '</svg>' +
-        '<p>Drop image here<br><span>or click to choose</span></p>' +
+        '<p>' + escHtml(tF('Drop image here')) + '<br><span>' + escHtml(tF('or click to choose')) + '</span></p>' +
       '</div>';
     _currentImgW = 0;
     _currentImgH = 0;
@@ -426,13 +426,13 @@ function renderImagePicker(stepDef, el) {
       cell.className = 'nsc-multi-image-cell';
       var imgEl = document.createElement('img');
       imgEl.src = url;
-      imgEl.alt = 'Image ' + (idx + 1);
+      imgEl.alt = tF('Image {n}').replace('{n}', idx + 1);
       imgEl.loading = 'lazy';
       cell.appendChild(imgEl);
       var rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'nsc-multi-image-remove';
-      rm.setAttribute('aria-label', 'Remove image ' + (idx + 1));
+      rm.setAttribute('aria-label', tF('Remove image {n}').replace('{n}', idx + 1));
       rm.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
       rm.addEventListener('click', function (e) { e.stopPropagation(); removeImageAt(idx); });
       cell.appendChild(rm);
@@ -578,7 +578,7 @@ function renderImagePicker(stepDef, el) {
   // Modal to choose a source image from the session's previous outputs.
   function openPrevFlowModal() {
     var imgs = sessionImages();
-    if (!imgs.length) { alert('No previous images in this session yet.'); return; }
+    if (!imgs.length) { alert(tF('No previous images in this session yet.')); return; }
 
     var backdrop = document.createElement('div');
     backdrop.className = 'ncf-prevflow-modal';
@@ -587,11 +587,11 @@ function renderImagePicker(stepDef, el) {
 
     var head = document.createElement('div');
     head.className = 'ncf-prevflow-head';
-    head.innerHTML = '<span class="ncf-prevflow-title">Choose an image from this session</span>';
+    head.innerHTML = '<span class="ncf-prevflow-title">' + escHtml(tF('Choose an image from this session')) + '</span>';
     var closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'ncf-prevflow-close';
-    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.setAttribute('aria-label', tF('Close'));
     closeBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
     head.appendChild(closeBtn);
     panel.appendChild(head);
@@ -655,18 +655,18 @@ function renderImagePicker(stepDef, el) {
     var item = document.createElement('button');
     item.type = 'button';
     item.className = 'ncf-model-ctx-item';
-    item.textContent = 'Paste image';
+    item.textContent = tF('Paste image');
     item.addEventListener('click', function () {
-      item.textContent = 'Pasting…';
+      item.textContent = tF('Pasting…');
       item.disabled = true;
       _pasteFromClipboard()
         .then(function (ok) {
           if (ok) { _hidePasteCtxMenu(); return; }
-          item.textContent = 'No image in clipboard';
+          item.textContent = tF('No image in clipboard');
           setTimeout(_hidePasteCtxMenu, 1200);
         })
         .catch(function () {
-          item.textContent = 'Paste failed — check permissions';
+          item.textContent = tF('Paste failed — check permissions');
           setTimeout(_hidePasteCtxMenu, 1600);
         });
     });
@@ -806,7 +806,7 @@ function renderImagePicker(stepDef, el) {
   // path every other image source (upload, tray, previous-flow) already
   // goes through, so preview/dims/server persistence/Generate-button state
   // all update for free.
-  var _cropAspectPresets = [{ key: 'free', label: 'Free', hint: 'Freeform crop, no locked ratio' }]
+  var _cropAspectPresets = [{ key: 'free', get label() { return tF('Free'); }, get hint() { return tF('Freeform crop, no locked ratio'); } }]
     .concat(OUTPAINT_ASPECT_PRESETS);
 
   function _fillCropPanel(bodyEl) {
@@ -814,7 +814,7 @@ function renderImagePicker(stepDef, el) {
     if (!currentUrl) {
       var empty = document.createElement('p');
       empty.className = 'nsc-step-hint';
-      empty.textContent = 'Pick an image first.';
+      empty.textContent = tF('Pick an image first.');
       bodyEl.appendChild(empty);
       return;
     }
@@ -823,18 +823,18 @@ function renderImagePicker(stepDef, el) {
     arRow.className = 'nsc-field-row nsc-field-row--compose';
     var arLbl = document.createElement('label');
     arLbl.className = 'nsc-field-label';
-    arLbl.textContent = 'Aspect ratio';
+    arLbl.textContent = tF('Aspect ratio');
     arRow.appendChild(arLbl);
 
     var iconsHtml = _cropAspectPresets.map(function (p, i) {
       var ic = p.icon || { vw: 18, vh: 18, rw: 16.5, rh: 16.5 };
-      var tip = p.hint ? ' title="' + p.hint + '"' : '';
+      var tip = p.hint ? ' title="' + escHtml(tF(p.hint)) + '"' : '';
       return '<div class="nsc-aspect-icon-item" data-idx="' + i + '"' + tip + '>' +
         '<svg viewBox="0 0 ' + ic.vw + ' ' + ic.vh + '" width="' + ic.vw + '" height="' + ic.vh + '">' +
         '<rect x=".75" y=".75" width="' + ic.rw + '" height="' + ic.rh + '" rx="1.5"/></svg></div>';
     }).join('');
     var ticksHtml = _cropAspectPresets.map(function (p) {
-      var tip = p.hint ? ' title="' + p.hint + '"' : '';
+      var tip = p.hint ? ' title="' + escHtml(tF(p.hint)) + '"' : '';
       return '<span' + tip + '>' + p.label + '</span>';
     }).join('');
 
@@ -842,7 +842,7 @@ function renderImagePicker(stepDef, el) {
     arWidget.className = 'nsc-aspect-slider-wrap';
     arWidget.innerHTML =
       '<div class="nsc-aspect-icons nsc-aspect-icons--wide" aria-hidden="true">' + iconsHtml + '</div>' +
-      '<input class="nsc-aspect-slider" type="range" min="0" max="' + (_cropAspectPresets.length - 1) + '" step="1" value="0" aria-label="Aspect ratio">' +
+      '<input class="nsc-aspect-slider" type="range" min="0" max="' + (_cropAspectPresets.length - 1) + '" step="1" value="0" aria-label="' + escHtml(tF('Aspect ratio')) + '">' +
       '<div class="nsc-aspect-ticks">' + ticksHtml + '</div>';
     arRow.appendChild(arWidget);
     bodyEl.appendChild(arRow);
@@ -856,11 +856,11 @@ function renderImagePicker(stepDef, el) {
     var applyBtn = document.createElement('button');
     applyBtn.type = 'button';
     applyBtn.className = 'nsc-crop-btn nsc-crop-btn--primary';
-    applyBtn.textContent = 'Apply crop';
+    applyBtn.textContent = tF('Apply crop');
     var cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
     cancelBtn.className = 'nsc-crop-btn';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = tF('Cancel');
     actions.appendChild(cancelBtn);
     actions.appendChild(applyBtn);
     bodyEl.appendChild(actions);
@@ -894,7 +894,7 @@ function renderImagePicker(stepDef, el) {
     var img = document.createElement('img');
     img.className = 'nsc-crop-img';
     img.src = currentUrl;
-    img.alt = 'Image to crop';
+    img.alt = tF('Image to crop');
     stage.appendChild(img);
 
     var box = document.createElement('div');
@@ -1031,7 +1031,7 @@ function renderImagePicker(stepDef, el) {
     var img = document.createElement('img');
     img.className = 'nsc-crop-pan-img';
     img.src = currentUrl;
-    img.alt = 'Image to crop';
+    img.alt = tF('Image to crop');
     img.draggable = false;
     winEl.appendChild(img);
 
@@ -1154,9 +1154,9 @@ function renderImagePicker(stepDef, el) {
 
   var _pickerMoreItems = [
     {
-      label: 'Crop',
+      label: tF('Crop'),
       svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
-      onClick: function () { openOptionsPanel('Crop', _fillCropPanel, { wide: true }); },
+      onClick: function () { openOptionsPanel(tF('Crop'), _fillCropPanel, { wide: true }); },
     },
   ].concat(ncfImageSourceItems().map(function (src) {
     return {
@@ -1169,10 +1169,10 @@ function renderImagePicker(stepDef, el) {
   }));
 
   var moreBtn = _makeSideBtn(
-    'More',
+    tF('More'),
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
     function () {
-      openOptionsPanel('More', function (body) { ncfFillOptionsMenu(body, _pickerMoreItems); });
+      openOptionsPanel(tF('More'), function (body) { ncfFillOptionsMenu(body, _pickerMoreItems); });
     }
   );
   // Next to the step's own label ("SOURCE IMAGE"), same spot/pattern the
@@ -1196,7 +1196,7 @@ function renderImagePicker(stepDef, el) {
     refTypeWrap.className = 'ncf-ref-type-wrap';
     var refTypeLabel = document.createElement('span');
     refTypeLabel.className = 'ncf-ref-type-label';
-    refTypeLabel.textContent = 'Reference';
+    refTypeLabel.textContent = tF('Reference');
     refTypeWrap.appendChild(refTypeLabel);
 
     var refTypePills = document.createElement('div');
@@ -1227,7 +1227,7 @@ function renderImagePicker(stepDef, el) {
     visionRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;';
     var visionLabel = document.createElement('span');
     visionLabel.style.cssText = 'font-size:0.67rem;color:var(--muted);flex:1;';
-    visionLabel.textContent = 'Vision model';
+    visionLabel.textContent = tF('Vision model');
     visionRow.appendChild(visionLabel);
     visionRow.appendChild(makeVisionModelBtn());
     wrap.appendChild(visionRow);
@@ -1260,8 +1260,8 @@ function renderImagePicker(stepDef, el) {
       subjDescribeBtn.type = 'button';
       subjDescribeBtn.className = 'nsc-history-btn';
       subjDescribeBtn.disabled = true;
-      subjDescribeBtn.setAttribute('aria-label', 'Detect subject with vision');
-      subjDescribeBtn.title = 'Detect subject with vision';
+      subjDescribeBtn.setAttribute('aria-label', tF('Detect subject with vision'));
+      subjDescribeBtn.title = tF('Detect subject with vision');
       // Not _VD_ICON_SVG (flow-step-vision-describe.js) — that markup has no
       // fill/stroke attributes of its own and only reads right inside the
       // full-width "Describe reference" button's own CSS. Standalone here,
@@ -1275,7 +1275,7 @@ function renderImagePicker(stepDef, el) {
 
       var subjVisionBtn = makeVisionModelBtn();
       subjVisionBtn.className = 'nsc-history-btn nsc-options-trigger ncf-vision-model-btn';
-      subjVisionBtn.setAttribute('aria-label', 'Change vision model');
+      subjVisionBtn.setAttribute('aria-label', tF('Change vision model'));
       var subjVisionName = subjVisionBtn.querySelector('.ncf-model-icon-name');
       if (subjVisionName) subjVisionName.remove();
       var subjVisionIcon = subjVisionBtn.querySelector('svg');
@@ -1328,7 +1328,7 @@ function renderImagePicker(stepDef, el) {
               }));
             }
           } catch (err) {
-            if (typeof showErrorToast === 'function') showErrorToast(err.message || 'Could not detect subject');
+            if (typeof showErrorToast === 'function') showErrorToast(err.message || tF('Could not detect subject'));
           } finally {
             var ringEl = subjDescribeBtn.querySelector('svg');
             if (ringEl) ringEl.outerHTML = _SUBJ_EYE_SVG;
@@ -1433,7 +1433,7 @@ function renderImagePicker(stepDef, el) {
     var zoneLabel = document.createElement('label');
     zoneLabel.className = 'nsc-field-label';
     zoneLabel.setAttribute('for', 'ncf-img-zone-' + stepDef.id);
-    zoneLabel.textContent = 'Goes in zone color';
+    zoneLabel.textContent = tF('Goes in zone color');
     zoneWrap.appendChild(zoneLabel);
 
     var zoneSelectWrap = document.createElement('div');
@@ -1443,7 +1443,7 @@ function renderImagePicker(stepDef, el) {
     zoneSelect.id = 'ncf-img-zone-' + stepDef.id;
     var zoneNoneOpt = document.createElement('option');
     zoneNoneOpt.value = '';
-    zoneNoneOpt.textContent = '— pick a color —';
+    zoneNoneOpt.textContent = tF('— pick a color —');
     zoneSelect.appendChild(zoneNoneOpt);
     (stepDef.zone_colors || []).forEach(function (c) {
       var opt = document.createElement('option');
@@ -1485,7 +1485,7 @@ function ncfImageSourceItems() {
   return [
     {
       key: 'inputs',
-      label: 'Previously used inputs',
+      label: tF('Previously used inputs'),
       title: 'Inputs',
       svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
       fill: function (body, onPick) {
@@ -1501,7 +1501,7 @@ function ncfImageSourceItems() {
     },
     {
       key: 'tray',
-      label: 'From tray',
+      label: tF('From tray'),
       title: 'Tray',
       svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>',
       fill: function (body, onPick) {
@@ -1510,7 +1510,7 @@ function ncfImageSourceItems() {
     },
     {
       key: 'history',
-      label: 'Recent generations',
+      label: tF('Recent generations'),
       title: 'History',
       svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
       fill: function (body, onPick) {
@@ -1540,7 +1540,7 @@ function ncfFillOptionsMenu(bodyEl, items) {
 function ncfFillThumbGrid(bodyEl, fetchUrl, emptyMsg, onPick) {
   var loading = document.createElement('p');
   loading.className = 'nsc-step-hint';
-  loading.textContent = 'Loading…';
+  loading.textContent = tF('Loading…');
   bodyEl.appendChild(loading);
 
   fetch(fetchUrl)
@@ -1576,7 +1576,7 @@ function ncfFillThumbGrid(bodyEl, fetchUrl, emptyMsg, onPick) {
       bodyEl.innerHTML = '';
       var err = document.createElement('p');
       err.className = 'nsc-step-hint';
-      err.textContent = 'Failed to load images.';
+      err.textContent = tF('Failed to load images.');
       bodyEl.appendChild(err);
     });
 }

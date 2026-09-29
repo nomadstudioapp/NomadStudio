@@ -21,18 +21,18 @@ function _updateAspectPreview(idx) {
   _aspectPanelRect.style.width  = w + 'px';
   _aspectPanelRect.style.height = h + 'px';
   if (_aspectPanelLabel) _aspectPanelLabel.textContent = preset.label;
-  if (_aspectPanelHint) _aspectPanelHint.textContent = preset.hint || '';
+  if (_aspectPanelHint) _aspectPanelHint.textContent = preset.hint ? tF(preset.hint) : '';
 }
 
 function openAspectRatioPanel(currentIdx, onChange) {
   _ncfAspectPanelApply = onChange || null;
-  openOptionsPanel('Aspect ratio', function (body) {
+  openOptionsPanel(tF('Aspect ratio'), function (body) {
     body.innerHTML =
       '<div class="ncf-aspect-preview-box"><div class="ncf-aspect-preview-rect" id="ncf-aspect-preview-rect"></div></div>' +
       '<p class="ncf-aspect-preview-hint" id="ncf-aspect-preview-hint"></p>' +
       '<p class="ncf-aspect-preview-label" id="ncf-aspect-preview-label">1:1</p>' +
       '<input class="nsc-aspect-slider ncf-aspect-panel-slider" id="ncf-aspect-panel-slider" type="range" min="0" max="' +
-        (ASPECT_PRESETS.length - 1) + '" step="1" value="' + currentIdx + '" aria-label="Aspect ratio">';
+        (ASPECT_PRESETS.length - 1) + '" step="1" value="' + currentIdx + '" aria-label="' + escHtml(tF('Aspect ratio')) + '">';
 
     _aspectPanelSlider = body.querySelector('#ncf-aspect-panel-slider');
     _aspectPanelRect   = body.querySelector('#ncf-aspect-preview-rect');
@@ -65,7 +65,7 @@ var RESOLUTION_TIERS = [
 // inputs change, so the caller can update customResDims/labels/saveParams.
 function openResolutionPanel(aspectIdx, currentTier, onChange, opts) {
   opts = opts || {};
-  openOptionsPanel('Resolution', function (body) {
+  openOptionsPanel(tF('Resolution'), function (body) {
     var preset = ASPECT_PRESETS[aspectIdx];
     var list = document.createElement('div');
     list.className = 'nsc-quality-list ncf-resolution-grid';
@@ -106,13 +106,13 @@ function openResolutionPanel(aspectIdx, currentTier, onChange, opts) {
     var customBlock = document.createElement('div');
     customBlock.className = 'nsc-param-block';
     customBlock.style.marginTop = '1rem';
-    customBlock.innerHTML = '<p class="nsc-param-title">Custom resolution</p>';
+    customBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Custom resolution')) + '</p>';
     var customRow = document.createElement('div');
     customRow.className = 'nsc-field-row';
     customRow.innerHTML =
-      '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="Width" id="ncf-res-panel-custom-w">' +
+      '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="' + escHtml(tF('Width')) + '" id="ncf-res-panel-custom-w">' +
       '<span style="color:var(--muted);flex-shrink:0;">×</span>' +
-      '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="Height" id="ncf-res-panel-custom-h">';
+      '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="' + escHtml(tF('Height')) + '" id="ncf-res-panel-custom-h">';
     customBlock.appendChild(customRow);
     body.appendChild(customBlock);
     var wInput = customRow.querySelector('#ncf-res-panel-custom-w');
@@ -135,7 +135,7 @@ function openResolutionPanel(aspectIdx, currentTier, onChange, opts) {
     var upTitle = document.createElement('p');
     upTitle.className = 'nsc-param-title';
     upTitle.style.marginTop = '1rem';
-    upTitle.textContent = 'Upscale output';
+    upTitle.textContent = tF('Upscale output');
     body.appendChild(upTitle);
     if (typeof _buildUpscaleOutputGrid === 'function') _buildUpscaleOutputGrid(body);
   });

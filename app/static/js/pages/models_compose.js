@@ -76,7 +76,7 @@
 
     const basicCard = document.createElement('article');
     basicCard.className = 'analysis-card';
-    basicCard.innerHTML = '<h3>Basic Parameters</h3>';
+    basicCard.innerHTML = '<h3>' + tH('Basic Parameters') + '</h3>';
     const basicGrid = document.createElement('div');
     basicGrid.className = 'param-grid';
     (analysis?.basicParameters || []).forEach((item) => {
@@ -96,11 +96,11 @@
 
     const advancedCard = document.createElement('details');
     advancedCard.className = 'analysis-card';
-    advancedCard.innerHTML = '<summary>Advanced Parameters</summary>';
+    advancedCard.innerHTML = '<summary>' + tH('Advanced Parameters') + '</summary>';
     const advancedList = document.createElement('div');
     advancedList.className = 'stack';
     if (!advancedParams.length) {
-      advancedList.innerHTML = '<p class="muted-note">No advanced parameters detected.</p>';
+      advancedList.innerHTML = '<p class="muted-note">' + tH('No advanced parameters detected.') + '</p>';
     } else {
       advancedParams.forEach((item) => {
         const row = document.createElement('p');
@@ -120,7 +120,7 @@
 
     const catalog = Array.isArray(models) ? models : [];
     if (!catalog.length) {
-      savedImportsEl.innerHTML = '<p class="muted-note">No saved compose imports yet.</p>';
+      savedImportsEl.innerHTML = '<p class="muted-note">' + tH('No saved compose imports yet.') + '</p>';
       return;
     }
 
@@ -209,7 +209,7 @@
         const modelId = btn.getAttribute('data-compose-delete');
         if (!modelId) return;
 
-        const ok = window.confirm('Delete this import? This cannot be undone.');
+        const ok = window.confirm(tF('Delete this import? This cannot be undone.'));
         if (!ok) return;
 
         try {

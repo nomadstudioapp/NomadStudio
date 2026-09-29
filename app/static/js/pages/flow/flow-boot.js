@@ -13,8 +13,16 @@ function flowBootLoad(id) {
 
   // The server translates the flow with the text its package carries.
   var lang = (window.NomadI18n && window.NomadI18n.getLanguage && window.NomadI18n.getLanguage()) || 'en';
-  return fetch('/api/flows/' + id + '?lang=' + encodeURIComponent(lang))
-    .then(function (r) { return r.json(); })
+  // The engine's own texts go through tF(), which needs the dictionary: wait
+  // for it (loaded in parallel with the flow), but never more than 3 s.
+  var dictReady = (window.NomadI18n && window.NomadI18n.ready)
+    ? Promise.race([window.NomadI18n.ready, new Promise(function (r) { setTimeout(r, 3000); })])
+    : Promise.resolve();
+  return Promise.all([
+    fetch('/api/flows/' + id + '?lang=' + encodeURIComponent(lang)).then(function (r) { return r.json(); }),
+    dictReady,
+  ])
+    .then(function (results) { return results[0]; })
     .then(function (data) {
       var flow = data && data.flow;
       if (!flow || !flow.definition) {
@@ -42,7 +50,7 @@ function flowBootLoad(id) {
         var instBadge = document.createElement('span');
         instBadge.id = 'nsc-flow-instance-badge';
         instBadge.className = 'nsc-flow-instance-badge';
-        instBadge.title = 'Flow instance id — generations made without leaving this page update the same history entry';
+        instBadge.title = tF('Flow instance id — generations made without leaving this page update the same history entry');
         instBadge.textContent = '#' + flowInstanceId;
         bc.parentElement.appendChild(instBadge);
       }
@@ -57,10 +65,10 @@ function flowBootLoad(id) {
         saveBtn.type = 'button';
         saveBtn.id = 'nsc-flow-save-btn';
         saveBtn.className = 'btn create-action-btn';
-        saveBtn.setAttribute('aria-label', 'Save this flow instance to Build');
+        saveBtn.setAttribute('aria-label', tF('Save this flow instance to Build'));
         var saveBtnTip = document.createElement('span');
         saveBtnTip.className = 'action-tip';
-        saveBtnTip.textContent = 'Save to Build';
+        saveBtnTip.textContent = tF('Save to Build');
         saveBtn.innerHTML =
           // A cube — the Depot's own icon (topbar badge). The thin prism it
           // replaced, drawn in a 100×160 box, barely showed at the rail's size.
@@ -73,14 +81,14 @@ function flowBootLoad(id) {
         saveBtn.addEventListener('click', function () {
           if (saveBtn.disabled || typeof saveFlowInstanceToLibrary !== 'function') return;
           saveBtn.disabled = true;
-          saveBtnTip.textContent = 'Saving…';
+          saveBtnTip.textContent = tF('Saving…');
           saveFlowInstanceToLibrary().then(function () {
-            saveBtnTip.textContent = 'Saved ✓';
-            setTimeout(function () { saveBtnTip.textContent = 'Save to Build'; saveBtn.disabled = false; }, 1500);
+            saveBtnTip.textContent = tF('Saved ✓');
+            setTimeout(function () { saveBtnTip.textContent = tF('Save to Build'); saveBtn.disabled = false; }, 1500);
           }).catch(function (err) {
             console.error('[Nomad Studio] Save to Build failed:', err);
-            saveBtnTip.textContent = 'Save failed';
-            setTimeout(function () { saveBtnTip.textContent = 'Save to Build'; saveBtn.disabled = false; }, 1500);
+            saveBtnTip.textContent = tF('Save failed');
+            setTimeout(function () { saveBtnTip.textContent = tF('Save to Build'); saveBtn.disabled = false; }, 1500);
           });
         });
         _saveBtnRail.insertBefore(saveBtn, _saveBtnRail.firstChild);
@@ -156,12 +164,12 @@ function flowBootLoad(id) {
 // exist at this point (renderAllSteps() never ran).
 function flowBootShowError(id) {
   var bc = document.getElementById('nsc-flow-breadcrumb');
-  if (bc) bc.textContent = 'Flow not found';
+  if (bc) bc.textContent = tF('Flow not found');
   var scroll = document.getElementById('ncf-steps-scroll');
   if (scroll) {
     scroll.innerHTML =
       '<div class="nsc-flow-boot-error">' +
-      '<p class="nsc-flow-boot-error-title">This flow could not be opened</p>' +
+      '<p class="nsc-flow-boot-error-title">' + escHtml(tF('This flow could not be opened')) + '</p>' +
       '<p class="nsc-flow-boot-error-sub">"' + id + '" no longer exists — it was likely renamed or removed since this step was created.</p>' +
       '</div>';
   }
@@ -294,7 +302,7 @@ window.FlowEngine = {
     if (back) {
       back.setAttribute('href', '/nomad-studio');
       var backLbl = back.querySelector('span');
-      if (backLbl) backLbl.textContent = 'BACK TO SESSION';
+      if (backLbl) backLbl.textContent = tF('BACK TO SESSION');
       back.addEventListener('click', returnToSession);
     }
 

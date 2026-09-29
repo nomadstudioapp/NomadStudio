@@ -35,11 +35,11 @@ function renderBulkVision(stepDef, el) {
   refBlock.className = 'nsc-param-block';
   var refTitle = document.createElement('p');
   refTitle.className = 'nsc-param-title';
-  refTitle.textContent = 'Reference prompt';
+  refTitle.textContent = tF('Reference prompt');
   var refHistBtn = document.createElement('button');
   refHistBtn.type = 'button';
   refHistBtn.className = 'nsc-history-btn nsc-options-trigger';
-  refHistBtn.setAttribute('aria-label', 'Reference prompt history');
+  refHistBtn.setAttribute('aria-label', tF('Reference prompt history'));
   refHistBtn.innerHTML =
     '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
       '<circle cx="8" cy="8" r="6"/>' +
@@ -67,7 +67,7 @@ function renderBulkVision(stepDef, el) {
   var modeBlock = document.createElement('div');
   modeBlock.className = 'nsc-param-block';
   modeBlock.style.marginTop = '0.75rem';
-  modeBlock.innerHTML = '<p class="nsc-param-title">Mode</p>';
+  modeBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Mode')) + '</p>';
   var modeRow = document.createElement('div');
   modeRow.style.cssText = 'display:flex;gap:0.5rem;';
   var mode = getVal(storeId, 'mode') || 'faithful';
@@ -75,14 +75,14 @@ function renderBulkVision(stepDef, el) {
   faithfulBtn.type = 'button';
   faithfulBtn.className = 'nsc-res-btn' + (mode === 'faithful' ? ' is-active' : '');
   faithfulBtn.style.flex = '1';
-  faithfulBtn.textContent = 'Faithful';
-  faithfulBtn.title = 'Describe literally what is in each image';
+  faithfulBtn.textContent = tF('Faithful');
+  faithfulBtn.title = tF('Describe literally what is in each image');
   var creativeBtn = document.createElement('button');
   creativeBtn.type = 'button';
   creativeBtn.className = 'nsc-res-btn' + (mode === 'creative' ? ' is-active' : '');
   creativeBtn.style.flex = '1';
-  creativeBtn.textContent = 'Creative';
-  creativeBtn.title = 'Use each image as loose inspiration, embellish freely';
+  creativeBtn.textContent = tF('Creative');
+  creativeBtn.title = tF('Use each image as loose inspiration, embellish freely');
   function _setMode(m) {
     mode = m;
     setVal(storeId, 'mode', mode);
@@ -104,7 +104,7 @@ function renderBulkVision(stepDef, el) {
   processBtn.className = 'nss-generate-scenes-btn';
   processBtn.style.cssText = 'flex:1;margin-top:0;';
   var processBtnLbl = document.createElement('span');
-  processBtnLbl.textContent = 'Process';
+  processBtnLbl.textContent = tF('Process');
   processBtn.appendChild(processBtnLbl);
   processRow.appendChild(processBtn);
   if (typeof makeVisionModelBtn === 'function') {
@@ -149,7 +149,7 @@ function renderBulkVision(stepDef, el) {
   generateAllBtn.id = 'ncf-bulk-generate-all-' + stepDef.id;
   generateAllBtn.className = 'nss-generate-scenes-btn';
   generateAllBtn.style.marginTop = '0.75rem';
-  generateAllBtn.textContent = 'Generate All';
+  generateAllBtn.textContent = tF('Generate All');
   generateAllBtn.disabled = true;
   el.appendChild(generateAllBtn);
 
@@ -208,12 +208,12 @@ function renderBulkVision(stepDef, el) {
     var single = getVal(imagesStepId, 'image_data_url');
     if (!images.length && single) images = [single];
     if (!images.length) {
-      if (typeof showErrorToast === 'function') showErrorToast('Add at least one reference image first.');
+      if (typeof showErrorToast === 'function') showErrorToast(tF('Add at least one reference image first.'));
       return;
     }
     var reference = refTa.value.trim();
     if (!reference) {
-      if (typeof showErrorToast === 'function') showErrorToast('Paste a reference prompt first.');
+      if (typeof showErrorToast === 'function') showErrorToast(tF('Paste a reference prompt first.'));
       return;
     }
     pushPromptHistory(REFERENCE_HISTORY_KEY, reference);
@@ -229,27 +229,26 @@ function renderBulkVision(stepDef, el) {
     processBtn.classList.add('is-composing');
 
     for (var i = 0; i < images.length; i++) {
-      progressEl.textContent = 'Processing ' + (i + 1) + '/' + images.length + '…';
-      processBtnLbl.textContent = 'Processing ' + (i + 1) + '/' + images.length;
+      progressEl.textContent = tF('Processing') + ' ' + (i + 1) + '/' + images.length + '…';
+      processBtnLbl.textContent = tF('Processing') + ' ' + (i + 1) + '/' + images.length;
       try {
         var desc = await _describeOnce(images[i], systemPrompt);
         if (_isNotADescription(desc, reference)) {
           // The same image and the same example usually read fine on a second
           // pass — the failure is a sampling accident, not a bad input — so
           // spend one retry before handing the user an empty row.
-          progressEl.textContent = 'Retrying ' + (i + 1) + '/' + images.length + '…';
-          processBtnLbl.textContent = 'Retrying ' + (i + 1) + '/' + images.length;
+          progressEl.textContent = tF('Retrying') + ' ' + (i + 1) + '/' + images.length + '…';
+          processBtnLbl.textContent = tF('Retrying') + ' ' + (i + 1) + '/' + images.length;
           desc = await _describeOnce(images[i], systemPrompt);
           if (_isNotADescription(desc, reference)) desc = '';
         }
         if (!desc && typeof showErrorToast === 'function') {
-          showErrorToast('Image ' + (i + 1) + ': the model gave back style words instead of '
-            + 'describing the image. Press Process again, or write this one yourself.');
+          showErrorToast(tF('Image {n}: the model gave back style words instead of describing the image. Press Process again, or write this one yourself.').replace('{n}', i + 1));
         }
         rows.push({ image: images[i], prompt: desc });
       } catch (err) {
         rows.push({ image: images[i], prompt: '' });
-        if (typeof showErrorToast === 'function') showErrorToast('Image ' + (i + 1) + ' failed: ' + err.message);
+        if (typeof showErrorToast === 'function') showErrorToast(tF('Image {n} failed:').replace('{n}', i + 1) + ' ' + err.message);
       }
       _renderRows();
     }
@@ -257,7 +256,7 @@ function renderBulkVision(stepDef, el) {
     isProcessing = false;
     processBtn.disabled = false;
     processBtn.classList.remove('is-composing');
-    processBtnLbl.textContent = 'Process';
+    processBtnLbl.textContent = tF('Process');
     _renderRows();
 
     // Say what just happened and what is still missing. This flow's whole
@@ -268,7 +267,7 @@ function renderBulkVision(stepDef, el) {
     // biggest confusion.
     var ready = rows.filter(function (r) { return r.prompt.trim(); }).length;
     if (!ready) {
-      progressEl.textContent = 'No prompts written — check the vision model and try again.';
+      progressEl.textContent = tF('No prompts written — check the vision model and try again.');
     } else if (ready < rows.length) {
       progressEl.textContent = ready + ' of ' + rows.length + ' prompts ready — '
         + 'press "Generate All" to render them. Blank rows are skipped; write them yourself to include them.';
@@ -282,7 +281,7 @@ function renderBulkVision(stepDef, el) {
     var isCustom = (getMode() === 'advanced');
     var workflowId = (isCustom && getGlobalWorkflows().length > 0) ? getGlobalWorkflows()[0] : selectedImportId;
     if (!workflowId) {
-      if (typeof showErrorToast === 'function') showErrorToast('Choose an engine first.');
+      if (typeof showErrorToast === 'function') showErrorToast(tF('Choose an engine first.'));
       return;
     }
     var dims = getDims();

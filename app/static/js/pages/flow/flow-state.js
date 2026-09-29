@@ -247,14 +247,14 @@ function saveFlowInstanceToLibrary() {
   try {
     snap = _collectFlowSnapshot();
   } catch (_) {
-    return Promise.reject(new Error('Could not read flow state'));
+    return Promise.reject(new Error(tF('Could not read flow state')));
   }
   return fetch('/api/library/flows', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: snap.type, label: snap.label, prompt: snap.prompt, data: snap.data }),
   }).then(function (r) {
-    if (!r.ok) throw new Error('Save failed (' + r.status + ')');
+    if (!r.ok) throw new Error(tF('Save failed') + ' (' + r.status + ')');
     return r.json();
   });
 }
@@ -296,10 +296,10 @@ var OUTPAINT_ASPECT_PRESETS = [
   { key: 'r2x3',     label: '2:3',    hint: 'Pinterest',
     icon: { vw: 13, vh: 18, rw: 11.5, rh: 16.5 },
     sd: { w:  640, h:  960 }, md: { w:  896, h: 1344 }, hd: { w: 1024, h: 1536 } },
-  { key: 'r4x5',     label: '4:5',    hint: 'Instagram feed vertical · el más usado ahora',
+  { key: 'r4x5',     label: '4:5',    hint: 'Instagram feed vertical · the most used now',
     icon: { vw: 14, vh: 18, rw: 12.5, rh: 16.5 },
     sd: { w:  768, h:  960 }, md: { w: 1024, h: 1280 }, hd: { w: 1024, h: 1280 } },
-  { key: 'r1x1',     label: '1:1',    hint: 'Instagram feed clásico',
+  { key: 'r1x1',     label: '1:1',    hint: 'Instagram feed classic',
     icon: { vw: 18, vh: 18, rw: 16.5, rh: 16.5 },
     sd: { w:  768, h:  768 }, md: { w: 1024, h: 1024 }, hd: { w: 1152, h: 1152 } },
   { key: 'r4x3',     label: '4:3',    hint: 'Facebook feed',
@@ -311,7 +311,7 @@ var OUTPAINT_ASPECT_PRESETS = [
   { key: 'r16x9',    label: '16:9',   hint: 'YouTube · Twitter/X landscape',
     icon: { vw: 18, vh: 11, rw: 16.5, rh:  9.5 },
     sd: { w: 1024, h:  576 }, md: { w: 1344, h:  768 }, hd: { w: 1536, h:  864 } },
-  { key: 'r239x100', label: '2.39:1', hint: 'Scope · Cinemascope · look anamórfico',
+  { key: 'r239x100', label: '2.39:1', hint: 'Scope · Cinemascope · anamorphic look',
     icon: { vw: 18, vh:  8, rw: 16.5, rh:  6.5 },
     sd: { w:  960, h:  384 }, md: { w: 1216, h:  512 }, hd: { w: 1536, h:  640 } },
 ];
@@ -324,9 +324,9 @@ var ASPECT_PRESET_SETS = { 'default': ASPECT_PRESETS, 'outpaint': OUTPAINT_ASPEC
 var _ncfSetAspectFn = null;
 
 var FALLBACK_QUALITY = [
-  { id: 'fast',     label: 'Fast',     sub: 'fewer steps', values: null },
-  { id: 'balanced', label: 'Balanced', sub: 'recommended', values: null },
-  { id: 'quality',  label: 'Max',      sub: 'more steps',  values: null },
+  { id: 'fast',     get label() { return tF('Fast'); },     get sub() { return tF('fewer steps'); }, values: null },
+  { id: 'balanced', get label() { return tF('Balanced'); }, get sub() { return tF('recommended'); }, values: null },
+  { id: 'quality',  get label() { return tF('Max'); },      get sub() { return tF('more steps'); },  values: null },
 ];
 
 // True only for an actual browser reload (F5 / refresh button) of the

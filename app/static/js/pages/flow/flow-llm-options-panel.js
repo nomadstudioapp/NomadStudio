@@ -50,12 +50,12 @@ function _creativityStepFor(v) {
 }
 
 function openLLMOptionsPanel(params) {
-  openOptionsPanel('Assist options', function (body) {
+  openOptionsPanel(tF('Assist options'), function (body) {
     var html = '';
     if (params.level) {
       html +=
         '<div class="nsc-param-block">' +
-          '<p class="nsc-param-title">Enhance level</p>' +
+          '<p class="nsc-param-title">' + escHtml(tF('Enhance level')) + '</p>' +
           '<div class="nse-level-btns" id="ncf-llm-options-level-btns" role="group"></div>' +
         '</div>';
     }
@@ -72,8 +72,8 @@ function openLLMOptionsPanel(params) {
         '<label class="ncf-chat-ep-toggle" id="ncf-llm-options-think-label">' +
           '<input type="checkbox" id="ncf-llm-options-think-toggle" class="ncf-chat-ep-input">' +
           '<span class="ncf-chat-ep-track"><span class="ncf-chat-ep-thumb"></span></span>' +
-          '<span class="ncf-chat-ep-text">Think</span>' +
-          '<span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip">Off: fast, no reasoning. On: the model jots a brief thinking outline before writing the result — still fast, this is prompted, not a special reasoning mode.</span>' +
+          '<span class="ncf-chat-ep-text">' + escHtml(tF('Think')) + '</span>' +
+          '<span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip">' + escHtml(tF('Off: fast, no reasoning. On: the model jots a brief thinking outline before writing the result — still fast, this is prompted, not a special reasoning mode.')) + '</span>' +
         '</label>' +
       '</div>';
     body.innerHTML = html;

@@ -62,13 +62,13 @@ function _appendThinkCompatBadge(badges, m) {
   var badge = document.createElement('span');
   badge.className = 'nse-model-think nse-model-think--' + state;
   badge.innerHTML = _THINK_BRAIN_SVG;
-  badge.title = state === 'supported'
+  badge.title = tF(state === 'supported'
     ? 'Respects "don\'t think" requests.'
     : state === 'unsupported'
       ? 'Does not support disabling thinking — can burn its whole token budget reasoning.'
       : state === 'no_thinking'
         ? 'No thinking/reasoning capability — nothing to toggle.'
-        : 'Think compatibility not checked yet (Settings > Prompts).';
+        : 'Think compatibility not checked yet (Settings > Prompts).');
   badges.appendChild(badge);
 }
 // What fits in VRAM right now (GET /api/models/chat/vram, NomadStudio#12):
@@ -180,7 +180,7 @@ function _updateVisionHintLabel(hintBtn, hintNameEl, model) {
     if (hintNameEl) hintNameEl.textContent = short;
     hintBtn.setAttribute('title', model);
   } else {
-    if (hintNameEl) hintNameEl.textContent = 'no model';
+    if (hintNameEl) hintNameEl.textContent = tF('no model');
   }
 }
 
@@ -200,7 +200,7 @@ async function _saveVisionModelSetting(model) {
     });
   } catch (err) {
     console.error('[FlowEngine] saveVisionModelSetting:', err);
-    if (typeof showErrorToast === 'function') showErrorToast('Could not save vision model');
+    if (typeof showErrorToast === 'function') showErrorToast(tF('Could not save vision model'));
   }
 }
 
@@ -208,7 +208,7 @@ function openVisionModelOptionsPanel(hintBtn) {
   if (hintBtn) hintBtn.setAttribute('aria-expanded', 'true');
   var visionPickerModel = (_pickerSettings && _pickerSettings.lmStudioVisionModel) || '';
 
-  openOptionsPanel('Vision model', function (body) {
+  openOptionsPanel(tF('Vision model'), function (body) {
     body.innerHTML = '<div class="nse-model-list" id="ncf-vision-model-panel-list"></div>';
     var listEl = body.querySelector('#ncf-vision-model-panel-list');
 
@@ -219,8 +219,7 @@ function openVisionModelOptionsPanel(hintBtn) {
     var scoreNote = document.createElement('p');
     scoreNote.className = 'nsc-step-hint';
     scoreNote.style.cssText = 'margin:0.6rem 0 0;opacity:0.75;';
-    scoreNote.textContent = 'Scores measure reading images, not writing. '
-      + 'Models without one simply have not been benchmarked yet.';
+    scoreNote.textContent = tF('Scores measure reading images, not writing. Models without one simply have not been benchmarked yet.');
     body.appendChild(scoreNote);
     var models = (_pickerSettings.lmStudioVisionModels && _pickerSettings.lmStudioVisionModels.length)
       ? _pickerSettings.lmStudioVisionModels
@@ -232,7 +231,7 @@ function openVisionModelOptionsPanel(hintBtn) {
     // has been measured, and is explained by the footer below the list.
     function renderList() {
       if (!models.length) {
-        listEl.innerHTML = '<p class="nse-model-empty">No vision models found — is LM Studio running?</p>';
+        listEl.innerHTML = '<p class="nse-model-empty">' + escHtml(tF('No vision models found — is LM Studio running?')) + '</p>';
         return;
       }
       _withVram(_loadVisionScores()).then(function (scoreData) {
@@ -287,16 +286,16 @@ function openVisionModelOptionsPanel(hintBtn) {
             ? _pickerSettings.lmStudioVisionModels
             : (_pickerSettings.lmStudioModels || []);
           renderList();
-          if (typeof showToast === 'function') showToast('Model list refreshed (' + models.length + ')', 'info');
+          if (typeof showToast === 'function') showToast(tF('Model list refreshed ({n})').replace('{n}', models.length), 'info');
         })
         .catch(function (err) {
-          if (typeof showErrorToast === 'function') showErrorToast(err.message || 'Could not refresh models');
+          if (typeof showErrorToast === 'function') showErrorToast(err.message || tF('Could not refresh models'));
         })
         .finally(function () {
           var el = document.getElementById('ncf-options-panel-action');
           if (el) el.classList.remove('is-spinning');
         });
-    }, { icon: true, label: 'Refresh model list from LM Studio' });
+    }, { icon: true, label: tF('Refresh model list from LM Studio') });
   }, { wide: true, flexBody: true });
 }
 
@@ -308,7 +307,7 @@ function makeVisionModelBtn() {
   btn.className = 'ncf-model-icon-btn ncf-vision-model-btn nsc-options-trigger';
   btn.type = 'button';
   btn.setAttribute('aria-haspopup', 'true');
-  btn.setAttribute('aria-label', 'Change vision model');
+  btn.setAttribute('aria-label', tF('Change vision model'));
   // A chip with a pupil, not a plain eye. Wherever this button sits next to
   // an action that actually RUNS vision (the "detect subject" eye in
   // flow-step-image-picker.js, "Describe reference" in

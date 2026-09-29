@@ -10,7 +10,7 @@
       <div class="cs-sub-header">
         <a href="/nomad-studio" class="cs-back-btn">
           <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>BACK</span>
+          <span data-i18n="tpl.back">BACK</span>
         </a>
         <p class="cs-breadcrumb">
           <a href="/nomad-studio">Nomad Studio</a>
@@ -20,14 +20,14 @@
           <!-- Only shown while a specific Depot is open (showDepotDetail) —
                doubles as the "back to the Depot list" affordance, so a
                separate back button inside the aside is unnecessary. -->
-          <a href="/build" id="lib-breadcrumb-depots" hidden>Depots</a>
+          <a href="/build" id="lib-breadcrumb-depots" hidden data-i18n="tpl.depots">Depots</a>
           <svg viewBox="0 0 24 24" aria-hidden="true" id="lib-breadcrumb-depots-arrow" hidden><path d="M9 18l6-6-6-6"/></svg>
-          <span class="cs-breadcrumb-current" id="lib-breadcrumb-current">Styles</span>
+          <span class="cs-breadcrumb-current" id="lib-breadcrumb-current" data-i18n="tpl.styles">Styles</span>
         </p>
         <!-- Active Depot badge, same as the flow pages' topbar (_flow_body.html),
              filled in by services/depot_indicator.js. -->
         <div class="nsc-topbar-center">
-          <a class="nsc-topbar-depot" id="nsc-topbar-depot" href="/build" title="Active Depot — click to manage" hidden>
+          <a class="nsc-topbar-depot" id="nsc-topbar-depot" href="/build" title="Active Depot — click to manage" hidden data-i18n-attr="title:tpl.active_depot_click_to_manage">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
             <span id="nsc-topbar-depot-name"></span>
           </a>
@@ -36,7 +36,7 @@
 
       <div class="cs-create-body" id="lib-body">
 
-        <aside class="cs-tag-filter cs-tag-filter--sidebar" id="lib-category-nav" role="tablist" aria-label="Build categories"></aside>
+        <aside class="cs-tag-filter cs-tag-filter--sidebar" id="lib-category-nav" role="tablist" aria-label="Build categories" data-i18n-attr="aria-label:tpl.build_categories"></aside>
 
         <!-- Styles-only vertical params panel — same .nsc-inputs shape as a
              Create flow's left sidebar, sitting between the category nav and
@@ -52,10 +52,10 @@
         <aside class="nsc-inputs" id="lib-styles-aside" hidden>
           <div class="nsc-steps-scroll">
             <div class="nsc-step">
-              <p class="nsc-step-label">Model</p>
+              <p class="nsc-step-label" data-i18n="tpl.model">Model</p>
               <div class="nsc-select-wrapper">
                 <select id="lib-model-select" class="nsc-select">
-                  <option value="">Loading models…</option>
+                  <option value="" data-i18n="tpl.loading_models">Loading models…</option>
                 </select>
                 <svg class="nsc-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
               </div>
@@ -68,15 +68,15 @@
             <div class="nsc-step">
               <div class="lib-advanced-panel" id="lib-advanced-panel">
                 <div class="nsc-param-block" id="lib-quant-block" style="display:none">
-                  <p class="nsc-param-title">Quantization</p>
+                  <p class="nsc-param-title" data-i18n="tpl.quantization">Quantization</p>
                   <div class="lib-quant-list" id="lib-quant-list" role="radiogroup"></div>
                 </div>
                 <div class="nsc-param-block">
-                  <p class="nsc-param-title">Resolution</p>
+                  <p class="nsc-param-title" data-i18n="tpl.resolution">Resolution</p>
                   <div class="nsc-res-btns" role="group" id="lib-res-btns">
-                    <button class="nsc-res-btn" data-res="sd" type="button" aria-pressed="false"><span class="nsc-res-label">SD</span><span class="nsc-res-sub" id="lib-res-sub-sd"></span></button>
-                    <button class="nsc-res-btn is-active" data-res="md" type="button" aria-pressed="true"><span class="nsc-res-label">MD</span><span class="nsc-res-sub" id="lib-res-sub-md"></span></button>
-                    <button class="nsc-res-btn" data-res="hd" type="button" aria-pressed="false"><span class="nsc-res-label">HD</span><span class="nsc-res-sub" id="lib-res-sub-hd"></span></button>
+                    <button class="nsc-res-btn" data-res="sd" type="button" aria-pressed="false"><span class="nsc-res-label" data-i18n="tpl.sd">SD</span><span class="nsc-res-sub" id="lib-res-sub-sd"></span></button>
+                    <button class="nsc-res-btn is-active" data-res="md" type="button" aria-pressed="true"><span class="nsc-res-label" data-i18n="tpl.md">MD</span><span class="nsc-res-sub" id="lib-res-sub-md"></span></button>
+                    <button class="nsc-res-btn" data-res="hd" type="button" aria-pressed="false"><span class="nsc-res-label" data-i18n="tpl.hd">HD</span><span class="nsc-res-sub" id="lib-res-sub-hd"></span></button>
                   </div>
                 </div>
                 <!-- Format + optional stable-named copy in the output folder
@@ -85,8 +85,8 @@
                 <div class="nsc-param-block">
                   <p class="nsc-param-title" data-i18n="build.imageFormat">Image format</p>
                   <div class="nsc-res-btns" role="group" id="lib-format-btns">
-                    <button class="nsc-res-btn is-active" data-format="png" type="button" aria-pressed="true"><span class="nsc-res-label">PNG</span></button>
-                    <button class="nsc-res-btn" data-format="webp" type="button" aria-pressed="false"><span class="nsc-res-label">WebP</span></button>
+                    <button class="nsc-res-btn is-active" data-format="png" type="button" aria-pressed="true"><span class="nsc-res-label" data-i18n="tpl.png">PNG</span></button>
+                    <button class="nsc-res-btn" data-format="webp" type="button" aria-pressed="false"><span class="nsc-res-label" data-i18n="tpl.webp">WebP</span></button>
                   </div>
                 </div>
                 <div class="nsc-param-block">
@@ -133,104 +133,104 @@
 
         <aside class="lib-style-edit-panel is-closed" id="lib-style-edit-modal" aria-labelledby="lib-style-edit-title" aria-hidden="true">
           <header class="lib-style-edit-panel-header">
-            <span class="lib-style-edit-panel-title" id="lib-style-edit-title">Edit Style</span>
-            <button class="lib-style-edit-panel-close" id="lib-style-edit-close" type="button" aria-label="Close">
+            <span class="lib-style-edit-panel-title" id="lib-style-edit-title" data-i18n="tpl.edit_style">Edit Style</span>
+            <button class="lib-style-edit-panel-close" id="lib-style-edit-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
               <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </header>
           <div class="lib-style-edit-panel-body">
             <div class="nsc-step" id="lib-style-edit-image-step">
-              <p class="nsc-step-label">Image</p>
+              <p class="nsc-step-label" data-i18n="tpl.image">Image</p>
               <div class="lib-style-edit-image-wrap" id="lib-style-edit-image-wrap">
                 <img class="lib-style-edit-image" id="lib-style-edit-image" alt="" hidden>
                 <i data-lucide="palette" class="lib-style-edit-image-fallback" aria-hidden="true"></i>
               </div>
               <input type="file" accept="image/*" id="lib-style-edit-image-input" hidden>
-              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-style-edit-image-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Change image</span></button>
+              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-style-edit-image-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span data-i18n="tpl.change_image">Change image</span></button>
             </div>
             <div class="nsc-step">
-              <p class="nsc-step-label">Details</p>
+              <p class="nsc-step-label" data-i18n="tpl.details">Details</p>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-style-edit-name">Name</label>
+                <label class="nsc-field-label" for="lib-style-edit-name" data-i18n="tpl.name">Name</label>
                 <input class="nsc-input" id="lib-style-edit-name" type="text" maxlength="120" autocomplete="off">
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-style-edit-category">Category</label>
+                <label class="nsc-field-label" for="lib-style-edit-category" data-i18n="tpl.category">Category</label>
                 <input class="nsc-input" id="lib-style-edit-category" type="text" maxlength="120" autocomplete="off">
               </div>
             </div>
             <div class="nsc-step">
-              <p class="nsc-step-label">Prompt</p>
+              <p class="nsc-step-label" data-i18n="tpl.prompt">Prompt</p>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-style-edit-prompt">Prompt</label>
+                <label class="nsc-field-label" for="lib-style-edit-prompt" data-i18n="tpl.prompt">Prompt</label>
                 <textarea class="nsc-input" id="lib-style-edit-prompt" rows="3" spellcheck="false"></textarea>
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-style-edit-prefix">Prefix</label>
+                <label class="nsc-field-label" for="lib-style-edit-prefix" data-i18n="tpl.prefix">Prefix</label>
                 <input class="nsc-input" id="lib-style-edit-prefix" type="text" autocomplete="off">
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-style-edit-suffix">Suffix</label>
+                <label class="nsc-field-label" for="lib-style-edit-suffix" data-i18n="tpl.suffix">Suffix</label>
                 <input class="nsc-input" id="lib-style-edit-suffix" type="text" autocomplete="off">
               </div>
             </div>
             <p class="lib-style-edit-status" id="lib-style-edit-status"></p>
           </div>
           <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
-            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-style-edit-delete" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Delete</span></button>
-            <button class="lib-style-edit-panel-apply" id="lib-style-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label">Save</span></button>
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-style-edit-delete" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="tpl.delete">Delete</span></button>
+            <button class="lib-style-edit-panel-apply" id="lib-style-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label" data-i18n="tpl.save">Save</span></button>
           </footer>
         </aside>
 
         <aside class="lib-style-edit-panel is-closed" id="lib-template-edit-modal" aria-labelledby="lib-template-edit-title" aria-hidden="true">
           <header class="lib-style-edit-panel-header">
-            <span class="lib-style-edit-panel-title" id="lib-template-edit-title">Edit Template</span>
-            <button class="lib-style-edit-panel-close" id="lib-template-edit-close" type="button" aria-label="Close">
+            <span class="lib-style-edit-panel-title" id="lib-template-edit-title" data-i18n="tpl.edit_template">Edit Template</span>
+            <button class="lib-style-edit-panel-close" id="lib-template-edit-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
               <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </header>
           <div class="lib-style-edit-panel-body">
             <div class="nsc-step" id="lib-template-edit-image-step">
-              <p class="nsc-step-label"><span class="nsc-step-num">1</span> Image</p>
+              <p class="nsc-step-label"><span class="nsc-step-num">1</span> <span data-i18n="tpl.image">Image</span></p>
               <div class="lib-style-edit-image-wrap" id="lib-template-edit-image-wrap">
                 <img class="lib-style-edit-image" id="lib-template-edit-image" alt="" hidden>
                 <i data-lucide="layout-template" class="lib-style-edit-image-fallback" aria-hidden="true"></i>
               </div>
               <input type="file" accept="image/*" id="lib-template-edit-image-input" hidden>
-              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-template-edit-image-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Change image</span></button>
+              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-template-edit-image-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span data-i18n="tpl.change_image">Change image</span></button>
             </div>
             <div class="nsc-step">
-              <p class="nsc-step-label"><span class="nsc-step-num">2</span> Details</p>
+              <p class="nsc-step-label"><span class="nsc-step-num">2</span> <span data-i18n="tpl.details">Details</span></p>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-template-edit-name">Name</label>
+                <label class="nsc-field-label" for="lib-template-edit-name" data-i18n="tpl.name">Name</label>
                 <input class="nsc-input" id="lib-template-edit-name" type="text" maxlength="120" autocomplete="off">
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-template-edit-theme">Theme</label>
-                <input class="nsc-input" id="lib-template-edit-theme" type="text" maxlength="120" autocomplete="off" placeholder="e.g. 90s Smalltown">
+                <label class="nsc-field-label" for="lib-template-edit-theme" data-i18n="tpl.theme">Theme</label>
+                <input class="nsc-input" id="lib-template-edit-theme" type="text" maxlength="120" autocomplete="off" placeholder="e.g. 90s Smalltown" data-i18n-attr="placeholder:tpl.e_g_90s_smalltown">
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-template-edit-pack">Template Pack</label>
-                <input class="nsc-input" id="lib-template-edit-pack" type="text" maxlength="120" autocomplete="off" placeholder="e.g. Cinematic">
+                <label class="nsc-field-label" for="lib-template-edit-pack" data-i18n="tpl.template_pack">Template Pack</label>
+                <input class="nsc-input" id="lib-template-edit-pack" type="text" maxlength="120" autocomplete="off" placeholder="e.g. Cinematic" data-i18n-attr="placeholder:tpl.e_g_cinematic">
               </div>
             </div>
             <div class="nsc-step">
-              <p class="nsc-step-label"><span class="nsc-step-num">3</span> Template</p>
+              <p class="nsc-step-label"><span class="nsc-step-num">3</span> <span data-i18n="tpl.template">Template</span></p>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-template-edit-template">Template</label>
-                <textarea class="nsc-input" id="lib-template-edit-template" rows="6" spellcheck="false" placeholder="Prompt scaffold with {placeholders}…"></textarea>
+                <label class="nsc-field-label" for="lib-template-edit-template" data-i18n="tpl.template">Template</label>
+                <textarea class="nsc-input" id="lib-template-edit-template" rows="6" spellcheck="false" placeholder="Prompt scaffold with {placeholders}…" data-i18n-attr="placeholder:tpl.prompt_scaffold_with_placeholders"></textarea>
               </div>
             </div>
             <div class="nsc-step" id="lib-template-edit-values-step">
-              <p class="nsc-step-label"><span class="nsc-step-num">4</span> Field Values</p>
-              <p class="lib-template-values-hint muted-note">Preset options for each <code>{placeholder}</code> above — shared by every template in this pack.</p>
+              <p class="nsc-step-label"><span class="nsc-step-num">4</span> <span data-i18n="tpl.field_values">Field Values</span></p>
+              <p class="lib-template-values-hint muted-note"><span data-i18n="tpl.preset_options_for_each">Preset options for each</span> <code>{placeholder}</code> <span data-i18n="tpl.above_shared_by_every_template_in">above — shared by every template in this pack.</span></p>
               <div class="lib-template-values-list" id="lib-template-edit-values"></div>
             </div>
             <p class="lib-style-edit-status" id="lib-template-edit-status"></p>
           </div>
           <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
-            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-template-edit-delete" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Delete</span></button>
-            <button class="lib-style-edit-panel-apply" id="lib-template-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label">Save</span></button>
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-template-edit-delete" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="tpl.delete">Delete</span></button>
+            <button class="lib-style-edit-panel-apply" id="lib-template-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label" data-i18n="tpl.save">Save</span></button>
           </footer>
         </aside>
 
@@ -241,8 +241,8 @@
              shell, so it slides in and pushes the grid exactly like its sibling. -->
         <aside class="lib-style-edit-panel lib-template-values-panel is-closed" id="lib-template-values-panel" aria-labelledby="lib-template-values-panel-title" aria-hidden="true">
           <header class="lib-style-edit-panel-header">
-            <span class="lib-style-edit-panel-title" id="lib-template-values-panel-title">Field</span>
-            <button class="lib-style-edit-panel-close" id="lib-template-values-panel-close" type="button" aria-label="Close">
+            <span class="lib-style-edit-panel-title" id="lib-template-values-panel-title" data-i18n="tpl.field">Field</span>
+            <button class="lib-style-edit-panel-close" id="lib-template-values-panel-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
               <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </header>
@@ -258,27 +258,27 @@
              offered — see library.js's openCreateDepotModal. -->
         <aside class="lib-style-edit-panel is-closed" id="lib-depot-edit-modal" aria-labelledby="lib-depot-edit-title" aria-hidden="true">
           <header class="lib-style-edit-panel-header">
-            <span class="lib-style-edit-panel-title" id="lib-depot-edit-title">Create Depot</span>
-            <button class="lib-style-edit-panel-close" id="lib-depot-edit-close" type="button" aria-label="Close">
+            <span class="lib-style-edit-panel-title" id="lib-depot-edit-title" data-i18n="tpl.create_depot">Create Depot</span>
+            <button class="lib-style-edit-panel-close" id="lib-depot-edit-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
               <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </header>
           <div class="lib-style-edit-panel-body">
             <div class="nsc-step">
-              <p class="nsc-step-label">Details</p>
+              <p class="nsc-step-label" data-i18n="tpl.details">Details</p>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-depot-edit-name">Name</label>
+                <label class="nsc-field-label" for="lib-depot-edit-name" data-i18n="tpl.name">Name</label>
                 <input class="nsc-input" id="lib-depot-edit-name" type="text" maxlength="120" autocomplete="off">
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-depot-edit-description">Description</label>
+                <label class="nsc-field-label" for="lib-depot-edit-description" data-i18n="tpl.description">Description</label>
                 <textarea class="nsc-input" id="lib-depot-edit-description" rows="3"></textarea>
               </div>
             </div>
             <p class="lib-style-edit-status" id="lib-depot-edit-status"></p>
           </div>
           <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
-            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-depot-edit-delete" type="button" hidden><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Delete</span></button>
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-depot-edit-delete" type="button" hidden><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="tpl.delete">Delete</span></button>
             <button class="lib-style-edit-panel-apply" id="lib-depot-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label">Create</span></button>
           </footer>
         </aside>
@@ -295,24 +295,24 @@
              openItemEditModal). -->
         <aside class="lib-style-edit-panel is-closed" id="lib-item-edit-modal" aria-labelledby="lib-item-edit-title" aria-hidden="true">
           <header class="lib-style-edit-panel-header">
-            <span class="lib-style-edit-panel-title" id="lib-item-edit-title">Edit</span>
-            <button class="lib-style-edit-panel-close" id="lib-item-edit-close" type="button" aria-label="Close">
+            <span class="lib-style-edit-panel-title" id="lib-item-edit-title" data-i18n="tpl.edit">Edit</span>
+            <button class="lib-style-edit-panel-close" id="lib-item-edit-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
               <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </header>
           <div class="lib-style-edit-panel-body">
             <div class="nsc-step" id="lib-item-edit-image-step">
-              <p class="nsc-step-label">Image</p>
+              <p class="nsc-step-label" data-i18n="tpl.image">Image</p>
               <div class="lib-style-edit-image-wrap" id="lib-item-edit-image-wrap">
                 <img class="lib-style-edit-image" id="lib-item-edit-image" alt="" hidden>
                 <i data-lucide="image" class="lib-style-edit-image-fallback" aria-hidden="true"></i>
               </div>
               <input type="file" accept="image/*" id="lib-item-edit-image-input" hidden>
-              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-item-edit-image-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Change image</span></button>
+              <button type="button" class="lib-style-edit-panel-secondary lib-style-edit-image-btn" id="lib-item-edit-image-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span data-i18n="tpl.change_image">Change image</span></button>
             </div>
             <div class="nsc-step">
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-item-edit-keyword">Identifier</label>
+                <label class="nsc-field-label" for="lib-item-edit-keyword" data-i18n="tpl.identifier">Identifier</label>
                 <!-- "$" prefix baked into the control, not just a label —
                      visual cue that this is a variable-like reference token
                      (the way a shell var or template placeholder reads),
@@ -322,28 +322,28 @@
                   <input class="lib-item-edit-identifier-input" id="lib-item-edit-keyword" type="text" maxlength="16" autocomplete="off" spellcheck="false" pattern="[a-z0-9]+([_-][a-z0-9]+)*">
                 </div>
               </div>
-              <p class="lib-item-edit-keyword-hint muted-note">Lowercase letters/numbers only, max 16 characters — use <code>-</code> or <code>_</code> instead of spaces.</p>
+              <p class="lib-item-edit-keyword-hint muted-note"><span data-i18n="tpl.lowercase_letters_numbers_only_max_16">Lowercase letters/numbers only, max 16 characters — use</span> <code>-</code> <span data-i18n="tpl.or">or</span> <code>_</code> <span data-i18n="tpl.instead_of_spaces">instead of spaces.</span></p>
             </div>
             <div class="nsc-step">
-              <p class="nsc-step-label">Details</p>
+              <p class="nsc-step-label" data-i18n="tpl.details">Details</p>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-item-edit-description">Description</label>
+                <label class="nsc-field-label" for="lib-item-edit-description" data-i18n="tpl.description">Description</label>
                 <textarea class="nsc-input" id="lib-item-edit-description" rows="2"></textarea>
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-item-edit-prompt">Prompt</label>
+                <label class="nsc-field-label" for="lib-item-edit-prompt" data-i18n="tpl.prompt">Prompt</label>
                 <textarea class="nsc-input" id="lib-item-edit-prompt" rows="3" spellcheck="false"></textarea>
               </div>
               <div class="nsc-field-row nsc-field-row--compose">
-                <label class="nsc-field-label" for="lib-item-edit-neutral-prompt">Neutral Prompt</label>
+                <label class="nsc-field-label" for="lib-item-edit-neutral-prompt" data-i18n="tpl.neutral_prompt">Neutral Prompt</label>
                 <textarea class="nsc-input" id="lib-item-edit-neutral-prompt" rows="3" spellcheck="false"></textarea>
               </div>
             </div>
             <p class="lib-style-edit-status" id="lib-item-edit-status"></p>
           </div>
           <footer class="lib-style-edit-panel-footer lib-style-edit-footer">
-            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-item-edit-delete" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Delete</span></button>
-            <button class="lib-style-edit-panel-apply" id="lib-item-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label">Save</span></button>
+            <button class="lib-style-edit-panel-secondary lib-style-edit-delete" id="lib-item-edit-delete" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="tpl.delete">Delete</span></button>
+            <button class="lib-style-edit-panel-apply" id="lib-item-edit-save" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span class="lib-btn-label" data-i18n="tpl.save">Save</span></button>
           </footer>
         </aside>
 
@@ -362,7 +362,7 @@
                 <!-- Same edit affordance as the pencil on a Depot card in the
                      list view (.lib-depot-card-edit-btn → openEditDepotModal)
                      — the detail view has no other way back to that form. -->
-                <button type="button" class="cs-card-zoom-btn" id="lib-depot-aside-edit-btn" aria-label="Edit Depot">
+                <button type="button" class="cs-card-zoom-btn" id="lib-depot-aside-edit-btn" aria-label="Edit Depot" data-i18n-attr="aria-label:tpl.edit_depot">
                   <i data-lucide="pencil" aria-hidden="true"></i>
                 </button>
               </div>
@@ -373,18 +373,18 @@
               </button>
             </div>
             <div class="nsc-step">
-              <p class="nsc-step-label">Contents</p>
+              <p class="nsc-step-label" data-i18n="tpl.contents">Contents</p>
               <div class="lib-depot-counters" id="lib-depot-counters"></div>
             </div>
             <div class="nsc-step lib-depot-item-detail" id="lib-depot-item-detail" hidden>
-              <p class="nsc-step-label">Selected</p>
+              <p class="nsc-step-label" data-i18n="tpl.selected">Selected</p>
               <div class="lib-depot-item-detail-media" id="lib-depot-item-detail-media"></div>
               <p class="lib-depot-item-detail-category" id="lib-depot-item-detail-category"></p>
               <p class="lib-depot-item-detail-caption" id="lib-depot-item-detail-caption" hidden></p>
               <p class="lib-depot-item-detail-date" id="lib-depot-item-detail-date"></p>
               <a class="nsc-generate-btn nsc-generate-btn--ghost lib-depot-item-detail-open" id="lib-depot-item-detail-open" target="_blank" rel="noopener">
                 <i data-lucide="external-link" aria-hidden="true"></i>
-                <span>Open flow</span>
+                <span data-i18n="tpl.open_flow">Open flow</span>
               </a>
             </div>
           </div>
@@ -404,21 +404,21 @@
           <!-- Save to Depot — Styles tab only, and only while a Depot is
                active (library.js refreshStyleDepotBtn). Saves the style open
                in Edit Style. Same cube as the flows' "Save to Build". -->
-          <button class="cs-card-zoom-btn lib-style-depot-btn" type="button" id="lib-style-depot-btn" aria-label="Save style to Depot" hidden>
+          <button class="cs-card-zoom-btn lib-style-depot-btn" type="button" id="lib-style-depot-btn" aria-label="Save style to Depot" hidden data-i18n-attr="aria-label:tpl.save_style_to_depot">
             <svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
             <span class="cs-mode-tip" id="lib-style-depot-tip"></span>
           </button>
-          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-reset" aria-label="Reset card size">
+          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-reset" aria-label="Reset card size" data-i18n-attr="aria-label:tpl.reset_card_size">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-            <span class="cs-mode-tip">Reset card size</span>
+            <span class="cs-mode-tip" data-i18n="tpl.reset_card_size">Reset card size</span>
           </button>
-          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-in" aria-label="Larger cards">
+          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-in" aria-label="Larger cards" data-i18n-attr="aria-label:tpl.larger_cards">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-            <span class="cs-mode-tip">Larger cards</span>
+            <span class="cs-mode-tip" data-i18n="tpl.larger_cards">Larger cards</span>
           </button>
-          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-out" aria-label="Smaller cards">
+          <button class="cs-card-zoom-btn" type="button" id="lib-grid-zoom-out" aria-label="Smaller cards" data-i18n-attr="aria-label:tpl.smaller_cards">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
-            <span class="cs-mode-tip">Smaller cards</span>
+            <span class="cs-mode-tip" data-i18n="tpl.smaller_cards">Smaller cards</span>
           </button>
         </div>
 
@@ -432,20 +432,20 @@
                  placeholder="Search…" aria-label="Search"
                  data-i18n-attr="placeholder:build.search,aria-label:build.search" autocomplete="off">
 
-          <p class="cs-tag-filter-empty" id="lib-empty" hidden>Nothing here yet.</p>
-          <nav class="cs-sub-grid" id="lib-grid" aria-label="Build items"></nav>
+          <p class="cs-tag-filter-empty" id="lib-empty" hidden data-i18n="tpl.nothing_here_yet">Nothing here yet.</p>
+          <nav class="cs-sub-grid" id="lib-grid" aria-label="Build items" data-i18n-attr="aria-label:tpl.build_items"></nav>
           <div class="lib-depot-detail" id="lib-depot-detail" hidden></div>
         </div>
 
         <div class="lib-lightbox is-closed" id="lib-template-lightbox" aria-hidden="true">
           <div class="lib-lightbox-backdrop" id="lib-template-lightbox-backdrop"></div>
-          <div class="lib-lightbox-shell" role="dialog" aria-modal="true" aria-label="Reference image viewer">
-            <button class="lib-lightbox-close" id="lib-template-lightbox-close" type="button" aria-label="Close">&times;</button>
-            <button class="lib-lightbox-nav lib-lightbox-prev" id="lib-template-lightbox-prev" type="button" aria-label="Previous image">&#8249;</button>
+          <div class="lib-lightbox-shell" role="dialog" aria-modal="true" aria-label="Reference image viewer" data-i18n-attr="aria-label:tpl.reference_image_viewer">
+            <button class="lib-lightbox-close" id="lib-template-lightbox-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">&times;</button>
+            <button class="lib-lightbox-nav lib-lightbox-prev" id="lib-template-lightbox-prev" type="button" aria-label="Previous image" data-i18n-attr="aria-label:tpl.previous_image">&#8249;</button>
             <figure class="lib-lightbox-figure">
               <img id="lib-template-lightbox-img" alt="">
             </figure>
-            <button class="lib-lightbox-nav lib-lightbox-next" id="lib-template-lightbox-next" type="button" aria-label="Next image">&#8250;</button>
+            <button class="lib-lightbox-nav lib-lightbox-next" id="lib-template-lightbox-next" type="button" aria-label="Next image" data-i18n-attr="aria-label:tpl.next_image">&#8250;</button>
             <div class="lib-lightbox-meta">
               <p class="lib-lightbox-counter" id="lib-template-lightbox-counter"></p>
               <p class="lib-lightbox-prompt" id="lib-template-lightbox-prompt"></p>

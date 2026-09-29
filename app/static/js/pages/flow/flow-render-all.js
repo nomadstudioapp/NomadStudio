@@ -12,7 +12,7 @@ var UPSCALE_OUTPUT_OPTIONS = [
 
 function _upscaleOutputLabel(mode) {
   var opt = UPSCALE_OUTPUT_OPTIONS.find(function (o) { return o.id === mode; });
-  return opt ? opt.label : 'None';
+  return opt ? tF(opt.label) : tF('None');
 }
 
 // Shared grid-builder for the Upscale Output picker — used both by Create's
@@ -30,10 +30,10 @@ function _buildUpscaleOutputGrid(container, onChange) {
     btn.className = 'nsc-quality-btn' + (opt.id === upscaleOutputMode ? ' is-active' : '');
     btn.setAttribute('role', 'radio');
     btn.setAttribute('aria-checked', opt.id === upscaleOutputMode ? 'true' : 'false');
-    btn.title = opt.title;
+    btn.title = tF(opt.title);
     btn.innerHTML =
       '<span class="nsc-quality-dot"></span>' +
-      '<span class="nsc-quality-copy"><strong>' + opt.label + '</strong></span>';
+      '<span class="nsc-quality-copy"><strong>' + escHtml(tF(opt.label)) + '</strong></span>';
     btn.addEventListener('click', function () {
       upscaleOutputMode = opt.id;
       list.querySelectorAll('.nsc-quality-btn').forEach(function (b) {
@@ -95,12 +95,12 @@ function _renderFixedResUpscaleControl(el) {
   wrap.className = 'nsc-param-block';
   wrap.innerHTML = ownAspect
     ? '<p class="nsc-param-title nsc-param-title--flex">Upscale output' +
-        '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="Upscale output">' +
+        '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="' + escHtml(tF('Upscale output')) + '">' +
           '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
         '</button>' +
       '</p>'
-    : '<p class="nsc-param-title nsc-param-title--flex">Resolution <span class="nsc-param-value" id="ncf-fixed-res-label">—</span>' +
-        '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="Resolution and upscale output">' +
+    : '<p class="nsc-param-title nsc-param-title--flex">' + escHtml(tF('Resolution')) + ' <span class="nsc-param-value" id="ncf-fixed-res-label">—</span>' +
+        '<button type="button" class="nsc-history-btn nsc-options-trigger" id="ncf-fixed-res-picker-btn" aria-label="' + escHtml(tF('Resolution and upscale output')) + '">' +
           '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="6" width="7.5" height="7.5" rx="1.3"/><rect x="7.5" y="1.5" width="9" height="9" rx="1.3"/></svg>' +
         '</button>' +
       '</p>';
@@ -120,25 +120,25 @@ function _renderFixedResUpscaleControl(el) {
   refreshLabel();
 
   pickerBtn.addEventListener('click', function () {
-    openOptionsPanel('Resolution', function (body) {
+    openOptionsPanel(tF('Resolution'), function (body) {
       if (!ownAspect) {
         var resBlock = document.createElement('div');
         resBlock.className = 'nsc-param-block ncf-fixed-res-readout';
         var url = _resolveFixedSourceImageUrl();
-        resBlock.innerHTML = '<p class="nsc-param-title">Source resolution</p>' +
-          '<p class="ncf-fixed-res-value">' + (url ? '' : 'No image picked yet') + '</p>';
+        resBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Source resolution')) + '</p>' +
+          '<p class="ncf-fixed-res-value">' + (url ? '' : escHtml(tF('No image picked yet'))) + '</p>';
         body.appendChild(resBlock);
         var valueEl = resBlock.querySelector('.ncf-fixed-res-value');
         if (url) {
           _measureImageDims(url, function (dims) {
-            if (valueEl) valueEl.textContent = dims ? (dims.w + '×' + dims.h) : 'Unknown';
+            if (valueEl) valueEl.textContent = dims ? (dims.w + '×' + dims.h) : tF('Unknown');
           });
         }
       }
 
       var upBlock = document.createElement('div');
       upBlock.className = 'nsc-param-block';
-      upBlock.innerHTML = '<p class="nsc-param-title">Upscale output</p>';
+      upBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Upscale output')) + '</p>';
       body.appendChild(upBlock);
       _buildUpscaleOutputGrid(upBlock);
     });
@@ -204,7 +204,7 @@ function renderAction(stepDef, el) {
       }).catch(function (err) {
         generateBtn.disabled = false;
         console.error('[FlowEngine] Simple mode LLM prep failed:', err);
-        showErrorToast((err && err.message) || 'Could not prepare prompt');
+        showErrorToast((err && err.message) || tF('Could not prepare prompt'));
       });
       return;
     }
@@ -302,7 +302,7 @@ function renderAllSteps() {
   // to the controls it actually affects. Works for both the workflow_file
   // (renderWorkflowParams) and Create-guided (renderParamGroup) variants —
   // both share the same aria-label, only their wrapper row's class differs.
-  var advTriggerBtn = stepsScrollEl.querySelector('button[aria-label="Advanced options"]');
+  var advTriggerBtn = stepsScrollEl.querySelector('button[aria-label="' + escHtml(tF('Advanced options')) + '"]');
   var advTriggerRow = advTriggerBtn && advTriggerBtn.closest('.nsc-param-title');
   if (advTriggerRow && stepsFooterEl) {
     advTriggerRow.classList.add('ncf-advanced-row--pinned');
@@ -350,7 +350,7 @@ function renderAllSteps() {
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
         ' Continue story' +
       '</button>' +
-      '<button class="nss-queue-selected-btn" id="ncf-end-btn" type="button">End story</button>';
+      '<button class="nss-queue-selected-btn" id="ncf-end-btn" type="button">' + escHtml(tF('End story')) + '</button>';
     (stepsFooterEl || stepsScrollEl).appendChild(storyActions);
   }
 }
@@ -411,7 +411,7 @@ async function runPendingSimpleLLMSteps() {
     await runLLM(s, refs.writeBtn, refs.writeLbl, refs.llmStatus, refs.outputTa);
     var produced = String(getVal(s.id, 'transformed_text') || '').trim();
     if (!produced) {
-      throw new Error('Could not prepare the prompt (' + (s.label || s.id) + ' failed) — try Guided mode to see details.');
+      throw new Error(tF('Could not prepare the prompt ({step} failed) — try Guided mode to see details.').replace('{step}', s.label || s.id));
     }
   }
 }
@@ -535,7 +535,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
   var _restoreTargets = _clearLLMTargets(stepDef, outputTa);
   writeBtn.disabled = true;
   writeBtn.classList.add('is-composing');
-  if (writeLbl) writeLbl.textContent = 'Composing…';
+  if (writeLbl) writeLbl.textContent = tF('Composing…');
   // Swap the static icon for a spinning progress ring while busy — the
   // orange color alone was static; this makes "working" visibly dynamic.
   var _btnIcon = writeBtn.querySelector('.nss-btn-icon');
@@ -552,7 +552,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
   writeBtn.insertBefore(_btnRing, _btnIcon || writeBtn.firstChild);
   if (statusEl) {
     statusEl.classList.add('is-busy');
-    statusEl.innerHTML = _NCF_SPIN_ICON + '<span>Calling LM Studio…</span>';
+    statusEl.innerHTML = _NCF_SPIN_ICON + '<span>' + escHtml(tF('Calling LM Studio…')) + '</span>';
   }
   var _stopQueueWatch = _watchGpuQueue(writeLbl, statusEl);
 
@@ -702,7 +702,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       var epCurrentPrompt = (stepDef.context_from && stepDef.context_from.current_prompt)
         ? (resolveRef(stepDef.context_from.current_prompt) || '')
         : '';
-      if (!epCurrentPrompt) throw new Error('No base description to edit yet — describe the image first.');
+      if (!epCurrentPrompt) throw new Error(tF('No base description to edit yet — describe the image first.'));
       var epRes = await fetch('/api/models/chat/edit-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -832,7 +832,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       var sbStyle    = (stepDef._paramValues && stepDef._paramValues['style']) || 'cinematic photography';
       var sbSys = (stepDef.system_prompts && stepDef.system_prompts[sbStyle]) || '';
       if (!sbSys) throw new Error('No system prompt found for style: ' + sbStyle);
-      if (!sbSubject) throw new Error('No subject text to generate storyboard from');
+      if (!sbSubject) throw new Error(tF('No subject text to generate storyboard from'));
 
       _progress('Generating storyboard…');
       var sbRes = await fetch('/api/models/chat/studio-ideogram-storyboard', {
@@ -854,7 +854,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       if (sbTargetStep && sbTargetStep.type === 'ideogram_composer' && sbTargetStep._fillFn) {
         sbTargetStep._fillFn(result);
         setVal(stepDef.id, 'transformed_text', result);
-        if (statusEl) statusEl.textContent = '✓ Storyboard ready — ' + sbData.panels + ' panels (' + sbData.gridSize + ')';
+        if (statusEl) statusEl.textContent = tF('✓ Storyboard ready — {n} panels ({grid})').replace('{n}', sbData.panels).replace('{grid}', sbData.gridSize);
         updateGenerateBtn();
         return;
       }
@@ -1037,7 +1037,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       if (idgTargetStep && idgTargetStep.type === 'ideogram_composer' && idgTargetStep._fillFn) {
         idgTargetStep._fillFn(result);
         setVal(stepDef.id, 'transformed_text', result);
-        if (statusEl) statusEl.textContent = '✓ Composition ready — edit if needed';
+        if (statusEl) statusEl.textContent = tF('✓ Composition ready — edit if needed');
         updateGenerateBtn();
 
         // Reference analysis feedback panel
@@ -1059,7 +1059,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
             refPanel.style.cssText = 'margin-top:8px;font-size:11px;border:1px solid rgba(100,200,100,0.3);border-radius:6px;padding:6px 8px;background:rgba(0,255,100,0.04);';
             var refSum = document.createElement('summary');
             refSum.style.cssText = 'cursor:pointer;color:#4ade80;font-weight:600;list-style:none;';
-            refSum.textContent = '✓ Reference analyzed';
+            refSum.textContent = tF('✓ Reference analyzed');
             var refBody = document.createElement('p');
             refBody.style.cssText = 'margin:6px 0 0;color:rgba(255,255,255,0.55);line-height:1.5;white-space:pre-wrap;';
             refBody.textContent = _refDesc;
@@ -1070,7 +1070,7 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
             var warnEl = document.createElement('p');
             warnEl.id = refPanelId;
             warnEl.style.cssText = 'margin-top:8px;font-size:11px;color:#fbbf24;padding:6px 8px;border:1px solid rgba(251,191,36,0.3);border-radius:6px;background:rgba(251,191,36,0.05);';
-            warnEl.textContent = '⚠ Reference image not analyzed — configure a vision model in Settings to enable character consistency';
+            warnEl.textContent = tF('⚠ Reference image not analyzed — configure a vision model in Settings to enable character consistency');
             statusEl.parentNode.insertBefore(warnEl, statusEl.nextSibling);
           }
         }
@@ -1108,14 +1108,14 @@ async function runLLM(stepDef, writeBtn, writeLbl, statusEl, outputTa) {
       // time even though the textarea looked updated on screen. Write it
       // directly into the target step's own namespace too.
       if (stepDef.output_to) setVal(stepDef.output_to, 'prompt_text', result);
-      if (statusEl) statusEl.textContent = '✓ Done — edit if needed';
+      if (statusEl) statusEl.textContent = tF('✓ Done — edit if needed');
     }
     updateGenerateBtn();
 
   } catch (err) {
     _restoreTargets();
     if (statusEl) statusEl.textContent = '✗ ' + (err.message || 'LLM error');
-    showErrorToast(tF(stepDef.label || 'AI step') + ': ' + (err.message || 'something went wrong'));
+    showErrorToast(tF(stepDef.label || 'AI step') + ': ' + (err.message || tF('something went wrong')));
     console.error('[FlowEngine] runLLM:', err);
   } finally {
     _stopQueueWatch();
@@ -1147,7 +1147,7 @@ function _showScenesAnchor(stepId, anchorText, scenesArr) {
     box.className = 'ncf-scenes-anchor';
     wrap.appendChild(box);
   }
-  var html = '<p class="ncf-scenes-anchor-title">Character / style anchor</p>' +
+  var html = '<p class="ncf-scenes-anchor-title">' + escHtml(tF('Character / style anchor')) + '</p>' +
     '<p class="ncf-scenes-anchor-text">' + escHtml(anchorText) + '</p>';
   if (Array.isArray(scenesArr) && scenesArr.length) {
     var anchorLower = anchorText.toLowerCase();
@@ -1226,7 +1226,7 @@ async function _submitOneImage(positivePrompt) {
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
-  if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+  if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
   var pendingCard = addGeneratingCard(generatedCount + 1, positivePrompt);
   var _params = buildParamsSnapshot({ kind: 'generate', positive: positivePrompt, seed: seedVal, width: dims.w, height: dims.h, workflowId: selectedImportId });
@@ -1448,11 +1448,11 @@ function _captureIntoPendingSession(imgUrl, params) {
 
 async function _runPixelMatch(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotPixelMatch(stepDef);
-  if (snap.__invalid) throw new Error('No source image selected');
+  if (snap.__invalid) throw new Error(tF('No source image selected'));
 
-  _setBusyStatus(generateStatus, 'Processing…');
+  _setBusyStatus(generateStatus, tF('Processing…'));
 
-  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, 'Pixel art…');
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, tF('Pixel art…'));
 
   // Send imageDataUrl + all advancedValues directly — no hardcoded field mapping.
   var res = await fetch('/api/models/pixel-match/process', {
@@ -1464,7 +1464,7 @@ async function _runPixelMatch(stepDef, ctx) {
   if (!res.ok || data.error) throw new Error(data.error || 'Pixel match failed');
 
   var imgUrl = data.imageUrl;
-  if (!imgUrl) throw new Error('No output image returned');
+  if (!imgUrl) throw new Error(tF('No output image returned'));
 
   var _params = buildParamsSnapshot({ kind: 'pixel-match', advancedValues: snap.advancedValues });
   setVal(stepDef.id, 'image_url', imgUrl);
@@ -1472,7 +1472,7 @@ async function _runPixelMatch(stepDef, ctx) {
   addToFeed(imgUrl, generatedCount, pendingCard, _params);
   _captureIntoPendingSession(imgUrl, _params);
   showResultActions(stepDef);
-  if (generateStatus) generateStatus.textContent = '✓ Pixel art ready';
+  if (generateStatus) generateStatus.textContent = tF('✓ Pixel art ready');
   saveSessionSnapshot();
 }
 
@@ -1492,11 +1492,11 @@ function _snapshotChromaKey(stepDef) {
 // ── Chroma Key execution ───────────────────────────────────────────────────
 async function _runChromaKey(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotChromaKey(stepDef);
-  if (snap.__invalid) throw new Error('No source image selected');
+  if (snap.__invalid) throw new Error(tF('No source image selected'));
 
-  _setBusyStatus(generateStatus, 'Keying out background…');
+  _setBusyStatus(generateStatus, tF('Keying out background…'));
 
-  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, 'Chroma key…');
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, tF('Chroma key…'));
 
   var res = await fetch('/api/models/chroma-key/process', {
     method: 'POST',
@@ -1507,7 +1507,7 @@ async function _runChromaKey(stepDef, ctx) {
   if (!res.ok || data.error) throw new Error(data.error || 'Chroma key failed');
 
   var imgUrl = data.imageUrl;
-  if (!imgUrl) throw new Error('No output image returned');
+  if (!imgUrl) throw new Error(tF('No output image returned'));
 
   var _params = buildParamsSnapshot({ kind: 'chroma-key', advancedValues: snap.advancedValues });
   setVal(stepDef.id, 'image_url', imgUrl);
@@ -1540,11 +1540,11 @@ function _snapshotLayerCompose(stepDef) {
 // ── Layer Composer execution ──────────────────────────────────────────────
 async function _runLayerCompose(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotLayerCompose(stepDef);
-  if (snap.__invalid) throw new Error('Pick both a background and a layer image first');
+  if (snap.__invalid) throw new Error(tF('Pick both a background and a layer image first'));
 
-  _setBusyStatus(generateStatus, 'Compositing…');
+  _setBusyStatus(generateStatus, tF('Compositing…'));
 
-  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, 'Composing layers…');
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, tF('Composing layers…'));
 
   var res = await fetch('/api/models/layer-compose/process', {
     method: 'POST',
@@ -1560,7 +1560,7 @@ async function _runLayerCompose(stepDef, ctx) {
   if (!res.ok || data.error) throw new Error(data.error || 'Layer compose failed');
 
   var imgUrl = data.imageUrl;
-  if (!imgUrl) throw new Error('No output image returned');
+  if (!imgUrl) throw new Error(tF('No output image returned'));
 
   var _params = buildParamsSnapshot({ kind: 'layer-compose', advancedValues: Object.assign({}, snap.transform, { lighting: snap.lighting }) });
   setVal(stepDef.id, 'image_url', imgUrl);
@@ -1568,14 +1568,14 @@ async function _runLayerCompose(stepDef, ctx) {
   addToFeed(imgUrl, generatedCount, pendingCard, _params);
   _captureIntoPendingSession(imgUrl, _params);
   showResultActions(stepDef);
-  if (generateStatus) generateStatus.textContent = '✓ Layers composed';
+  if (generateStatus) generateStatus.textContent = tF('✓ Layers composed');
   saveSessionSnapshot();
 }
 
 // ── Upscale execution ─────────────────────────────────────────────────────
 async function _runUpscale(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotUpscale(stepDef);
-  if (snap.__invalid) throw new Error('No source image selected');
+  if (snap.__invalid) throw new Error(tF('No source image selected'));
   var imageDataUrl   = snap.imageDataUrl;
   var promptRefine   = snap.promptRefine;
   var upscaleModelId = snap.upscaleModelId;
@@ -1587,7 +1587,7 @@ async function _runUpscale(stepDef, ctx) {
     }
   });
 
-  _setBusyStatus(generateStatus, 'Preparing…');
+  _setBusyStatus(generateStatus, tF('Preparing…'));
 
   var prepRes = await fetch('/api/models/upscale/prepare', {
     method: 'POST',
@@ -1608,21 +1608,21 @@ async function _runUpscale(stepDef, ctx) {
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
-  if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+  if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
-  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, promptRefine || 'Upscaling…');
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, promptRefine || tF('Upscaling…'));
 
   var _params = buildParamsSnapshot({ kind: 'upscale', prompt: promptRefine, promptRefine: promptRefine, upscaleModelId: upscaleModelId });
   var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, pendingCard, 'Upscaling…');
   imgUrl = await saveFlowImage(imgUrl, prepData.comfyApiUrl, prepData.importId, promptRefine, 0, _params);
-  if (!imgUrl) throw new Error('No output image returned from upscale');
+  if (!imgUrl) throw new Error(tF('No output image returned from upscale'));
 
   setVal(stepDef.id, 'image_url', imgUrl);
   generatedCount++;
   addToFeed(imgUrl, generatedCount, pendingCard, _params);
 
   showResultActions(stepDef);
-  if (generateStatus) generateStatus.textContent = '✓ Upscaled';
+  if (generateStatus) generateStatus.textContent = tF('✓ Upscaled');
   saveSessionSnapshot();
 }
 
@@ -1632,21 +1632,21 @@ async function _runRemoveChecker_REMOVED(stepDef) {
   var imageDataUrl = resolveRef(inputMap['imageDataUrl']) || '';
   var tolerance    = parseInt(resolveRef(inputMap['tolerance']) || 30, 10);
 
-  if (!imageDataUrl) throw new Error('No source image selected');
+  if (!imageDataUrl) throw new Error(tF('No source image selected'));
 
-  if (generateStatus) generateStatus.textContent = 'Loading image…';
+  if (generateStatus) generateStatus.textContent = tF('Loading image…');
 
   // Load the image into an offscreen canvas
   var img = new Image();
   img.crossOrigin = 'anonymous';
   await new Promise(function (resolve, reject) {
     img.onload = resolve;
-    img.onerror = function () { reject(new Error('Could not load image')); };
+    img.onerror = function () { reject(new Error(tF('Could not load image'))); };
     img.src = imageDataUrl;
   });
 
   var W = img.naturalWidth, H = img.naturalHeight;
-  if (!W || !H) throw new Error('Image has zero dimensions');
+  if (!W || !H) throw new Error(tF('Image has zero dimensions'));
 
   var canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -1656,7 +1656,7 @@ async function _runRemoveChecker_REMOVED(stepDef) {
   var imageData = ctx.getImageData(0, 0, W, H);
   var d = imageData.data;
 
-  if (generateStatus) generateStatus.textContent = 'Detecting checker pattern…';
+  if (generateStatus) generateStatus.textContent = tF('Detecting checker pattern…');
 
   // ── Auto-detect checker square size ────────────────────────────────
   // JPEG compression creates soft gradients at square boundaries, so we
@@ -1717,7 +1717,7 @@ async function _runRemoveChecker_REMOVED(stepDef) {
   var c2r = col2[0], c2g = col2[1], c2b = col2[2];
 
   // ── Apply alpha mask ────────────────────────────────────────────────
-  if (generateStatus) generateStatus.textContent = 'Removing background…';
+  if (generateStatus) generateStatus.textContent = tF('Removing background…');
 
   var softMax = tolerance * 1.5;
   for (var y = 0; y < H; y++) {
@@ -1747,7 +1747,7 @@ async function _runRemoveChecker_REMOVED(stepDef) {
   ctx.putImageData(imageData, 0, 0);
   var resultDataUrl = canvas.toDataURL('image/png');
 
-  if (generateStatus) generateStatus.textContent = 'Saving…';
+  if (generateStatus) generateStatus.textContent = tF('Saving…');
 
   // Save to output dir via server endpoint
   var saveRes = await fetch('/api/images/save-dataurl', {
@@ -1759,17 +1759,17 @@ async function _runRemoveChecker_REMOVED(stepDef) {
   if (!saveRes.ok || saveData.error) throw new Error(saveData.error || 'Save failed');
 
   var imgUrl = saveData.url;
-  var pendingCard = addGeneratingCard(generatedCount + 1, 'Remove checker background');
+  var pendingCard = addGeneratingCard(generatedCount + 1, tF('Remove checker background'));
   generatedCount++;
   addToFeed(imgUrl, generatedCount, pendingCard);
   setVal(stepDef.id, 'image_url', imgUrl);
-  if (generateStatus) generateStatus.textContent = '✓ Done — PNG with alpha ready';
+  if (generateStatus) generateStatus.textContent = tF('✓ Done — PNG with alpha ready');
   saveSessionSnapshot();
 }
 
 async function _runRefine(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotRefine(stepDef);
-  if (snap.__invalid) throw new Error('No source image selected');
+  if (snap.__invalid) throw new Error(tF('No source image selected'));
   var workflowFile   = snap.workflowFile;
   var imageDataUrl   = snap.imageDataUrl;
   var advancedValues = snap.advancedValues;
@@ -1777,7 +1777,7 @@ async function _runRefine(stepDef, ctx) {
   var promptText     = snap.promptText;
   if (snap.promptHistoryId && promptText) pushPromptHistory(snap.promptHistoryId, promptText);
 
-  _setBusyStatus(generateStatus, 'Preparing…');
+  _setBusyStatus(generateStatus, tF('Preparing…'));
 
   var prepRes = await fetch('/api/models/refine/prepare', {
     method: 'POST',
@@ -1796,14 +1796,14 @@ async function _runRefine(stepDef, ctx) {
     // Keep the spinner (via _setBusyStatus) instead of replacing it with
     // plain text — "Ready" here was misleading since generation hasn't
     // actually started yet, this is just the upload-to-ComfyUI wait.
-    _setBusyStatus(generateStatus, 'Uploading to ComfyUI…');
+    _setBusyStatus(generateStatus, tF('Uploading to ComfyUI…'));
     var _viewInputLink = document.createElement('a');
     _viewInputLink.href = prepData.inputImageUrl;
     _viewInputLink.target = '_blank';
     _viewInputLink.rel = 'noopener';
     _viewInputLink.style.color = 'var(--accent)';
     _viewInputLink.style.marginLeft = '6px';
-    _viewInputLink.textContent = 'view input image ↗';
+    _viewInputLink.textContent = tF('view input image ↗');
     generateStatus.appendChild(_viewInputLink);
     await new Promise(function (r) { setTimeout(r, 2500); });
   }
@@ -1815,14 +1815,14 @@ async function _runRefine(stepDef, ctx) {
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
-  if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+  if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
-  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, promptText || 'Refining…');
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, promptText || tF('Refining…'));
 
   var _params = buildParamsSnapshot({ kind: 'refine', prompt: promptText, advancedValues: advancedValues, workflowFile: workflowFile });
   var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, pendingCard, 'Refining…');
   imgUrl = await saveFlowImage(imgUrl, prepData.comfyApiUrl, '', promptText, 0, _params);
-  if (!imgUrl) throw new Error('No output image returned from refine');
+  if (!imgUrl) throw new Error(tF('No output image returned from refine'));
   // Opt-in edge-fringing cleanup (Remove Background's "Clean edge fringing"
   // toggle) — runs on the already-saved result and re-persists the cleaned
   // PNG, so the defringed version is what actually lands in history.
@@ -1837,7 +1837,7 @@ async function _runRefine(stepDef, ctx) {
   addToFeed(imgUrl, generatedCount, pendingCard, _params, imageDataUrl);
 
   showResultActions(stepDef);
-  if (generateStatus) generateStatus.textContent = '✓ Refined';
+  if (generateStatus) generateStatus.textContent = tF('✓ Refined');
   saveSessionSnapshot();
 }
 
@@ -1860,13 +1860,13 @@ function _queueRejected(submitData) {
 
 async function _runMix(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotMix(stepDef);
-  if (snap.__invalid) throw new Error('Please select both images first');
+  if (snap.__invalid) throw new Error(tF('Please select both images first'));
   var images         = snap.images;
   var advancedValues = snap.advancedValues;
   var cardPrompt     = snap.cardPrompt;
   var workflowFile   = snap.workflowFile;
 
-  _setBusyStatus(generateStatus, 'Preparing…');
+  _setBusyStatus(generateStatus, tF('Preparing…'));
 
   var prepRes = await fetch('/api/models/mix/prepare', {
     method: 'POST',
@@ -1887,13 +1887,13 @@ async function _runMix(stepDef, ctx) {
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
-  if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+  if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
   var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, cardPrompt);
 
-  var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, pendingCard, 'Generating…');
+  var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, pendingCard, tF('Generating…'));
   imgUrl = await saveFlowImage(imgUrl, prepData.comfyApiUrl, '', cardPrompt, 0);
-  if (!imgUrl) throw new Error('No output image returned');
+  if (!imgUrl) throw new Error(tF('No output image returned'));
   imgUrl = await _maybeUpscaleOutput(imgUrl, pendingCard);
 
   setVal(stepDef.id, 'image_url', imgUrl);
@@ -1907,7 +1907,7 @@ async function _runMix(stepDef, ctx) {
     quantizationId: selectedQuantizationId || '',
   });
   showResultActions(stepDef);
-  if (generateStatus) generateStatus.textContent = '✓ Done';
+  if (generateStatus) generateStatus.textContent = tF('✓ Done');
   saveSessionSnapshot();
 }
 
@@ -1921,7 +1921,7 @@ async function runGenerate(stepDef, ctx) {
   isGenerating = true;
   // Reflect the enqueueable state (button stays enabled + relabels to "Enqueue")
   updateGenerateBtn();
-  _setBusyStatus(generateStatus, 'Preparing…');
+  _setBusyStatus(generateStatus, tF('Preparing…'));
 
   if (stepDef.calls === 'generation.submit_upscale') {
     try {
@@ -2098,7 +2098,7 @@ async function runGenerate(stepDef, ctx) {
         var positivePrompt = prompts[pi];
         if (!positivePrompt) continue;
         _setBusyStatus(generateStatus, prompts.length > 1
-          ? 'Generating ' + (pi + 1) + ' of ' + prompts.length + '…' : 'Preparing…');
+          ? tF('Generating {n} of {total}…').replace('{n}', pi + 1).replace('{total}', prompts.length) : tF('Preparing…'));
 
         var seedVal;
         if (isCustom) {
@@ -2133,7 +2133,7 @@ async function runGenerate(stepDef, ctx) {
             errMsg += ' — node errors: ' + Object.keys(submitData.node_errors).join(', ');
           throw new Error(errMsg);
         }
-        if (!submitData.prompt_id) throw new Error('ComfyUI did not return a prompt_id');
+        if (!submitData.prompt_id) throw new Error(tF('ComfyUI did not return a prompt_id'));
 
         var pendingCard;
         if (existingPromptCards[pi]) {
@@ -2142,7 +2142,7 @@ async function runGenerate(stepDef, ctx) {
           var dot = pendingCard.querySelector('.nss-card-status-dot');
           var lbl = pendingCard.querySelector('.nss-card-status-label');
           if (dot) dot.setAttribute('data-status', 'generating');
-          if (lbl) lbl.textContent = 'generating…';
+          if (lbl) lbl.textContent = tF('generating…');
           // These prompt-editor cards (buildPromptCard) all got their
           // _genStartTime stamped together, in one synchronous loop, the
           // moment the whole scene batch's prompts came back from the LLM —
@@ -2158,7 +2158,7 @@ async function runGenerate(stepDef, ctx) {
         } else {
           pendingCard = addGeneratingCard(generatedCount + 1, positivePrompt);
         }
-        var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, pendingCard, 'Generating…');
+        var imgUrl = await waitForImage(prepData.comfyApiUrl, prepData.clientId, submitData.prompt_id, pendingCard, tF('Generating…'));
         var _loopParams = buildParamsSnapshot({ kind: 'generate', positive: positivePrompt, seed: seedVal, width: dims.w, height: dims.h, workflowId: workflowIds[0] });
         imgUrl = await saveFlowImage(imgUrl, prepData.comfyApiUrl, prepData.importId, positivePrompt, seedVal, _loopParams);
         imgUrl = await _maybeUpscaleOutput(imgUrl, pendingCard);
@@ -2176,7 +2176,7 @@ async function runGenerate(stepDef, ctx) {
 
     } else {
       // ── Multi-workflow: all prompts × all workflows in parallel ──────────
-      _setBusyStatus(generateStatus, 'Launching ' + (prompts.length * workflowIds.length) + ' generations…');
+      _setBusyStatus(generateStatus, tF('Launching {n} generations…').replace('{n}', prompts.length * workflowIds.length));
       var parallelSeed = isCustom && selectedSeed >= 0 ? selectedSeed : Math.floor(Math.random() * 0x7FFFFFFF);
       var tasks = [];
       prompts.forEach(function (prompt) {

@@ -132,16 +132,16 @@ function _tplCardHtml(item) {
 // same panel, but only that theme's cards — no theme list, no search, since
 // there is nothing to navigate between. The panel title names the theme.
 function _openTemplatePickerPanel(onPick, lock) {
-  openOptionsPanel(lock ? _tplT(lock.theme) : 'Choose a template', function (body) {
+  openOptionsPanel(lock ? _tplT(lock.theme) : tF('Choose a template'), function (body) {
     body.innerHTML = lock
       ? '<div class="ncf-style-picker-layout">' +
           '<div class="ncf-style-picker-grid ncf-style-picker-grid--tpl"></div>' +
         '</div>'
       : '<div class="ncf-style-picker-search-row">' +
-          '<input type="text" class="nsc-input ncf-style-picker-search" placeholder="Search templates…" aria-label="Search templates">' +
+          '<input type="text" class="nsc-input ncf-style-picker-search" placeholder="' + escHtml(tF('Search templates…')) + '" aria-label="' + escHtml(tF('Search templates')) + '">' +
         '</div>' +
         '<div class="ncf-style-picker-layout">' +
-          '<nav class="ncf-style-picker-tree ncf-style-picker-tree--wide" aria-label="Template themes"></nav>' +
+          '<nav class="ncf-style-picker-tree ncf-style-picker-tree--wide" aria-label="' + escHtml(tF('Template themes')) + '"></nav>' +
           '<div class="ncf-style-picker-grid ncf-style-picker-grid--tpl"></div>' +
         '</div>';
 
@@ -157,7 +157,7 @@ function _openTemplatePickerPanel(onPick, lock) {
       if (!treeEl) return;
       var themes = _tplThemeList(allItems);
       var html = '<button type="button" class="lib-style-cat-tree-item' +
-        (selectedTheme === '' ? ' is-active' : '') + '" data-theme="">All</button>';
+        (selectedTheme === '' ? ' is-active' : '') + '" data-theme="">' + escHtml(tF('All')) + '</button>';
       html += themes.map(function (t) {
         return '<button type="button" class="lib-style-cat-tree-item' +
           (selectedTheme === t ? ' is-active' : '') + '" data-theme="' + escHtml(t) + '">' +
@@ -218,7 +218,7 @@ function _openTemplatePickerPanel(onPick, lock) {
       closeOptionsPanel();
     });
 
-    gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">Loading…</p>';
+    gridEl.innerHTML = '<p class="ncf-style-picker-empty muted-note">' + escHtml(tF('Loading…')) + '</p>';
     _loadTemplatePacksOnce().then(function (items) {
       allItems = items;
       renderTree();
@@ -242,9 +242,9 @@ function _tplFillRowHtml(key) {
       '<div class="ncf-tplfill-control">' +
         '<input type="text" class="nsc-input ncf-tplfill-input" id="ncf-tplfill-' + escHtml(key) + '" ' +
           'data-field-key="' + escHtml(key) + '" autocomplete="off" ' +
-          'placeholder="Type anything, or pick one →">' +
+          'placeholder="' + escHtml(tF('Type anything, or pick one →')) + '">' +
         '<button type="button" class="ncf-tplfill-btn ncf-tplfill-dice" data-field-key="' + escHtml(key) + '" ' +
-          'aria-label="Random value">' +
+          'aria-label="' + escHtml(tF('Random value')) + '">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">' +
             '<rect x="3" y="3" width="18" height="18" rx="3"/>' +
             '<circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/>' +
@@ -253,7 +253,7 @@ function _tplFillRowHtml(key) {
           '</svg>' +
         '</button>' +
         '<button type="button" class="ncf-tplfill-btn ncf-tplfill-toggle" data-field-key="' + escHtml(key) + '" ' +
-          'aria-label="Show suggestions" aria-expanded="false">' +
+          'aria-label="' + escHtml(tF('Show suggestions')) + '" aria-expanded="false">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">' +
             '<path d="M6 9l6 6 6-6"/></svg>' +
         '</button>' +
@@ -267,13 +267,12 @@ function _tplFillRowHtml(key) {
 }
 
 function _openTemplateFillPanel(state, onApply) {
-  openOptionsPanel('Fill template', function (body) {
+  openOptionsPanel(tF('Fill template'), function (body) {
     var placeholders = _tplParsePlaceholders(state.selected && state.selected.template);
 
     if (!placeholders.length) {
       body.innerHTML =
-        '<p class="ncf-tplfill-empty muted-note">This template has no blanks to fill — ' +
-        'its prompt is ready as it is, and you can still edit it in the step below.</p>';
+        '<p class="ncf-tplfill-empty muted-note">' + escHtml(tF('This template has no blanks to fill — its prompt is ready as it is, and you can still edit it in the step below.')) + '</p>';
       return;
     }
 
@@ -281,11 +280,11 @@ function _openTemplateFillPanel(state, onApply) {
       '<div class="ncf-tplfill-head">' +
         '<p class="ncf-tplfill-hint">Every field is yours to type in. The chevron ' +
         'shows what the pack suggests; the dice picks one for you.</p>' +
-        '<button type="button" class="nse-modal-secondary ncf-tplfill-randomize">Randomize all</button>' +
+        '<button type="button" class="nse-modal-secondary ncf-tplfill-randomize">' + escHtml(tF('Randomize all')) + '</button>' +
       '</div>' +
       '<div class="ncf-tplfill-rows">' + placeholders.map(_tplFillRowHtml).join('') + '</div>' +
       '<div class="ncf-json-panel-footer">' +
-        '<button type="button" class="nse-modal-apply ncf-tplfill-apply">Apply</button>' +
+        '<button type="button" class="nse-modal-apply ncf-tplfill-apply">' + escHtml(tF('Apply')) + '</button>' +
       '</div>';
 
     var rowsEl = body.querySelector('.ncf-tplfill-rows');
@@ -595,12 +594,12 @@ function renderTemplatePicker(stepDef, el) {
       var data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || 'AI error');
       var written = String(data.enhancedPrompt || '').trim();
-      if (!written) throw new Error('The AI returned an empty prompt');
+      if (!written) throw new Error(tF('The AI returned an empty prompt'));
       promptTa.value = written;
       setVal(stepDef.id, 'prompt_text', written);
       syncResetBtn();
     } catch (err) {
-      if (typeof showErrorToast === 'function') showErrorToast(_tplT('Apply with AI') + ': ' + (err.message || 'something went wrong'));
+      if (typeof showErrorToast === 'function') showErrorToast(_tplT('Apply with AI') + ': ' + (err.message || tF('something went wrong')));
       else console.error('[template assist]', err);
     } finally {
       assistBusy = false;
@@ -613,7 +612,7 @@ function renderTemplatePicker(stepDef, el) {
   var promptTa = document.createElement('textarea');
   promptTa.className = 'nsc-textarea ncf-template-prompt-preview';
   promptTa.rows = 4;
-  promptTa.placeholder = 'Pick a template and its prompt appears here — editable, as always.';
+  promptTa.placeholder = tF('Pick a template and its prompt appears here — editable, as always.');
   promptTa.addEventListener('input', function () {
     setVal(stepDef.id, 'prompt_text', promptTa.value);
     syncResetBtn();
@@ -647,7 +646,7 @@ function renderTemplatePicker(stepDef, el) {
       summaryEl.classList.add('is-empty');
       summaryEl.innerHTML =
         '<span class="ncf-template-summary-text">' +
-          '<span class="ncf-template-summary-name">Choose template</span>' +
+          '<span class="ncf-template-summary-name">' + escHtml(tF('Choose template')) + '</span>' +
         '</span>';
       return;
     }

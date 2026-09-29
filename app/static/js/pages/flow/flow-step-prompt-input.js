@@ -129,7 +129,7 @@ function renderPromptInput(stepDef, el) {
     var histBtn = document.createElement('button');
     histBtn.type = 'button';
     histBtn.className = 'nsc-history-btn nsc-options-trigger';
-    histBtn.setAttribute('aria-label', 'Prompt history');
+    histBtn.setAttribute('aria-label', tF('Prompt history'));
     histBtn.innerHTML =
       '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="8" cy="8" r="6"/>' +
@@ -155,8 +155,8 @@ function renderPromptInput(stepDef, el) {
       var styleBtn = document.createElement('button');
       styleBtn.type = 'button';
       styleBtn.className = 'nsc-history-btn nsc-options-trigger';
-      styleBtn.setAttribute('aria-label', 'Choose a Style');
-      styleBtn.title = 'Choose a Style';
+      styleBtn.setAttribute('aria-label', tF('Choose a Style'));
+      styleBtn.title = tF('Choose a Style');
       styleBtn.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
           '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/>' +
@@ -202,8 +202,8 @@ function renderPromptInput(stepDef, el) {
       var editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'nsc-history-btn nsc-options-trigger';
-      editBtn.setAttribute('aria-label', 'Edit prompt');
-      editBtn.title = 'Edit prompt (prefix / idea / suffix)';
+      editBtn.setAttribute('aria-label', tF('Edit prompt'));
+      editBtn.title = tF('Edit prompt (prefix / idea / suffix)');
       editBtn.innerHTML =
         '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M11 2l3 3-8 8-3.5 1 1-3.5z"/>' +
@@ -233,8 +233,8 @@ function renderPromptInput(stepDef, el) {
     var bracketBtn = document.createElement('button');
     bracketBtn.type = 'button';
     bracketBtn.className = 'nsc-history-btn nsc-options-trigger';
-    bracketBtn.setAttribute('aria-label', 'Edit template fields');
-    bracketBtn.title = 'Edit the [bracketed] fields as a form';
+    bracketBtn.setAttribute('aria-label', tF('Edit template fields'));
+    bracketBtn.title = tF('Edit the [bracketed] fields as a form');
     bracketBtn.innerHTML =
       '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M6 2H3v12h3M10 2h3v12h-3"/>' +
@@ -262,8 +262,8 @@ function renderPromptInput(stepDef, el) {
     var copyBtn = document.createElement('button');
     copyBtn.type = 'button';
     copyBtn.className = 'nsc-history-btn';
-    copyBtn.setAttribute('aria-label', 'Copy prompt');
-    copyBtn.title = 'Copy this prompt to the clipboard';
+    copyBtn.setAttribute('aria-label', tF('Copy prompt'));
+    copyBtn.title = tF('Copy this prompt to the clipboard');
     var _copyIcon =
       '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/>' +
@@ -408,7 +408,7 @@ function renderPromptInput(stepDef, el) {
   if (_isChatScenePrompt) {
     ta.disabled = true;
     ta.classList.add('is-prefill-pending');
-    ta.placeholder = 'Click "Update scene prompt" to generate with AI…';
+    ta.placeholder = tF('Click "Update scene prompt" to generate with AI…');
   }
 
   // Phrase chips (Chat's scene_prompt only, #109): a session's prompt grows by
@@ -453,7 +453,7 @@ function renderPromptInput(stepDef, el) {
       chip.type = 'button';
       chip.className = 'ncf-prompt-chip';
       chip.textContent = label;
-      chip.title = 'Remove this phrase';
+      chip.title = tF('Remove this phrase');
       chip.addEventListener('click', function () {
         var rest = phrases.slice();
         rest.splice(idx, 1);
@@ -524,7 +524,7 @@ function renderPromptInput(stepDef, el) {
     var x = document.createElement('button');
     x.type = 'button';
     x.className = 'ncf-style-chip-clear';
-    x.setAttribute('aria-label', 'Remove style');
+    x.setAttribute('aria-label', tF('Remove style'));
     x.textContent = '×';
     x.addEventListener('click', function () { _setPickedStyle(null); });
     _styleChip.appendChild(lbl);
@@ -590,8 +590,8 @@ function renderPromptInput(stepDef, el) {
       var x = document.createElement('button');
       x.type = 'button';
       x.className = 'ncf-style-chip-clear';
-      x.setAttribute('aria-label', 'Remove style wording');
-      x.title = 'Remove the style wording (keeps the reference image)';
+      x.setAttribute('aria-label', tF('Remove style wording'));
+      x.title = tF('Remove the style wording (keeps the reference image)');
       x.textContent = '×';
       x.addEventListener('click', function () {
         setVal(_styleSrcId, 'style_prefix', '');
@@ -651,7 +651,7 @@ function renderPromptInput(stepDef, el) {
         var candidates = allCandidates.filter(function (c) { return c.role !== 'negative'; });
 
         if (!candidates.length && !negativeCandidate) {
-          if (typeof showErrorToast === 'function') showErrorToast('No prompt found in this image’s metadata');
+          if (typeof showErrorToast === 'function') showErrorToast(tF('No prompt found in this image’s metadata'));
           return;
         }
 
@@ -666,7 +666,7 @@ function renderPromptInput(stepDef, el) {
           var negTa = document.getElementById('ncf-negative-prompt');
           if (negTa) negTa.value = negativeCandidate.text;
           if (typeof saveParams === 'function') saveParams();
-          if (typeof showToast === 'function') showToast('Negative prompt applied from image metadata', 'info');
+          if (typeof showToast === 'function') showToast(tF('Negative prompt applied from image metadata'), 'info');
         }
 
         // Unambiguous positive prompt — fill it straight away, same as
@@ -720,7 +720,7 @@ function renderPromptInput(stepDef, el) {
           }
         });
       }).catch(function () {
-        if (typeof showErrorToast === 'function') showErrorToast('Could not read this image');
+        if (typeof showErrorToast === 'function') showErrorToast(tF('Could not read this image'));
       });
     });
   }
@@ -731,17 +731,17 @@ function renderPromptInput(stepDef, el) {
   if (Array.isArray(stepDef.strip_buttons) && stepDef.strip_buttons.length) {
     var _STRIP_CFG = {
       remove_elements: {
-        label: 'No elements',
+        label: tF('No elements'),
         icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="17" x2="21" y2="17"/><line x1="17.5" y1="13.5" x2="17.5" y2="20.5"/></svg>',
         removeDesc: 'physical scene objects and props: furniture, vehicles (ship, boat, car...), weapons, tools, storage containers (crate, box...), navigational items (compass, map...), food, and any other tangible object placed in the scene.',
       },
       remove_characters: {
-        label: 'No characters',
+        label: tF('No characters'),
         icon: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="4" y1="4" x2="20" y2="20"/></svg>',
         removeDesc: 'characters and everything tied to them: people (1girl, solo...), body descriptions, clothing, accessories, hairstyles, poses, expressions, emotions, and character names.',
       },
       remove_background: {
-        label: 'No background',
+        label: tF('No background'),
         icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-5 4 5"/><line x1="3" y1="3" x2="21" y2="21"/></svg>',
         removeDesc: 'background and environment: settings, locations (outdoors, forest, city...), sky, ground, water, architecture, nature elements (trees, grass...), and weather conditions.',
       },
@@ -755,7 +755,7 @@ function renderPromptInput(stepDef, el) {
     var applyStripBtn = document.createElement('button');
     applyStripBtn.type = 'button';
     applyStripBtn.className = 'ncf-strip-apply';
-    applyStripBtn.textContent = 'Apply';
+    applyStripBtn.textContent = tF('Apply');
     applyStripBtn.disabled = true;
 
     // Restore button
@@ -848,7 +848,7 @@ function renderPromptInput(stepDef, el) {
         console.warn('[strip apply]', err);
       } finally {
         applyStripBtn.classList.remove('is-loading');
-        applyStripBtn.textContent = 'Apply';
+        applyStripBtn.textContent = tF('Apply');
         stripRow.querySelectorAll('.ncf-strip-btn').forEach(function (b) { b.disabled = false; });
       }
     });
@@ -867,7 +867,7 @@ function renderPromptInput(stepDef, el) {
     loopBtn.className = 'ncf-loop-apply-btn';
     loopBtn.innerHTML =
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
-      '<span>Apply change</span>';
+      '<span>' + escHtml(tF('Apply change')) + '</span>';
     loopBtn.addEventListener('click', function () {
       var instrText = ta.value.trim();
       if (!instrText) return;
@@ -907,7 +907,7 @@ function renderPromptInput(stepDef, el) {
     qlaBtn.addEventListener('click', async function () {
       if (isWritingScene) return;
       var inputText = ta.value.trim();
-      if (!inputText) { qlaStatus.textContent = 'Enter a scene description first.'; return; }
+      if (!inputText) { qlaStatus.textContent = tF('Enter a scene description first.'); return; }
 
       var syntheticStep = {
         calls: qla.calls,
@@ -1165,7 +1165,7 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
             if (desc) onDone(desc);
           })
           .catch(function (err) {
-            if (typeof showErrorToast === 'function') showErrorToast('Vision describe failed: ' + err.message);
+            if (typeof showErrorToast === 'function') showErrorToast(tF('Vision describe failed:') + ' ' + err.message);
           })
           .finally(done);
       }
@@ -1286,7 +1286,7 @@ function _openEditPromptPanel(imageStepId, ta, onApply, title) {
           }
         })
         .catch(function (err) {
-          if (typeof showErrorToast === 'function') showErrorToast('Refine failed: ' + err.message);
+          if (typeof showErrorToast === 'function') showErrorToast(tF('Refine failed:') + ' ' + err.message);
         })
         .finally(done);
     });
@@ -1464,7 +1464,7 @@ function _extractPromptCandidatesFromImageMeta(chunks) {
 
     try {
       var p = parseCivitAI(raw);
-      if (p && p.positive) candidates.push({ label: 'Positive prompt (image metadata)', text: p.positive });
+      if (p && p.positive) candidates.push({ label: tF('Positive prompt (image metadata)'), text: p.positive });
     } catch (_) {}
   });
 
@@ -1565,7 +1565,7 @@ function _bracketReplace(text, values) {
 }
 
 function openBracketEditorPanel(stepDef, ta, onApply) {
-  openOptionsPanel('Template fields', function (body) {
+  openOptionsPanel(tF('Template fields'), function (body) {
     var spans = _bracketSpans(ta.value);
 
     var rows = document.createElement('div');
@@ -1587,7 +1587,7 @@ function openBracketEditorPanel(stepDef, ta, onApply) {
       var lbl = document.createElement('label');
       lbl.className = 'ncf-json-row-label';
       lbl.setAttribute('for', 'ncf-bf-' + i);
-      lbl.textContent = 'field ' + (i + 1);
+      lbl.textContent = tF('field {n}').replace('{n}', i + 1);
       row.appendChild(lbl);
 
       var control;
@@ -1616,7 +1616,7 @@ function openBracketEditorPanel(stepDef, ta, onApply) {
     var applyBtn = document.createElement('button');
     applyBtn.type = 'button';
     applyBtn.className = 'nse-modal-apply';
-    applyBtn.textContent = 'Apply';
+    applyBtn.textContent = tF('Apply');
     applyBtn.addEventListener('click', function () {
       var values = [];
       rows.querySelectorAll('[data-idx]').forEach(function (c) {

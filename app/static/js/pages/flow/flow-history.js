@@ -53,7 +53,7 @@ function pushPromptHistory(stepId, text) {
 // Rendered into the shared options panel (flow-options-panel.js) instead of
 // its own modal — same pattern as Aspect ratio / Assist options / Model.
 function openHistoryModal(stepId, onSelect) {
-  openOptionsPanel('History', function (body) {
+  openOptionsPanel(tF('History'), function (body) {
     _renderHistoryList(stepId, body, onSelect);
   });
 }
@@ -84,8 +84,8 @@ function _historyRowEl(stepId, text, onSelect, isFav, onToggleFav) {
   var starBtn = document.createElement('button');
   starBtn.type = 'button';
   starBtn.className = 'ncf-history-star' + (isFav ? ' is-favorite' : '');
-  starBtn.setAttribute('aria-label', isFav ? 'Remove from favorites' : 'Add to favorites');
-  starBtn.title = isFav ? 'Remove from favorites' : 'Add to favorites';
+  starBtn.setAttribute('aria-label', tF(isFav ? 'Remove from favorites' : 'Add to favorites'));
+  starBtn.title = tF(isFav ? 'Remove from favorites' : 'Add to favorites');
   starBtn.innerHTML = isFav ? _HISTORY_STAR_SVG_FILLED : _HISTORY_STAR_SVG_OUTLINE;
   starBtn.addEventListener('click', function (e) {
     e.stopPropagation();
@@ -101,7 +101,7 @@ function _renderHistoryList(stepId, body, onSelect) {
   var hist = getPromptHistory(stepId);
   var favs = getFavoritePrompts(stepId);
   if (!hist.length && !favs.length) {
-    body.innerHTML = '<p class="nse-model-empty">No history yet.</p>';
+    body.innerHTML = '<p class="nse-model-empty">' + escHtml(tF('No history yet.')) + '</p>';
     setOptionsPanelAction(null);
     return;
   }
@@ -114,7 +114,7 @@ function _renderHistoryList(stepId, body, onSelect) {
   if (favs.length) {
     var favLabel = document.createElement('p');
     favLabel.className = 'nse-modal-section-label';
-    favLabel.textContent = 'Favorites';
+    favLabel.textContent = tF('Favorites');
     body.appendChild(favLabel);
     var favListEl = document.createElement('div');
     favListEl.className = 'nse-model-list';
@@ -128,7 +128,7 @@ function _renderHistoryList(stepId, body, onSelect) {
     if (favs.length) {
       var histLabel = document.createElement('p');
       histLabel.className = 'nse-modal-section-label';
-      histLabel.textContent = 'History';
+      histLabel.textContent = tF('History');
       body.appendChild(histLabel);
     }
     var listEl = document.createElement('div');

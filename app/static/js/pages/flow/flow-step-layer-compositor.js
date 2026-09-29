@@ -48,14 +48,14 @@ function renderLayerCompositor(stepDef, el) {
   previewMeta.className = 'ncf-lc-preview-meta';
   var metaLabel = document.createElement('span');
   metaLabel.className = 'ncf-lc-preview-label';
-  metaLabel.textContent = 'Pick both images to position the layer';
+  metaLabel.textContent = tF('Pick both images to position the layer');
   previewMeta.appendChild(metaLabel);
   preview.appendChild(previewMeta);
 
   var editBtn = document.createElement('button');
   editBtn.type = 'button';
   editBtn.className = 'ncf-btn ncf-btn--secondary ncf-lc-edit-btn';
-  editBtn.textContent = 'Edit Layout';
+  editBtn.textContent = tF('Edit Layout');
   editBtn.disabled = true;
   preview.appendChild(editBtn);
 
@@ -194,7 +194,7 @@ function renderLayerCompositor(stepDef, el) {
     }
 
     var myToken = ++_lightingToken;
-    if (lightingHintEl) lightingHintEl.textContent = 'Updating preview…';
+    if (lightingHintEl) lightingHintEl.textContent = tF('Updating preview…');
 
     Promise.all([
       _downscaleForPreview(_layerUrl()),
@@ -221,7 +221,7 @@ function renderLayerCompositor(stepDef, el) {
         if (lightingHintEl) lightingHintEl.textContent = '';
       })
       .catch(function () {
-        if (myToken === _lightingToken && lightingHintEl) lightingHintEl.textContent = 'Preview failed';
+        if (myToken === _lightingToken && lightingHintEl) lightingHintEl.textContent = tF('Preview failed');
       });
   }
 

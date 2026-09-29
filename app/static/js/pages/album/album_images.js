@@ -624,7 +624,7 @@ window.albumImagesPage = (function albumImagesModule() {
         sessionStorage.setItem(UPSCALE_SOURCE_IMAGE_KEY, dataUrl);
         window.open('/nomad-studio/refine/upscale-model', '_blank');
       } catch {
-        setStatus('Could not open Upscale with selected image.', true);
+        setStatus(tF('Could not open Upscale with selected image.'), true);
       }
     }
 
@@ -646,7 +646,7 @@ window.albumImagesPage = (function albumImagesModule() {
         sessionStorage.setItem(UPSCALE_SOURCE_IMAGE_KEY, source);
         window.open('/nomad-studio/create/describe-image', '_blank');
       } catch {
-        setStatus('Could not open Describe with selected image.', true);
+        setStatus(tF('Could not open Describe with selected image.'), true);
       }
     }
 
@@ -888,7 +888,7 @@ window.albumImagesPage = (function albumImagesModule() {
         groupsEl.innerHTML = '';
         emptyEl.style.display = '';
         loadSentinelEl.style.display = 'none';
-        setStatus('No images available yet.');
+        setStatus(tF('No images available yet.'));
         updateSearchCount(0, 0);
         return;
       }
@@ -899,7 +899,7 @@ window.albumImagesPage = (function albumImagesModule() {
         groupsEl.innerHTML = '';
         emptyEl.style.display = '';
         loadSentinelEl.style.display = 'none';
-        setStatus('No results for your current filter.');
+        setStatus(tF('No results for your current filter.'));
         updateSearchCount(0, 0);
         return;
       }
@@ -983,7 +983,7 @@ window.albumImagesPage = (function albumImagesModule() {
         modal.className = 'create-modal album-delete-modal open';
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-label', 'Delete image');
+        modal.setAttribute('aria-label', tF('Delete image'));
         modal.innerHTML = `
           <div class="create-modal-backdrop"></div>
           <div class="create-modal-shell">
@@ -1025,13 +1025,13 @@ window.albumImagesPage = (function albumImagesModule() {
 
       try {
         const api = window.openJourneyApi;
-        if (!api || typeof api.deleteImages !== 'function') throw new Error('Delete is unavailable');
+        if (!api || typeof api.deleteImages !== 'function') throw new Error(tF('Delete is unavailable'));
         await api.deleteImages([filename]);
         const nextGallery = gallery.filter((entry) => String(entry.id) !== String(batchId));
         await persistGallery(nextGallery);
         renderGroups(true);
       } catch (error) {
-        setStatus(error && error.message ? error.message : 'Failed to delete image.', true);
+        setStatus(error && error.message ? error.message : tF('Failed to delete image.'), true);
       }
     }
 

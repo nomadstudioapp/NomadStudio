@@ -31,12 +31,12 @@
     </p>
     <div class="nsc-topbar-center">
       {% if viewer_is_vanish %}
-      <a class="nsc-topbar-viewer nsc-topbar-vanish" href="{{ url_for('viewers.switch_viewer') }}" title="Vanish Session — nothing is saved. Click to end it.">
+      <a class="nsc-topbar-viewer nsc-topbar-vanish" href="{{ url_for('viewers.switch_viewer') }}" title="Vanish Session — nothing is saved. Click to end it." data-i18n-attr="title:tpl.vanish_session_nothing_is_saved_click">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 21c0-3 2-4 4-4s4 1 4 4M12 3a5 5 0 0 0-5 5v7l2-1.5 1.5 1.5L12 14l1.5 1.5L15 14l2 1.5V8a5 5 0 0 0-5-5z"/></svg>
         <span data-i18n="flow.vanishActive">Vanish Session — nothing is saved</span>
       </a>
       {% elif viewer_name %}
-      <p class="nsc-topbar-viewer" id="nsc-topbar-viewer" title="Current session">
+      <p class="nsc-topbar-viewer" id="nsc-topbar-viewer" title="Current session" data-i18n-attr="title:tpl.current_session">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>{{ viewer_name }}</span>
       </p>
@@ -45,18 +45,18 @@
            see depots_routes.py) — populated by services/depot_indicator.js,
            right next to the viewer badge since this is the topbar visible
            while actually generating (where "Send to Depot" gets used). -->
-      <a class="nsc-topbar-depot" id="nsc-topbar-depot" href="/build" title="Active Depot — click to manage" hidden>
+      <a class="nsc-topbar-depot" id="nsc-topbar-depot" href="/build" title="Active Depot — click to manage" hidden data-i18n-attr="title:tpl.active_depot_click_to_manage">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
         <span id="nsc-topbar-depot-name"></span>
       </a>
     </div>
     <div style="flex:1"></div>
-    <button class="nit-tray-btn" id="nit-tray-btn" type="button" aria-label="Image Tray">
+    <button class="nit-tray-btn" id="nit-tray-btn" type="button" aria-label="Image Tray" data-i18n-attr="aria-label:tpl.image_tray">
       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>
       <span data-i18n="flow.tray.shortLabel">Tray</span>
       <span class="nit-tray-badge" id="nit-tray-badge" hidden>0</span>
     </button>
-    <div class="cs-mode-toggle nsc-topbar-toggle" id="ncf-mode-toggle" role="group" aria-label="Interface mode">
+    <div class="cs-mode-toggle nsc-topbar-toggle" id="ncf-mode-toggle" role="group" aria-label="Interface mode" data-i18n-attr="aria-label:tpl.interface_mode">
       <button class="cs-mode-btn" data-ncf-mode="simple" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         <span data-i18n="hub.mode.simple">Simple</span>
@@ -94,12 +94,12 @@
       <p class="nsc-param-title" data-i18n="flow.customParams">Custom params</p>
       <div class="nsc-field-row">
         <label class="nsc-field-label" for="ncf-wf-aside-seed" data-i18n="flow.seed">Seed</label>
-        <input class="nsc-input nsc-input--seed" id="ncf-wf-aside-seed" type="number" value="-1" min="-1" placeholder="-1 = random"/>
-        <button class="nsc-icon-btn" id="ncf-wf-aside-seed-random" type="button" aria-label="Randomize">
+        <input class="nsc-input nsc-input--seed" id="ncf-wf-aside-seed" type="number" value="-1" min="-1" placeholder="-1 = random" data-i18n-attr="placeholder:tpl.1_random" />
+        <button class="nsc-icon-btn" id="ncf-wf-aside-seed-random" type="button" aria-label="Randomize" data-i18n-attr="aria-label:tpl.randomize">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l3 3-3 3M2 20l5-5M2 4l5 5-5 5M21 7H7M7 17H3"/></svg>
         </button>
       </div>
-      <div class="ncf-wf-tabs" id="ncf-wf-tabs" role="tablist" aria-label="Selected models"></div>
+      <div class="ncf-wf-tabs" id="ncf-wf-tabs" role="tablist" aria-label="Selected models" data-i18n-attr="aria-label:tpl.selected_models"></div>
       <div class="ncf-wf-tab-bodies" id="ncf-wf-tab-bodies"></div>
     </aside>
 
@@ -115,7 +115,7 @@
       <div class="nsc-options-panel-header">
         <span class="nsc-options-panel-title" id="ncf-options-panel-title"></span>
         <button class="nsc-options-panel-action" id="ncf-options-panel-action" type="button" hidden></button>
-        <button class="nse-modal-close" id="ncf-options-panel-close" type="button" aria-label="Close">
+        <button class="nse-modal-close" id="ncf-options-panel-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
           <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </button>
       </div>
@@ -131,7 +131,7 @@
     <aside class="nsc-options-panel nsc-options-exempt" id="ncf-options-panel-2" hidden>
       <div class="nsc-options-panel-header">
         <span class="nsc-options-panel-title" id="ncf-options-panel-2-title"></span>
-        <button class="nse-modal-close" id="ncf-options-panel-2-close" type="button" aria-label="Close">
+        <button class="nse-modal-close" id="ncf-options-panel-2-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
           <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </button>
       </div>
@@ -151,20 +151,20 @@
           </svg>
           <span class="action-tip" data-i18n="flow.results.refine">Refine</span>
         </button>
-        <button class="btn create-action-btn nsc-options-trigger" type="button" id="ncf-gallery-export-btn" aria-label="Export">
+        <button class="btn create-action-btn nsc-options-trigger" type="button" id="ncf-gallery-export-btn" aria-label="Export" data-i18n-attr="aria-label:tpl.export">
           <svg class="explore-zoom-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>
           </svg>
-          <span class="action-tip">Export</span>
+          <span class="action-tip" data-i18n="tpl.export">Export</span>
         </button>
-        <button class="btn create-action-btn" type="button" id="ncf-gallery-zoom-in" aria-label="Zoom in">
+        <button class="btn create-action-btn" type="button" id="ncf-gallery-zoom-in" aria-label="Zoom in" data-i18n-attr="aria-label:tpl.zoom_in">
           <svg class="explore-zoom-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
           <span class="action-tip" data-i18n="flow.results.zoomIn">Zoom in</span>
         </button>
-        <button class="btn create-action-btn" type="button" id="ncf-gallery-zoom-out" aria-label="Zoom out">
+        <button class="btn create-action-btn" type="button" id="ncf-gallery-zoom-out" aria-label="Zoom out" data-i18n-attr="aria-label:tpl.zoom_out">
           <svg class="explore-zoom-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
@@ -195,7 +195,7 @@
               <span class="ncf-chat-ep-text" data-i18n="flow.chat.refineImage">Refine Image</span>
               <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.chat.refineImageTip">On: an AI rewrites your instruction into a full prompt before sending. Off: your text is sent to the workflow as-is.</span>
             </label>
-            <button type="button" id="ncf-chat-model-btn" class="nsc-history-btn nsc-history-btn--named nsc-options-trigger ncf-llm-model-btn" aria-haspopup="dialog" aria-label="Change LLM model">
+            <button type="button" id="ncf-chat-model-btn" class="nsc-history-btn nsc-history-btn--named nsc-options-trigger ncf-llm-model-btn" aria-haspopup="dialog" aria-label="Change LLM model" data-i18n-attr="aria-label:tpl.change_llm_model">
               <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="5" width="14" height="9" rx="1.5"/>
                 <line x1="5" y1="8" x2="5.01" y2="8"/><line x1="9" y1="8" x2="9.01" y2="8"/><line x1="13" y1="8" x2="13.01" y2="8"/>
@@ -207,7 +207,7 @@
             <div class="ncf-chat-wf-editwith" id="ncf-chat-wf-editwith" hidden>
               <span class="ncf-chat-wf-label" data-i18n="flow.chat.editWith">Edit with</span>
               <div class="ncf-chat-wf-wrapper">
-                <select class="ncf-chat-wf-select" id="ncf-chat-wf-select" aria-label="Edit workflow">
+                <select class="ncf-chat-wf-select" id="ncf-chat-wf-select" aria-label="Edit workflow" data-i18n-attr="aria-label:tpl.edit_workflow">
                   <option value="" data-i18n="flow.chat.generateNewOption">— generate new —</option>
                 </select>
                 <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
@@ -218,7 +218,7 @@
             <div class="ncf-chat-scene-wrap">
               <span class="ncf-chat-wf-label" data-i18n="flow.chat.scene">Scene</span>
               <div class="ncf-chat-wf-wrapper ncf-chat-scene-wrapper">
-                <select class="ncf-chat-wf-select" id="ncf-chat-scene-select" aria-label="Scene to edit"></select>
+                <select class="ncf-chat-wf-select" id="ncf-chat-scene-select" aria-label="Scene to edit" data-i18n-attr="aria-label:tpl.scene_to_edit"></select>
                 <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
               </div>
               <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.chat.sceneTip">Choose which scene your next message works from. With "Edit with", it's the image edited. With "— generate new —", it's the prompt your instruction is layered onto.</span>
@@ -231,9 +231,8 @@
               rows="1"
               placeholder="Describe what to change… (Ctrl+Enter to send)"
               aria-label="Chat instruction"
-              data-i18n-attr="placeholder:flow.chat.placeholder"
-            ></textarea>
-            <button class="ncf-chat-send-btn" id="ncf-chat-send-btn" type="button" aria-label="Send">
+              data-i18n-attr="placeholder:flow.chat.placeholder,aria-label:tpl.chat_instruction"></textarea>
+            <button class="ncf-chat-send-btn" id="ncf-chat-send-btn" type="button" aria-label="Send" data-i18n-attr="aria-label:tpl.send">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 19V5M5 12l7-7 7 7"/>
               </svg>
@@ -250,7 +249,7 @@
             <div class="ncf-chat-wf-editwith" id="ncf-story-reasoning-wrap">
               <span class="ncf-chat-wf-label" data-i18n="flow.story.think">Think</span>
               <div class="ncf-chat-wf-wrapper">
-                <select class="ncf-chat-wf-select" id="ncf-story-reasoning-select" aria-label="Reasoning level">
+                <select class="ncf-chat-wf-select" id="ncf-story-reasoning-select" aria-label="Reasoning level" data-i18n-attr="aria-label:tpl.reasoning_level">
                   <option value="off" data-i18n="flow.story.reasoning.off">Off</option>
                   <option value="low" data-i18n="flow.story.reasoning.low">Low</option>
                   <option value="medium" data-i18n="flow.story.reasoning.medium">Medium</option>
@@ -272,13 +271,13 @@
             <div class="ncf-chat-wf-editwith" id="ncf-story-scenes-wrap">
               <span class="ncf-chat-wf-label" data-i18n="flow.story.scenes">Scenes</span>
               <div class="ncf-chat-wf-wrapper">
-                <select class="ncf-chat-wf-select" id="ncf-story-scenes-select" aria-label="Number of scenes to generate"></select>
+                <select class="ncf-chat-wf-select" id="ncf-story-scenes-select" aria-label="Number of scenes to generate" data-i18n-attr="aria-label:tpl.number_of_scenes_to_generate"></select>
                 <svg class="ncf-chat-wf-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
               </div>
               <span class="ncf-chat-tip ncf-chat-tip--wide" role="tooltip" data-i18n="flow.story.scenesTip">How many consecutive scenes to write and generate from this one instruction.</span>
             </div>
             <span class="ncf-chat-wf-sep"></span>
-            <button class="ncf-story-json-btn nsc-options-trigger" id="ncf-story-json-btn" type="button" aria-label="View story JSON" title="View story JSON">
+            <button class="ncf-story-json-btn nsc-options-trigger" id="ncf-story-json-btn" type="button" aria-label="View story JSON" title="View story JSON" data-i18n-attr="title:tpl.view_story_json,aria-label:tpl.view_story_json">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 4H7a2 2 0 0 0-2 2v3a2 2 0 0 1-2 3 2 2 0 0 1 2 3v3a2 2 0 0 0 2 2h2"/>
                 <path d="M15 4h2a2 2 0 0 1 2 2v3a2 2 0 0 0 2 3 2 2 0 0 0-2 3v3a2 2 0 0 1-2 2h-2"/>
@@ -293,9 +292,8 @@
               rows="1"
               placeholder="What happens next? (Ctrl+Enter to send)"
               aria-label="Story direction"
-              data-i18n-attr="placeholder:flow.story.placeholder"
-            ></textarea>
-            <button class="ncf-chat-send-btn" id="ncf-story-send-btn" type="button" aria-label="Send">
+              data-i18n-attr="placeholder:flow.story.placeholder,aria-label:tpl.story_direction"></textarea>
+            <button class="ncf-chat-send-btn" id="ncf-story-send-btn" type="button" aria-label="Send" data-i18n-attr="aria-label:tpl.send">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 19V5M5 12l7-7 7 7"/>
               </svg>
@@ -311,17 +309,17 @@
 
 
 <!-- ── Vision model picker modal ─────────────────────────────────────────── -->
-<div class="nse-modal-backdrop" id="ncf-vision-model-modal" role="dialog" aria-modal="true" aria-label="Select vision model" hidden>
+<div class="nse-modal-backdrop" id="ncf-vision-model-modal" role="dialog" aria-modal="true" aria-label="Select vision model" hidden data-i18n-attr="aria-label:tpl.select_vision_model">
   <div class="nse-modal">
     <header class="nse-modal-header">
       <span class="nse-modal-title" data-i18n="flow.visionModal.title">Vision Model</span>
-      <button class="nse-modal-close" id="ncf-vision-modal-close" type="button" aria-label="Close">
+      <button class="nse-modal-close" id="ncf-vision-modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
         <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
       </button>
     </header>
     <div class="nse-modal-body">
       <p class="nse-modal-section-label" style="margin-bottom:0.6rem;font-size:0.72rem;color:var(--muted)" data-i18n="flow.visionModal.desc">Model used to analyze reference images.</p>
-      <div class="nse-model-list" id="ncf-vision-model-list" role="listbox" aria-label="Available vision models">
+      <div class="nse-model-list" id="ncf-vision-model-list" role="listbox" aria-label="Available vision models" data-i18n-attr="aria-label:tpl.available_vision_models">
         <p class="nse-model-empty" data-i18n="flow.visionModal.loading">Loading models…</p>
       </div>
     </div>
@@ -342,7 +340,7 @@
   <div class="ncf-civitai-section">
     <div class="ncf-civitai-paste-row">
       <p class="nse-modal-section-label" data-i18n="flow.civitai.pasteInfo">Paste generation info</p>
-      <button id="ncf-civitai-paste-btn" type="button" class="ncf-json-file-btn" title="Paste from clipboard">
+      <button id="ncf-civitai-paste-btn" type="button" class="ncf-json-file-btn" title="Paste from clipboard" data-i18n-attr="title:tpl.paste_from_clipboard">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="4" y="2.5" width="8" height="11" rx="1"/><path d="M6.5 2.5V1.5h3v1"/>
         </svg>
@@ -373,17 +371,17 @@
 </div>
 
 <!-- ── Workflow queue modal ──────────────────────────────────────────────── -->
-<div class="nse-modal-backdrop" id="ncf-wq-modal" role="dialog" aria-modal="true" aria-label="Select workflows" hidden>
+<div class="nse-modal-backdrop" id="ncf-wq-modal" role="dialog" aria-modal="true" aria-label="Select workflows" hidden data-i18n-attr="aria-label:tpl.select_workflows">
   <div class="nse-modal">
     <header class="nse-modal-header">
       <span class="nse-modal-title" data-i18n="flow.wq.title">Workflows</span>
-      <button class="nse-modal-close" id="ncf-wq-modal-close" type="button" aria-label="Close">
+      <button class="nse-modal-close" id="ncf-wq-modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
         <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
       </button>
     </header>
     <div class="nse-modal-body">
       <p class="nse-modal-section-label" style="margin-bottom:0.5rem" data-i18n="flow.wq.desc">Select one or more workflows to use in Custom mode. Generate will run all selected workflows in parallel.</p>
-      <div class="nse-model-list" id="ncf-wq-modal-list" role="listbox" aria-multiselectable="true" aria-label="Available workflows">
+      <div class="nse-model-list" id="ncf-wq-modal-list" role="listbox" aria-multiselectable="true" aria-label="Available workflows" data-i18n-attr="aria-label:tpl.available_workflows">
         <p class="nse-model-empty" data-i18n="flow.wq.loading">Loading…</p>
       </div>
     </div>
@@ -391,18 +389,18 @@
 </div>
 
 <!-- ── Lightbox ──────────────────────────────────────────────────────────── -->
-<div class="nsc-lightbox" id="nsc-lightbox" hidden role="dialog" aria-modal="true" aria-label="Image viewer">
-  <button class="nsc-lightbox-close" id="nsc-lightbox-close" aria-label="Close viewer" type="button">
+<div class="nsc-lightbox" id="nsc-lightbox" hidden role="dialog" aria-modal="true" aria-label="Image viewer" data-i18n-attr="aria-label:tpl.image_viewer">
+  <button class="nsc-lightbox-close" id="nsc-lightbox-close" aria-label="Close viewer" type="button" data-i18n-attr="aria-label:tpl.close_viewer">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
   </button>
-  <button class="nsc-lightbox-nav" id="nsc-lightbox-prev" aria-label="Previous image" type="button">
+  <button class="nsc-lightbox-nav" id="nsc-lightbox-prev" aria-label="Previous image" type="button" data-i18n-attr="aria-label:tpl.previous_image">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
   </button>
   <div class="nsc-lightbox-inner">
-    <img class="nsc-lightbox-img" id="nsc-lightbox-img" src="" alt="Generated image" />
+    <img class="nsc-lightbox-img" id="nsc-lightbox-img" src="" alt="Generated image" data-i18n-attr="alt:tpl.generated_image" />
     <canvas class="nsc-lightbox-bbox-canvas" id="nsc-lightbox-bbox-canvas" aria-hidden="true"></canvas>
   </div>
-  <button class="nsc-lightbox-nav" id="nsc-lightbox-next" aria-label="Next image" type="button">
+  <button class="nsc-lightbox-nav" id="nsc-lightbox-next" aria-label="Next image" type="button" data-i18n-attr="aria-label:tpl.next_image">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
   </button>
   <p class="nsc-lightbox-prompt" id="nsc-lightbox-prompt" hidden></p>
@@ -410,13 +408,13 @@
 </div>
 
 <!-- ── Ideogram Composer modal ────────────────────────────────────────────── -->
-<div class="nse-modal-backdrop ncf-idg-backdrop" id="ncf-ideogram-modal" role="dialog" aria-modal="true" aria-label="Edit composition" hidden>
+<div class="nse-modal-backdrop ncf-idg-backdrop" id="ncf-ideogram-modal" role="dialog" aria-modal="true" aria-label="Edit composition" hidden data-i18n-attr="aria-label:tpl.edit_composition">
   <div class="nse-modal nse-modal--ideogram">
     <header class="nse-modal-header">
       <span class="nse-modal-title" data-i18n="flow.ideogram.title">Edit Composition</span>
       <div class="ncf-idg-header-actions">
         <button class="ncf-btn ncf-btn--ghost ncf-idg-json-toggle" id="ncf-idg-json-toggle" type="button" data-i18n="flow.ideogram.rawJson">Raw JSON</button>
-        <button class="nse-modal-close" id="ncf-ideogram-modal-close" type="button" aria-label="Close">
+        <button class="nse-modal-close" id="ncf-ideogram-modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
           <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </button>
       </div>
@@ -450,11 +448,11 @@
 </div>
 
 <!-- ── Layer Composer modal ───────────────────────────────────────────────── -->
-<div class="nse-modal-backdrop ncf-lc-backdrop" id="ncf-layer-modal" role="dialog" aria-modal="true" aria-label="Position layer" hidden>
+<div class="nse-modal-backdrop ncf-lc-backdrop" id="ncf-layer-modal" role="dialog" aria-modal="true" aria-label="Position layer" hidden data-i18n-attr="aria-label:tpl.position_layer">
   <div class="nse-modal nse-modal--layer-composer">
     <header class="nse-modal-header">
       <span class="nse-modal-title" data-i18n="flow.layerComposer.title">Position &amp; Scale Layer</span>
-      <button class="nse-modal-close" id="ncf-lc-modal-close" type="button" aria-label="Close">
+      <button class="nse-modal-close" id="ncf-lc-modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
         <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
       </button>
     </header>
@@ -500,11 +498,11 @@
 </div>
 
 <!-- ── Region Annotate modal ──────────────────────────────────────────────── -->
-<div class="nse-modal-backdrop" id="ncf-annotate-modal" role="dialog" aria-modal="true" aria-label="Annotate regions" hidden>
+<div class="nse-modal-backdrop" id="ncf-annotate-modal" role="dialog" aria-modal="true" aria-label="Annotate regions" hidden data-i18n-attr="aria-label:tpl.annotate_regions">
   <div class="nse-modal nse-modal--annotate">
     <header class="nse-modal-header">
       <span class="nse-modal-title" data-i18n="flow.annotate.title">Mark Regions</span>
-      <button class="nse-modal-close" id="ncf-annotate-modal-close" type="button" aria-label="Close">
+      <button class="nse-modal-close" id="ncf-annotate-modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
         <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
       </button>
     </header>
@@ -517,7 +515,7 @@
       </div>
       <div class="ncf-annotate-tools-panel">
         <p class="ncf-annotate-tools-title" data-i18n="flow.annotate.shape">Shape</p>
-        <div class="ncf-annotate-shape-row" id="ncf-annotate-shapes" role="radiogroup" aria-label="Shape">
+        <div class="ncf-annotate-shape-row" id="ncf-annotate-shapes" role="radiogroup" aria-label="Shape" data-i18n-attr="aria-label:tpl.shape">
           <button type="button" class="ncf-annotate-shape-btn is-active" id="ncf-annotate-shape-freehand" data-i18n="flow.annotate.shapeFreehand">Freehand</button>
           <button type="button" class="ncf-annotate-shape-btn" id="ncf-annotate-shape-rect" data-i18n="flow.annotate.shapeRect">Rectangle</button>
         </div>
@@ -540,11 +538,11 @@
 </div>
 
 <!-- ── Image Tray modal ───────────────────────────────────────────────────── -->
-<div class="nse-modal-backdrop" id="nit-tray-modal" role="dialog" aria-modal="true" aria-label="Image Tray" hidden>
+<div class="nse-modal-backdrop" id="nit-tray-modal" role="dialog" aria-modal="true" aria-label="Image Tray" hidden data-i18n-attr="aria-label:tpl.image_tray">
   <div class="nse-modal nse-modal--wide">
     <header class="nse-modal-header">
       <span class="nse-modal-title" data-i18n="flow.tray.title">Image Tray</span>
-      <button class="nse-modal-close" id="nit-tray-close" type="button" aria-label="Close">
+      <button class="nse-modal-close" id="nit-tray-close" type="button" aria-label="Close" data-i18n-attr="aria-label:tpl.close">
         <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
       </button>
     </header>

@@ -276,11 +276,11 @@
     var gotoBtn = document.createElement('button');
     gotoBtn.type = 'button';
     gotoBtn.className = 'album-card-expand-goto';
-    gotoBtn.setAttribute('aria-label', 'Go to flow');
+    gotoBtn.setAttribute('aria-label', tF('Go to flow'));
     gotoBtn.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M5 12h14M13 5l7 7-7 7"/></svg>' +
-      '<span class="cs-mode-tip">Go to flow</span>';
+      '<span class="cs-mode-tip">' + tH('Go to flow') + '</span>';
     gotoBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       goToFlow(sess);
@@ -437,13 +437,13 @@
         '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" ' +
         'stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/>' +
         '<path d="m3 16 5-5 4 4 4-5 5 6"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>' +
-        '<span>Image missing</span>';
+        '<span>' + tH('Image missing') + '</span>';
 
       var delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'cs-session-recent-del album-card-del';
-      delBtn.title = 'Remove from Album';
-      delBtn.setAttribute('aria-label', 'Remove from Album');
+      delBtn.title = tF('Remove from Album');
+      delBtn.setAttribute('aria-label', tF('Remove from Album'));
       delBtn.innerHTML =
         '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
         'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +

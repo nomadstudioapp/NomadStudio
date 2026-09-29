@@ -25,13 +25,13 @@ function renderIdeogramComposer(stepDef, el) {
   var metaCount = document.createElement('span');
   metaCount.className = 'ncf-idg-preview-count';
   metaCount.id = 'ncf-idg-count-' + stepDef.id;
-  metaCount.textContent = 'No composition yet';
+  metaCount.textContent = tF('No composition yet');
   previewMeta.appendChild(metaCount);
 
   var pasteBtn = document.createElement('button');
   pasteBtn.type = 'button';
   pasteBtn.className = 'ncf-btn ncf-btn--ghost ncf-idg-paste-btn';
-  pasteBtn.title = 'Paste an Ideogram composition JSON generated externally';
+  pasteBtn.title = tF('Paste an Ideogram composition JSON generated externally');
   pasteBtn.innerHTML =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:13px;height:13px">' +
     '<rect x="4.5" y="1.5" width="7" height="2.5" rx="1"/>' +
@@ -60,7 +60,7 @@ function renderIdeogramComposer(stepDef, el) {
   var editBtn = document.createElement('button');
   editBtn.type = 'button';
   editBtn.className = 'ncf-btn ncf-btn--secondary ncf-idg-edit-btn';
-  editBtn.textContent = 'Edit Composition';
+  editBtn.textContent = tF('Edit Composition');
   editBtn.disabled = true;
   preview.appendChild(editBtn);
 
@@ -71,7 +71,7 @@ function renderIdeogramComposer(stepDef, el) {
 
   var refineTa = document.createElement('textarea');
   refineTa.className = 'ncf-idg-refine-input';
-  refineTa.placeholder = 'e.g. change the woman swimming in the water';
+  refineTa.placeholder = tF('e.g. change the woman swimming in the water');
   refineTa.rows = 2;
 
   var refineRow = document.createElement('div');
@@ -80,7 +80,7 @@ function renderIdeogramComposer(stepDef, el) {
   var refineSendBtn = document.createElement('button');
   refineSendBtn.type = 'button';
   refineSendBtn.className = 'ncf-btn ncf-btn--secondary ncf-idg-refine-btn';
-  refineSendBtn.textContent = 'Refine';
+  refineSendBtn.textContent = tF('Refine');
 
   var refineStatus = document.createElement('span');
   refineStatus.className = 'ncf-idg-refine-status';
@@ -97,9 +97,9 @@ function renderIdeogramComposer(stepDef, el) {
     var linkedLLMStep = allSteps.find(function (s) { return s.type === 'llm_transform' && s.output_to === stepDef.id; });
     var level = selectedLevel || 'scene';
     var sys = linkedLLMStep && linkedLLMStep.system_prompts && (linkedLLMStep.system_prompts[level] || linkedLLMStep.system_prompts['scene']);
-    if (!sys) { refineStatus.textContent = 'No system prompt available'; return; }
+    if (!sys) { refineStatus.textContent = tF('No system prompt available'); return; }
     refineSendBtn.disabled = true;
-    refineStatus.textContent = 'Refining…';
+    refineStatus.textContent = tF('Refining…');
     try {
       var res = await fetch('/api/models/chat/studio-ideogram-refine', {
         method: 'POST',
@@ -109,7 +109,7 @@ function renderIdeogramComposer(stepDef, el) {
       var data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || 'Refine failed');
       stepDef._fillFn(JSON.stringify(data.ideogramJson));
-      refineStatus.textContent = '✓ Updated';
+      refineStatus.textContent = tF('✓ Updated');
       refineTa.value = '';
     } catch (e) {
       refineStatus.textContent = '✗ ' + e.message;
@@ -357,7 +357,7 @@ function renderIdeogramComposer(stepDef, el) {
       }
     } catch (_) { /* permission denied / unsupported — fall back to prompt */ }
     if (!text || !text.trim()) {
-      text = window.prompt('Paste Ideogram composition JSON:') || '';
+      text = window.prompt(tF('Paste Ideogram composition JSON:')) || '';
     }
     text = text.trim();
     if (!text) return;
@@ -426,8 +426,8 @@ function renderIdeogramComposer(stepDef, el) {
     selectAllBtn.type = 'button';
     selectAllBtn.id = 'ncf-idg-selectall-btn';
     selectAllBtn.className = 'ncf-btn ncf-btn--ghost ncf-idg-selectall-btn';
-    selectAllBtn.title = 'Select all elements to move or scale them together';
-    selectAllBtn.textContent = 'Select All';
+    selectAllBtn.title = tF('Select all elements to move or scale them together');
+    selectAllBtn.textContent = tF('Select All');
     headerActions.insertBefore(selectAllBtn, jsonToggle);
   }
 
@@ -442,7 +442,7 @@ function renderIdeogramComposer(stepDef, el) {
     zoomOutBtn.type = 'button';
     zoomOutBtn.className = 'ncf-idg-zoom-btn';
     zoomOutBtn.textContent = '−';
-    zoomOutBtn.title = 'Zoom out';
+    zoomOutBtn.title = tF('Zoom out');
     zoomLabel = document.createElement('span');
     zoomLabel.className = 'ncf-idg-zoom-label';
     zoomLabel.textContent = '100%';
@@ -450,12 +450,12 @@ function renderIdeogramComposer(stepDef, el) {
     zoomInBtn.type = 'button';
     zoomInBtn.className = 'ncf-idg-zoom-btn';
     zoomInBtn.textContent = '+';
-    zoomInBtn.title = 'Zoom in';
+    zoomInBtn.title = tF('Zoom in');
     zoomResetBtn = document.createElement('button');
     zoomResetBtn.type = 'button';
     zoomResetBtn.className = 'ncf-idg-zoom-btn ncf-idg-zoom-reset';
-    zoomResetBtn.textContent = 'Reset';
-    zoomResetBtn.title = 'Reset zoom';
+    zoomResetBtn.textContent = tF('Reset');
+    zoomResetBtn.title = tF('Reset zoom');
     zoomBar.appendChild(zoomOutBtn);
     zoomBar.appendChild(zoomLabel);
     zoomBar.appendChild(zoomInBtn);
@@ -526,11 +526,11 @@ function renderIdeogramComposer(stepDef, el) {
     try {
       var p = JSON.parse(rawTa.value);
       _idgModel = p;
-      rawStatus.textContent = '✓ Valid JSON';
+      rawStatus.textContent = tF('✓ Valid JSON');
       rawStatus.style.color = 'var(--nss-green, #4ade80)';
       _renderVisual(p);
     } catch (_) {
-      rawStatus.textContent = '✗ Invalid JSON';
+      rawStatus.textContent = tF('✗ Invalid JSON');
       rawStatus.style.color = 'var(--nss-red, #f87171)';
     }
   });
@@ -874,7 +874,7 @@ function renderIdeogramComposer(stepDef, el) {
       bgBadge.style.borderColor = '#64748b'; bgBadge.style.color = '#64748b';
       var bgNum = document.createElement('span');
       bgNum.className = 'ncf-idg-card-num';
-      bgNum.textContent = 'Scene';
+      bgNum.textContent = tF('Scene');
       bgHdr.appendChild(bgDot); bgHdr.appendChild(bgNum); bgHdr.appendChild(bgBadge);
       bgCard.appendChild(bgHdr);
       var bgTa = document.createElement('textarea');

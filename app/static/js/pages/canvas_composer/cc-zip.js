@@ -113,7 +113,7 @@ window.CC = window.CC || {};
     for (var i = bytes.length - 22; i >= scanStart; i--) {
       if (view.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
     }
-    if (eocdOffset < 0) throw new Error('Not a valid .zip file');
+    if (eocdOffset < 0) throw new Error(tF('Not a valid .zip file'));
 
     var entryCount = view.getUint16(eocdOffset + 10, true);
     var centralDirOffset = view.getUint32(eocdOffset + 16, true);
@@ -122,7 +122,7 @@ window.CC = window.CC || {};
     var pos = centralDirOffset;
 
     for (var e = 0; e < entryCount; e++) {
-      if (view.getUint32(pos, true) !== 0x02014b50) throw new Error('Malformed zip central directory');
+      if (view.getUint32(pos, true) !== 0x02014b50) throw new Error(tF('Malformed zip central directory'));
       var method = view.getUint16(pos + 10, true);
       var compSize = view.getUint32(pos + 20, true);
       var nameLen = view.getUint16(pos + 28, true);

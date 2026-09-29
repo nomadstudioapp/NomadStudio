@@ -107,7 +107,7 @@ var NcfPromptParams = (function () {
         wrap.appendChild(_pill('on', label, tip));
       }
     }
-    if (p.speed) wrap.appendChild(_pill('on', _fill('Quality: {v}', _SPEED_LABELS[p.speed] || p.speed)));
+    if (p.speed) wrap.appendChild(_pill('on', _fill('Quality: {v}', _t(_SPEED_LABELS[p.speed] || p.speed))));
     if (p.quantization) wrap.appendChild(_pill('on', _fill('Quantization: {v}', p.quantization.toUpperCase())));
     // Midjourney-only ones (--stylize, --chaos…) are dropped silently: no pill.
     Object.keys(p.invalid || {}).forEach(function (name) {

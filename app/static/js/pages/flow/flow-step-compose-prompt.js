@@ -49,7 +49,7 @@ function _openComposePromptPanel(onSelect) {
 
 function _fillComposePromptList(listEl, onSelect) {
     // "Default" option
-    var items = [{ id: '', label: 'Default', text: _composePromptState.baseText || _composePromptState.defaultText }]
+    var items = [{ id: '', label: tF('Default'), text: _composePromptState.baseText || _composePromptState.defaultText }]
       .concat(_composePromptState.variants);
 
     items.forEach(function (item) {

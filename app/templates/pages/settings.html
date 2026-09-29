@@ -71,7 +71,7 @@
         <p class="settings-field-label" data-i18n="settings.common.status">Status</p>
         <div class="settings-status-row" id="output-dir-status-row">
           <span class="settings-status-dot" id="output-dir-status-dot" aria-hidden="true"></span>
-          <span class="settings-status-text" id="output-dir-status">Loading...</span>
+          <span class="settings-status-text" id="output-dir-status" data-i18n="tpl.loading">Loading...</span>
           <div class="settings-status-actions">
             <button type="button" class="btn settings-btn-ghost" id="test-output-dir-btn" data-i18n="settings.common.test">Test</button>
             <button type="button" class="btn settings-btn-ghost" id="clear-output-dir-btn" data-i18n="settings.common.clear">Clear</button>
@@ -129,7 +129,7 @@
         <p class="settings-field-label" data-i18n="settings.common.status">Status</p>
         <div class="settings-status-row" id="comfy-models-folder-status-row">
           <span class="settings-status-dot" id="comfy-models-folder-status-dot" aria-hidden="true"></span>
-          <span class="settings-status-text" id="comfy-models-folder-status">Loading...</span>
+          <span class="settings-status-text" id="comfy-models-folder-status" data-i18n="tpl.loading">Loading...</span>
           <div class="settings-status-actions">
             <button type="button" class="btn settings-btn-ghost" id="test-comfy-models-folder-btn" data-i18n="settings.common.test">Test</button>
             <button type="button" class="btn settings-btn-ghost" id="clear-comfy-models-folder-btn" data-i18n="settings.common.clear">Clear</button>
@@ -149,20 +149,20 @@
       </div>
       <p class="settings-section-desc" data-i18n="settings.systemPrompts.desc">Customize the system prompts used by each AI operation. Leave empty to use the built-in default.</p>
       <div class="settings-prompts-actions">
-        <span id="prompts-summary" class="settings-prompts-summary">0 prompts - 0 customized</span>
+        <span id="prompts-summary" class="settings-prompts-summary" data-i18n="tpl.0_prompts_0_customized">0 prompts - 0 customized</span>
         <button type="button" class="btn settings-btn-secondary" id="save-prompts-btn" style="display:none;" data-i18n="settings.common.save">Save</button>
         <button type="button" class="btn settings-btn-ghost" id="reset-prompts-btn" data-i18n="settings.common.resetAll">Reset All</button>
       </div>
     </div>
     <div class="settings-section-body">
 
-      <div class="settings-prompts-tabs" id="prompts-tabs" role="tablist" aria-label="Prompt tabs"></div>
+      <div class="settings-prompts-tabs" id="prompts-tabs" role="tablist" aria-label="Prompt tabs" data-i18n-attr="aria-label:tpl.prompt_tabs"></div>
 
       <div class="settings-prompt-panel" id="prompt-active-panel">
         <div class="settings-prompt-panel-header">
           <div class="settings-prompt-title-wrap">
-            <h4 id="active-prompt-title">Prompt</h4>
-            <span class="settings-prompt-badge" id="active-prompt-badge">DEFAULT</span>
+            <h4 id="active-prompt-title" data-i18n="tpl.prompt">Prompt</h4>
+            <span class="settings-prompt-badge" id="active-prompt-badge" data-i18n="tpl.default">DEFAULT</span>
           </div>
           <button type="button" class="btn settings-btn-reset" id="reset-active-prompt-btn" style="display:none;" data-i18n="settings.common.reset">Reset</button>
         </div>
@@ -193,8 +193,8 @@
       <div class="settings-prompt-panel" id="compose-prompt-active-panel">
         <div class="settings-prompt-panel-header">
           <div class="settings-prompt-title-wrap">
-            <h4 id="compose-active-prompt-title">Compose Prompt</h4>
-            <span class="settings-prompt-badge" id="compose-active-prompt-badge">DEFAULT</span>
+            <h4 id="compose-active-prompt-title" data-i18n="tpl.compose_prompt">Compose Prompt</h4>
+            <span class="settings-prompt-badge" id="compose-active-prompt-badge" data-i18n="tpl.default">DEFAULT</span>
           </div>
           <button type="button" class="btn settings-btn-reset" id="compose-reset-active-prompt-btn" style="display:none;" data-i18n="settings.common.reset">Reset</button>
         </div>
@@ -214,20 +214,20 @@
       </div>
       <p class="settings-section-desc" data-i18n="settings.studioPrompts.desc">Customize the enhancement prompts used by each level in the Studio New modal. Leave empty to use the built-in default.</p>
       <div class="settings-prompts-actions">
-        <span id="studio-prompts-summary" class="settings-prompts-summary">0 prompts - 0 customized</span>
+        <span id="studio-prompts-summary" class="settings-prompts-summary" data-i18n="tpl.0_prompts_0_customized">0 prompts - 0 customized</span>
         <button type="button" class="btn settings-btn-secondary" id="studio-save-prompts-btn" style="display:none;" data-i18n="settings.common.save">Save</button>
         <button type="button" class="btn settings-btn-ghost" id="studio-reset-prompts-btn" data-i18n="settings.common.resetAll">Reset All</button>
       </div>
     </div>
     <div class="settings-section-body">
 
-      <div class="settings-prompts-tabs" id="studio-prompts-tabs" role="tablist" aria-label="Studio prompt tabs"></div>
+      <div class="settings-prompts-tabs" id="studio-prompts-tabs" role="tablist" aria-label="Studio prompt tabs" data-i18n-attr="aria-label:tpl.studio_prompt_tabs"></div>
 
       <div class="settings-prompt-panel" id="studio-prompt-active-panel">
         <div class="settings-prompt-panel-header">
           <div class="settings-prompt-title-wrap">
-            <h4 id="studio-active-prompt-title">Prompt</h4>
-            <span class="settings-prompt-badge" id="studio-active-prompt-badge">DEFAULT</span>
+            <h4 id="studio-active-prompt-title" data-i18n="tpl.prompt">Prompt</h4>
+            <span class="settings-prompt-badge" id="studio-active-prompt-badge" data-i18n="tpl.default">DEFAULT</span>
           </div>
           <button type="button" class="btn settings-btn-reset" id="studio-reset-active-prompt-btn" style="display:none;" data-i18n="settings.common.reset">Reset</button>
         </div>
@@ -482,7 +482,7 @@
     <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
       <div class="settings-modal-header">
         <h3 id="reset-modal-title" data-i18n="settings.reset.title">Reset Nomad Studio</h3>
-        <button type="button" class="settings-modal-close" id="reset-close-btn" aria-label="Close">×</button>
+        <button type="button" class="settings-modal-close" id="reset-close-btn" aria-label="Close" data-i18n-attr="aria-label:tpl.close">×</button>
       </div>
       <div class="settings-modal-body" id="reset-modal-body"></div>
       <div class="settings-modal-footer" id="reset-modal-footer"></div>

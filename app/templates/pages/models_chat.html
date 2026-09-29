@@ -26,38 +26,38 @@
   </header>
 
   <article class="panel import-panel models-chat-card">
-    <h3 class="models-chat-card-title">LM Studio Connection</h3>
+    <h3 class="models-chat-card-title" data-i18n="tpl.lm_studio_connection">LM Studio Connection</h3>
     <div class="models-chat-connection-row">
-      <input type="text" id="lmstudio-uri" placeholder="http://127.0.0.1:1234" />
-      <button type="button" class="btn settings-btn-secondary" id="load-lmstudio-models"><i data-lucide="refresh-cw" class="nav-icon" aria-hidden="true"></i> Load Models</button>
+      <input type="text" id="lmstudio-uri" placeholder="http://127.0.0.1:1234" data-i18n-attr="placeholder:tpl.http_127_0_0_1_1234" />
+      <button type="button" class="btn settings-btn-secondary" id="load-lmstudio-models"><i data-lucide="refresh-cw" class="nav-icon" aria-hidden="true"></i> <span data-i18n="tpl.load_models">Load Models</span></button>
     </div>
     <div class="availability-chip" id="lmstudio-availability-chip" aria-live="polite">
       <span class="availability-led" id="lmstudio-availability-led" aria-hidden="true"></span>
-      <span class="availability-text" id="lmstudio-availability-text">Checking LM Studio...</span>
+      <span class="availability-text" id="lmstudio-availability-text" data-i18n="tpl.checking_lm_studio">Checking LM Studio...</span>
     </div>
   </article>
 
-  <article class="panel import-panel models-chat-card models-chat-model-block models-chat-model-block-prompt" aria-label="Prompt LLM models">
+  <article class="panel import-panel models-chat-card models-chat-model-block models-chat-model-block-prompt" aria-label="Prompt LLM models" data-i18n-attr="aria-label:tpl.prompt_llm_models">
     <header class="models-chat-model-block-header">
-      <h3>Prompt LLM</h3>
-      <p class="muted-note">Used for prompt writing and text-only tasks.</p>
+      <h3 data-i18n="tpl.prompt_llm">Prompt LLM</h3>
+      <p class="muted-note" data-i18n="tpl.used_for_prompt_writing_and_text">Used for prompt writing and text-only tasks.</p>
     </header>
 
     <div class="models-chat-model-select-wrap">
       <select id="lmstudio-prompt-model-select">
-        <option value="">No models loaded</option>
+        <option value="" data-i18n="tpl.no_models_loaded">No models loaded</option>
       </select>
-      <button type="button" class="btn settings-btn-secondary" id="lmstudio-prompt-favorite-toggle">Add to favorites</button>
+      <button type="button" class="btn settings-btn-secondary" id="lmstudio-prompt-favorite-toggle" data-i18n="tpl.add_to_favorites">Add to favorites</button>
     </div>
 
     {% if not is_vision_page %}
     <div class="models-chat-tools">
-      <h4 class="models-chat-section-title">Model Tools</h4>
+      <h4 class="models-chat-section-title" data-i18n="tpl.model_tools">Model Tools</h4>
       <div class="models-chat-tools-grid">
-        <button type="button" class="btn settings-btn-secondary" id="lmstudio-browse-models">Browse Models</button>
-        <button type="button" class="btn settings-btn-secondary" id="lmstudio-check-think-compat">Check Think Compatibility</button>
-        <button type="button" class="btn settings-btn-secondary" id="lmstudio-check-all-pending">Check All Pending</button>
-        <button type="button" class="btn settings-btn-secondary" id="lmstudio-benchmark-new-models">Benchmark New Models</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-browse-models" data-i18n="tpl.browse_models">Browse Models</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-check-think-compat" data-i18n="tpl.check_think_compatibility">Check Think Compatibility</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-check-all-pending" data-i18n="tpl.check_all_pending">Check All Pending</button>
+        <button type="button" class="btn settings-btn-secondary" id="lmstudio-benchmark-new-models" data-i18n="tpl.benchmark_new_models">Benchmark New Models</button>
       </div>
       <span class="models-chat-think-compat-status" id="lmstudio-think-compat-status"></span>
       <span class="models-chat-think-compat-status" id="lmstudio-benchmark-status"></span>
@@ -66,37 +66,37 @@
 
     <div class="models-chat-favorites">
       <div class="models-chat-favorites-head">
-        <h4 class="models-chat-section-title">Favorites</h4>
+        <h4 class="models-chat-section-title" data-i18n="tpl.favorites">Favorites</h4>
         <label class="checkbox-row models-chat-favorites-filter">
           <input type="checkbox" id="lmstudio-prompt-favorites-only" />
-          Filter to favorites
+          <span data-i18n="tpl.filter_to_favorites">Filter to favorites</span>
         </label>
       </div>
       <div class="models-chat-favorites-list" id="lmstudio-prompt-favorites-quick"></div>
     </div>
   </article>
 
-  <article class="panel import-panel models-chat-card models-chat-model-block models-chat-model-block-vision" aria-label="Vision LLM models">
+  <article class="panel import-panel models-chat-card models-chat-model-block models-chat-model-block-vision" aria-label="Vision LLM models" data-i18n-attr="aria-label:tpl.vision_llm_models">
     <header class="models-chat-model-block-header">
-      <h3>Vision LLM</h3>
-      <p class="muted-note">Used for image understanding and describe operations.</p>
+      <h3 data-i18n="tpl.vision_llm">Vision LLM</h3>
+      <p class="muted-note" data-i18n="tpl.used_for_image_understanding_and_describe">Used for image understanding and describe operations.</p>
     </header>
 
     <div class="models-chat-model-select-wrap">
       <select id="lmstudio-vision-model-select">
-        <option value="">No vision models loaded</option>
+        <option value="" data-i18n="tpl.no_vision_models_loaded">No vision models loaded</option>
       </select>
-      <button type="button" class="btn settings-btn-secondary" id="lmstudio-vision-favorite-toggle">Add to favorites</button>
+      <button type="button" class="btn settings-btn-secondary" id="lmstudio-vision-favorite-toggle" data-i18n="tpl.add_to_favorites">Add to favorites</button>
     </div>
 
-    <p class="muted-note" id="lmstudio-vision-filter-note">Vision list is filtered using LM Studio model metadata when available.</p>
+    <p class="muted-note" id="lmstudio-vision-filter-note" data-i18n="tpl.vision_list_is_filtered_using_lm">Vision list is filtered using LM Studio model metadata when available.</p>
 
     <div class="models-chat-favorites">
       <div class="models-chat-favorites-head">
-        <h4 class="models-chat-section-title">Favorites</h4>
+        <h4 class="models-chat-section-title" data-i18n="tpl.favorites">Favorites</h4>
         <label class="checkbox-row models-chat-favorites-filter">
           <input type="checkbox" id="lmstudio-vision-favorites-only" />
-          Filter to favorites
+          <span data-i18n="tpl.filter_to_favorites">Filter to favorites</span>
         </label>
       </div>
       <div class="models-chat-favorites-list" id="lmstudio-vision-favorites-quick"></div>
@@ -104,31 +104,31 @@
   </article>
 
   <article class="panel import-panel models-chat-card">
-    <h3 class="models-chat-card-title">Parameters</h3>
+    <h3 class="models-chat-card-title" data-i18n="tpl.parameters">Parameters</h3>
     <div class="models-chat-params-grid">
       <label class="models-chat-floating-field">
-        <span>Temperature</span>
+        <span data-i18n="tpl.temperature">Temperature</span>
         <input type="number" id="lmstudio-temperature" min="0" max="2" step="0.01" value="0.2" />
       </label>
     </div>
 
     <label class="checkbox-row models-chat-auto-disconnect">
       <input type="checkbox" id="lmstudio-auto-disconnect" />
-      Auto-disconnect after each call
+      <span data-i18n="tpl.auto_disconnect_after_each_call">Auto-disconnect after each call</span>
     </label>
   </article>
 
   <details class="chat-log-expander models-chat-log-card">
-    <summary>LM Studio Output Log</summary>
+    <summary data-i18n="tpl.lm_studio_output_log">LM Studio Output Log</summary>
     <div class="stack" style="margin-top: 10px;">
       <div class="btn-row">
-        <button type="button" class="btn settings-btn-secondary" id="clear-lmstudio-log">Clear Log</button>
+        <button type="button" class="btn settings-btn-secondary" id="clear-lmstudio-log" data-i18n="tpl.clear_log">Clear Log</button>
       </div>
-      <textarea id="lmstudio-output-log" rows="12" readonly placeholder="No output log yet"></textarea>
+      <textarea id="lmstudio-output-log" rows="12" readonly placeholder="No output log yet" data-i18n-attr="placeholder:tpl.no_output_log_yet"></textarea>
     </div>
   </details>
 
-  <div class="preview" id="lmstudio-chat-status">Waiting for action...</div>
+  <div class="preview" id="lmstudio-chat-status" data-i18n="tpl.waiting_for_action">Waiting for action...</div>
 </section>
 </div>
 {% endblock %}

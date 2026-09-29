@@ -35,6 +35,11 @@
   ];
   var cache = {};
   var packTexts = {};  // lang → text the installed packages carry (see mergePackageTexts)
+  // Resolves once the first dictionary is in the cache and applied. Scripts
+  // that build text with t()/tField() while the page loads (the flow
+  // engine's steps) wait for it, or they would render in English.
+  var resolveReady;
+  var ready = new Promise(function (resolve) { resolveReady = resolve; });
 
   function getLanguage() {
     try { return localStorage.getItem(LANG_KEY) || 'en'; } catch (_) { return 'en'; }
@@ -137,7 +142,7 @@
       // Lets scripts that build their own DOM (the hub's tag filter chips)
       // re-render in the new language once its dictionary is in the cache.
       document.dispatchEvent(new CustomEvent('nomad-i18n-applied', { detail: { lang: effectiveId } }));
-    });
+    }).then(function () { resolveReady(); }, function () { resolveReady(); });
   }
 
   function setLanguage(id) {
@@ -252,5 +257,15 @@
     return value != null ? value : text;
   }
 
-  window.NomadI18n = { getLanguage: getLanguage, setLanguage: setLanguage, LANGUAGES: LANGUAGES, t: t, tField: tField };
+  window.NomadI18n = { getLanguage: getLanguage, setLanguage: setLanguage, LANGUAGES: LANGUAGES, t: t, tField: tField,
+                       ready: ready };
+
+  // Short helpers for text a page script writes (English original as the
+  // key, like tField): tF for textContent/attributes, tH for text going into
+  // an HTML string. The flow engine defines its own identical tF.
+  if (typeof window.tF !== 'function') window.tF = tField;
+  window.tH = function (text) {
+    return String(tField(text) == null ? '' : tField(text))
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  };
 })();

@@ -697,6 +697,27 @@ def _preset_cover_url(preset: dict) -> str | None:
     return f"/packages/{pkg}/{cover}" if cover and pkg else None
 
 
+def _pack_cover_url(pkg_id: str) -> str | None:
+    """The pack's own cover, declared by its manifest's "cover_image" and
+    shipped inside the package (NomadStudio#29) — so updating the pack updates
+    the card. Falls back to None (caller then borrows the first preset's
+    image, the old behaviour). The pack version goes in the query string:
+    /packages/ files are served `immutable`, and a new version with a new
+    picture under the same file name would otherwise stay cached for a year."""
+    from . import packages_routes
+    from ..services import package_service
+
+    manifest_path = package_service.packages_dir(packages_routes.DATA_DIR) / pkg_id / "manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    cover = manifest.get("cover_image")
+    if not cover or not (manifest_path.parent / cover).is_file():
+        return None
+    return f"/packages/{pkg_id}/{cover}?v={manifest.get('version', '0')}"
+
+
 def _load_presets_pack_summaries() -> list[dict]:
     """One card per installed Presets package (Core/Open Air/Film & Shadow/
     any future one) — same "one card per pack, first item's image as the
@@ -723,7 +744,7 @@ def _load_presets_pack_summaries() -> list[dict]:
             "pkg_id": pkg_id,
             "name": name,
             "count": len(flows),
-            "cover_image_url": _preset_cover_url(flows[0]),
+            "cover_image_url": _pack_cover_url(pkg_id) or _preset_cover_url(flows[0]),
         })
     # Core (the 2 free/included ones) first, then alphabetical by name.
     packs.sort(key=lambda p: (p["pkg_id"] != "nomad.refine-presets-core", p["name"]))

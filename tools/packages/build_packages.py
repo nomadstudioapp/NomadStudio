@@ -46,6 +46,9 @@ DIST = REPO / "dist" / "packages"
 # whether the user asked for them or not. DIST_OPTIONAL keeps them out of
 # that scan while still producing a real, installable ZIP.
 DIST_OPTIONAL = REPO / "dist" / "optional-packages"
+# Hub-card covers of the Refine preset packs, one <pkg_id>.webp each (made with
+# Z-Image Turbo, D:/NOMADSTUDIO_PACKS/tools/sessions/make_preset_pack_covers.py).
+PACK_COVERS = Path(__file__).resolve().parent / "covers"
 LICENSE_TEXT = "Copyright (c) Nomad Studio. All rights reserved.\nInternal test package — not for distribution.\n"
 AUTHOR = {"name": "Nomad Studio"}
 
@@ -2659,6 +2662,7 @@ def build_refine_static_group(
     extra_contributes: dict | None = None,
     extra_texts: dict[str, dict[str, str]] | None = None,
     extra_i18n: dict[str, dict] | None = None,
+    cover_image: Path | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -2775,6 +2779,12 @@ def build_refine_static_group(
             **extra_contributes,
         },
     }
+    # The pack's own hub-card cover (NomadStudio#29): a picture for the set,
+    # not borrowed from whichever preset happens to load first. New file name
+    # on purpose — /packages/ files are served `immutable` for a year.
+    if cover_image is not None:
+        manifest["cover_image"] = "images/cover.webp"
+        files["images/cover.webp"] = cover_image.read_bytes()
     print(f"  {pkg_id} texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
     return write_zip(pkg_id, {"manifest.json": manifest, **files, **extra_files, "LICENSE": LICENSE_TEXT,
                                **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
@@ -3996,7 +4006,7 @@ def _preset_cover_files(source: Path, flow_ids: list[str]) -> dict[str, bytes]:
 def build_presets_core(source: Path, version: str) -> Path:
     return build_refine_static_group(
         source, version, "nomad.refine-presets-core", "presets",
-        name={"en": "Presets", "es": "Presets", "zh": "预设", "ko": "프리셋"},
+        name={"en": "Photo Looks Starter", "es": "Photo Looks Starter", "zh": "照片风格入门", "ko": "포토 룩 스타터"},
         summary={
             "en": "Two signature one-click photo looks — Riviera and Spectra — included free.",
             "es": "Dos looks de foto de un clic — Riviera y Spectra — incluidos gratis.",
@@ -4005,6 +4015,7 @@ def build_presets_core(source: Path, version: str) -> Path:
         },
         flow_ids=PRESETS_CORE_FLOWS,
         extra_files=_preset_cover_files(source, PRESETS_CORE_FLOWS),
+        cover_image=PACK_COVERS / "nomad.refine-presets-core.webp",
     )
 
 
@@ -4020,6 +4031,7 @@ def build_presets_open_air(source: Path, version: str) -> Path:
         },
         flow_ids=PRESETS_OPEN_AIR_FLOWS,
         extra_files=_preset_cover_files(source, PRESETS_OPEN_AIR_FLOWS),
+        cover_image=PACK_COVERS / "nomad.refine-presets-open-air.webp",
     )
 
 
@@ -4035,6 +4047,7 @@ def build_presets_film_shadow(source: Path, version: str) -> Path:
         },
         flow_ids=PRESETS_FILM_SHADOW_FLOWS,
         extra_files=_preset_cover_files(source, PRESETS_FILM_SHADOW_FLOWS),
+        cover_image=PACK_COVERS / "nomad.refine-presets-film-shadow.webp",
     )
 
 

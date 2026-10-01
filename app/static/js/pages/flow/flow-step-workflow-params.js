@@ -202,7 +202,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var stored = getVal(stepDef.id, 'field_' + f.id);
         if (stored != null && stored !== '' && f.adv_key) advVals[f.adv_key] = String(stored);
       } else if (f.type === 'aspect_ratio') {
-        var _arPSet = (f.presets_id && ASPECT_PRESET_SETS[f.presets_id]) ? ASPECT_PRESET_SETS[f.presets_id] : ASPECT_PRESETS;
+        var _arPSet = aspectPresetsFor(f.presets_id);
         var aspectKey = getVal(stepDef.id, 'field_' + f.id) || f.default || _arPSet[Math.floor(_arPSet.length / 2)].key;
         var preset = _arPSet.filter(function (p) { return p.key === aspectKey; })[0] || _arPSet[Math.floor(_arPSet.length / 2)];
         // Custom width/height (typed in the Resolution panel) wins over the
@@ -584,7 +584,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
       // scoped to this field (stepValues[stepDef.id]), not Create's global
       // session params, so several flows can each have their own.
       if (f.type === 'aspect_ratio') {
-        var arPresets = (f.presets_id && ASPECT_PRESET_SETS[f.presets_id]) ? ASPECT_PRESET_SETS[f.presets_id] : ASPECT_PRESETS;
+        var arPresets = aspectPresetsFor(f.presets_id);
         var arMid = Math.floor(arPresets.length / 2);
         var arDefaultIdx = arMid;
         arPresets.forEach(function (p, i) { if (p.key === f.default) arDefaultIdx = i; });
@@ -641,7 +641,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             _arUpdateResLabel();
             buildAdv();
             triggerPreviewUpdate();
-          });
+          }, arPresets);
         });
         arResBtn.addEventListener('click', function () {
           openResolutionPanel(arIdx, arTier, function (tier) {
@@ -653,6 +653,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             buildAdv();
             triggerPreviewUpdate();
           }, {
+            presets: arPresets,
             customDims: arCustomDims,
             onCustomChange: function (dims) {
               arCustomDims = dims;

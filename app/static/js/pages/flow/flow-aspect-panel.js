@@ -7,9 +7,10 @@ var _aspectPanelRect     = null;
 var _aspectPanelLabel    = null;
 var _aspectPanelHint     = null;
 var _ncfAspectPanelApply = null;
+var _aspectPanelPresets  = null;   // the list the open panel indexes (#28)
 
-function _updateAspectPreview(idx) {
-  var preset = ASPECT_PRESETS[idx];
+function _updateAspectPreview(idx, presets) {
+  var preset = (presets || _aspectPanelPresets || ASPECT_PRESETS)[idx];
   if (!preset || !_aspectPanelRect) return;
   var parts = String(preset.label).split(':');
   var rw = parseFloat(parts[0]) || 1;
@@ -24,15 +25,19 @@ function _updateAspectPreview(idx) {
   if (_aspectPanelHint) _aspectPanelHint.textContent = preset.hint ? tF(preset.hint) : '';
 }
 
-function openAspectRatioPanel(currentIdx, onChange) {
+// `presets` (optional): the list `currentIdx` and the index handed to
+// onChange refer to — a field's subset of ASPECT_PRESETS (aspectPresetsFor).
+// Slider, preview and callback must all use the SAME list (NomadStudio#28).
+function openAspectRatioPanel(currentIdx, onChange, presets) {
   _ncfAspectPanelApply = onChange || null;
+  _aspectPanelPresets = presets || ASPECT_PRESETS;
   openOptionsPanel(tF('Aspect ratio'), function (body) {
     body.innerHTML =
       '<div class="ncf-aspect-preview-box"><div class="ncf-aspect-preview-rect" id="ncf-aspect-preview-rect"></div></div>' +
       '<p class="ncf-aspect-preview-hint" id="ncf-aspect-preview-hint"></p>' +
       '<p class="ncf-aspect-preview-label" id="ncf-aspect-preview-label">1:1</p>' +
       '<input class="nsc-aspect-slider ncf-aspect-panel-slider" id="ncf-aspect-panel-slider" type="range" min="0" max="' +
-        (ASPECT_PRESETS.length - 1) + '" step="1" value="' + currentIdx + '" aria-label="' + escHtml(tF('Aspect ratio')) + '">';
+        (_aspectPanelPresets.length - 1) + '" step="1" value="' + currentIdx + '" aria-label="' + escHtml(tF('Aspect ratio')) + '">';
 
     _aspectPanelSlider = body.querySelector('#ncf-aspect-panel-slider');
     _aspectPanelRect   = body.querySelector('#ncf-aspect-preview-rect');
@@ -63,10 +68,12 @@ var RESOLUTION_TIERS = [
 // opts.customDims: { w, h } | null — current custom override, if any.
 // opts.onCustomChange: fn({w,h}|null) — called live as the width/height
 // inputs change, so the caller can update customResDims/labels/saveParams.
+// opts.presets: the list aspectIdx refers to (default ASPECT_PRESETS) — same
+// rule as openAspectRatioPanel; also hides tiers that subset doesn't offer.
 function openResolutionPanel(aspectIdx, currentTier, onChange, opts) {
   opts = opts || {};
   openOptionsPanel(tF('Resolution'), function (body) {
-    var preset = ASPECT_PRESETS[aspectIdx];
+    var preset = (opts.presets || ASPECT_PRESETS)[aspectIdx];
     var list = document.createElement('div');
     list.className = 'nsc-quality-list ncf-resolution-grid';
     list.setAttribute('role', 'radiogroup');

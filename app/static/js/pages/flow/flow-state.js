@@ -287,35 +287,44 @@ var ASPECT_PRESETS = [
   { key: 'r16x9', label: '16:9', hint: 'YouTube · Twitter/X landscape · widescreen video', sd: { w: 1024, h:  576  }, md: { w: 1344, h:  768  }, hd: { w: 1536, h:  864  }, uhd: { w: 2048, h: 1152 } },
   { key: 'r2x1',  label: '2:1',  hint: 'Wide banners · Twitter/X header images',       sd: { w: 1088, h:  544  }, md: { w: 1456, h:  720  }, hd: { w: 1632, h:  816  }, uhd: { w: 2176, h: 1088 } },
   { key: 'r21x9', label: '21:9', hint: 'Cinematic ultrawide · Scope/Cinemascope look', sd: { w: 1168, h:  496  }, md: { w: 1568, h:  672  }, hd: { w: 1760, h:  752  }, uhd: { w: 2352, h: 1008 } },
+  // Appended (not inserted by ratio): Create stores its choice as an index
+  // into this list, so existing entries must keep their positions.
+  { key: 'r239x100', label: '2.39:1', hint: 'Scope · Cinemascope · anamorphic look', sd: { w:  960, h:  384  }, md: { w: 1216, h:  512  }, hd: { w: 1536, h:  640  }, uhd: { w: 2064, h:  864 } },
 ];
 
-var OUTPAINT_ASPECT_PRESETS = [
-  { key: 'r9x16',    label: '9:16',   hint: 'TikTok · Instagram Stories/Reels · YouTube Shorts',
-    icon: { vw: 11, vh: 18, rw:  9.5, rh: 16.5 },
-    sd: { w:  576, h: 1024 }, md: { w:  768, h: 1344 }, hd: { w:  864, h: 1536 } },
-  { key: 'r2x3',     label: '2:3',    hint: 'Pinterest',
-    icon: { vw: 13, vh: 18, rw: 11.5, rh: 16.5 },
-    sd: { w:  640, h:  960 }, md: { w:  896, h: 1344 }, hd: { w: 1024, h: 1536 } },
-  { key: 'r4x5',     label: '4:5',    hint: 'Instagram feed vertical · the most used now',
-    icon: { vw: 14, vh: 18, rw: 12.5, rh: 16.5 },
-    sd: { w:  768, h:  960 }, md: { w: 1024, h: 1280 }, hd: { w: 1024, h: 1280 } },
-  { key: 'r1x1',     label: '1:1',    hint: 'Instagram feed classic',
-    icon: { vw: 18, vh: 18, rw: 16.5, rh: 16.5 },
-    sd: { w:  768, h:  768 }, md: { w: 1024, h: 1024 }, hd: { w: 1152, h: 1152 } },
-  { key: 'r4x3',     label: '4:3',    hint: 'Facebook feed',
-    icon: { vw: 18, vh: 14, rw: 16.5, rh: 12.5 },
-    sd: { w:  768, h:  576 }, md: { w: 1024, h:  768 }, hd: { w: 1152, h:  864 } },
-  { key: 'r3x2',     label: '3:2',    hint: 'Twitter/X · LinkedIn',
-    icon: { vw: 18, vh: 13, rw: 16.5, rh: 11.5 },
-    sd: { w:  960, h:  640 }, md: { w: 1152, h:  768 }, hd: { w: 1344, h:  896 } },
-  { key: 'r16x9',    label: '16:9',   hint: 'YouTube · Twitter/X landscape',
-    icon: { vw: 18, vh: 11, rw: 16.5, rh:  9.5 },
-    sd: { w: 1024, h:  576 }, md: { w: 1344, h:  768 }, hd: { w: 1536, h:  864 } },
-  { key: 'r239x100', label: '2.39:1', hint: 'Scope · Cinemascope · anamorphic look',
-    icon: { vw: 18, vh:  8, rw: 16.5, rh:  6.5 },
-    sd: { w:  960, h:  384 }, md: { w: 1216, h:  512 }, hd: { w: 1536, h:  640 } },
-];
+// ASPECT_PRESETS is the one source of aspect ratios. A flow that offers fewer
+// picks a SUBSET of it by key (and may cap the resolution tiers) — never a
+// parallel list: the old separate OUTPAINT_ASPECT_PRESETS had its own order
+// and sizes, and the shared panels indexed it as if it were this list
+// (NomadStudio#28: 16:9 did nothing in Outpaint, other picks applied a
+// different ratio than the one previewed).
+var ASPECT_PRESET_SUBSETS = {
+  outpaint: { keys: ['r9x16', 'r2x3', 'r4x5', 'r1x1', 'r4x3', 'r3x2', 'r16x9', 'r239x100'], tiers: ['sd', 'md', 'hd'] },
+};
 
+// Small ratio glyph for preset buttons (crop panel), derived from the ratio
+// so no entry has to carry hand-made icon numbers.
+function _aspectIcon(label) {
+  var parts = String(label).split(':');
+  var r = (parseFloat(parts[0]) || 1) / (parseFloat(parts[1]) || 1);
+  var vw = r >= 1 ? 18 : Math.max(6, Math.round(18 * r));
+  var vh = r >= 1 ? Math.max(6, Math.round(18 / r)) : 18;
+  return { vw: vw, vh: vh, rw: vw - 1.5, rh: vh - 1.5 };
+}
+
+function aspectPresetsFor(subsetId) {
+  var sub = subsetId && ASPECT_PRESET_SUBSETS[subsetId];
+  if (!sub) return ASPECT_PRESETS;
+  return sub.keys.map(function (k) {
+    var p = ASPECT_PRESETS.filter(function (q) { return q.key === k; })[0];
+    if (!p) return null;
+    var copy = { key: p.key, label: p.label, hint: p.hint, icon: _aspectIcon(p.label) };
+    (sub.tiers || ['sd', 'md', 'hd', 'uhd']).forEach(function (t) { if (p[t]) copy[t] = p[t]; });
+    return copy;
+  }).filter(Boolean);
+}
+
+var OUTPAINT_ASPECT_PRESETS = aspectPresetsFor('outpaint');   // kept for existing callers (crop panel)
 var ASPECT_PRESET_SETS = { 'default': ASPECT_PRESETS, 'outpaint': OUTPAINT_ASPECT_PRESETS };
 
 // Set by renderParamGroup (flow-step-workflow-params.js) so other modules

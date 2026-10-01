@@ -201,8 +201,8 @@ function _applyAdvancedToFields(adv, forceQuantRefresh) {
         // find whichever preset in this field's set produces the same
         // width/height at its configured resolution, and restore that.
         var _w = Number(adv[f.adv_keys.width]), _h = Number(adv[f.adv_keys.height]);
-        var _pset = (f.presets_id && typeof ASPECT_PRESET_SETS !== 'undefined' && ASPECT_PRESET_SETS[f.presets_id]) ||
-                    (typeof ASPECT_PRESETS !== 'undefined' ? ASPECT_PRESETS : []);
+        var _pset = typeof aspectPresetsFor === 'function' ? aspectPresetsFor(f.presets_id)
+                  : (typeof ASPECT_PRESETS !== 'undefined' ? ASPECT_PRESETS : []);
         var _match = _pset.filter(function (p) {
           var d = p[f.resolution || 'md'] || p.md;
           return d && d.w === _w && d.h === _h;

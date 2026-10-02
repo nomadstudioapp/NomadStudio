@@ -1683,6 +1683,11 @@
         "또는 앱을 닫은 상태에서 이 블록을 설정 파일에 추가하세요(긴 생성에 10분을 주는 설정도 포함).",
         "앱을 다시 여세요. 생성이나 수정 전에는 허락을 구하고, 조회는 그렇지 않습니다."
       ],
+      "antigravitySteps": [
+        "Agent 패널에서 … 메뉴 → MCP Servers → Manage MCP Servers → View raw config를 엽니다.",
+        "\"mcpServers\" 안에 \"nomad-studio\" 블록을 추가합니다(파일이 비어 있으면 전체를 붙여 넣으세요).",
+        "Manage MCP Servers로 돌아가 Refresh를 누르거나, Antigravity를 닫았다가 다시 엽니다."
+      ],
       "bionicSteps": [
         "Bionic의 MCP 서버 설정을 열고 하나 추가하세요: 이름 Nomad Studio, 유형 stdio, 그리고 아래의 명령, 인수, 변수.",
         "또는 Bionic을 닫은 상태에서 이 항목을 설정 파일의 \"servers\" 목록에 추가하세요.",
@@ -1702,6 +1707,7 @@
       "done": "완료.",
       "restartClaude": "Claude를 완전히 종료한 뒤 다시 여세요.",
       "restartCodex": "ChatGPT 앱을 닫았다가 다시 여세요.",
+      "restartAntigravity": "Antigravity의 Manage MCP Servers에서 Refresh를 누르거나 다시 여세요.",
       "restartBionic": "Bionic을 다시 여세요.",
       "backupSaved": "이전 파일이 {path}에 저장되었습니다",
       "writeError": "파일을 쓸 수 없습니다: {error}"

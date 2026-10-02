@@ -1683,6 +1683,11 @@
         "或者在关闭应用后，把这段添加到配置文件中（还会给较长的生成留出 10 分钟）。",
         "重新打开应用。生成或修改前它会征求同意；查询不需要。"
       ],
+      "antigravitySteps": [
+        "在 Agent 面板中打开 … 菜单 → MCP Servers → Manage MCP Servers → View raw config。",
+        "把 \"nomad-studio\" 代码块加到 \"mcpServers\" 里面（如果文件是空的，就整段粘贴）。",
+        "回到 Manage MCP Servers 点击 Refresh，或者关闭 Antigravity 再重新打开。"
+      ],
       "bionicSteps": [
         "打开 Bionic 的 MCP 服务器设置并添加一个：名称 Nomad Studio，类型 stdio，并填入下面的命令、参数和变量。",
         "或者在关闭 Bionic 后，把这一项添加到配置文件的 \"servers\" 列表中。",
@@ -1702,6 +1707,7 @@
       "done": "完成。",
       "restartClaude": "完全退出 Claude 后重新打开。",
       "restartCodex": "关闭 ChatGPT 应用后重新打开。",
+      "restartAntigravity": "在 Antigravity 的 Manage MCP Servers 中点击 Refresh，或重新打开它。",
       "restartBionic": "重新打开 Bionic。",
       "backupSaved": "原文件已保存在 {path}",
       "writeError": "无法写入文件：{error}"

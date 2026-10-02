@@ -1,5 +1,5 @@
 """Settings › Agents: how to connect Claude Desktop, ChatGPT (Codex / Work
-modes) and Bionic to this Nomad Studio's MCP server.
+modes), Antigravity and Bionic to this Nomad Studio's MCP server.
 
 The server already knows everything a user would otherwise type by hand:
 the Python it runs on (sys.executable — the portable build's app\\python,
@@ -31,7 +31,11 @@ from typing import Any
 
 MCP_MODULE = "app.mcp.server"
 DEFAULT_MCP_PORT = 5123  # app/mcp/config.py: NOMAD_BASE_URL without the env var
-SERVER_NAMES = {"claude": "nomad-studio", "codex": "nomad_studio", "bionic": "Nomad Studio"}
+SERVER_NAMES = {"claude": "nomad-studio", "codex": "nomad_studio", "bionic": "Nomad Studio",
+                "antigravity": "nomad-studio"}
+CLIENTS = ("claude", "codex", "antigravity", "bionic")
+# Programs whose config is {"mcpServers": {name: {command, args, env}}}
+_MCP_SERVERS_JSON = ("claude", "antigravity")
 
 
 def app_root() -> Path:
@@ -62,8 +66,17 @@ def config_paths() -> dict[str, Path]:
     return {
         "claude": claude,
         "codex": home / ".codex" / "config.toml",
+        "antigravity": _antigravity_config(home),
         "bionic": home / ".lmstudio" / "apps" / "bionic" / ".internal" / "ng-mcp.json",
     }
+
+
+def _antigravity_config(home: Path) -> Path:
+    """Antigravity (Google, Gemini) keeps its MCP servers in ~/.gemini/antigravity-ide/mcp_config.json;
+    some versions use ~/.gemini/antigravity/. The one that already has a file wins."""
+    candidates = [home / ".gemini" / "antigravity-ide" / "mcp_config.json",
+                  home / ".gemini" / "antigravity" / "mcp_config.json"]
+    return next((p for p in candidates if p.is_file()), next((p for p in candidates if p.parent.is_dir()), candidates[0]))
 
 
 def _installed(client: str, path: Path) -> bool:
@@ -81,7 +94,7 @@ def _entries(client: str, path: Path) -> list[dict[str, Any]]:
             items = [(name, cfg) for name, cfg in servers.items() if isinstance(cfg, dict)]
         else:
             data = json.loads(path.read_text(encoding="utf-8"))
-            if client == "claude":
+            if client in _MCP_SERVERS_JSON:
                 items = [(name, cfg) for name, cfg in (data.get("mcpServers") or {}).items() if isinstance(cfg, dict)]
             else:
                 items = [(s.get("name") or "", s.get("connection") or {})
@@ -167,6 +180,7 @@ def snippets(port: int) -> dict[str, str]:
     toml += [f"{k} = {_toml_str(v)}" for k, v in cfg["env"].items()]
     return {
         "claude": json.dumps(claude, indent=2, ensure_ascii=False),
+        "antigravity": json.dumps({"mcpServers": {SERVER_NAMES["antigravity"]: cfg}}, indent=2, ensure_ascii=False),
         "bionic": json.dumps(bionic, indent=2, ensure_ascii=False),
         "codex": "\n".join(toml),
     }
@@ -177,7 +191,7 @@ def setup_info(port: int) -> dict[str, Any]:
         "port": port,
         "launch": launch(port),
         "snippets": snippets(port),
-        "clients": {client: status(client, port) for client in ("claude", "codex", "bionic")},
+        "clients": {client: status(client, port) for client in CLIENTS},
     }
 
 
@@ -215,10 +229,10 @@ def _connect_json(client: str, path: Path, raw: str, port: int) -> str:
     if not isinstance(data, dict):
         raise ConnectError("the file is not a JSON object")
     here = launch(port)
-    if client == "claude":
+    if client in _MCP_SERVERS_JSON:
         servers = data.setdefault("mcpServers", {})
         name = next((n for n, c in servers.items() if isinstance(c, dict) and MCP_MODULE in (c.get("args") or [])),
-                    SERVER_NAMES["claude"])
+                    SERVER_NAMES[client])
         old = servers.get(name) if isinstance(servers.get(name), dict) else {}
         servers[name] = {**{k: v for k, v in old.items() if k not in ("command", "args", "env", "cwd")},
                          "command": here["command"], "args": here["args"], "env": _merged_env(old.get("env"), port)}
@@ -237,7 +251,7 @@ def _connect_json(client: str, path: Path, raw: str, port: int) -> str:
     text = json.dumps(data, indent=_indent_of(raw), ensure_ascii=False) + "\n"
     before = json.loads(raw) if raw.strip() else {}
     after = json.loads(text)
-    key = "mcpServers" if client == "claude" else "servers"
+    key = "mcpServers" if client in _MCP_SERVERS_JSON else "servers"
     if {k: v for k, v in before.items() if k != key} != {k: v for k, v in after.items() if k != key}:
         raise ConnectError("the rest of the file would change")
     return text

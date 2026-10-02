@@ -1683,6 +1683,11 @@
         "O, con la app cerrada, añade este bloque al archivo de configuración (además da 10 minutos a las generaciones largas).",
         "Vuelve a abrir la app. Pide permiso antes de generar o retocar; las consultas no."
       ],
+      "antigravitySteps": [
+        "En el panel Agent, abre el menú … → MCP Servers → Manage MCP Servers → View raw config.",
+        "Añade el bloque \"nomad-studio\" dentro de \"mcpServers\" (pégalo entero si el archivo está vacío).",
+        "Vuelve a Manage MCP Servers y pulsa Refresh, o cierra Antigravity y ábrelo de nuevo."
+      ],
       "bionicSteps": [
         "Abre los ajustes de servidores MCP de Bionic y añade uno: nombre Nomad Studio, tipo stdio, y el comando, argumentos y variables de abajo.",
         "O, con Bionic cerrado, añade esta entrada a la lista \"servers\" del archivo de configuración.",
@@ -1702,6 +1707,7 @@
       "done": "Hecho.",
       "restartClaude": "Cierra Claude del todo y vuelve a abrirlo.",
       "restartCodex": "Cierra la app de ChatGPT y vuelve a abrirla.",
+      "restartAntigravity": "En Antigravity, pulsa Refresh en Manage MCP Servers o vuelve a abrirlo.",
       "restartBionic": "Vuelve a abrir Bionic.",
       "backupSaved": "El archivo anterior está guardado en {path}",
       "writeError": "No se ha podido escribir el archivo: {error}"

@@ -1132,7 +1132,7 @@ function showResultActions(actionStepDef) {
       if (worldDef) {
         worldDef._sessionSyncFrozen = true;
         var instrPlaceholder = (instrDef && instrDef.placeholder)
-          || 'Turn right toward the jungle / nightfall / a figure appears…';
+          || tF('Turn right toward the jungle / nightfall / a figure appears…');
         var worldWrap = document.getElementById('ncf-step-wrap-' + worldDef.id);
         var worldTa   = document.getElementById('ncf-input-' + worldDef.id);
         if (worldWrap) {
@@ -1802,7 +1802,7 @@ function _showStoryBar(actionStepDef) {
       }
     } catch (err) {
       if (generateStatus) {
-        generateStatus.textContent = '✗ ' + (err.message || 'Story generation failed');
+        generateStatus.textContent = '✗ ' + (err.message || tF('Story generation failed'));
         generateStatus.classList.remove('is-busy');
       }
     } finally {

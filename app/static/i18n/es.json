@@ -1384,7 +1384,19 @@
       "Remove from queue": "Quitar de la cola",
       "Setup required": "Falta configurar",
       "You must configure an Output Folder before using Nomad Studio. All generated images will be saved there.": "Tienes que configurar una carpeta de salida antes de usar Nomad Studio. Todas las imágenes generadas se guardarán ahí.",
-      "Go to Settings": "Ir a Settings"
+      "Go to Settings": "Ir a Settings",
+      "Choose a workflow first": "Elige primero un workflow",
+      "Pick a background image": "Elige una imagen de fondo",
+      "Pick a layer image": "Elige la imagen de la capa",
+      "Pick all the images to mix": "Elige todas las imágenes que vas a mezclar",
+      "Pick an image to refine": "Elige una imagen para retocar",
+      "Pick an image to upscale": "Elige una imagen para ampliar",
+      "Pick an upscale model": "Elige un modelo de ampliación",
+      "Write a prompt to generate": "Escribe un prompt para generar",
+      "Recommended for this flow": "Recomendados para este flow",
+      "Everything else you have imported": "Todo lo demás que has importado",
+      "Turn right toward the jungle / nightfall / a figure appears…": "Gira a la derecha hacia la selva / cae la noche / aparece una figura…",
+      "Story generation failed": "No se pudo generar la historia"
     },
     "creativity": {
       "title": "Creatividad",

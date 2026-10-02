@@ -8,6 +8,14 @@
   font-style: normal;
   font-display: swap;
 }
+/* The real italic (own letterforms): without it the browser slants the upright. */
+@font-face {
+  font-family: 'Asap';
+  src: url('Asap-Italic-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
 @font-face {
   font-family: 'Fugaz One';
   src: url('FugazOne-Regular.ttf') format('truetype');

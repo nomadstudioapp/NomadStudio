@@ -5,7 +5,7 @@
    bit us directly: the card-zoom @property block below used to sit above
    this import, which invalidated it and killed the Fugaz One title font
    sitewide. Keep this import first, always. */
-@import url('https://fonts.googleapis.com/css2?family=Fugaz+One&display=block');
+@import url('../../vendor/fonts/fonts.css');
 
 /* Card-size zoom (+/-/reset, see .cs-card-zoom further down) animates
    smoothly: plain CSS custom properties change instantly with no

@@ -1,0 +1,17 @@
+/* Fonts served by the app itself (no Google Fonts request: works offline and
+   tells nobody when the app starts). SIL Open Font License 1.1 — see the
+   *-OFL.txt files next to them. */
+@font-face {
+  font-family: 'Asap';
+  src: url('Asap-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fugaz One';
+  src: url('FugazOne-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}

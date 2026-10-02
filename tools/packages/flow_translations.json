@@ -1204,6 +1204,11 @@
   "ko": "물체를 글로 설명하면 SAM3가 찾아 줍니다 — 직접 마스크할 필요가 없습니다. 그 물체가 있던 자리를 투명하게 비운 이미지를 출력합니다.",
   "zh": "用文字描述一个物体，SAM3 会帮你找到它——无需手动蒙版。输出的图片会在该物体原来的位置留出透明空洞。"
  },
+ "Describe an object in plain text, SAM3 finds it, and Qwen Image Edit 2511 repaints only that area with what was behind it — a one-step magic eraser.": {
+  "es": "Describe un objeto con texto, SAM3 lo encuentra y Qwen Image Edit 2511 repinta solo esa zona con lo que había detrás: un borrador mágico en un paso.",
+  "ko": "물체를 글로 설명하면 SAM3가 찾고 Qwen Image Edit 2511이 그 영역만 뒤에 있던 모습으로 다시 그립니다 — 한 번에 끝나는 마법 지우개.",
+  "zh": "用文字描述一个物体，SAM3 找到它，Qwen Image Edit 2511 只重绘该区域，补上它后面原本的样子——一步到位的魔法橡皮擦。"
+ },
  "Describe an object in plain text, SAM3 finds it, and Qwen 2511 (White-to-Scene LoRA) automatically fills in the background where it used to be — a one-step magic eraser.": {
   "es": "Describe un objeto con texto, SAM3 lo encuentra y Qwen 2511 (LoRA White-to-Scene) rellena solo el fondo donde estaba: un borrador mágico en un paso.",
   "ko": "물체를 글로 설명하면 SAM3가 찾고 Qwen 2511(White-to-Scene LoRA)이 그 자리의 배경을 자동으로 채웁니다 — 한 번에 끝나는 마법 지우개.",

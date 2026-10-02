@@ -4059,6 +4059,64 @@ def build_presets_film_shadow(source: Path, version: str) -> Path:
 EXTRACT_SOURCE_FLOWS = ["refine.smart_selection", "refine.smart_selection_fill"]
 EXTRACT_GROUP_OVERRIDES = {fid: "extract" for fid in EXTRACT_SOURCE_FLOWS}
 
+# Smart Object Removal never removed anything (NOMADSTUDIO_TUTORIALS
+# IMPROVEMENTS.md note 10): the source graph burns the SAM3 mask into the
+# photo as white pixels and asks Qwen Edit 2511 — through a White-to-Scene
+# LoRA trained for 2509 and the Qwen *Image* Lightning LoRA — to "fill the
+# white area". Measured 2026-10-02 on the tutorial garden: two teddy bears
+# where the chairs were (2509 + its own LoRAs: two white dogs). What works:
+# Qwen Edit 2511 + its own Lightning gets the ORIGINAL photo and "Remove
+# <object>. <fill>", the SAM3 mask goes in as a latent noise mask, and the
+# result is pasted back only inside the mask, so the rest stays untouched.
+SMART_FILL_OBJECT_NODE = "240"
+SMART_FILL_TEXT_NODE = "241"
+SMART_FILL_DEFAULT = ("Fill that area with what was behind it, matching the same lighting, perspective and style "
+                      "as the rest of the photo.")
+SMART_FILL_DESCRIPTION = ("Describe an object in plain text, SAM3 finds it, and Qwen Image Edit 2511 repaints only "
+                          "that area with what was behind it — a one-step magic eraser.")
+
+
+def _fix_smart_fill_workflow(graph: dict) -> None:
+    graph["4"]["inputs"]["lora_name"] = "qwen_2511\\Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
+    graph["4"]["inputs"]["model"] = ["6", 0]
+    for node in ("5", "106", "144", "150", "151"):  # White-to-Scene LoRA + the white composite
+        graph.pop(node, None)
+    graph["22"]["inputs"]["image"] = ["79", 0]
+    graph[SMART_FILL_OBJECT_NODE] = {"class_type": "PrimitiveString", "inputs": {"value": ""},
+                                     "_meta": {"title": "Object to remove"}}
+    graph[SMART_FILL_TEXT_NODE] = {"class_type": "PrimitiveStringMultiline", "inputs": {"value": SMART_FILL_DEFAULT},
+                                   "_meta": {"title": "How to fill it in"}}
+    graph["99:78"]["inputs"]["text"] = [SMART_FILL_OBJECT_NODE, 0]
+    graph["242"] = {"class_type": "StringConcatenate",
+                    "inputs": {"string_a": "Remove ", "string_b": [SMART_FILL_OBJECT_NODE, 0], "delimiter": ""}}
+    graph["243"] = {"class_type": "StringConcatenate",
+                    "inputs": {"string_a": ["242", 0], "string_b": [SMART_FILL_TEXT_NODE, 0], "delimiter": ". "}}
+    graph["13"]["inputs"]["prompt"] = ["243", 0]
+    # the feathered SAM3 mask at the edit resolution
+    graph["244"] = {"class_type": "MaskToImage", "inputs": {"mask": ["115", 0]}}
+    graph["245"] = {"class_type": "FluxKontextImageScale", "inputs": {"image": ["244", 0]}}
+    graph["246"] = {"class_type": "ImageToMask", "inputs": {"image": ["245", 0], "channel": "red"}}
+    graph["247"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["22", 0], "vae": ["2", 0]}}
+    graph["248"] = {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["247", 0], "mask": ["246", 0]}}
+    graph["15"]["inputs"]["latent_image"] = ["248", 0]
+    graph.pop("11", None)
+    graph.pop("20", None)
+    graph["249"] = {"class_type": "ImageCompositeMasked",
+                    "inputs": {"destination": ["22", 0], "source": ["17", 0], "x": 0, "y": 0,
+                               "resize_source": True, "mask": ["246", 0]}}
+    graph["9"]["inputs"]["images"] = ["249", 0]
+
+
+def _fix_smart_fill_flow(flow: dict) -> None:
+    flow["description"] = SMART_FILL_DESCRIPTION
+    for step in flow["steps"]:
+        for field in step.get("fields", []):
+            if field["id"] == "object_prompt":
+                field["adv_key"] = f"{SMART_FILL_OBJECT_NODE}.value"
+            elif field["id"] == "fill_prompt":
+                field["adv_key"] = f"{SMART_FILL_TEXT_NODE}.value"
+                field["default"] = SMART_FILL_DEFAULT
+
 
 # Chroma Key (contributes.addon, same PACKAGE_FORMAT.md §9 minimal slice as
 # Pixel Matcher — see _pixel_matcher_addon_contribution): local, no-AI
@@ -4093,7 +4151,10 @@ def build_extract_pack(source: Path, version: str) -> Path:
     files.update(addon_files)
 
     for flow_id in EXTRACT_SOURCE_FLOWS:
-        flow = add_card_texts(flow_from_source(source, flow_id), table)
+        raw = flow_from_source(source, flow_id)
+        if flow_id == "refine.smart_selection_fill":
+            _fix_smart_fill_flow(raw)
+        flow = add_card_texts(raw, table)
         flow["group"] = "extract"
         _upgrade_seed_fields_to_similarity(flow)
         flows.append(flow)
@@ -4130,6 +4191,8 @@ def build_extract_pack(source: Path, version: str) -> Path:
     for ref in sorted(workflow_refs):
         graph = _load_workflow_ref(source, ref)
         _strip_foreign_flow_data(graph)
+        if ref.endswith("refine_smart_selection_fill.json"):
+            _fix_smart_fill_workflow(graph)
         files[ref] = graph
 
     # The addon's flow is served from this package too (flow_engine translates

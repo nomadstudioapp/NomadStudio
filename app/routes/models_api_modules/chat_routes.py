@@ -424,8 +424,13 @@ def _call_studio_llm(
     reasoning: str = "off",
     timeout: int = 120,
     label: str = "studio",
+    stats_out: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """Get one text answer from LM Studio with reasoning genuinely disabled.
+
+    ``stats_out``, when given, receives the native call's ``stats``
+    (tokens_per_second, reasoning_output_tokens, model_load_time_seconds…);
+    it stays empty when the legacy endpoint answered.
 
     Returns (text, source) matching _extract_lmstudio_message_text, so callers
     keep their existing reasoning-only reporting.
@@ -459,6 +464,10 @@ def _call_studio_llm(
             temperature, max_tokens, reasoning=reasoning, timeout=timeout,
         )
         text = _extract_lmstudio_v1_message_text(response).strip()
+        if stats_out is not None and isinstance(response.get("stats"), dict):
+            stats_out.update(response["stats"])
+        if not text and lmstudio_service.reasoning_only(response):
+            return "", "reasoning_only"
         return text, ("content" if text else "")
     except Exception as exc:
         native_error = exc
@@ -1136,18 +1145,36 @@ def benchmark_model():
     # story_benchmark_20260829 every model after the first crash "failed to
     # load" in 0.3 s. If it never comes back, engineDown tells the page to stop
     # the run instead of failing every remaining model.
+    # Room for this model: whatever else is loaded goes (NomadStudio#12) —
+    # with LM Studio's 1 h TTL the user's models stayed and the next large
+    # candidate didn't fit.
+    lmstudio_service.unload_others(lmstudio_url, keep=model)
     start = time.monotonic()
+    stats: dict[str, Any] = {}
     try:
         raw_output, _raw_source = _call_studio_llm(
             lmstudio_url, model, _benchmark_story_messages(), 0.7, 1600,
-            reasoning="off", timeout=180, label="benchmark",
+            reasoning="off", timeout=180, label="benchmark", stats_out=stats,
         )
     except Exception as exc:
         return jsonify({
             "model": model, "ok": False, "error": f"LM Studio request failed: {exc}",
             "engineDown": not lmstudio_service.is_ready(lmstudio_url),
         }), 200
-    duration = round(time.monotonic() - start, 2)
+    # Speed is judged on generation only: the native stats say how long the
+    # load took (a model loaded by this call would otherwise look slow).
+    load_sec = float(stats.get("model_load_time_seconds") or 0)
+    duration = round(max(0.0, time.monotonic() - start - load_sec), 2)
+    native_stats = {
+        key: value for key, value in (
+            ("loadSec", round(load_sec, 2) if load_sec else None),
+            ("tokensPerSecond", round(float(stats["tokens_per_second"]), 1) if stats.get("tokens_per_second") else None),
+            ("firstTokenSec", round(float(stats["time_to_first_token_seconds"]), 2)
+             if stats.get("time_to_first_token_seconds") else None),
+            ("outputTokens", stats.get("total_output_tokens")),
+            ("reasoningTokens", stats.get("reasoning_output_tokens")),
+        ) if value is not None
+    }
 
     scenes = _parse_benchmark_scenes(raw_output) if raw_output else []
     if not scenes:
@@ -1217,7 +1244,7 @@ def benchmark_model():
     }
     average = round(sum(metrics.values()) / len(metrics), 2)
 
-    entry = {"average": average, "durationSec": duration, **metrics}
+    entry = {"average": average, "durationSec": duration, **metrics, **native_stats}
     scores.setdefault("models", {})[model] = entry
     if not scores.get("fastestDurationSec") or duration < scores["fastestDurationSec"]:
         scores["fastestDurationSec"] = duration

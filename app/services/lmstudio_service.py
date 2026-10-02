@@ -119,7 +119,8 @@ def _coerce_model_entries(payload: Any) -> list[dict[str, Any]]:
 
 
 def _entry_model_name(entry: dict[str, Any]) -> str:
-    for key in ("model", "model_id", "id", "name"):
+    # "key" is what the native /api/v1/models calls it.
+    for key in ("model", "model_id", "id", "name", "key"):
         value = str(entry.get(key, "")).strip()
         if value:
             return value
@@ -134,7 +135,15 @@ def _entry_model_id(entry: dict[str, Any]) -> str:
     return ""
 
 
+def _entry_instance_ids(entry: dict[str, Any]) -> list[str]:
+    """Loaded instance ids of a native /api/v1/models entry."""
+    return [str(item.get("id", "")).strip() for item in entry.get("loaded_instances") or []
+            if isinstance(item, dict) and str(item.get("id", "")).strip()]
+
+
 def _entry_is_loaded(entry: dict[str, Any]) -> bool:
+    if _entry_instance_ids(entry):
+        return True
     loaded_flag = entry.get("loaded")
     if isinstance(loaded_flag, bool):
         return loaded_flag
@@ -167,10 +176,35 @@ def find_loaded_instance_id(base_url: str, model_name: str) -> str | None:
             continue
         instance_id = str(
             entry.get("instance_id", "") or entry.get("instanceId", "")
-        ).strip()
+        ).strip() or next(iter(_entry_instance_ids(entry)), "")
         return instance_id or target
 
     return None
+
+
+def unload_others(base_url: str, keep: str = "") -> list[str]:
+    """Unload every loaded LLM/VLM instance except those of ``keep``.
+
+    Benchmarks call it before each model (NomadStudio#12): unloading only
+    what the benchmark itself loaded left the user's models in memory for
+    LM Studio's 1 h TTL, and the next large model didn't fit."""
+    try:
+        payload = http_json(rest_models_endpoint(base_url), timeout=20)
+    except Exception:
+        return []
+    unloaded: list[str] = []
+    for entry in _coerce_model_entries(payload):
+        if str(entry.get("type", "llm")).strip().lower() == "embedding":
+            continue
+        key = str(entry.get("key", "") or _entry_model_name(entry)).strip()
+        if keep and key == keep:
+            continue
+        for instance_id in _entry_instance_ids(entry):
+            if unload_model(base_url, instance_id):
+                unloaded.append(instance_id)
+    if unloaded:
+        logger.info("Unloaded %s before running %s", ", ".join(unloaded), keep or "the next model")
+    return unloaded
 
 
 def _sdk_host(base_url: str) -> str:
@@ -768,7 +802,30 @@ def native_chat(
             ) from exc
         ensure_room(base_url, model, comfy)
         response, used = with_level(reasoning)
+    if reasoning_only(response):
+        # Intermittent on several Qwen builds even with reasoning off; when the
+        # model had to reason (stepped to "on"), it ran out of budget instead,
+        # so the retry gets twice the tokens.
+        retry_tokens = max_tokens if (used or "off") == "off" else min(max_tokens * 2, REASONING_RETRY_MAX_TOKENS)
+        logger.warning("%s answered with reasoning only (reasoning=%s); retrying once with %d tokens",
+                       model, used or "off", retry_tokens)
+        max_tokens = retry_tokens
+        response, used = with_level(used)
     return response, (used or "off")
+
+
+REASONING_RETRY_MAX_TOKENS = 16384
+
+
+def reasoning_only(response: dict[str, Any]) -> bool:
+    """A native response whose whole output was chain-of-thought: no final
+    message text, some reasoning text."""
+    if native_message_text(response):
+        return False
+    output = response.get("output") if isinstance(response, dict) else None
+    return any(isinstance(item, dict) and str(item.get("type", "")).strip().lower() == "reasoning"
+               and str(item.get("content", "")).strip()
+               for item in (output if isinstance(output, list) else []))
 
 
 def native_message_text(response: dict[str, Any]) -> str:

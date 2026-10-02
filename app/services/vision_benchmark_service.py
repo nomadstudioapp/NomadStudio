@@ -341,6 +341,8 @@ def run_vision_describe_benchmark(
         }
 
         loaded_instance_id = ""
+        # Room for this model: whatever else is loaded goes (NomadStudio#12).
+        lmstudio_service.unload_others(lmstudio_url, keep=model_id)
         loaded_before = bool(
             lmstudio_service.find_loaded_instance_id(lmstudio_url, model_id)
         )
@@ -357,6 +359,9 @@ def run_vision_describe_benchmark(
                 )
                 if not loaded_here and not loaded_now:
                     raise RuntimeError("Failed to load model in LM Studio")
+            # durationMs is the answer alone; the load is reported apart.
+            result["loadMs"] = int((time.perf_counter() - start) * 1000)
+            start = time.perf_counter()
 
             # Native /api/v1/chat first, with reasoning off (NomadStudio#12): the
             # same call the app's describe uses, so the benchmark measures what
@@ -374,6 +379,12 @@ def run_vision_describe_benchmark(
                     reasoning="off", timeout=max(10, int(per_model_timeout_sec)),
                 )
                 description = lmstudio_service.native_message_text(native_response)
+                stats = native_response.get("stats") if isinstance(native_response, dict) else None
+                if isinstance(stats, dict):
+                    if stats.get("tokens_per_second"):
+                        result["tokensPerSecond"] = round(float(stats["tokens_per_second"]), 1)
+                    if stats.get("reasoning_output_tokens") is not None:
+                        result["reasoningTokens"] = stats["reasoning_output_tokens"]
             except Exception:
                 description = ""
 
@@ -445,12 +456,12 @@ def run_vision_describe_benchmark(
         except Exception as exc:
             result["error"] = str(exc)
         finally:
+            duration_ms = int((time.perf_counter() - start) * 1000)
+            result["durationMs"] = max(0, duration_ms)
             if auto_disconnect and result.get("loadedByBenchmark"):
                 unload_target = loaded_instance_id or model_id
                 lmstudio_service.unload_model(lmstudio_url, unload_target)
 
-            duration_ms = int((time.perf_counter() - start) * 1000)
-            result["durationMs"] = max(0, duration_ms)
             results.append(result)
             if callable(on_model_finished):
                 try:

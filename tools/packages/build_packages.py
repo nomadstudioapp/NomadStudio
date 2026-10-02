@@ -49,7 +49,9 @@ DIST_OPTIONAL = REPO / "dist" / "optional-packages"
 # Hub-card covers of the Refine preset packs, one <pkg_id>.webp each (made with
 # Z-Image Turbo, D:/NOMADSTUDIO_PACKS/tools/sessions/make_preset_pack_covers.py).
 PACK_COVERS = Path(__file__).resolve().parent / "covers"
-LICENSE_TEXT = "Copyright (c) Nomad Studio. All rights reserved.\nInternal test package — not for distribution.\n"
+# The pack license every ZIP carries as LICENSE (paid, free and bundled alike;
+# see LICENSING.md). Same file in NomadStudioPacks/tools/PACK_LICENSE.txt.
+LICENSE_TEXT = (Path(__file__).resolve().parent / "PACK_LICENSE.txt").read_text(encoding="utf-8")
 AUTHOR = {"name": "Nomad Studio"}
 
 # registry name → package slug + short summary in the four app languages.

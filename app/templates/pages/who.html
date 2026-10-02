@@ -10,9 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/base.css') }}?v={{ asset_v }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/parts/lang_panel.css') }}?v={{ asset_v }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/who.css') }}?v={{ asset_v }}" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fonts/fonts.css') }}?v={{ asset_v }}" />
     <script>
       (function () {
         var THEME_KEY = 'oj-theme-v1';
@@ -178,7 +176,7 @@
       </div>
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="{{ url_for('static', filename='vendor/lucide/lucide.min.js') }}"></script>
     <script>lucide.createIcons();</script>
     <script src="{{ url_for('static', filename='js/services/i18n.js') }}?v={{ asset_v }}"></script>
     <script src="{{ url_for('static', filename='js/pages/who.js') }}?v={{ asset_v }}"></script>

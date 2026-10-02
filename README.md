@@ -36,4 +36,4 @@ Portable builds and in-app updates are described in [docs/APP_UPDATES.md](docs/A
 
 ## License
 
-To be defined before the public release. Until then, all rights reserved.
+Nomad Studio is free software under the [GNU General Public License v3.0 or later](LICENSE). The images you generate are yours; packs and AI models have their own licenses. Details in [LICENSING.md](LICENSING.md).

@@ -1384,7 +1384,19 @@
       "Remove from queue": "대기열에서 제거",
       "Setup required": "설정 필요",
       "You must configure an Output Folder before using Nomad Studio. All generated images will be saved there.": "Nomad Studio를 쓰기 전에 출력 폴더를 설정해야 합니다. 생성된 모든 이미지가 그곳에 저장됩니다.",
-      "Go to Settings": "Settings로 이동"
+      "Go to Settings": "Settings로 이동",
+      "Choose a workflow first": "먼저 워크플로를 고르세요",
+      "Pick a background image": "배경 이미지를 고르세요",
+      "Pick a layer image": "레이어 이미지를 고르세요",
+      "Pick all the images to mix": "섞을 이미지를 모두 고르세요",
+      "Pick an image to refine": "다듬을 이미지를 고르세요",
+      "Pick an image to upscale": "업스케일할 이미지를 고르세요",
+      "Pick an upscale model": "업스케일 모델을 고르세요",
+      "Write a prompt to generate": "생성하려면 프롬프트를 입력하세요",
+      "Recommended for this flow": "이 플로에 추천",
+      "Everything else you have imported": "가져온 나머지 전부",
+      "Turn right toward the jungle / nightfall / a figure appears…": "오른쪽 정글로 향한다 / 밤이 된다 / 누군가 나타난다…",
+      "Story generation failed": "스토리를 생성하지 못했습니다"
     },
     "creativity": {
       "title": "창의성",
@@ -1683,6 +1695,11 @@
         "또는 앱을 닫은 상태에서 이 블록을 설정 파일에 추가하세요(긴 생성에 10분을 주는 설정도 포함).",
         "앱을 다시 여세요. 생성이나 수정 전에는 허락을 구하고, 조회는 그렇지 않습니다."
       ],
+      "antigravitySteps": [
+        "Agent 패널에서 … 메뉴 → MCP Servers → Manage MCP Servers → View raw config를 엽니다.",
+        "\"mcpServers\" 안에 \"nomad-studio\" 블록을 추가합니다(파일이 비어 있으면 전체를 붙여 넣으세요).",
+        "Manage MCP Servers로 돌아가 Refresh를 누르거나, Antigravity를 닫았다가 다시 엽니다."
+      ],
       "bionicSteps": [
         "Bionic의 MCP 서버 설정을 열고 하나 추가하세요: 이름 Nomad Studio, 유형 stdio, 그리고 아래의 명령, 인수, 변수.",
         "또는 Bionic을 닫은 상태에서 이 항목을 설정 파일의 \"servers\" 목록에 추가하세요.",
@@ -1702,6 +1719,7 @@
       "done": "완료.",
       "restartClaude": "Claude를 완전히 종료한 뒤 다시 여세요.",
       "restartCodex": "ChatGPT 앱을 닫았다가 다시 여세요.",
+      "restartAntigravity": "Antigravity의 Manage MCP Servers에서 Refresh를 누르거나 다시 여세요.",
       "restartBionic": "Bionic을 다시 여세요.",
       "backupSaved": "이전 파일이 {path}에 저장되었습니다",
       "writeError": "파일을 쓸 수 없습니다: {error}"

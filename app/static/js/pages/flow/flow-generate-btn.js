@@ -86,7 +86,7 @@ function updateGenerateBtn() {
   if (generateBtn) {
     generateBtn.disabled = disabled;
     var _tipEl = generateBtn.querySelector('.cs-mode-tip');
-    if (_tipEl) _tipEl.textContent = disabled ? tip : '';
+    if (_tipEl) _tipEl.textContent = disabled ? tF(tip) : '';
     // While a generation is running, an enabled button enqueues the next job —
     // reflect that by relabeling it to "Enqueue".
     var _btnSpan = generateBtn.querySelector('span');
@@ -169,13 +169,13 @@ async function loadWorkflows(selectEl, hintEl, recommendedIds) {
       : [];
     if (recommended.length) {
       var gRec = document.createElement('optgroup');
-      gRec.label = 'Recommended for this flow';
+      gRec.label = tF('Recommended for this flow');
       recommended.forEach(function (imp) { gRec.appendChild(mkOption(imp)); });
       selectEl.appendChild(gRec);
       var rest = allImports.filter(function (i) { return recommendedSet.indexOf(String(i.id)) === -1; });
       if (rest.length) {
         var gAll = document.createElement('optgroup');
-        gAll.label = 'Everything else you have imported';
+        gAll.label = tF('Everything else you have imported');
         rest.forEach(function (imp) { gAll.appendChild(mkOption(imp)); });
         selectEl.appendChild(gAll);
       }

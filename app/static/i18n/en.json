@@ -1310,6 +1310,11 @@
         "Or, with the app closed, add this block to the config file (it also gives long generations 10 minutes).",
         "Open the app again. It asks before generating or editing; lookups don't need it."
       ],
+      "antigravitySteps": [
+        "In the Agent panel, open the … menu → MCP Servers → Manage MCP Servers → View raw config.",
+        "Add the \"nomad-studio\" block inside \"mcpServers\" (paste all of it if the file is empty).",
+        "Go back to Manage MCP Servers and press Refresh, or close Antigravity and open it again."
+      ],
       "bionicSteps": [
         "Open Bionic's MCP servers settings and add one: name Nomad Studio, type stdio, and the command, arguments and variables below.",
         "Or, with Bionic closed, add this entry to the \"servers\" list of the config file.",
@@ -1329,6 +1334,7 @@
       "done": "Done.",
       "restartClaude": "Quit Claude completely and open it again.",
       "restartCodex": "Close the ChatGPT app and open it again.",
+      "restartAntigravity": "In Antigravity, press Refresh in Manage MCP Servers, or open it again.",
       "restartBionic": "Open Bionic again.",
       "backupSaved": "Previous file saved in {path}",
       "writeError": "Couldn't write the file: {error}"

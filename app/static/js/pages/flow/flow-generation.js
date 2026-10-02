@@ -177,7 +177,7 @@ async function waitForImageLocal(comfyUrl, clientId, promptId, card, onNote) {
         // Same brief confirmation flash as waitForImage's clearNote — see
         // that comment for why.
         if (typeof onNote === 'function') {
-          onNote('Model initialization complete!');
+          onNote(tF('Model initialization complete!'));
           setTimeout(function () { if (typeof onNote === 'function') onNote(''); }, 1200);
         }
       }

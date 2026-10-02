@@ -1,6 +1,6 @@
 'use strict';
-// Settings › Agents: connect Claude Desktop, ChatGPT (Codex / Work modes) and
-// Bionic to this installation's MCP server. /api/agents/setup
+// Settings › Agents: connect Claude Desktop, ChatGPT (Codex / Work modes),
+// Antigravity and Bionic to this installation's MCP server. /api/agents/setup
 // (app/services/agent_setup.py) gives this installation's own launch values
 // (Python, PYTHONPATH, port) and reads each program's config to say whether
 // it already points here. Phase 1: steps + values to copy; nothing is
@@ -33,6 +33,10 @@
       steps: ['Press Ctrl + , → Integrations → Plugins → Add → Add MCP Server. Type STDIO, name nomad_studio, and fill in the command, arguments and variables below.',
               'Or, with the app closed, add this block to the config file (it also gives long generations 10 minutes).',
               'Open the app again. It asks before generating or editing; lookups don\'t need it.'] },
+    { id: 'antigravity', title: 'Antigravity (Gemini)', snippet: 'antigravity', fields: false,
+      steps: ['In the Agent panel, open the … menu → MCP Servers → Manage MCP Servers → View raw config.',
+              'Add the "nomad-studio" block inside "mcpServers" (paste all of it if the file is empty).',
+              'Go back to Manage MCP Servers and press Refresh, or close Antigravity and open it again.'] },
     { id: 'bionic', title: 'Bionic (LM Studio)', snippet: 'bionic', fields: true,
       steps: ['Open Bionic\'s MCP servers settings and add one: name Nomad Studio, type stdio, and the command, arguments and variables below.',
               'Or, with Bionic closed, add this entry to the "servers" list of the config file.',
@@ -117,6 +121,7 @@
   var RESTART = {
     claude: ['restartClaude', 'Quit Claude completely and open it again.'],
     codex: ['restartCodex', 'Close the ChatGPT app and open it again.'],
+    antigravity: ['restartAntigravity', 'In Antigravity, press Refresh in Manage MCP Servers, or open it again.'],
     bionic: ['restartBionic', 'Open Bionic again.'],
   };
   var lastData = null;

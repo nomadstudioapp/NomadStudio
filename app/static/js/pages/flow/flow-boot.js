@@ -64,11 +64,13 @@ function flowBootLoad(id) {
         var saveBtn = document.createElement('button');
         saveBtn.type = 'button';
         saveBtn.id = 'nsc-flow-save-btn';
-        saveBtn.className = 'btn create-action-btn';
-        saveBtn.setAttribute('aria-label', tF('Save this flow instance to Build'));
+        // nsc-options-trigger: it opens the side panel, so clicking it again
+        // mustn't count as the "outside" click that closes that panel.
+        saveBtn.className = 'btn create-action-btn nsc-options-trigger';
+        saveBtn.setAttribute('aria-label', tF('Send flow to Build'));
         var saveBtnTip = document.createElement('span');
         saveBtnTip.className = 'action-tip';
-        saveBtnTip.textContent = tF('Save to Build');
+        saveBtnTip.textContent = tF('Send flow to Build');
         saveBtn.innerHTML =
           // A cube — the Depot's own icon (topbar badge). The thin prism it
           // replaced, drawn in a 100×160 box, barely showed at the rail's size.
@@ -78,18 +80,12 @@ function flowBootLoad(id) {
           '<path d="M3.3 7 12 12l8.7-5M12 22V12"/>' +
           '</svg>';
         saveBtn.appendChild(saveBtnTip);
+        // A panel, not a direct save: Build › Flows (this flow with its
+        // settings) or the Depot its results are filed into as they're made
+        // (flow-gallery.js _openSendFlowToBuildPanel).
         saveBtn.addEventListener('click', function () {
-          if (saveBtn.disabled || typeof saveFlowInstanceToLibrary !== 'function') return;
-          saveBtn.disabled = true;
-          saveBtnTip.textContent = tF('Saving…');
-          saveFlowInstanceToLibrary().then(function () {
-            saveBtnTip.textContent = tF('Saved ✓');
-            setTimeout(function () { saveBtnTip.textContent = tF('Save to Build'); saveBtn.disabled = false; }, 1500);
-          }).catch(function (err) {
-            console.error('[Nomad Studio] Save to Build failed:', err);
-            saveBtnTip.textContent = tF('Save failed');
-            setTimeout(function () { saveBtnTip.textContent = tF('Save to Build'); saveBtn.disabled = false; }, 1500);
-          });
+          if (typeof saveFlowInstanceToLibrary !== 'function') return;
+          _openSendFlowToBuildPanel(saveFlowInstanceToLibrary);
         });
         _saveBtnRail.insertBefore(saveBtn, _saveBtnRail.firstChild);
       }

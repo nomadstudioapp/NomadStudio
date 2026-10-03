@@ -13,7 +13,7 @@ from app.routes.models_api_shared import (
     models_api_bp,
 )
 from app import paths
-from app.services import image_service
+from app.services import depot_service, image_service
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +170,9 @@ def update_character(keyword: str):
 
     target.update(updates)
     _save_characters(items)
+    if new_keyword is not None and new_keyword != key:
+        # Depots point at characters by keyword (depot_service.REF_KEYS).
+        depot_service.rename_ref_keyword("character", key, new_keyword)
     return jsonify({"ok": True, "character": target})
 
 

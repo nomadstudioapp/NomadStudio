@@ -11713,48 +11713,20 @@ body.nsc-session-workspace-page .nss-scenes-area {
   border-color: #ef4444;
 }
 
-.nit-send-depot-btn {
+/* One "Send to Build" cube (flow-gallery.js) — Character, Background,
+   Style and Depot are chosen in its side panel. */
+.nit-send-build-btn {
   right: 74px;
 }
-.nit-send-depot-btn:hover {
-  background: color-mix(in srgb, var(--accent) 80%, #000);
-}
-.nss-card-img-wrap:hover .nit-send-depot-btn,
-.nsc-image-tile:hover .nit-send-depot-btn {
+.nss-card-img-wrap:hover .nit-send-build-btn,
+.nsc-image-tile:hover .nit-send-build-btn {
   opacity: 1;
 }
 
-.nit-send-character-btn {
-  right: 108px;
-}
-.nit-send-character-btn:hover {
-  background: color-mix(in srgb, var(--accent) 80%, #000);
-}
-.nss-card-img-wrap:hover .nit-send-character-btn,
-.nsc-image-tile:hover .nit-send-character-btn {
-  opacity: 1;
-}
-
-.nit-send-background-btn {
-  right: 142px;
-}
-.nit-send-background-btn:hover {
-  background: color-mix(in srgb, var(--accent) 80%, #000);
-}
-.nss-card-img-wrap:hover .nit-send-background-btn,
-.nsc-image-tile:hover .nit-send-background-btn {
-  opacity: 1;
-}
-
-.nit-send-style-btn {
-  right: 176px;
-}
-.nit-send-style-btn:hover {
-  background: color-mix(in srgb, var(--accent) 80%, #000);
-}
-.nss-card-img-wrap:hover .nit-send-style-btn,
-.nsc-image-tile:hover .nit-send-style-btn {
-  opacity: 1;
+/* "<- Send to Build" atop a sub-panel opened from that menu */
+.ncf-send-build-menu-back {
+  display: block;
+  margin: 0 0 0.75rem;
 }
 
 .ncf-depot-send-info {
@@ -15308,6 +15280,45 @@ body.explore-page-body #album-topbar-toolbar + div {
   font-size: var(--fs-sm);
   color: var(--text);
   margin: 0 0 0.35rem;
+}
+
+/* Build's Depot filter (library.js renderDepotFilterBar): under the search */
+.lib-depot-filter {
+  margin: 0 0 0.75rem;
+}
+.lib-depot-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+.lib-depot-filter-label svg {
+  width: 16px;
+  height: 16px;
+}
+.lib-depot-filter-select {
+  min-width: 12rem;
+}
+
+/* A Depot Character/Background's Build side (library.js renderDepotItemBuild) */
+.lib-depot-item-build {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+.lib-depot-item-build:empty {
+  display: none;
+}
+.lib-depot-item-build-field {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.lib-depot-item-build-field strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .lib-depot-item-detail-date {

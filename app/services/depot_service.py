@@ -173,16 +173,63 @@ def add_item(
     return item
 
 
+# Which field of ``ref`` identifies the Build entity an item points at.
+# Styles by numeric id; Characters/Backgrounds by keyword — the same keyword
+# flows use, so a Depot character is a real Build character, not a snapshot.
+REF_KEYS = {"style": "styleId", "character": "keyword", "background": "keyword"}
+
+
 def find_item_by_ref(
     depot_id: str, viewer_id: str | None, category: str, ref_id: str
 ) -> dict[str, Any] | None:
     """The item of ``category`` whose ``ref`` points at ``ref_id`` (e.g. a
     style already saved in this depot), or None."""
+    ref_key = REF_KEYS.get(category)
+    if not ref_key:
+        return None
     depot = get_depot(depot_id, viewer_id)
     for item in (depot or {}).get("items") or []:
-        if item.get("category") == category and str((item.get("ref") or {}).get("styleId")) == str(ref_id):
+        if item.get("category") == category and str((item.get("ref") or {}).get(ref_key)) == str(ref_id):
             return item
     return None
+
+
+def set_item_ref(
+    depot_id: str, viewer_id: str | None, item_id: str, ref: dict[str, Any], url: str = ""
+) -> dict[str, Any] | None:
+    """Link an existing item to a Build entity — an image-only Character or
+    Background sent before items carried a ``ref`` becomes the real one it
+    was just made into. Returns the updated item, or None if not found."""
+    data = _ensure_depots()
+    d = next((x for x in data["depots"] if x.get("id") == depot_id), None)
+    if d is None or not visible_to(d, viewer_id):
+        return None
+    item = next((it for it in d.get("items") or [] if it.get("id") == item_id), None)
+    if item is None:
+        return None
+    item["ref"] = ref
+    if url:
+        item["url"] = url
+    _save_depots(data)
+    return item
+
+
+def rename_ref_keyword(category: str, old: str, new: str) -> int:
+    """A Build Character/Background was renamed (its keyword is also its
+    image's file name): repoint every depot item that referenced it, in every
+    viewer's depots. Returns how many items changed."""
+    data = _ensure_depots()
+    changed = 0
+    for d in data["depots"]:
+        for item in d.get("items") or []:
+            ref = item.get("ref") or {}
+            if item.get("category") == category and ref.get("keyword") == old:
+                ref["keyword"] = new
+                item["url"] = f"/static/images/{category}s/{new}.png"
+                changed += 1
+    if changed:
+        _save_depots(data)
+    return changed
 
 
 def _now_ms() -> int:

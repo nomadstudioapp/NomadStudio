@@ -428,7 +428,82 @@
 
   // A selection can be a flat leaf, a group name (matches the group itself
   // plus every "Group/..." under it), or one exact "Group/Sub" string.
+  /* ── Depot filter ─────────────────────────────────────────────────────────
+     Build holds everything; a Depot is a filter on top of it. Characters,
+     Backgrounds and Styles can be narrowed to what one Depot references
+     (its items' ref.keyword / ref.styleId — depot_service.REF_KEYS). Opens
+     on the active Depot, if there is one; "All of Build" lifts it. */
+  var DEPOT_FILTERABLE = { characters: 'character', backgrounds: 'background', styles: 'style' };
+  var depotFilterId = null;     // '' = All of Build
+  var depotFilterReady = false; // default (the active Depot) picked once per page load
+  var depotFilterList = [];
+  var depotFilterBar = null;
+
+  function depotFilterRefs() {
+    var depot = depotFilterList.find(function (d) { return d.id === depotFilterId; });
+    var refs = { character: {}, background: {}, style: {} };
+    ((depot && depot.items) || []).forEach(function (it) {
+      var ref = it.ref || {};
+      if (it.category === 'style' && ref.styleId != null) refs.style[String(ref.styleId)] = true;
+      else if (refs[it.category] && ref.keyword) refs[it.category][ref.keyword] = true;
+    });
+    return refs;
+  }
+
+  function applyDepotFilter(id, items) {
+    var kind = DEPOT_FILTERABLE[id];
+    if (!kind || !depotFilterId) return items;
+    var refs = depotFilterRefs()[kind];
+    return items.filter(function (it) {
+      return refs[kind === 'style' ? String(it.id) : it.keyword];
+    });
+  }
+
+  function loadDepotFilter() {
+    return Promise.all([
+      fetch('/api/depots').then(function (r) { return r.json(); }),
+      depotFilterReady ? Promise.resolve(null) : fetch('/api/depots/active').then(function (r) { return r.json(); }),
+    ]).then(function (res) {
+      depotFilterList = (res[0] && res[0].depots) || [];
+      if (!depotFilterReady) {
+        depotFilterReady = true;
+        depotFilterId = (res[1] && res[1].depot && res[1].depot.id) || '';
+      }
+      if (depotFilterId && !depotFilterList.some(function (d) { return d.id === depotFilterId; })) depotFilterId = '';
+    }).catch(function () { depotFilterList = []; depotFilterId = ''; });
+  }
+
+  function renderDepotFilterBar(id) {
+    if (!depotFilterBar) {
+      depotFilterBar = document.createElement('div');
+      depotFilterBar.className = 'lib-depot-filter';
+      // Right under the search box, above the empty-state line and the grid.
+      var anchor = searchInput && searchInput.parentNode === grid.parentNode ? searchInput.nextSibling : grid;
+      grid.parentNode.insertBefore(depotFilterBar, anchor);
+      depotFilterBar.addEventListener('change', function (e) {
+        if (!e.target.matches('select')) return;
+        depotFilterId = e.target.value;
+        var cat = CATEGORIES.find(function (c) { return c.id === activeId; });
+        if (cat) renderGrid(cat, filterItemsForDisplay(activeId, activeItems));
+      });
+    }
+    var show = !!DEPOT_FILTERABLE[id] && depotFilterList.length > 0;
+    depotFilterBar.hidden = !show;
+    if (!show) return;
+    depotFilterBar.innerHTML =
+      '<label class="lib-depot-filter-label"><i data-lucide="box" aria-hidden="true"></i>' +
+        '<select class="nsc-select lib-depot-filter-select">' +
+          '<option value="">' + tH('All of Build') + '</option>' +
+          depotFilterList.map(function (d) {
+            return '<option value="' + escHtml(d.id) + '"' + (d.id === depotFilterId ? ' selected' : '') + '>' +
+              escHtml(d.name || d.id) + '</option>';
+          }).join('') +
+        '</select></label>';
+    if (window.lucide) window.lucide.createIcons();
+  }
+
   function filterItemsForDisplay(id, items) {
+    items = applyDepotFilter(id, items);
     if (id === 'styles' && selectedStyleCategory) {
       var sel = selectedStyleCategory;
       return items.filter(function (it) {
@@ -792,13 +867,16 @@
       empty.hidden = false;
       // Empty sections say how things get here, not just that nothing has.
       var EMPTY_HINTS = {
-        characters: ['build.emptyCharacters', 'No characters yet. Generate an image in Create, Refine or Mix and press "Send to Character" on the result to make it a character.'],
-        backgrounds: ['build.emptyBackgrounds', 'No backgrounds yet. Generate an image in Create, Refine or Mix and press "Send to Background" on the result to keep it as a background.'],
-        flows: ['build.emptyFlows', 'No saved flows yet. In any Create, Refine or Mix flow, press "Save to Build" in the top bar to keep it here with its settings and images.'],
+        characters: ['build.emptyCharacters', 'No characters yet. Generate an image in Create, Refine or Mix, press "Send to Build" on the result and choose Character.'],
+        backgrounds: ['build.emptyBackgrounds', 'No backgrounds yet. Generate an image in Create, Refine or Mix, press "Send to Build" on the result and choose Background.'],
+        flows: ['build.emptyFlows', 'No saved flows yet. In any Create, Refine or Mix flow, press "Send flow to Build" (the cube on the right) and choose "Save flow to Build" to keep it here with its settings and images.'],
       };
       var hint = EMPTY_HINTS[cat.id];
+      var filterDepot = DEPOT_FILTERABLE[cat.id] && depotFilterId &&
+        depotFilterList.find(function (d) { return d.id === depotFilterId; });
       empty.textContent = searchQuery.trim()
         ? tr('build.noMatch', 'Nothing matches your search.')
+        : filterDepot ? tF('Nothing from "{name}" here yet. Pick "All of Build" above to see everything.').replace('{name}', filterDepot.name)
         : hint ? tr(hint[0], hint[1])
         : tF('No {items} saved yet.').replace('{items}', tF(cat.label).toLowerCase());
       return;
@@ -932,8 +1010,14 @@
     if (breadcrumbDepots) breadcrumbDepots.hidden = true;
     if (breadcrumbDepotsArrow) breadcrumbDepotsArrow.setAttribute('hidden', ''); // SVG: no .hidden property
 
-    fetchItems(cat).then(function (items) {
+    if (depotFilterBar) depotFilterBar.hidden = true;
+    Promise.all([
+      fetchItems(cat),
+      DEPOT_FILTERABLE[id] ? loadDepotFilter() : null,
+    ]).then(function (loaded) {
+      var items = loaded[0];
       if (activeId !== id) return;
+      renderDepotFilterBar(id);
       activeItems = items;
       if (id === 'styles') { allStyleItems = items; renderGrid(cat, filterItemsForDisplay(id, items)); return; }
       if (id === 'templates') { allTemplateItems = items; renderGrid(cat, filterItemsForDisplay(id, items)); return; }
@@ -2010,14 +2094,22 @@
     if (window.lucide) window.lucide.createIcons();
   }
 
-  function openItemEditModal(catId, keyword) {
+  // After Save/Delete: a Depot's detail view opened the modal for one of its
+  // linked Characters/Backgrounds — refresh that view, not the Depot list.
+  function reloadAfterItemEdit() {
+    if (activeId === 'depot' && depotDetailId) showDepotDetail(depotDetailId, selectedDepotItemId);
+    else loadCategory(activeId);
+  }
+
+  function openItemEditModal(catId, keyword, itemOverride) {
     if (!itemEditModal) return;
     var cat = CATEGORIES.find(function (c) { return c.id === catId; });
     if (!cat) return;
     // Read from the already-loaded grid data instead of a fresh fetch — both
     // categories' full list is already in currentItems from the last
-    // loadCategory() call (same source cardHtml itself read from).
-    var item = currentItems.find(function (it) { return it && it.keyword === keyword; });
+    // loadCategory() call (same source cardHtml itself read from). The Depot
+    // view passes the item itself (its grid holds Depot items instead).
+    var item = itemOverride || currentItems.find(function (it) { return it && it.keyword === keyword; });
     if (!item) return;
     editingItemCat = cat;
     editingItemKeyword = keyword;
@@ -2121,7 +2213,7 @@
       }).then(function (res) {
         if (!res.ok) throw new Error((res.data && res.data.error) || 'Save failed');
         closeItemEditModal();
-        loadCategory(activeId);
+        reloadAfterItemEdit();
       }).catch(function (err) {
         console.error('[Library] Item save failed:', err);
         itemEditStatus.textContent = (err && err.message) || 'Save failed.';
@@ -2140,7 +2232,7 @@
         .then(function (r) {
           if (!r.ok) throw new Error('Delete failed (' + r.status + ')');
           closeItemEditModal();
-          loadCategory(activeId);
+          reloadAfterItemEdit();
         })
         .catch(function (err) {
           console.error('[Library] Item delete failed:', err);
@@ -2181,10 +2273,30 @@
   var depotItemsById = {}; // populated per-render by renderDepotDetail, read by selectDepotItem
   var selectedDepotItemId = null;
 
+  // Characters/Backgrounds in a Depot point at the real Build ones by keyword
+  // (item.ref.keyword, depot_service.REF_KEYS). This is Build's current list
+  // of both, fetched with the Depot so cards and the aside show each one's
+  // own name, description and prompt — not what it looked like when sent.
+  var depotBuildIndex = { character: {}, background: {} };
+  var depotBust = '';
+
+  function linkedBuildItem(item) {
+    var kw = item && item.ref && item.ref.keyword;
+    if (!kw || !depotBuildIndex[item.category]) return null;
+    return depotBuildIndex[item.category][kw] || null;
+  }
+
   // Same .rp-card full-bleed-photo treatment as Style/Template/Album cards
   // (see styleCardHtml's comment above) — kept visually identical so a
   // Depot's items read as the same "card" everywhere in the app.
   function depotItemCardHtml(item) {
+    var linked = linkedBuildItem(item);
+    if (linked) {
+      item = Object.assign({}, item, {
+        url: '/static/images/' + item.category + 's/' + encodeURIComponent(linked.keyword) + '.png' + depotBust,
+        caption: linked.keyword + (linked.description ? ' — ' + linked.description : ''),
+      });
+    }
     var img = item.url || '';
     var imgBlock = img
       ? '<img src="' + escHtml(img) + '" alt="" loading="lazy" decoding="async" onerror="this.closest(\'.lib-style-card-img-wrap\').classList.add(\'lib-style-card-img-wrap--fallback\')">'
@@ -2229,6 +2341,105 @@
   var DEPOT_SECTION_LABEL = {};
   DEPOT_SECTIONS.forEach(function (s) { DEPOT_SECTION_LABEL[s.key] = s.label; });
 
+  // The Build side of a selected Character/Background: its description and
+  // prompt with Edit (Build's own edit panel), or — for one sent as a bare
+  // image before Depot items pointed at Build — "Make it a character".
+  var depotItemBuildEl = null;
+  function renderDepotItemBuild(item, linked) {
+    if (!depotItemBuildEl && depotItemDetailCaption) {
+      depotItemBuildEl = document.createElement('div');
+      depotItemBuildEl.className = 'lib-depot-item-build';
+      depotItemDetailCaption.parentNode.insertBefore(depotItemBuildEl, depotItemDetailCaption.nextSibling);
+    }
+    if (!depotItemBuildEl) return;
+    depotItemBuildEl.innerHTML = '';
+    var isChar = item.category === 'character';
+    if (!isChar && item.category !== 'background') return;
+    var catId = isChar ? 'characters' : 'backgrounds';
+
+    if (linked) {
+      [['Description', linked.description], ['Prompt', linked.prompt]].forEach(function (row) {
+        if (!row[1]) return;
+        var p = document.createElement('p');
+        p.className = 'lib-depot-item-build-field';
+        var b = document.createElement('strong');
+        b.textContent = tF(row[0]) + ': ';
+        p.appendChild(b);
+        p.appendChild(document.createTextNode(row[1]));
+        depotItemBuildEl.appendChild(p);
+      });
+      var edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'nsc-generate-btn nsc-generate-btn--ghost';
+      edit.textContent = tF('Edit');
+      edit.addEventListener('click', function () { openItemEditModal(catId, linked.keyword, linked); });
+      depotItemBuildEl.appendChild(edit);
+      return;
+    }
+
+    var hint = document.createElement('p');
+    hint.className = 'muted-note';
+    hint.textContent = item.ref && item.ref.keyword
+      ? tF('"{name}" is no longer in Build.').replace('{name}', item.ref.keyword)
+      : tF('Only an image for now — not yet a Build item you can use in flows.');
+    depotItemBuildEl.appendChild(hint);
+    var make = document.createElement('button');
+    make.type = 'button';
+    make.className = 'nsc-generate-btn';
+    make.textContent = tF(isChar ? 'Make it a character' : 'Make it a background');
+    make.addEventListener('click', function () {
+      make.disabled = true;
+      makeDepotItemBuild(item).catch(function (err) {
+        console.error('[Library] Make it a ' + item.category + ' failed:', err);
+        hint.textContent = (err && err.message) || String(err);
+        make.disabled = false;
+      });
+    });
+    depotItemBuildEl.appendChild(make);
+  }
+
+  // Same two calls as a result card's "Send to Character" (flow-gallery.js
+  // _sendResultToBuild): create it (the server picks a free keyword), give
+  // it this image; then point the Depot item at it and open Build's edit
+  // panel so it gets a proper name right away.
+  function makeDepotItemBuild(item) {
+    var plural = item.category + 's';
+    var text = String(item.caption || '').trim();
+    var description = text.split(/\s+/).filter(Boolean).slice(0, 12).join(' ') ||
+      (item.category === 'character' ? 'New character' : 'New background');
+    function json(r) {
+      return r.json().then(function (d) {
+        if (!r.ok || (d && d.ok === false)) throw new Error((d && d.error) || ('HTTP ' + r.status));
+        return d;
+      });
+    }
+    var created;
+    return fetch('/api/' + plural, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: item.category, description: description, prompt: text || description }),
+    }).then(json).then(function (d) {
+      created = d[item.category];
+      return fetch('/api/' + plural + '/' + encodeURIComponent(created.keyword) + '/image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: item.url }),
+      }).then(json).catch(function (err) {
+        return fetch('/api/' + plural + '/' + encodeURIComponent(created.keyword), { method: 'DELETE' })
+          .catch(function () {}).then(function () { throw err; });
+      });
+    }).then(function () {
+      return fetch('/api/depots/' + encodeURIComponent(depotDetailId) + '/items/' + encodeURIComponent(item.id) + '/ref', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: created.keyword }),
+      }).then(json);
+    }).then(function () {
+      showDepotDetail(depotDetailId, item.id);
+      openItemEditModal(plural, created.keyword, created);
+    });
+  }
+
   // Fills #lib-depot-item-detail with the clicked item's own info — kept
   // separate from renderDepotDetail so re-selecting doesn't refetch/rerender
   // the whole depot (and the grid's own scroll position) each click.
@@ -2244,16 +2455,22 @@
     }
     if (!item || !depotItemDetailEl) return;
     depotItemDetailEl.hidden = false;
+    var linked = linkedBuildItem(item);
+    var mediaUrl = linked
+      ? '/static/images/' + item.category + 's/' + encodeURIComponent(linked.keyword) + '.png' + depotBust
+      : item.url;
     if (depotItemDetailMedia) {
-      depotItemDetailMedia.innerHTML = item.url
-        ? '<img src="' + escHtml(item.url) + '" alt="">'
+      depotItemDetailMedia.innerHTML = mediaUrl
+        ? '<img src="' + escHtml(mediaUrl) + '" alt="">'
         : '';
     }
     if (depotItemDetailCategory) depotItemDetailCategory.textContent = tF(DEPOT_SECTION_LABEL[item.category] || item.category || '');
     if (depotItemDetailCaption) {
-      depotItemDetailCaption.hidden = !item.caption;
-      depotItemDetailCaption.textContent = item.caption || '';
+      var caption = linked ? linked.keyword : item.caption;
+      depotItemDetailCaption.hidden = !caption;
+      depotItemDetailCaption.textContent = caption || '';
     }
+    renderDepotItemBuild(item, linked);
     if (depotItemDetailDate) depotItemDetailDate.textContent = formatDepotDate(item.addedAt);
     if (depotItemDetailOpen) {
       if (item.sourceUrl) {
@@ -2323,19 +2540,31 @@
     if (window.lucide) window.lucide.createIcons();
   }
 
-  function showDepotDetail(depotId) {
+  function showDepotDetail(depotId, selectItemId) {
     depotDetailId = depotId;
     if (depotToolbar) depotToolbar.hidden = true;
     if (searchInput) searchInput.hidden = true;  // the detail view isn't a grid
+    function list(kind) {
+      return fetch('/api/' + kind).then(function (r) { return r.json(); })
+        .then(function (d) { return (d && d[kind]) || []; }, function () { return []; });
+    }
     Promise.all([
       fetch('/api/depots/' + encodeURIComponent(depotId)).then(function (r) { return r.json(); }),
       fetch('/api/depots/active').then(function (r) { return r.json(); }),
+      list('characters'),
+      list('backgrounds'),
     ]).then(function (results) {
       if (depotDetailId !== depotId) return; // navigated away while this was in flight
       var depot = results[0] && results[0].depot;
       var activeDepot = results[1] && results[1].depot;
       if (!depot) { showDepotList(); return; }
+      depotBuildIndex = { character: {}, background: {} };
+      results[2].forEach(function (it) { if (it && it.keyword) depotBuildIndex.character[it.keyword] = it; });
+      results[3].forEach(function (it) { if (it && it.keyword) depotBuildIndex.background[it.keyword] = it; });
+      // Images keep their <keyword>.png name when replaced: bust per load.
+      depotBust = '?v=' + Date.now();
       renderDepotDetail(depot, !!(activeDepot && activeDepot.id === depot.id));
+      if (selectItemId && depotItemsById[selectItemId]) selectDepotItem(selectItemId);
     }).catch(function (err) {
       console.error('[Library] Failed to load depot detail:', err);
     });

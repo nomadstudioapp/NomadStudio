@@ -13,7 +13,7 @@ from app.routes.models_api_shared import (
     models_api_bp,
 )
 from app import paths
-from app.services import image_service
+from app.services import depot_service, image_service
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +167,9 @@ def update_background(keyword: str):
 
     target.update(updates)
     _save_backgrounds(items)
+    if new_keyword is not None and new_keyword != key:
+        # Depots point at backgrounds by keyword (depot_service.REF_KEYS).
+        depot_service.rename_ref_keyword("background", key, new_keyword)
     return jsonify({"ok": True, "background": target})
 
 

@@ -61,10 +61,15 @@ def add_active_depot_item():
     user picked (character/background/asset)."""
     viewer_id = _active_viewer_id()
     depot_id = _active_depot_id()
-    if not depot_id:
-        return jsonify({"ok": False, "error": "No active Depot"}), 400
     body = request.get_json(silent=True) or {}
     category = str(body.get("category") or "").strip().lower()
+    if not depot_id:
+        # "flow" is the automatic save after every generation
+        # (flow-gallery.js addToFeed): no Depot active just means there is
+        # nowhere to file it, not an error.
+        if category == "flow":
+            return jsonify({"ok": True, "skipped": "no active depot"})
+        return jsonify({"ok": False, "error": "No active Depot"}), 400
     url = str(body.get("url") or "").strip()
     ref = None
     if category == "style":
@@ -81,6 +86,18 @@ def add_active_depot_item():
         for key in ("name", "category", "prompt"):
             if raw_ref.get(key):
                 ref[key] = str(raw_ref[key])[:2000]
+    elif category in ("character", "background") and isinstance(body.get("ref"), dict):
+        # A real Build Character/Background (flow-gallery.js creates or picks
+        # it first): the item points at its keyword. Same one twice → the
+        # one already there.
+        keyword = str(body["ref"].get("keyword") or "").strip()
+        if not keyword:
+            return jsonify({"ok": False, "error": "ref.keyword is required"}), 400
+        existing = depot_service.find_item_by_ref(depot_id, viewer_id, category, keyword)
+        if existing is not None:
+            return jsonify({"ok": True, "item": existing, "duplicate": True})
+        ref = {"keyword": keyword}
+        url = url or f"/static/images/{category}s/{keyword}.png"
     elif not url:
         return jsonify({"ok": False, "error": "url is required"}), 400
     item = depot_service.add_item(
@@ -94,6 +111,26 @@ def add_active_depot_item():
     )
     if item is None:
         return jsonify({"ok": False, "error": "Invalid category or depot"}), 400
+    return jsonify({"ok": True, "item": item})
+
+
+@models_api_bp.patch("/depots/<depot_id>/items/<item_id>/ref")
+def link_depot_item(depot_id: str, item_id: str):
+    """Point an image-only Character/Background item at the real Build one
+    it was just made into (library.js "Make it a character")."""
+    viewer_id = _active_viewer_id()
+    body = request.get_json(silent=True) or {}
+    keyword = str(body.get("keyword") or "").strip()
+    if not keyword:
+        return jsonify({"ok": False, "error": "keyword is required"}), 400
+    depot = depot_service.get_depot(depot_id, viewer_id)
+    item = next((it for it in (depot or {}).get("items") or [] if it.get("id") == item_id), None)
+    if item is None:
+        return jsonify({"ok": False, "error": "not found"}), 404
+    if item.get("category") not in ("character", "background"):
+        return jsonify({"ok": False, "error": "Only Characters and Backgrounds link to Build"}), 400
+    url = f"/static/images/{item['category']}s/{keyword}.png"
+    item = depot_service.set_item_ref(depot_id, viewer_id, item_id, {"keyword": keyword}, url)
     return jsonify({"ok": True, "item": item})
 
 

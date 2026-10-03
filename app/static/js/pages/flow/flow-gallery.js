@@ -501,76 +501,29 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   sendTrayBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12v8a2 2 0 002 2h16a2 2 0 002-2v-8M2 12l3-9h14l3 9"/></svg>';
   imgWrap.appendChild(sendTrayBtn);
 
-  // Send to Depot — only meaningful while a Depot is active (see
-  // depots_routes.py's /api/depots/active); the panel itself checks and
-  // shows a nudge to activate one if not, rather than hiding the button
-  // (hiding it would make "why isn't this here" a mystery on every card).
-  var sendDepotBtn = document.createElement('button');
-  sendDepotBtn.type = 'button';
-  sendDepotBtn.id = 'nit-send-depot-btn-' + idx;
-  sendDepotBtn.className = 'nit-send-tray-btn nit-send-depot-btn nsc-options-trigger';
-  sendDepotBtn.setAttribute('aria-label', tF('Send to Depot'));
-  sendDepotBtn.title = tF('Send to Depot');
-  sendDepotBtn.innerHTML =
-    '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>' +
-      '<path d="M3.3 7 12 12l8.7-5M12 22V12"/>' +
-    '</svg>';
-  sendDepotBtn.addEventListener('click', function (e) {
+  // Send to Build — one cube instead of four buttons (Character, Background,
+  // Style, Depot all land in Build): the side panel asks where. Same cube as
+  // the flow rail's "Send flow to Build" (flow-boot.js).
+  var sendBuildBtn = document.createElement('button');
+  sendBuildBtn.type = 'button';
+  sendBuildBtn.id = 'nit-send-build-btn-' + idx;
+  sendBuildBtn.className = 'nit-send-tray-btn nit-send-build-btn nsc-options-trigger';
+  sendBuildBtn.setAttribute('aria-label', tF('Send to Build'));
+  sendBuildBtn.title = tF('Send to Build');
+  sendBuildBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+    _BUILD_CUBE_SVG + '</svg>';
+  sendBuildBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    _openSendToDepotPanel(imgUrl, _cardPromptStr);
+    _openSendToBuildMenu(imgUrl, _cardPromptStr, card._params || null, sendBuildBtn);
   });
-  imgWrap.appendChild(sendDepotBtn);
-
-  // Send to Character / Send to Background — a side panel: a new Build
-  // Character or Background from this result (image + the card's prompt), or
-  // this image for one that already exists (issue #13); see
-  // _openSendToBuildPanel below. Distinct from "Send to Depot" above, which
-  // files the image into the active Depot's own buckets.
-  [
-    { kind: 'character', label: 'Send to Character',
-      svg: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>' },
-    { kind: 'background', label: 'Send to Background',
-      svg: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/>' },
-  ].forEach(function (target) {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.id = 'nit-send-' + target.kind + '-btn-' + idx;
-    btn.className = 'nit-send-tray-btn nit-send-' + target.kind + '-btn nsc-options-trigger';
-    btn.setAttribute('aria-label', tF(target.label));
-    btn.title = tF(target.label);
-    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      target.svg + '</svg>';
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      _openSendToBuildPanel(target.kind, imgUrl, _cardPromptStr, btn);
-    });
-    imgWrap.appendChild(btn);
-  });
-
-  // Send to Style — the vision model reads this result plus the prompt that
-  // made it and proposes a reusable Build style (see _openSendToStylePanel).
-  var sendStyleBtn = document.createElement('button');
-  sendStyleBtn.type = 'button';
-  sendStyleBtn.id = 'nit-send-style-btn-' + idx;
-  sendStyleBtn.className = 'nit-send-tray-btn nit-send-style-btn nsc-options-trigger';
-  sendStyleBtn.setAttribute('aria-label', tF('Send to Style'));
-  sendStyleBtn.title = tF('Send to Style');
-  sendStyleBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4.5 4H15a2 2 0 0 0-1.5 3.3A1.6 1.6 0 0 1 12 22z"/>' +
-    '<circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="6.8" r="1.2"/><circle cx="15.5" cy="7.5" r="1.2"/></svg>';
-  sendStyleBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    _openSendToStylePanel(imgUrl, _cardPromptStr, card._params || null);
-  });
-  imgWrap.appendChild(sendStyleBtn);
+  imgWrap.appendChild(sendBuildBtn);
 
   // Auto-save to the active Depot's Flows section — every generation while
   // a depot is active, no manual picking. Distinct from the button above
   // (which lets the user additionally curate a specific result into
   // Background/Character/Asset). Fire-and-forget: the endpoint itself
-  // resolves the active depot from the session and just 400s with no side
-  // effect when none is active, which this silently treats as a no-op.
+  // resolves the active depot from the session and answers ok/"skipped"
+  // with no side effect when none is active.
   fetch('/api/depots/active/items', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -620,62 +573,143 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   }(lbIdx));
 }
 
-// "Send to Depot" — classify a result image as Background/Character/Asset
-// and attach it to whichever Depot is currently active (server-side session
-// state, see depots_routes.py). Reuses the shared lateral options panel
-// (flow-options-panel.js) rather than a one-off modal.
-function _openSendToDepotPanel(imgUrl, caption) {
-  fetch('/api/depots/active').then(function (r) { return r.json(); }).then(function (data) {
-    var depot = data && data.depot;
-    openOptionsPanel(tF('Send to Depot'), function (body) {
-      var info = document.createElement('p');
-      info.className = 'ncf-depot-send-info';
-      body.appendChild(info);
+// The Build cube (Depot's own icon), shared by the card's "Send to Build" and
+// the flow rail's "Send flow to Build" (flow-boot.js).
+var _BUILD_CUBE_SVG =
+  '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>' +
+  '<path d="M3.3 7 12 12l8.7-5M12 22V12"/>';
 
-      if (!depot) {
-        info.textContent = tF('No active Depot. Open a Depot from Build and hit Activate first.');
-        return;
-      }
-      info.textContent = tF('Sending to "{name}":').replace('{name}', depot.name);
+function _svgIcon(inner) {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+    inner + '</svg>';
+}
 
-      var optionsWrap = document.createElement('div');
-      optionsWrap.className = 'ncf-depot-send-options';
-      body.appendChild(optionsWrap);
-
-      [
-        { key: 'background', label: tF('Background') },
-        { key: 'character', label: tF('Character') },
-        { key: 'asset', label: tF('Asset') },
-      ].forEach(function (opt) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'ncf-depot-category-btn';
-        btn.textContent = opt.label;
-        btn.addEventListener('click', function () {
-          optionsWrap.querySelectorAll('.ncf-depot-category-btn').forEach(function (b) { b.disabled = true; });
-          fetch('/api/depots/active/items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category: opt.key, url: imgUrl, caption: caption || '', sourceUrl: window.location.href }),
-          }).then(function (r) {
-            return r.json().then(function (d) { return { ok: r.ok, data: d }; });
-          }).then(function (res) {
-            if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed');
-            info.textContent = tF('Sent to "{name}" as {kind}.').replace('{name}', depot.name).replace('{kind}', opt.label);
-            setTimeout(closeOptionsPanel, 900);
-          }).catch(function (err) {
-            console.error('[FlowGallery] Send to depot failed:', err);
-            info.textContent = tF('Failed to send:') + ' ' + (err && err.message ? err.message : err);
-            optionsWrap.querySelectorAll('.ncf-depot-category-btn').forEach(function (b) { b.disabled = false; });
-          });
-        });
-        optionsWrap.appendChild(btn);
-      });
-    });
-  }).catch(function (err) {
-    console.error('[FlowGallery] Failed to check active depot:', err);
+function _jsonOrThrow(r) {
+  return r.json().then(function (d) {
+    if (!r.ok || (d && d.ok === false)) throw new Error((d && d.error) || ('HTTP ' + r.status));
+    return d;
   });
 }
+
+// "← Send to Build" at the top of a sub-panel opened from the card's menu.
+function _prependBuildBack(body, back) {
+  if (typeof back !== 'function') return;
+  var link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'ncf-send-build-back ncf-send-build-menu-back';
+  link.textContent = '← ' + tF('Send to Build');
+  link.addEventListener('click', back);
+  body.appendChild(link);
+}
+
+// Build is where everything goes; the active Depot (picked from the topbar
+// badge) is a filter on top of it. Whatever is sent to Build while a Depot is
+// active is ALSO filed in that Depot — the same Build item, referenced, not a
+// copy (depot_service.REF_KEYS). Read when a panel opens, so a send always
+// goes where the panel said it would.
+var _sendDepot = null;
+
+function _refreshSendDepot() {
+  return fetch('/api/depots/active').then(function (r) { return r.json(); })
+    .then(function (d) { _sendDepot = (d && d.depot) || null; return _sendDepot; },
+          function () { _sendDepot = null; return null; });
+}
+
+// "→ Build · Release Campaign" under a panel's title: where this goes.
+function _appendDestination(body, depot) {
+  var p = document.createElement('p');
+  p.className = 'ncf-depot-send-info ncf-send-build-dest';
+  p.textContent = depot
+    ? tF('Goes to Build and to the active Depot "{name}".').replace('{name}', depot.name)
+    : tF('Goes to Build. Activate a Depot (top bar) to also file it there.');
+  body.appendChild(p);
+}
+
+// File a Build item in the active Depot too. No Depot active: nothing to do.
+function _fileInDepot(category, payload) {
+  if (!_sendDepot) return Promise.resolve(null);
+  var depot = _sendDepot;
+  return fetch('/api/depots/active/items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ category: category, sourceUrl: window.location.href }, payload)),
+  }).then(_jsonOrThrow).then(function () { return depot; }, function (err) {
+    console.error('[FlowGallery] File in depot failed:', err);
+    return null;
+  });
+}
+
+function _alsoInDepot(depot) {
+  return depot ? ' · ' + tF('also in "{name}"').replace('{name}', depot.name) : '';
+}
+
+// A result's "Send to Build": what it becomes in Build. Each entry opens the
+// panel that used to sit behind its own card button, with a way back here.
+function _openSendToBuildMenu(imgUrl, prompt, params, btn) {
+  function back() { _openSendToBuildMenu(imgUrl, prompt, params, btn); }
+  openOptionsPanel(tF('Send to Build'), function (body) {
+    _refreshSendDepot().then(function (depot) {
+      _appendDestination(body, depot);
+      var items = [
+        { label: tF('Character'),
+          svgInner: _svgIcon('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
+          onClick: function () { _openSendToBuildPanel('character', imgUrl, prompt, btn, back); } },
+        { label: tF('Background'),
+          svgInner: _svgIcon('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/>'),
+          onClick: function () { _openSendToBuildPanel('background', imgUrl, prompt, btn, back); } },
+        { label: tF('Style'),
+          svgInner: _svgIcon('<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4.5 4H15a2 2 0 0 0-1.5 3.3A1.6 1.6 0 0 1 12 22z"/>' +
+            '<circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="6.8" r="1.2"/><circle cx="15.5" cy="7.5" r="1.2"/>'),
+          onClick: function () { _openSendToStylePanel(imgUrl, prompt, params, back); } },
+      ];
+      // Assets only exist inside a Depot (Build has no Assets tab).
+      if (depot) {
+        items.push({ label: tF('Asset'),
+          svgInner: _svgIcon(_BUILD_CUBE_SVG),
+          onClick: function () {
+            _fileInDepot('asset', { url: imgUrl, caption: prompt || '' }).then(function (d) {
+              closeOptionsPanel();
+              if (d && typeof showToast === 'function') {
+                showToast(tF('Sent to "{name}" as {kind}.').replace('{name}', d.name).replace('{kind}', tF('Asset')), 'info');
+              }
+            });
+          } });
+      }
+      ncfFillOptionsMenu(body, items);
+    });
+  });
+}
+
+// The flow rail's "Send flow to Build" (flow-boot.js): keep this flow with
+// its settings in Build › Flows. While a Depot is active, the flow's images
+// are already filed in it as they're made (the auto-save in addToFeed).
+function _openSendFlowToBuildPanel(saveFlow) {
+  openOptionsPanel(tF('Send flow to Build'), function (body) {
+    _refreshSendDepot().then(function (depot) {
+      _appendDestination(body, depot);
+      ncfFillOptionsMenu(body, [{
+        label: tF('Save flow to Build'),
+        svgInner: _svgIcon('<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>'),
+        onClick: function () {
+          saveFlow().then(function () {
+            if (typeof showToast === 'function') showToast(tF('Saved to Build › Flows'), 'info');
+            closeOptionsPanel();
+          }).catch(function (err) {
+            console.error('[Nomad Studio] Save to Build failed:', err);
+            if (typeof showErrorToast === 'function') showErrorToast((err && err.message) || tF('Save failed'));
+          });
+        },
+      }]);
+      if (depot) {
+        var hint = document.createElement('p');
+        hint.className = 'nsc-step-hint ncf-send-build-hint';
+        hint.textContent = tF('While a Depot is active, every image this flow makes is saved to its Flows section.');
+        body.appendChild(hint);
+      }
+    });
+  });
+}
+
 
 // "Send to Character" / "Send to Background" — turn a result into a new
 // Build Character or Background on the spot: POST /api/characters (or
@@ -716,10 +750,12 @@ function _sendResultToBuild(kind, imgUrl, prompt, btn) {
       return fetch(itemUrl, { method: 'DELETE' }).catch(function () {}).then(function () { throw err; });
     });
   }).then(function (item) {
-    if (typeof showToast === 'function') {
-      showToast((kind === 'character' ? tF('Character created') : tF('Background created')) +
-        ': ' + item.keyword + ' — ' + tF('edit it in Build.'), 'info');
-    }
+    return _fileInDepot(kind, { ref: { keyword: item.keyword }, caption: fullPrompt }).then(function (depot) {
+      if (typeof showToast === 'function') {
+        showToast((kind === 'character' ? tF('Character created') : tF('Background created')) +
+          ': ' + item.keyword + ' — ' + tF('edit it in Build.') + _alsoInDepot(depot), 'info');
+      }
+    });
   }).catch(function (err) {
     console.error('[FlowGallery] Send to ' + kind + ' failed:', err);
     if (typeof showErrorToast === 'function') showErrorToast((err && err.message) || String(err));
@@ -733,14 +769,17 @@ function _sendResultToBuild(kind, imgUrl, prompt, btn) {
 // existing ones of that kind (flow-step-image-picker.js ncfFillBuildPanel).
 // Picking one asks first, in the panel itself, then makes this result its
 // image (PATCH …/<keyword>/image — the same call Build's "Change image"
-// makes; its prompt and description stay as they are).
-function _openSendToBuildPanel(kind, imgUrl, prompt, btn) {
+// makes; its prompt and description stay as they are). Either way it is
+// also filed in the active Depot, if any (_fileInDepot).
+function _openSendToBuildPanel(kind, imgUrl, prompt, btn, back) {
   var isChar = kind === 'character';
   var plural = kind + 's';
   var title = tF(isChar ? 'Send to Character' : 'Send to Background');
 
   function renderChoose(body) {
     body.innerHTML = '';
+    _prependBuildBack(body, back);
+    _appendDestination(body, _sendDepot);
     ncfFillOptionsMenu(body, [{
       label: tF(isChar ? 'New character' : 'New background'),
       svgInner: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -814,8 +853,10 @@ function _openSendToBuildPanel(kind, imgUrl, prompt, btn) {
           if (!r.ok) throw new Error((d && d.error) || 'Image failed');
         });
       }).then(function () {
+        return _fileInDepot(kind, { ref: { keyword: item.keyword } });
+      }).then(function (depot) {
         closeOptionsPanel();
-        if (typeof showToast === 'function') showToast(tF('Image updated') + ': ' + item.keyword, 'info');
+        if (typeof showToast === 'function') showToast(tF('Image updated') + ': ' + item.keyword + _alsoInDepot(depot), 'info');
       }).catch(function (err) {
         console.error('[FlowGallery] Replace ' + kind + ' image failed:', err);
         ok.disabled = back.disabled = false;
@@ -836,7 +877,7 @@ function _openSendToBuildPanel(kind, imgUrl, prompt, btn) {
 // category, prefix/suffix (the reusable style) and a short example subject.
 // Everything is editable in the panel before "Create style"; the result
 // becomes the style's image for the engine that made it, when known.
-function _openSendToStylePanel(imgUrl, prompt, params) {
+function _openSendToStylePanel(imgUrl, prompt, params, back) {
   var dataUrlPromise = null;
   function imageDataUrl() {
     if (!dataUrlPromise) {
@@ -885,6 +926,8 @@ function _openSendToStylePanel(imgUrl, prompt, params) {
 
   function renderWorking(body) {
     body.innerHTML = '';
+    _prependBuildBack(body, back);
+    _appendDestination(body, _sendDepot);
     var fig = document.createElement('div');
     fig.className = 'ncf-send-build-pair';
     var figure = document.createElement('figure');
@@ -917,6 +960,7 @@ function _openSendToStylePanel(imgUrl, prompt, params) {
 
   function renderForm(body, style) {
     body.innerHTML = '';
+    _prependBuildBack(body, back);
     var hint = document.createElement('p');
     hint.className = 'nsc-step-hint ncf-send-build-hint';
     hint.textContent = tF('Proposed by the vision model from this image and its prompt. Adjust it and create the style.');
@@ -968,9 +1012,15 @@ function _openSendToStylePanel(imgUrl, prompt, params) {
           });
         }).then(function () { return created; }, function () { return created; });
       }).then(function (created) {
+        // Same item Build › Styles' own save-to-Depot writes (library.js).
+        return _fileInDepot('style', {
+          url: imgUrl, caption: created.name || styleName,
+          ref: { styleId: created.id, name: created.name || styleName, category: created.category || '', prompt: created.prompt || '' },
+        }).then(function (depot) { return { created: created, depot: depot }; });
+      }).then(function (res) {
         closeOptionsPanel();
         if (typeof showToast === 'function') {
-          showToast(tF('Style created') + ': ' + (created.name || styleName) + ' — ' + tF('edit it in Build.'), 'info');
+          showToast(tF('Style created') + ': ' + (res.created.name || styleName) + ' — ' + tF('edit it in Build.') + _alsoInDepot(res.depot), 'info');
         }
       }).catch(function (err) {
         console.error('[FlowGallery] Create style failed:', err);

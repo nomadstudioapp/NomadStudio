@@ -393,6 +393,8 @@
       "Asset": "Asset",
       "Sent to \"{name}\" as {kind}.": "Sent to \"{name}\" as {kind}.",
       "Failed to send:": "Failed to send:",
+      "Remove from Depot": "Remove from Depot",
+      "Remove \"{name}\" from this Depot? It stays in Build.": "Remove \"{name}\" from this Depot? It stays in Build.",
       "Goes to Build and to the active Depot \"{name}\".": "Goes to Build and to the active Depot \"{name}\".",
       "Goes to Build. Activate a Depot (top bar) to also file it there.": "Goes to Build. Activate a Depot (top bar) to also file it there.",
       "also in \"{name}\"": "also in \"{name}\"",

@@ -15339,6 +15339,42 @@ body.explore-page-body #album-topbar-toolbar + div {
   box-shadow: inset 0 0 0 3px var(--accent);
 }
 
+/* Remove from Depot — same look as a result card's delete (.nit-delete-img-btn) */
+.lib-depot-item-card {
+  position: relative;
+}
+.lib-depot-item-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, #000 55%, transparent);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 3;
+}
+.lib-depot-item-remove svg {
+  width: 14px;
+  height: 14px;
+}
+.lib-depot-item-card:hover .lib-depot-item-remove,
+.lib-depot-item-remove:focus-visible {
+  opacity: 1;
+}
+.lib-depot-item-remove:hover {
+  background: color-mix(in srgb, #ef4444 80%, #000);
+  border-color: #ef4444;
+}
+
 .lib-depot-section-title {
   display: flex;
   align-items: center;

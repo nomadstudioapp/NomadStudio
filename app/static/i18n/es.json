@@ -726,6 +726,8 @@
       "Asset": "Recurso",
       "Sent to \"{name}\" as {kind}.": "Enviado a «{name}» como {kind}.",
       "Failed to send:": "No se ha podido enviar:",
+      "Remove from Depot": "Quitar del Depot",
+      "Remove \"{name}\" from this Depot? It stays in Build.": "¿Quitar «{name}» de este Depot? Seguirá en Build.",
       "Goes to Build and to the active Depot \"{name}\".": "Va a Build y al Depot activo «{name}».",
       "Goes to Build. Activate a Depot (top bar) to also file it there.": "Va a Build. Activa un Depot (barra superior) para guardarlo también allí.",
       "also in \"{name}\"": "también en «{name}»",

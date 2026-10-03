@@ -114,6 +114,15 @@ def add_active_depot_item():
     return jsonify({"ok": True, "item": item})
 
 
+@models_api_bp.delete("/depots/<depot_id>/items/<item_id>")
+def remove_depot_item(depot_id: str, item_id: str):
+    """Remove from Depot (library.js card trash button) — the Build item or
+    image it pointed at stays."""
+    if not depot_service.remove_item(depot_id, _active_viewer_id(), item_id):
+        return jsonify({"ok": False, "error": "not found"}), 404
+    return jsonify({"ok": True})
+
+
 @models_api_bp.patch("/depots/<depot_id>/items/<item_id>/ref")
 def link_depot_item(depot_id: str, item_id: str):
     """Point an image-only Character/Background item at the real Build one

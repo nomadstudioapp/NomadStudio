@@ -214,6 +214,22 @@ def set_item_ref(
     return item
 
 
+def remove_item(depot_id: str, viewer_id: str | None, item_id: str) -> bool:
+    """Take an item out of a depot. Only the depot's entry goes: the Build
+    item it points at, or the image file, is left alone."""
+    data = _ensure_depots()
+    d = next((x for x in data["depots"] if x.get("id") == depot_id), None)
+    if d is None or not visible_to(d, viewer_id):
+        return False
+    items = d.get("items") or []
+    kept = [it for it in items if it.get("id") != item_id]
+    if len(kept) == len(items):
+        return False
+    d["items"] = kept
+    _save_depots(data)
+    return True
+
+
 def rename_ref_keyword(category: str, old: str, new: str) -> int:
     """A Build Character/Background was renamed (its keyword is also its
     image's file name): repoint every depot item that referenced it, in every

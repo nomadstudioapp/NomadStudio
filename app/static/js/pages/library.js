@@ -2309,9 +2309,31 @@
             '<i data-lucide="image" class="lib-style-card-fallback-icon" aria-hidden="true"></i>' +
           '</div>' +
           (item.caption ? '<div class="rp-card-body"><p class="rp-card-desc">' + escHtml(item.caption) + '</p></div>' : '') +
+          // Remove from Depot (hover): only this Depot's entry — the Build
+          // item or image stays (depot_service.remove_item).
+          '<button type="button" class="lib-depot-item-remove" title="' + tH('Remove from Depot') + '" aria-label="' + tH('Remove from Depot') + '">' +
+            '<i data-lucide="trash-2" aria-hidden="true"></i>' +
+          '</button>' +
         '</div>' +
       '</div>'
     );
+  }
+
+  function removeDepotItem(itemId) {
+    var item = depotItemsById[itemId];
+    if (!item || !depotDetailId) return;
+    var linked = linkedBuildItem(item);
+    var name = (linked && linked.keyword) || item.caption || tF(DEPOT_SECTION_LABEL[item.category] || item.category);
+    if (!window.confirm(tF('Remove "{name}" from this Depot? It stays in Build.').replace('{name}', String(name).slice(0, 60)))) return;
+    fetch('/api/depots/' + encodeURIComponent(depotDetailId) + '/items/' + encodeURIComponent(itemId), { method: 'DELETE' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Remove failed (' + r.status + ')');
+        showDepotDetail(depotDetailId, selectedDepotItemId === itemId ? null : selectedDepotItemId);
+      })
+      .catch(function (err) {
+        console.error('[Library] Remove depot item failed:', err);
+        if (typeof showErrorToast === 'function') showErrorToast((err && err.message) || String(err));
+      });
   }
 
   function depotDetailSectionHtml(section, items) {
@@ -2616,6 +2638,12 @@
   // way out of the card, mirroring how Depot cards themselves drill in.
   if (depotDetailEl) {
     depotDetailEl.addEventListener('click', function (e) {
+      var removeBtn = e.target.closest('.lib-depot-item-remove');
+      if (removeBtn) {
+        e.stopPropagation();
+        removeDepotItem(removeBtn.closest('.lib-depot-item-card').dataset.depotItemId);
+        return;
+      }
       var card = e.target.closest('.lib-depot-item-card');
       if (!card) return;
       selectDepotItem(card.dataset.depotItemId);

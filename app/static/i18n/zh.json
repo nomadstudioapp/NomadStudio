@@ -725,6 +725,8 @@
       "Asset": "素材",
       "Sent to \"{name}\" as {kind}.": "已作为{kind}发送到「{name}」。",
       "Failed to send:": "发送失败：",
+      "Remove from Depot": "从 Depot 移除",
+      "Remove \"{name}\" from this Depot? It stays in Build.": "要从此 Depot 移除“{name}”吗？它仍会保留在 Build 中。",
       "Goes to Build and to the active Depot \"{name}\".": "保存到 Build，并放入当前 Depot“{name}”。",
       "Goes to Build. Activate a Depot (top bar) to also file it there.": "保存到 Build。在顶部栏激活一个 Depot，即可同时放入其中。",
       "also in \"{name}\"": "也在“{name}”中",

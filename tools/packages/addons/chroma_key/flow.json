@@ -1,0 +1,139 @@
+{
+  "id": "refine.chroma_key",
+  "label": "Remove Chroma Key",
+  "category": "refine",
+  "group": "core",
+  "description": "Remove a solid or vignetted background by keying on color (chrominance), not just brightness — robust to lighting gradients that trip up naive color-distance or AI cutout tools on flat backgrounds. 100% local, no AI model required.",
+  "card_desc": "Key out a solid/gradient background by color. Great for flat studio or poster backgrounds where AI cutout models leave a fringe.",
+  "card_tags": [
+    "Chroma Key",
+    "Local",
+    "No AI"
+  ],
+  "card_css_modifier": "chroma-key",
+  "llm_required": false,
+  "comfyui_required": false,
+  "steps": [
+    {
+      "id": "image",
+      "type": "image_picker",
+      "label": "Source image",
+      "required": true
+    },
+    {
+      "id": "params",
+      "type": "workflow_params",
+      "label": "Parameters",
+      "live_preview": true,
+      "live_preview_endpoint": "/api/models/chroma-key/process",
+      "fields": [
+        {
+          "id": "auto_detect",
+          "adv_key": "auto_detect",
+          "label": "Background color",
+          "type": "select",
+          "default": "true",
+          "note": "Auto-detect re-samples the dominant background color fresh from the current image every time you preview or generate — if you change the source image, it adapts automatically.",
+          "options": [
+            { "value": "true", "label": "Auto-detect (from image)" },
+            { "value": "false", "label": "Manual color" }
+          ]
+        },
+        {
+          "id": "bg_color",
+          "adv_key": "bg_color",
+          "label": "Background color",
+          "type": "text",
+          "default": "#062e1a",
+          "note": "Hex color to key out — only used when Background color is set to Manual.",
+          "detect_endpoint": "/api/models/chroma-key/detect",
+          "detect_button_label": "Detect from image"
+        },
+        {
+          "id": "tolerance",
+          "adv_key": "tolerance",
+          "label": "Tolerance",
+          "type": "slider",
+          "default": 30,
+          "min": 5,
+          "max": 80,
+          "step": 1,
+          "note": "Chroma distance below which a pixel is treated as fully background. Raise if background fringes survive; lower if foreground gets eaten."
+        },
+        {
+          "id": "feather",
+          "adv_key": "feather",
+          "label": "Feather",
+          "type": "slider",
+          "default": 25,
+          "min": 5,
+          "max": 60,
+          "step": 1,
+          "note": "Extra chroma distance over which the edge fades in — wider values give a softer antialiased edge."
+        },
+        {
+          "id": "despeckle_min_size",
+          "adv_key": "despeckle_min_size",
+          "label": "Despeckle",
+          "type": "slider",
+          "default": 15,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "note": "Drops isolated foreground specks smaller than this many pixels (0 disables despeckling)."
+        },
+        {
+          "id": "choke",
+          "adv_key": "choke",
+          "label": "Choke (matte shrink)",
+          "type": "slider",
+          "default": 0,
+          "min": 0,
+          "max": 5,
+          "step": 0.1,
+          "note": "Erodes the edge inward by roughly this many pixels before smoothing — use if a colored halo survives despeckle/decontamination. 0 = off. Higher values can thin out fine detail like hair strands, so nudge up gradually (try 0.5-2 first)."
+        },
+        {
+          "id": "decontaminate",
+          "adv_key": "decontaminate",
+          "label": "Clean edge fringing",
+          "type": "checkbox",
+          "default": true,
+          "note": "Removes residual background-colour spill from semi-transparent edge pixels, without touching the alpha shape. Also now includes spill suppression on fully-opaque edge pixels (e.g. green-screen light bounce onto hair)."
+        },
+        {
+          "id": "blur_sigma",
+          "adv_key": "blur_sigma",
+          "label": "Edge smoothing",
+          "type": "slider",
+          "default": 0.8,
+          "min": 0,
+          "max": 3,
+          "step": 0.1,
+          "note": "Gaussian blur applied to the alpha channel for smoother edges."
+        }
+      ]
+    },
+    {
+      "id": "generate",
+      "type": "action",
+      "label": "Remove Background",
+      "calls": "chroma_key.submit",
+      "input_map": {
+        "imageDataUrl":   "steps.image.output.image_data_url",
+        "advancedValues": "steps.params.output.adv_values"
+      }
+    },
+    {
+      "id": "result",
+      "type": "result_view",
+      "label": "Result",
+      "actions": [
+        "save",
+        "regenerate"
+      ]
+    }
+  ],
+  "entry_category": "Background",
+  "entry_model": "Local"
+}

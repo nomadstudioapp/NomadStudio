@@ -4121,16 +4121,19 @@ def _fix_smart_fill_flow(flow: dict) -> None:
 # Chroma Key (contributes.addon, same PACKAGE_FORMAT.md §9 minimal slice as
 # Pixel Matcher — see _pixel_matcher_addon_contribution): local, no-AI
 # chrominance-space background removal, the natural companion to Extract's
-# AI cutout flows for flat/studio backgrounds. Only __init__.py/routes.py/
-# service.py ship — chroma_key_source*.py in the source addon folder are
-# superseded drafts (v1/v2/v3), never imported by service.py, so they're
-# left out of the zip. Bundled straight into Extract's zip under addon/,
+# AI cutout flows for flat/studio backgrounds. Its source lives in THIS repo,
+# tools/packages/addons/chroma_key/ (moved out of --source 2026-10-03 to fix
+# the key eating neutral pixels; the old chroma_key_source*.py drafts stayed
+# behind). Bundled straight into Extract's zip under addon/,
 # flow.json's group overridden to "extract" (source says "core"). Installing
 # this package extracts addon/ to data/packages/<pkg>/addon/;
 # app/services/addon_loader.py picks it up from there on the NEXT app start
 # (no hot-load, same restart Pixel Matcher already needed).
-def _chroma_key_addon_contribution(source: Path) -> tuple[dict[str, str], dict]:
-    addon_dir = source / "addons" / "chroma_key"
+CHROMA_KEY_ADDON_DIR = Path(__file__).with_name("addons") / "chroma_key"
+
+
+def _chroma_key_addon_contribution() -> tuple[dict[str, str], dict]:
+    addon_dir = CHROMA_KEY_ADDON_DIR
     files = {
         f"addon/{name}": (addon_dir / name).read_text(encoding="utf-8")
         for name in ("__init__.py", "routes.py", "service.py")
@@ -4147,7 +4150,7 @@ def build_extract_pack(source: Path, version: str) -> Path:
     flows: list[dict] = []
     workflow_refs: set[str] = set()
 
-    addon_files, addon_contributes = _chroma_key_addon_contribution(source)
+    addon_files, addon_contributes = _chroma_key_addon_contribution()
     files.update(addon_files)
 
     for flow_id in EXTRACT_SOURCE_FLOWS:

@@ -111,3 +111,16 @@ def apply_update():
 def dismiss_result():
     update_service.dismiss_result()
     return jsonify({"ok": True})
+
+
+@updates_bp.post("/api/app/quit")
+@local_only
+def quit_app():
+    """Settings › Close Nomad Studio. After an update on Linux/macOS the app
+    runs in the background with no terminal to close, so this is how it is
+    stopped; handy on Windows too. Same exit code as an update, so
+    NomadStudio.bat closes its window instead of pausing."""
+    import threading
+
+    threading.Timer(0.8, lambda: os._exit(update_service.EXIT_CODE_UPDATE)).start()
+    return jsonify({"ok": True})

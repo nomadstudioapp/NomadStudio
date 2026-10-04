@@ -1752,15 +1752,15 @@
     },
     "updates": {
       "title": "Actualizaciones",
-      "desc": "Instala una versión más nueva de Nomad Studio desde su ZIP. Tus datos están fuera de la carpeta del programa y se hace una copia de seguridad antes de actualizar.",
+      "desc": "Instala una versión más nueva de Nomad Studio desde su archivo de publicación (.zip en Windows, .tar.gz en macOS y Linux). Tus datos se guardan fuera de la carpeta del programa y se hace una copia de seguridad antes de actualizar.",
       "installed": "Versión instalada",
       "dataDir": "Tus datos: {path}",
       "devCopy": "Copia de desarrollo (se actualiza con git)",
-      "choose": "Actualizar desde ZIP…",
+      "choose": "Actualizar desde archivo…",
       "checking": "Comprobando la versión… ({size})",
       "candidate": "Nomad Studio {to} · tienes la {from}",
       "whatHappens": "Al preparar se descomprime la versión nueva junto a la actual y se hace una copia de tus datos. No cambia nada hasta que reinicies.",
-      "unsigned": "Las versiones aún no están firmadas: usa solo ZIP descargados de Nomad Studio.",
+      "unsigned": "Las versiones aún no están firmadas: usa solo archivos descargados de Nomad Studio.",
       "prepare": "Preparar actualización",
       "phaseExtract": "Descomprimiendo la versión nueva… {pct}%",
       "phaseBackup": "Haciendo copia de tus datos…",
@@ -1778,9 +1778,14 @@
       "reasonLocked": "la carpeta del programa estaba en uso (cierra cualquier ventana abierta dentro de ella)",
       "reasonNoExit": "Nomad Studio no se cerró",
       "reasonMissing": "faltaba la actualización preparada",
-      "unsupportedDev": "Esta es una copia de desarrollo: actualizar desde un ZIP es solo para la versión portable.",
+      "unsupportedDev": "Esta es una copia de desarrollo: actualizar desde un archivo es solo para la versión portable.",
       "unsupportedPlatform": "Por ahora, actualizar desde aquí solo está disponible en Windows.",
-      "unsupportedLayout": "Esta copia no tiene la estructura de carpetas de la versión portable, así que no puede actualizarse sola."
+      "unsupportedLayout": "Esta copia no tiene la estructura de carpetas de la versión portable, así que no puede actualizarse sola.",
+      "quitLabel": "Cerrar Nomad Studio",
+      "quitHint": "Detiene Nomad Studio en este equipo. Vuelve a abrirlo con NomadStudio.bat, NomadStudio.command o NomadStudio.sh.",
+      "quitBtn": "Cerrar Nomad Studio",
+      "quitConfirm": "¿Cerrar Nomad Studio ahora? Lo que se esté generando se detendrá.",
+      "quitDone": "Nomad Studio está cerrado. Ya puedes cerrar esta pestaña."
     }
   },
   "album": {

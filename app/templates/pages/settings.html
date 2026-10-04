@@ -372,11 +372,11 @@
       <div class="settings-field-block" id="updates-result" hidden></div>
 
       <div class="settings-field-block">
-        <input type="file" id="updates-file" accept=".zip,application/zip" hidden />
+        <input type="file" id="updates-file" accept=".zip,.gz,.tgz,application/zip,application/gzip" hidden />
         <div>
           <button type="button" class="btn settings-btn-secondary" id="updates-choose-btn"{% if not is_local_request() %} disabled{% endif %}>
             <i data-lucide="file-up" aria-hidden="true"></i>
-            <span data-i18n="settings.updates.choose">Update from ZIP…</span>
+            <span data-i18n="settings.updates.choose">Update from file…</span>
           </button>
         </div>
         {% if not is_local_request() %}
@@ -388,6 +388,20 @@
         </div>
         <div class="settings-inline-status" id="updates-status"></div>
         <div class="settings-package-review" id="updates-review" hidden></div>
+      </div>
+
+      <!-- Close Nomad Studio: after an update on Linux/macOS the app runs in
+           the background with no terminal to close (apply_update.sh). -->
+      <div class="settings-field-block">
+        <p class="settings-field-label" data-i18n="settings.updates.quitLabel">Close Nomad Studio</p>
+        <p class="settings-field-hint" data-i18n="settings.updates.quitHint">Stops Nomad Studio on this computer. Start it again with NomadStudio.bat, NomadStudio.command or NomadStudio.sh.</p>
+        <div>
+          <button type="button" class="btn settings-btn-ghost" id="updates-quit-btn"{% if not is_local_request() %} disabled{% endif %}>
+            <i data-lucide="power" aria-hidden="true"></i>
+            <span data-i18n="settings.updates.quitBtn">Close Nomad Studio</span>
+          </button>
+        </div>
+        <div class="settings-inline-status" id="updates-quit-status"></div>
       </div>
 
     </div>

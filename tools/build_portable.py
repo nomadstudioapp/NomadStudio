@@ -31,6 +31,14 @@ the executable bits a ZIP would lose. There is no smoke test — Linux binaries
 do not run here — so the build checks the tree instead; the real test is
 running ./NomadStudio.sh on a Linux machine.
 
+macOS Apple Silicon (--platform macos-arm64, added 2026-10-04): the same
+cross-build — python-build-standalone for aarch64-apple-darwin, dependencies
+resolved by uv for that target — with NomadStudio.command as the launcher
+(opens in Terminal on double-click). Not notarized: the launcher lifts the
+download quarantine from its own folder once the user has allowed it, and
+the download guide explains that first step. No smoke test here either; the
+real test is double-clicking NomadStudio.command on a Mac.
+
 Nothing is signed yet (SHA256SUMS.sig needs the official key, §3).
 """
 from __future__ import annotations
@@ -232,13 +240,21 @@ def sha256(path: Path) -> str:
 
 
 PBS_TAG = "20250409"
-PBS_ASSET = "cpython-3.13.3+20250409-x86_64-unknown-linux-gnu-install_only.tar.gz"
+# python-build-standalone asset per cross-built platform.
+PBS_ASSETS = {
+    "linux-x64": "cpython-3.13.3+20250409-x86_64-unknown-linux-gnu-install_only.tar.gz",
+    "macos-arm64": "cpython-3.13.3+20250409-aarch64-apple-darwin-install_only.tar.gz",
+}
+# uv's target for the dependency wheels, and the launcher each one ships.
+UV_TARGETS = {"linux-x64": "x86_64-manylinux_2_28", "macos-arm64": "aarch64-apple-darwin"}
+LAUNCHERS = {"linux-x64": "NomadStudio.sh", "macos-arm64": "NomadStudio.command"}
 PBS_BASE = f"https://github.com/astral-sh/python-build-standalone/releases/download/{PBS_TAG}/"
 
 
-def fetch_linux_python(dest: Path) -> str:
-    """python-build-standalone for Linux x64, verified against its release's
+def fetch_linux_python(dest: Path, plat: str = "linux-x64") -> str:
+    """python-build-standalone for a cross-built platform, verified against its release's
     SHA256SUMS, unpacked into dest. Returns the Python version."""
+    PBS_ASSET = PBS_ASSETS[plat]
     cache = DIST / "python-cache"
     cache.mkdir(parents=True, exist_ok=True)
     archive = cache / PBS_ASSET
@@ -275,16 +291,17 @@ def fetch_linux_python(dest: Path) -> str:
     return PBS_ASSET.split("+", 1)[0].split("-", 1)[1]
 
 
-def install_linux_deps(lib_dir: Path) -> None:
+def install_linux_deps(lib_dir: Path, plat: str = "linux-x64") -> None:
     run(["uv", "pip", "install", "--quiet", "--require-hashes", "--only-binary", ":all:", "--no-deps",
-         "--python-platform", "x86_64-manylinux_2_28", "--python-version", "3.13",
+         "--python-platform", UV_TARGETS[plat], "--python-version", "3.13",
          "--target", str(lib_dir), "-r", str(REPO / "requirements.lock")])
 
 
-def check_linux_tree(app_dir: Path) -> None:
-    """What a smoke test would catch, without running Linux binaries."""
+def check_linux_tree(app_dir: Path, plat: str = "linux-x64") -> None:
+    """What a smoke test would catch, without running Linux/macOS binaries."""
     problems = []
-    for rel in ("python/bin/python3", "app.py", "app/__init__.py", "portable.json", "launcher/NomadStudio.sh",
+    for rel in ("python/bin/python3", "app.py", "app/__init__.py", "portable.json", "launcher/" + LAUNCHERS[plat],
+                "launcher/apply_update.sh",
                 "python/lib/python3.13/site-packages/nomad-lib.pth"):
         if not (app_dir / rel).exists():
             problems.append("missing " + rel)
@@ -298,18 +315,18 @@ def check_linux_tree(app_dir: Path) -> None:
     if windows_binaries:
         problems.append(f"Windows extension modules in lib/: {windows_binaries}")
     if not any(lib.rglob("*.so")):
-        problems.append("no Linux extension modules (.so) in lib/")
+        problems.append("no extension modules (.so) in lib/")
     if not (app_dir / "python" / "lib" / "python3.13" / "lib-dynload").is_dir():
         problems.append("python lib-dynload missing")
     if problems:
-        raise SystemExit("linux tree check failed:\n  " + "\n  ".join(problems))
+        raise SystemExit(f"{plat} tree check failed:\n  " + "\n  ".join(problems))
     so_count = sum(1 for _ in lib.rglob("*.so"))
-    print(f"  tree ok: python3, app, launcher, {so_count} Linux extension modules, no Windows binaries")
+    print(f"  tree ok: python3, app, launcher, {so_count} {plat} extension modules, no Windows binaries")
 
 
 def make_tarball(root: Path, tar_path: Path) -> None:
-    """tar.gz with the executable bits Linux needs (a ZIP made on Windows has none)."""
-    executable = {"NomadStudio.sh", "app/launcher/NomadStudio.sh"}
+    """tar.gz with the executable bits Linux/macOS need (a ZIP made on Windows has none)."""
+    executable = {n for l in LAUNCHERS.values() for n in (l, "app/launcher/" + l)} | {"app/launcher/apply_update.sh"}
 
     def fix(info: tarfile.TarInfo) -> tarfile.TarInfo:
         rel = info.name.replace("\\", "/")
@@ -329,7 +346,7 @@ def make_tarball(root: Path, tar_path: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", required=True, help="SemVer, e.g. 0.1.0-internal.1")
-    ap.add_argument("--platform", choices=("windows-x64", "linux-x64"), default="windows-x64")
+    ap.add_argument("--platform", choices=("windows-x64", "linux-x64", "macos-arm64"), default="windows-x64")
     ap.add_argument("--python-home", type=Path, help="CPython install to bundle (Windows builds)")
     ap.add_argument("--update-repo", default="juanpaexpedite/NomadStudio")
     ap.add_argument("--packages-dir", type=Path, default=REPO / "dist" / "packages",
@@ -337,9 +354,10 @@ def main() -> None:
     args = ap.parse_args()
 
     if platform.system() != "Windows":
-        raise SystemExit("this script runs on Windows (it cross-builds the Linux package)")
+        raise SystemExit("this script runs on Windows (it cross-builds the Linux and macOS packages)")
     plat = args.platform
-    linux = plat == "linux-x64"
+    # Cross-built, tar.gz, no smoke test: Linux and macOS share one path.
+    linux = plat in ("linux-x64", "macos-arm64")
     if not linux and not args.python_home:
         raise SystemExit("--python-home is required for the Windows build")
     name = f"NomadStudio-{args.version}-{plat}"
@@ -353,7 +371,7 @@ def main() -> None:
     commit = export_code(app_dir)
 
     print("2/6 bundled Python")
-    py_version = fetch_linux_python(app_dir / "python") if linux else copy_python(args.python_home, app_dir / "python")
+    py_version = fetch_linux_python(app_dir / "python", plat) if linux else copy_python(args.python_home, app_dir / "python")
     lock_py = lock_python_version()
     print(f"  CPython {py_version} (lock made for {lock_py})")
     if lock_py and not py_version.startswith(lock_py):
@@ -361,7 +379,7 @@ def main() -> None:
 
     print("3/6 dependencies from requirements.lock")
     if linux:
-        install_linux_deps(app_dir / "lib")
+        install_linux_deps(app_dir / "lib", plat)
     else:
         run([str(args.python_home / "python.exe"), "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
              "--require-hashes", "--only-binary=:all:", "--no-deps",
@@ -392,15 +410,19 @@ def main() -> None:
     }, indent=2) + "\n", encoding="utf-8")
     if linux:
         (app_dir / "launcher").mkdir(parents=True, exist_ok=True)
-        script = (REPO / "tools" / "launcher" / "NomadStudio.sh").read_text(encoding="utf-8").replace("\r\n", "\n")
-        for target in (app_dir / "launcher" / "NomadStudio.sh", root / "NomadStudio.sh"):
+        launcher = LAUNCHERS[plat]
+        script = (REPO / "tools" / "launcher" / launcher).read_text(encoding="utf-8").replace("\r\n", "\n")
+        for target in (app_dir / "launcher" / launcher, root / launcher):
             target.write_bytes(script.encode("utf-8"))
+        # Settings › Updates hands the folder swap to this (update_service.apply).
+        updater = (REPO / "tools" / "launcher" / "apply_update.sh").read_text(encoding="utf-8").replace("\r\n", "\n")
+        (app_dir / "launcher" / "apply_update.sh").write_bytes(updater.encode("utf-8"))
     else:
         write_launchers(app_dir, root)
 
     if linux:
-        print("5/6 tree check (Linux binaries do not run here: test ./NomadStudio.sh on Linux)")
-        check_linux_tree(app_dir)
+        print(f"5/6 tree check ({plat} binaries do not run here: test {LAUNCHERS[plat]} on the real system)")
+        check_linux_tree(app_dir, plat)
     else:
         print("5/6 smoke test")
         smoke_test(app_dir, args.version)

@@ -1369,15 +1369,15 @@
     },
     "updates": {
       "title": "Updates",
-      "desc": "Install a newer version of Nomad Studio from its release ZIP. Your data is kept outside the program folder and a backup is made before updating.",
+      "desc": "Install a newer version of Nomad Studio from its release file (.zip on Windows, .tar.gz on macOS and Linux). Your data is kept outside the program folder and a backup is made before updating.",
       "installed": "Installed version",
       "dataDir": "Your data: {path}",
       "devCopy": "Development copy (update it with git)",
-      "choose": "Update from ZIP…",
+      "choose": "Update from file…",
       "checking": "Checking the release… ({size})",
       "candidate": "Nomad Studio {to} · you have {from}",
       "whatHappens": "Preparing extracts the new version next to the current one and backs up your data. Nothing changes until you restart.",
-      "unsigned": "Releases are not signed yet: use only ZIPs you downloaded from Nomad Studio.",
+      "unsigned": "Releases are not signed yet: use only files you downloaded from Nomad Studio.",
       "prepare": "Prepare update",
       "phaseExtract": "Extracting the new version… {pct}%",
       "phaseBackup": "Backing up your data…",
@@ -1395,9 +1395,14 @@
       "reasonLocked": "the program folder was in use (close any window open inside it)",
       "reasonNoExit": "Nomad Studio did not close",
       "reasonMissing": "the prepared update was missing",
-      "unsupportedDev": "This is a development copy: updating from a ZIP is only for the portable version.",
+      "unsupportedDev": "This is a development copy: updating from a file is only for the portable version.",
       "unsupportedPlatform": "Updating from here is only available on Windows for now.",
-      "unsupportedLayout": "This copy is not in the portable folder layout, so it cannot update itself."
+      "unsupportedLayout": "This copy is not in the portable folder layout, so it cannot update itself.",
+      "quitLabel": "Close Nomad Studio",
+      "quitHint": "Stops Nomad Studio on this computer. Start it again with NomadStudio.bat, NomadStudio.command or NomadStudio.sh.",
+      "quitBtn": "Close Nomad Studio",
+      "quitConfirm": "Close Nomad Studio now? Anything still generating stops.",
+      "quitDone": "Nomad Studio is closed. You can close this tab."
     }
   },
   "album": {

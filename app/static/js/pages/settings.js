@@ -2024,7 +2024,7 @@ secretKeySection({
         '<span class="settings-backup-meta">' + esc([u.platform, u.commit ? 'commit ' + u.commit : '', u.builtAt ? String(u.builtAt).slice(0, 10) : '', mb(u.zipBytes)].filter(Boolean).join(' · ')) + '</span>' +
         '<span class="settings-backup-meta">' + esc(t('settings.updates.whatHappens', 'Preparing extracts the new version next to the current one and backs up your data. Nothing changes until you restart.')) + '</span>' +
         '</div></div>' +
-        '<p class="settings-field-hint settings-package-unsigned">' + esc(t('settings.updates.unsigned', 'Releases are not signed yet: use only ZIPs you downloaded from Nomad Studio.')) + '</p>' +
+        '<p class="settings-field-hint settings-package-unsigned">' + esc(t('settings.updates.unsigned', 'Releases are not signed yet: use only files you downloaded from Nomad Studio.')) + '</p>' +
         '<div class="settings-backup-actions settings-package-actions">' +
           '<button type="button" class="btn settings-btn-ghost" data-update-cancel' + (busy ? ' disabled' : '') + '>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
           '<button type="button" class="btn settings-btn-secondary" data-update-prepare' + (busy ? ' disabled' : '') + '>' + esc(t('settings.updates.prepare', 'Prepare update')) + '</button>' +
@@ -2046,7 +2046,7 @@ secretKeySection({
     chooseBtn.disabled = busy || !state.local || !!unsupported || !!state.pending || !!restarting;
     if (unsupported && !busy && !restarting) {
       setStatus(unsupported === 'dev'
-        ? t('settings.updates.unsupportedDev', 'This is a development copy: updating from a ZIP is only for the portable version.')
+        ? t('settings.updates.unsupportedDev', 'This is a development copy: updating from a file is only for the portable version.')
         : unsupported === 'platform'
           ? t('settings.updates.unsupportedPlatform', 'Updating from here is only available on Windows for now.')
           : t('settings.updates.unsupportedLayout', 'This copy is not in the portable folder layout, so it cannot update itself.'));
@@ -2186,6 +2186,24 @@ secretKeySection({
     try { await api('POST', '/api/updates/dismiss-result'); } catch (_) { /* ignore */ }
     load();
   });
+
+  // Close Nomad Studio — the way to stop it once an update has restarted it
+  // in the background on Linux/macOS (no terminal left to close).
+  const quitBtn = document.getElementById('updates-quit-btn');
+  const quitStatus = document.getElementById('updates-quit-status');
+  if (quitBtn) {
+    quitBtn.addEventListener('click', async () => {
+      if (!window.confirm(t('settings.updates.quitConfirm', 'Close Nomad Studio now? Anything still generating stops.'))) return;
+      quitBtn.disabled = true;
+      try {
+        await api('POST', '/api/app/quit');
+        if (quitStatus) quitStatus.textContent = t('settings.updates.quitDone', 'Nomad Studio is closed. You can close this tab.');
+      } catch (error) {
+        quitBtn.disabled = false;
+        if (quitStatus) quitStatus.textContent = error.message;
+      }
+    });
+  }
 
   document.addEventListener('nomad-i18n-applied', render);
   load();

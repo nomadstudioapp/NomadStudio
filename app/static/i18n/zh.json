@@ -1752,15 +1752,15 @@
     },
     "updates": {
       "title": "更新",
-      "desc": "通过发布 ZIP 安装更新版本的 Nomad Studio。你的数据保存在程序文件夹之外，更新前会自动备份。",
+      "desc": "从发布文件安装更新版本的 Nomad Studio（Windows 为 .zip，macOS 和 Linux 为 .tar.gz）。你的数据保存在程序文件夹之外，更新前会先备份。",
       "installed": "已安装版本",
       "dataDir": "你的数据：{path}",
       "devCopy": "开发副本（使用 git 更新）",
-      "choose": "从 ZIP 更新…",
+      "choose": "从文件更新…",
       "checking": "正在检查发布包…（{size}）",
       "candidate": "Nomad Studio {to} · 当前为 {from}",
       "whatHappens": "准备时会将新版本解压到当前版本旁边并备份你的数据。重启之前不会有任何改变。",
-      "unsigned": "发布包尚未签名：请只使用从 Nomad Studio 下载的 ZIP。",
+      "unsigned": "发布版本尚未签名：请只使用从 Nomad Studio 下载的文件。",
       "prepare": "准备更新",
       "phaseExtract": "正在解压新版本…{pct}%",
       "phaseBackup": "正在备份你的数据…",
@@ -1778,9 +1778,14 @@
       "reasonLocked": "程序文件夹正在被使用（请关闭在其中打开的窗口）",
       "reasonNoExit": "Nomad Studio 未能关闭",
       "reasonMissing": "找不到已准备的更新",
-      "unsupportedDev": "这是开发副本：从 ZIP 更新仅适用于便携版。",
+      "unsupportedDev": "这是开发副本：从文件更新仅适用于便携版。",
       "unsupportedPlatform": "目前仅 Windows 支持在此处更新。",
-      "unsupportedLayout": "此副本不是便携版的文件夹结构，无法自行更新。"
+      "unsupportedLayout": "此副本不是便携版的文件夹结构，无法自行更新。",
+      "quitLabel": "关闭 Nomad Studio",
+      "quitHint": "在这台电脑上停止 Nomad Studio。可通过 NomadStudio.bat、NomadStudio.command 或 NomadStudio.sh 重新启动。",
+      "quitBtn": "关闭 Nomad Studio",
+      "quitConfirm": "现在关闭 Nomad Studio 吗？正在生成的内容会停止。",
+      "quitDone": "Nomad Studio 已关闭。你可以关闭此标签页。"
     }
   },
   "album": {

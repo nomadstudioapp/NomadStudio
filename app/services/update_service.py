@@ -38,6 +38,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import threading
 import time
 import uuid
@@ -55,8 +56,20 @@ EXIT_CODE_UPDATE = 3  # NomadStudio.bat closes its window instead of pausing
 MAX_UPLOAD_BYTES = 1 << 30
 MAX_UNPACKED_BYTES = 4 << 30
 MAX_FILES = 200_000
-REQUIRED_MEMBERS = ("NomadStudio.bat", "app/portable.json", "app/app.py", "app/app/__init__.py", "app/launcher/apply_update.ps1")
+REQUIRED_COMMON = ("app/portable.json", "app/app.py", "app/app/__init__.py")
+# Per platform: the root launcher and the apply script the release must carry.
+# Windows ships a ZIP and a PowerShell script; Linux and macOS a .tar.gz (it
+# keeps the executable bits) and the bash twin, apply_update.sh (2026-10-04).
+PLATFORM_FILES = {
+    "windows-x64": ("NomadStudio.bat", "apply_update.ps1"),
+    "linux-x64": ("NomadStudio.sh", "apply_update.sh"),
+    "macos-arm64": ("NomadStudio.command", "apply_update.sh"),
+}
 UPLOAD_TTL_S = 6 * 3600
+
+
+def _platform_files(platform: str | None) -> tuple[str, str]:
+    return PLATFORM_FILES.get(str(platform or ""), PLATFORM_FILES["windows-x64"])
 
 _SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$")
 
@@ -118,7 +131,7 @@ def unsupported_reason() -> str | None:
     """Why this copy cannot update itself (None when it can)."""
     if app_info._PORTABLE is None:
         return "dev"
-    if not sys.platform.startswith("win"):
+    if not sys.platform.startswith(("win", "linux", "darwin")):
         return "platform"
     if paths.REPO_DIR.name != "app":
         return "layout"
@@ -176,44 +189,84 @@ def discard_upload(token: str) -> None:
         path.unlink(missing_ok=True)
 
 
-def _member_ok(info: zipfile.ZipInfo) -> bool:
-    name = info.filename
+def _is_gzip(path: Path) -> bool:
+    with path.open("rb") as fh:
+        return fh.read(2) == b"\x1f\x8b"
+
+
+def _release_entries(path: Path) -> list[tuple[str, int, str]]:
+    """(name, size, kind) of every member of a release archive — kind is
+    "file", "dir" or "link". ZIP (Windows) or .tar.gz (Linux, macOS), told
+    apart by content, not by the upload's name."""
+    if _is_gzip(path):
+        try:
+            with tarfile.open(path, "r:gz") as tf:
+                out = []
+                for m in tf.getmembers():
+                    name = m.name[2:] if m.name.startswith("./") else m.name
+                    kind = "dir" if m.isdir() else ("file" if m.isfile() else "link")
+                    out.append((name.rstrip("/"), m.size if m.isfile() else 0, kind))
+                return out
+        except (tarfile.TarError, OSError, EOFError):
+            raise UpdateError("This file is not a valid release archive") from None
+    try:
+        with zipfile.ZipFile(path) as zf:
+            out = []
+            for i in zf.infolist():
+                is_link = (i.external_attr >> 16) & 0o170000 == 0o120000  # Unix symlink bit
+                kind = "link" if is_link else ("dir" if i.is_dir() else "file")
+                out.append((i.filename.rstrip("/"), i.file_size, kind))
+            return out
+    except (zipfile.BadZipFile, OSError):
+        raise UpdateError("This file is not a valid ZIP or .tar.gz") from None
+
+
+def _read_member(path: Path, name: str) -> bytes:
+    if _is_gzip(path):
+        with tarfile.open(path, "r:gz") as tf:
+            for m in tf.getmembers():
+                if m.name in (name, "./" + name) and m.isfile():
+                    return tf.extractfile(m).read()
+        raise KeyError(name)
+    with zipfile.ZipFile(path) as zf:
+        return zf.read(name)
+
+
+def _member_ok(name: str, kind: str, launcher: str) -> bool:
     if not name or "\\" in name or name.startswith("/") or ":" in name.split("/")[0]:
         return False
     parts = PurePosixPath(name).parts
     if ".." in parts:
         return False
-    # Unix symlink bit in the external attributes.
-    if (info.external_attr >> 16) & 0o170000 == 0o120000:
+    if kind == "link":  # links could point outside the install
         return False
-    return name == "NomadStudio.bat" or name.startswith("app/")
+    return name == launcher or name == "app" or name.startswith("app/")
 
 
 def inspect_zip(zip_path: Path, installed: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Validate a release ZIP against this install. Raises UpdateError."""
+    """Validate a release archive (ZIP or .tar.gz) against this install.
+    Raises UpdateError. The name stays: it is the API the routes call."""
     installed = installed or current()
+    launcher, script = _platform_files(installed.get("platform"))
+    required = (launcher, *REQUIRED_COMMON, "app/launcher/" + script)
+    entries = _release_entries(zip_path)
+    names = {n for n, _, _ in entries}
+    missing = [m for m in required if m not in names]
+    if missing:
+        raise UpdateError("This file is not a Nomad Studio release for this system (missing " + ", ".join(missing) + ")")
+    if len(entries) > MAX_FILES:
+        raise UpdateError("The release has too many files")
+    bad = [n for n, _, kind in entries if not _member_ok(n, kind, launcher)]
+    if bad:
+        raise UpdateError(f"The release contains unexpected paths: {bad[:3]}")
+    unpacked = sum(size for _, size, _ in entries)
+    if unpacked > MAX_UNPACKED_BYTES:
+        raise UpdateError("The release is too large once extracted")
+    infos = entries
     try:
-        zf = zipfile.ZipFile(zip_path)
-    except (zipfile.BadZipFile, OSError):
-        raise UpdateError("This file is not a valid ZIP") from None
-    with zf:
-        infos = zf.infolist()
-        names = {i.filename for i in infos}
-        missing = [m for m in REQUIRED_MEMBERS if m not in names]
-        if missing:
-            raise UpdateError("This ZIP is not a Nomad Studio release (missing " + ", ".join(missing) + ")")
-        if len(infos) > MAX_FILES:
-            raise UpdateError("The release has too many files")
-        bad = [i.filename for i in infos if not _member_ok(i)]
-        if bad:
-            raise UpdateError(f"The release contains unexpected paths: {bad[:3]}")
-        unpacked = sum(i.file_size for i in infos)
-        if unpacked > MAX_UNPACKED_BYTES:
-            raise UpdateError("The release is too large once extracted")
-        try:
-            portable = json.loads(zf.read("app/portable.json").decode("utf-8"))
-        except (ValueError, KeyError):
-            raise UpdateError("The release has a damaged portable.json") from None
+        portable = json.loads(_read_member(zip_path, "app/portable.json").decode("utf-8"))
+    except (ValueError, KeyError):
+        raise UpdateError("The release has a damaged portable.json") from None
     version = str(portable.get("version") or "")
     try:
         parse_version(version)
@@ -292,6 +345,26 @@ def dismiss_result() -> None:
 def _extract_app(zip_path: Path, dest: Path) -> None:
     tmp = dest.with_name(dest.name + ".partial")
     shutil.rmtree(tmp, ignore_errors=True)
+    if _is_gzip(zip_path):
+        # .tar.gz (Linux, macOS): the "data" filter refuses anything that would
+        # land outside tmp and keeps the executable bits the bundled Python and
+        # launchers need — the reason these builds are not ZIPs.
+        with tarfile.open(zip_path, "r:gz") as tf:
+            members = []
+            for m in tf.getmembers():
+                name = m.name[2:] if m.name.startswith("./") else m.name
+                if name.startswith("app/") and m.isfile():
+                    m.name = name[len("app/"):]
+                    members.append(m)
+            total = sum(m.size for m in members) or 1
+            done = 0
+            for m in members:
+                tf.extract(m, tmp, filter="data")
+                done += m.size
+                _set_job(done=done, total=total)
+        shutil.rmtree(dest, ignore_errors=True)
+        os.replace(tmp, dest)
+        return
     with zipfile.ZipFile(zip_path) as zf:
         members = [i for i in zf.infolist() if i.filename.startswith("app/") and not i.is_dir()]
         total = sum(i.file_size for i in members) or 1
@@ -328,7 +401,8 @@ def start_prepare(token: str, backup_dir: Path) -> dict[str, Any]:
             _extract_app(zip_path, root / "app.new")
             script_dir = root / ".nomad-update"
             script_dir.mkdir(exist_ok=True)
-            shutil.copy2(root / "app.new" / "launcher" / "apply_update.ps1", script_dir / "apply_update.ps1")
+            script = _platform_files(current().get("platform"))[1]
+            shutil.copy2(root / "app.new" / "launcher" / script, script_dir / script)
             _set_job(phase="backup", done=0, total=0)
             if backup_service.is_busy():
                 raise UpdateError("A backup or restore is running; try again when it finishes")
@@ -367,10 +441,24 @@ def apply(port: int) -> dict[str, Any]:
     if info is None:
         raise UpdateError("There is no prepared update")
     root = root_dir()
-    script = root / ".nomad-update" / "apply_update.ps1"
+    launcher, script_name = _platform_files(current().get("platform"))
+    script = root / ".nomad-update" / script_name
     if not script.is_file():
         raise UpdateError("The prepared update is incomplete; prepare it again")
     (root / "update-result.json").unlink(missing_ok=True)
+    if not sys.platform.startswith("win"):
+        # Linux / macOS: the bash twin, in a session of its own so it survives
+        # this process and the terminal it may have been started from.
+        cmd = ["/bin/bash", str(script), str(root), str(os.getpid()), str(info["to"]),
+               str(info.get("from") or ""), str(port), launcher]
+        try:
+            subprocess.Popen(cmd, cwd=str(root), start_new_session=True, close_fds=True,  # noqa: S603 — fixed script, local app
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            raise UpdateError("Could not start the update script") from None
+        logger.info("update %s → %s: handing over to %s", info.get("from"), info["to"], script)
+        threading.Timer(1.0, lambda: os._exit(EXIT_CODE_UPDATE)).start()
+        return info
     cmd = [
         "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", str(script),
         "-Root", str(root), "-WaitPid", str(os.getpid()), "-From", str(info.get("from") or ""),

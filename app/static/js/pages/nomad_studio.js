@@ -53,8 +53,9 @@
     // produced tags). Otherwise it'd sit there toggling nothing.
     if (filterToggleWrap) {
       var onSubView = viewMain && viewMain.getAttribute('aria-hidden') === 'true';
-      var hasFilters = !!document.querySelector('.cs-view:not([aria-hidden="true"]) .cs-tag-filter--sidebar:not([hidden])');
-      filterToggleWrap.hidden = !(onSubView && hasFilters);
+      var sidebar = document.querySelector('.cs-view:not([aria-hidden="true"]) .cs-tag-filter--sidebar:not([hidden])');
+      filterToggleWrap.hidden = !(onSubView && sidebar);
+      if (!filterToggleWrap.hidden) csAlignFilterToggle(sidebar);
     }
     // Language + History are page-level widgets (siblings of #cs-view-main,
     // not children — nothing else here ever hides them), so they used to
@@ -189,6 +190,46 @@
   // sidebar is a workspace preference rather than a per-visit action.
   var CS_FILTERS_KEY = 'ns-filters-hidden';
   var filterToggleBtn = document.getElementById('cs-filter-toggle-btn');
+
+  // The toggle is position:fixed at one height (.cs-filter-toggle `top`),
+  // but each view's sidebar starts at its own height — Refine and Mix sat
+  // ~14px higher than Create, so the button covered their FILTERS label.
+  // Centre it on the visible sidebar's label instead, whatever is above it.
+  // The first time a view shows, the button stays invisible until it has
+  // been placed (measured on the next frame) — placing it after a visible
+  // start made it jump on every load. Each view's spot is remembered, so
+  // later visits land there at once; a second measure after the view-switch
+  // animation (~450 ms) corrects any in-flight offset. While the sidebar is
+  // collapsed the label has no box, so the button keeps its last spot and
+  // never moves out from under the cursor.
+  var _csAlignTimer = null;
+  var _csToggleTops = {};
+  function csAlignFilterToggle(sidebar) {
+    if (!filterToggleWrap || !sidebar) return;
+    var key = sidebar.id || 'default';
+    if (_csToggleTops[key] != null) filterToggleWrap.style.top = _csToggleTops[key] + 'px';
+    else filterToggleWrap.style.visibility = 'hidden';
+    function measure() {
+      var label = sidebar.querySelector('.group-label');
+      if (!label || filterToggleWrap.hidden) return;
+      var r = label.getBoundingClientRect();
+      if (r.height) {
+        var h = filterToggleWrap.offsetHeight || 34;
+        _csToggleTops[key] = Math.round(r.top + r.height / 2 - h / 2);
+        filterToggleWrap.style.top = _csToggleTops[key] + 'px';
+      }
+      filterToggleWrap.style.visibility = '';
+    }
+    // Remembered spot: confirm on the next frame. First visit: wait out the
+    // view-switch animation before measuring, so the one placement is final.
+    if (_csToggleTops[key] != null) requestAnimationFrame(function () { requestAnimationFrame(measure); });
+    clearTimeout(_csAlignTimer);
+    _csAlignTimer = setTimeout(measure, 450);
+  }
+  window.addEventListener('resize', function () {
+    var sb = document.querySelector('.cs-view:not([aria-hidden="true"]) .cs-tag-filter--sidebar:not([hidden])');
+    if (sb) csAlignFilterToggle(sb);
+  });
 
   function csApplyFiltersHidden(hidden) {
     document.documentElement.classList.toggle('cs-filters-hidden', hidden);

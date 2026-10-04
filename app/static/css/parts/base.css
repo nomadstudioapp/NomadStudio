@@ -53,16 +53,6 @@ html:lang(ko) body {
   font-family: 'Asap', "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", "Source Han Sans KR", sans-serif;
 }
 
-body.create-page {
-  overflow-y: hidden;
-}
-
-body.create-page .main-wrap {
-  height: 100vh;
-  overflow: hidden;
-  padding: 0;
-}
-
 body.upscale-page {
   overflow-y: hidden;
 }

@@ -2852,8 +2852,6 @@
   margin: 0;
 }
 
-
-
 .organize-cell {
   height: 100px;
   border: 1px solid var(--line);
@@ -4908,7 +4906,6 @@ textarea {
   text-transform: uppercase;
 }
 
-
 .upscale-run-row {
   justify-content: flex-end;
 }
@@ -5242,8 +5239,6 @@ body[data-theme="1"] .seed-reseed-btn:hover {
   color: var(--text-bright);
 }
 
-
-
 .prompt-word-tag {
   border: none;
   background: transparent;
@@ -5482,356 +5477,6 @@ body[data-theme="1"] .seed-reseed-btn:hover {
 .client-gallery .client-image-card {
   background: transparent;
   padding: 0;
-}
-
-body.create-page .client-gallery {
-  gap: 0;
-}
-
-body.create-page .client-image-card {
-  border-bottom: 1px solid var(--oh-line, rgba(255, 255, 255, 0.06));
-  border-radius: 0;
-  padding: 0 0 20px;
-  margin: 0 0 20px;
-}
-
-body.create-page .client-card-main {
-  gap: 18px;
-  grid-template-columns: minmax(0, var(--create-gallery-left-width)) minmax(280px, 1fr);
-}
-
-body.create-page .client-grid {
-  border-radius: 8px;
-  overflow: hidden;
-  background: #0b0e15;
-}
-
-body.create-page .client-editor-panel {
-  border: 1px solid var(--oh-line, rgba(255, 255, 255, 0.06));
-  background: var(--oh-panel, #0f1218);
-  border-radius: 8px;
-  overflow: visible;
-  display: grid;
-  min-height: 100%;
-}
-
-body.create-page .client-editor-header {
-  min-height: 36px;
-  padding: 5px 10px;
-  border-bottom: 1px solid var(--oh-line, rgba(255, 255, 255, 0.06));
-  background: var(--oh-panel-2, #141821);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-body.create-page .client-editor-header-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-body.create-page .client-meta-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--oh-text-3, #6b7180);
-  white-space: nowrap;
-}
-
-body.create-page .client-meta-dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--oh-line-2, rgba(255, 255, 255, 0.1));
-  flex: 0 0 auto;
-}
-
-body.create-page .client-meta-time {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  font-size: 11px;
-  color: var(--oh-text-2, #9aa0ad);
-  white-space: nowrap;
-}
-
-body.create-page .client-editor-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  position: relative;
-}
-
-body.create-page .client-editor-actions .btn {
-  min-height: 26px;
-  padding: 0 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-body.create-page .client-btn-icon {
-  width: 13px;
-  height: 13px;
-  stroke: currentColor;
-  flex: 0 0 auto;
-}
-
-body.create-page .client-btn-label {
-  line-height: 1;
-  display: inline;
-}
-
-body.create-page .client-btn-compact {
-  min-width: 0;
-  width: 30px;
-  min-width: 30px;
-  padding: 0;
-}
-
-body.create-page .client-editor-actions-dropdown {
-  position: relative;
-}
-
-body.create-page .client-actions-toggle {
-  min-height: 28px;
-}
-
-body.create-page .client-actions-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: min(220px, 70vw);
-  max-height: min(320px, 52vh);
-  padding: 6px;
-  border: 1px solid var(--oh-line, rgba(255, 255, 255, 0.08));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--oh-panel, #0f1219) 92%, #000 8%);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-  display: grid;
-  gap: 4px;
-  overflow-y: auto;
-  z-index: 35;
-}
-
-body.create-page .client-actions-menu[hidden] {
-  display: none !important;
-}
-
-body.create-page .client-action-menu-item {
-  width: 100%;
-  min-height: 30px;
-  padding: 0 8px;
-  border-radius: 7px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--oh-text-2, #9aa0ad);
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-body.create-page .client-action-menu-item:hover,
-body.create-page .client-action-menu-item:focus-visible {
-  background: rgba(146, 166, 216, 0.12);
-  color: var(--oh-text, #e2e7f6);
-  outline: none;
-}
-
-body.create-page .client-action-menu-item-danger {
-  color: #f4a5a5;
-}
-
-body.create-page .client-btn-primary {
-  background: var(--oh-accent-soft, color-mix(in srgb, var(--accent) 12%, transparent));
-  border-color: var(--oh-accent-line, color-mix(in srgb, var(--accent) 45%, transparent));
-  color: var(--oh-accent);
-}
-
-body.create-page .client-btn-ghost {
-  background: transparent;
-  border-color: var(--oh-line, rgba(255, 255, 255, 0.08));
-  color: var(--oh-text-2, #9aa0ad);
-}
-
-body.create-page .client-btn-danger {
-  color: #f4a5a5;
-  border-color: rgba(244, 165, 165, 0.3);
-}
-
-body.create-page .client-editor-body {
-  padding: 12px 12px 8px;
-}
-
-body.create-page .client-sent-prompt {
-  margin: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  color: var(--oh-blue, #6aa9ff);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  max-height: none;
-  overflow: visible;
-  padding: 0;
-}
-
-body.create-page .client-sent-prompt-clamped {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-body.create-page .client-prompt-toggle {
-  margin-top: 6px;
-  padding: 0;
-  min-height: 20px;
-  border: none;
-  background: transparent;
-  color: var(--oh-accent);
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-body.create-page .client-editor-footer {
-  padding: 8px 12px;
-  border-top: 1px solid var(--oh-line, rgba(255, 255, 255, 0.06));
-  background: var(--oh-panel-2, #141821);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-body.create-page .client-meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-body.create-page .client-meta-value {
-  color: var(--oh-text, #e8eaee);
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-body.create-page .client-meta-separator {
-  width: 1px;
-  height: 14px;
-  background: var(--oh-line, rgba(255, 255, 255, 0.06));
-}
-
-body.create-page .client-meta-lora-list {
-  align-items: flex-start;
-}
-
-body.create-page .client-meta-lora-chips {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-body.create-page .client-meta-lora-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 7px;
-  border-radius: 5px;
-  border: 1px solid var(--oh-line-2, rgba(255, 255, 255, 0.1));
-  background: var(--oh-panel, #0f1218);
-  color: var(--oh-text-2, #9aa0ad);
-  font-size: 11px;
-  font-weight: 500;
-}
-
-body.create-page .client-meta-lora-weight {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  color: var(--oh-accent);
-  font-size: 10.5px;
-  font-weight: 600;
-}
-
-body.create-page .client-meta-lora-more {
-  cursor: help;
-}
-
-body.create-page .client-meta-empty {
-  color: var(--oh-text-3, #6b7180);
-  font-size: 11px;
-}
-
-body.create-page .client-meta-spacer {
-  flex: 1;
-}
-
-body.create-page .client-tags-row {
-  gap: 5px;
-  margin-left: auto;
-}
-
-body.create-page .client-tag {
-  font-size: 11px;
-  padding: 3px 9px;
-}
-
-body.create-page .client-tag-add {
-  opacity: 0;
-  transition: opacity 120ms ease;
-  pointer-events: none;
-}
-
-body.create-page .client-image-card:hover .client-tag-add {
-  opacity: 1;
-}
-
-body.create-page .client-meta-secondary {
-  padding: 6px 12px 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-body.create-page .client-meta-secondary .muted-note {
-  margin: 0;
-  font-size: 11px;
-}
-
-body.create-page .client-workflow-id {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  color: var(--oh-text-3, #6b7180);
-}
-
-@media (max-width: 980px) {
-  body.create-page .client-card-main {
-    grid-template-columns: 1fr;
-  }
-
-  body.create-page .client-editor-header {
-    flex-wrap: wrap;
-  }
-
-  body.create-page .client-editor-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
-  body.create-page .client-editor-footer {
-    gap: 8px;
-  }
 }
 
 /* ── Skeleton loading ─────────────────────────────────── */
@@ -6128,9 +5773,7 @@ body.chat-modal-open {
     grid-template-columns: 1fr;
   }
 
-  body.create-page {
-    overflow-y: auto;
-  }
+  
 
   .group-feed {
     max-height: none;
@@ -6378,7 +6021,6 @@ body.mobile-page-body .main-wrap {
   padding: 0;
 }
 
-
 /* ---- Gallery viewer (no scroll) ---- */
 .mobile-viewer {
   flex: 1;
@@ -6625,7 +6267,6 @@ body.mobile-page-body .main-wrap {
   height: 100%;
   object-fit: cover;
 }
-
 
 /* ---- Edit panel (bottom sheet) ---- */
 .mobile-edit-panel {
@@ -6939,7 +6580,6 @@ body.organize-page-body .organize-page {
   overflow-y: auto;
   padding-right: 10px;
 }
-
 
 /* ==========================================================================
    COMPOSE RUN PANEL — 3-column layout inside the Compose tab

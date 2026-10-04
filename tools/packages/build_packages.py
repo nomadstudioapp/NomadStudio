@@ -24,6 +24,7 @@ annotation.downloads — the app keeps no per-engine download list of its own.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import sys
@@ -36,6 +37,9 @@ sys.path.insert(0, str(REPO))
 from app.routes.models_api_modules.imports_routes import _extract_downloads_from_workflow  # noqa: E402
 from app.services import package_service  # noqa: E402
 from app.services.flow_engine import _DISPLAY_KEYS, _PROMPT_KEYS  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from vintage_presets import FAMILIES as VINTAGE_FAMILIES, UI_TEXTS as VINTAGE_UI_TEXTS  # noqa: E402
 
 DIST = REPO / "dist" / "packages"
 # Packages that ship with the app go in DIST — paths.BUNDLED_PACKAGES_DIR
@@ -2852,6 +2856,33 @@ STYLING_GROUP_OVERRIDES = {fid: "styling" for fid in STYLING_FLOWS}
 REFINE_GROUPS_VERSION = "0.1.0"
 
 
+def _vintage_flows(source: Path) -> list[dict]:
+    """The 4 Vintage flows (tools/packages/vintage_presets.py), cloned from
+    Effects Artistic so they share its engines, steps and buttons — only id,
+    texts and the preset list change."""
+    base = flow_from_source(source, "refine.pe_effects_artistic")
+    flows = []
+    for family in VINTAGE_FAMILIES:
+        flow = copy.deepcopy(base)
+        flow.update({
+            "id": f"refine.{family['slug']}",
+            "label": family["label"]["en"],
+            "description": family["desc"]["en"],
+            "card_desc": family["desc"]["en"],
+            "card_tags": family["tags"],
+            "_i18n_overrides": {"label": family["label"], "desc": family["desc"]},
+        })
+        flow.pop("card", None)
+        for step in flow["steps"]:
+            for field in step.get("fields") or []:
+                if field.get("id") == "prompt":
+                    field["presets"] = copy.deepcopy(family["presets"])
+                    field["default"] = family["presets"][0]["text"]
+                    field["tooltip"] = "Pick a vintage look, or write your own."
+        flows.append(flow)
+    return flows
+
+
 def build_photo_editing(source: Path, version: str) -> Path:
     return build_refine_static_group(
         source, version, "nomad.refine-photo-editing", "photo-editing",
@@ -2874,7 +2905,9 @@ def build_photo_editing(source: Path, version: str) -> Path:
         # _load_workflow_ref: no more override for this ref), so id/label/
         # steps stay whatever the source itself declares (fixed 4-step
         # Lightning LoRA setup, no exposed Steps field).
-        hand_authored=[_local_edit_qwen2_flow(), _text_editor_qwen2_flow(), _text_editor_klein9b_flow()],
+        hand_authored=[_local_edit_qwen2_flow(), _text_editor_qwen2_flow(), _text_editor_klein9b_flow(),
+                       *_vintage_flows(source)],
+        extra_texts=VINTAGE_UI_TEXTS,
     )
 
 

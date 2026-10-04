@@ -6416,22 +6416,6 @@ body.nsc-session-workspace-page .nsc-topbar-toggle.cs-mode-toggle .cs-mode-btn s
   color: var(--accent);
 }
 
-/* ── Sidebar: hidden on all Nomad Studio pages ───────────────────────────── */
-
-body.nomad-studio-page .app-shell {
-  grid-template-columns: 0px 1fr;
-}
-
-body.nomad-studio-page .sidebar {
-  width: 0;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  border-right-color: transparent;
-}
-
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Tablet: stack vertically, inputs scrollable, sticky generate */
@@ -6862,20 +6846,6 @@ body.nsc-enhance-page .nsc-action-btn--ghost:hover {
 }
 
 /* ── Body class so Simple's sidebar-hide rule still applies ─────────────── */
-
-body.nsc-enhance-page .app-shell {
-  grid-template-columns: 0px 1fr;
-}
-
-body.nsc-enhance-page .sidebar {
-  width: 0;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  border-right-color: transparent;
-}
 
 body.nsc-enhance-page.nsc-simple-page .main-wrap,
 body.nsc-enhance-page .main-wrap {

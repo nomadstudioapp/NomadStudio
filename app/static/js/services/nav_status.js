@@ -55,147 +55,30 @@
   document.body.appendChild(banner);
 })();
 
+// ── Service status LEDs ───────────────────────────────────────────────────
+// Paints the model-service LEDs of the Nomad Studio settings panel
+// ([data-cs-led] = images | chat | vision); nomad_studio.js reads their
+// state to open the panel by itself when a service goes down. Elements are
+// looked up on every update: shell_router.js swaps pages in without a reload.
 (async function navStatusService() {
-  const imagesLed = document.getElementById('nav-led-images');
-  const upscaleLed = document.getElementById('nav-led-upscale');
-  const chatLed = document.getElementById('nav-led-chat');
-  const visionLed = document.getElementById('nav-led-vision');
-  const sidebarQueuePanelEl = document.getElementById('sidebar-queue-panel');
-  const sidebarQueueCountEl = document.getElementById('sidebar-queue-count');
-  const sidebarQueueProgressEl = document.getElementById('sidebar-queue-progress');
-  const sidebarQueueProgressBarEl = document.getElementById('sidebar-queue-progress-bar');
-  const sidebarQueueListEl = document.getElementById('sidebar-queue-list');
-  const sidebarQueueClearBtn = document.getElementById('sidebar-queue-clear-btn');
-  const CREATE_TASK_QUEUE_KEY = 'oj-create-task-queue-v1';
-  const GLOBAL_QUEUE_REFRESH_MS = 1500;
-
-  if (!imagesLed && !upscaleLed && !chatLed && !visionLed && !sidebarQueuePanelEl) {
-    return;
-  }
-
-  // Polling timers — only active while service is unavailable
-  let imagesTimer = null;
-  let upscaleTimer = null;
-  let chatTimer   = null;
-
   const POLL_INTERVAL = 30000;
+  let imagesTimer = null;
+  let chatTimer = null;
 
-  function escapeHtml(text) {
-    return String(text || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  function leds(name) {
+    return document.querySelectorAll(`[data-cs-led="${name}"]`);
   }
 
-  function readPersistedQueueTasks() {
-    try {
-      const raw = localStorage.getItem(CREATE_TASK_QUEUE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      return parsed.filter((task) => task && typeof task === 'object');
-    } catch {
-      return [];
-    }
-  }
-
-  function getQueueTaskTypeLabel(task) {
-    return String(task?.type || '').toLowerCase() === 'describe' ? 'Describe' : 'Generate';
-  }
-
-  function getQueueTaskStatusLabel(task) {
-    const value = String(task?.status || 'pending').toLowerCase();
-    if (value === 'running') return 'Running';
-    if (value === 'done') return 'Done';
-    if (value === 'failed') return 'Failed';
-    return 'Pending';
-  }
-
-  function clearPersistedQueueTasks() {
-    try {
-      localStorage.setItem(CREATE_TASK_QUEUE_KEY, JSON.stringify([]));
-    } catch {
-      // Ignore localStorage failures.
-    }
-    renderGlobalSidebarQueue();
-  }
-
-  function renderGlobalSidebarQueue() {
-    if (!sidebarQueuePanelEl || !sidebarQueueListEl || !sidebarQueueCountEl || !sidebarQueueProgressEl || !sidebarQueueProgressBarEl) {
-      return;
-    }
-    if (document.body.classList.contains('create-page')) {
-      // Studio page has richer real-time renderer in create.js.
-      return;
-    }
-
-    const tasks = readPersistedQueueTasks();
-    const runningTask = tasks.find((task) => String(task?.status || '').toLowerCase() === 'running') || null;
-    const pendingTasks = tasks.filter((task) => String(task?.status || 'pending').toLowerCase() === 'pending');
-    const total = (runningTask ? 1 : 0) + pendingTasks.length;
-    sidebarQueueCountEl.textContent = String(total);
-
-    if (!total) {
-      sidebarQueueProgressEl.textContent = tF('Idle');
-      sidebarQueueProgressBarEl.style.width = '0%';
-      sidebarQueueListEl.innerHTML = '<p class="sidebar-queue-empty">' + tH('No pending tasks.') + '</p>';
-      return;
-    }
-
-    if (runningTask) {
-      const typeLabel = getQueueTaskTypeLabel(runningTask);
-      const isGenerate = typeLabel.toLowerCase() === 'generate';
-      const storedPct = Number(runningTask?.progress ?? -1);
-      const pct = storedPct >= 1 ? Math.min(99, Math.round(storedPct)) : 15;
-      sidebarQueueProgressEl.textContent = isGenerate
-        ? `ComfyUI ${pct}%`
-        : `LMStudio ${pct}%`;
-      sidebarQueueProgressBarEl.style.width = `${pct}%`;
-    } else {
-      sidebarQueueProgressEl.textContent = `${pendingTasks.length} pending`;
-      sidebarQueueProgressBarEl.style.width = '0%';
-    }
-
-    const items = [];
-    if (runningTask) {
-      items.push(runningTask);
-    }
-    pendingTasks.forEach((task) => {
-      if (runningTask && String(task.id || '') === String(runningTask.id || '')) return;
-      items.push(task);
+  function setLedState(name, state, titleText) {
+    leds(name).forEach((el) => {
+      el.classList.toggle('available', state === 'available');
+      el.classList.toggle('unavailable', state === 'unavailable');
+      el.title = titleText || '';
     });
-
-    sidebarQueueListEl.innerHTML = items.slice(0, 6).map((task) => {
-      const isActive = runningTask && String(runningTask.id || '') === String(task.id || '');
-      const status = getQueueTaskStatusLabel(task);
-      const label = String(task?.queuedMessage || task?.payload?.queuedMessage || '').trim() || 'Queued task';
-      return `
-        <article class="sidebar-queue-item ${isActive ? 'active' : ''}">
-          <div class="sidebar-queue-item-head">
-            <span class="sidebar-queue-item-type">${escapeHtml(getQueueTaskTypeLabel(task))}</span>
-            <span class="sidebar-queue-item-status">${escapeHtml(status)}</span>
-          </div>
-          <p class="sidebar-queue-item-label">${escapeHtml(label)}</p>
-        </article>
-      `;
-    }).join('');
-
-    if (!items.length) {
-      sidebarQueueListEl.innerHTML = '<p class="sidebar-queue-empty">' + tH('No pending tasks.') + '</p>';
-    }
   }
 
-  function setLedState(el, state, titleText) {
-    if (!el) return;
-    el.classList.toggle('available', state === 'available');
-    el.classList.toggle('unavailable', state === 'unavailable');
-    el.title = titleText || '';
-  }
-
-  function startPolling(timerRef, fn, setRef) {
-    if (timerRef) return timerRef; // already running
+  function startPolling(timerId, fn) {
+    if (timerId) return timerId; // already running
     return setInterval(fn, POLL_INTERVAL);
   }
 
@@ -205,94 +88,48 @@
   }
 
   async function refreshImagesAvailability() {
-    if (!imagesLed || !window.openJourneyApi) return;
-    setLedState(imagesLed, 'checking', 'Checking Images service');
+    if (!window.openJourneyApi) return;
+    setLedState('images', 'checking', 'Checking Images service');
     try {
       const settingsResponse = await window.openJourneyApi.getModelsSettings();
       const comfyApiUrl = String(settingsResponse?.settings?.comfyApiUrl || '').trim();
       if (!comfyApiUrl) {
-        setLedState(imagesLed, 'unavailable', 'Images service unavailable: no ComfyUI URI');
+        setLedState('images', 'unavailable', 'Images service unavailable: no ComfyUI URI');
         imagesTimer = startPolling(imagesTimer, refreshImagesAvailability);
         return;
       }
       const result = await window.openJourneyApi.testModelsConnection({ comfyApiUrl });
-      setLedState(imagesLed, 'available', `Images service available (${result.endpoint || 'system_stats'})`);
+      setLedState('images', 'available', `Images service available (${result.endpoint || 'system_stats'})`);
       imagesTimer = stopPolling(imagesTimer);
     } catch {
-      setLedState(imagesLed, 'unavailable', 'Images service unavailable');
+      setLedState('images', 'unavailable', 'Images service unavailable');
       imagesTimer = startPolling(imagesTimer, refreshImagesAvailability);
     }
   }
 
   async function refreshChatAvailability(force = false) {
-    if ((!chatLed && !visionLed) || !window.openJourneyApi) return;
-    setLedState(chatLed, 'checking', 'Checking Prompts service');
-    setLedState(visionLed, 'checking', 'Checking Vision service');
+    if (!window.openJourneyApi) return;
+    setLedState('chat', 'checking', 'Checking Prompts service');
+    setLedState('vision', 'checking', 'Checking Vision service');
     try {
       await window.openJourneyApi.pingChatService(`nav-led:${window.location.pathname}${window.location.hash}`, force);
-      setLedState(chatLed, 'available', 'Prompts service available');
-      setLedState(visionLed, 'available', 'Vision service available');
+      setLedState('chat', 'available', 'Prompts service available');
+      setLedState('vision', 'available', 'Vision service available');
       chatTimer = stopPolling(chatTimer);
     } catch {
-      setLedState(chatLed, 'unavailable', 'Prompts service unavailable');
-      setLedState(visionLed, 'unavailable', 'Vision service unavailable');
+      setLedState('chat', 'unavailable', 'Prompts service unavailable');
+      setLedState('vision', 'unavailable', 'Vision service unavailable');
       chatTimer = startPolling(chatTimer, () => refreshChatAvailability(true));
     }
   }
 
-  async function refreshUpscaleAvailability() {
-    if (!upscaleLed || !window.openJourneyApi) return;
-    setLedState(upscaleLed, 'checking', 'Checking Upscale service');
-    try {
-      const response = await window.openJourneyApi.getUpscaleSettings();
-      const comfyApiUrl = String(response?.settings?.comfyApiUrl || '').trim();
-      if (!comfyApiUrl) {
-        setLedState(upscaleLed, 'unavailable', 'Upscale service unavailable: no ComfyUI URI');
-        upscaleTimer = startPolling(upscaleTimer, refreshUpscaleAvailability);
-        return;
-      }
-      const result = await window.openJourneyApi.testModelsConnection({ comfyApiUrl });
-      setLedState(upscaleLed, 'available', `Upscale service available (${result.endpoint || 'system_stats'})`);
-      upscaleTimer = stopPolling(upscaleTimer);
-    } catch {
-      setLedState(upscaleLed, 'unavailable', 'Upscale service unavailable');
-      upscaleTimer = startPolling(upscaleTimer, refreshUpscaleAvailability);
-    }
-  }
-
   window.refreshNavImagesLed = refreshImagesAvailability;
-  window.refreshNavUpscaleLed = refreshUpscaleAvailability;
 
-  // Make LEDs clickable for manual re-check
-  if (imagesLed) {
-    imagesLed.style.cursor = 'pointer';
-    imagesLed.addEventListener('click', () => refreshImagesAvailability());
-  }
-  if (chatLed) {
-    chatLed.style.cursor = 'pointer';
-    chatLed.addEventListener('click', () => refreshChatAvailability(true));
-  }
-  if (visionLed) {
-    visionLed.style.cursor = 'pointer';
-    visionLed.addEventListener('click', () => refreshChatAvailability(true));
-  }
-  if (upscaleLed) {
-    upscaleLed.style.cursor = 'pointer';
-    upscaleLed.addEventListener('click', () => refreshUpscaleAvailability());
-  }
-  if (sidebarQueueClearBtn) {
-    sidebarQueueClearBtn.addEventListener('click', clearPersistedQueueTasks);
+  function refreshAll() {
+    return Promise.all([refreshImagesAvailability(), refreshChatAvailability()]);
   }
 
-  // Initial check — polling starts automatically only for unavailable services
-  await Promise.all([refreshImagesAvailability(), refreshUpscaleAvailability(), refreshChatAvailability()]);
-
-  // Keep queue visible across non-Studio pages while tasks are persisted in localStorage.
-  renderGlobalSidebarQueue();
-  window.addEventListener('storage', (event) => {
-    if (event.key === CREATE_TASK_QUEUE_KEY) {
-      renderGlobalSidebarQueue();
-    }
-  });
-  setInterval(renderGlobalSidebarQueue, GLOBAL_QUEUE_REFRESH_MS);
+  // Polling starts automatically only for unavailable services.
+  await refreshAll();
+  window.addEventListener('oj:shell:navigate-end', refreshAll);
 })();

@@ -1,8 +1,7 @@
 (function shellRouterService() {
   const mainWrap = document.querySelector('.main-wrap');
-  const sidebar = document.querySelector('.sidebar');
 
-  if (!mainWrap || !sidebar) {
+  if (!mainWrap) {
     return;
   }
 
@@ -52,33 +51,7 @@
     return pathname;
   }
 
-  function updateSidebarActiveState(pathname) {
-    const normalizedCurrent = normalizePathname(pathname);
-    const links = Array.from(sidebar.querySelectorAll('a.nav-item[href]'));
-    links.forEach((link) => {
-      const href = link.getAttribute('href');
-      if (!href || href === '#') {
-        link.classList.remove('active');
-        link.removeAttribute('aria-current');
-        return;
-      }
-      try {
-        const target = new URL(href, window.location.href);
-        const isActive = normalizePathname(target.pathname) === normalizedCurrent;
-        link.classList.toggle('active', isActive);
-        if (isActive) {
-          link.setAttribute('aria-current', 'page');
-        } else {
-          link.removeAttribute('aria-current');
-        }
-      } catch {
-        link.classList.remove('active');
-        link.removeAttribute('aria-current');
-      }
-    });
-  }
-
-  function applyIncomingDocument(doc, pathnameForActiveState) {
+  function applyIncomingDocument(doc) {
     const incomingMain = doc.querySelector('.main-wrap');
     if (!incomingMain) {
       throw new Error(tF('Incoming page has no main container'));
@@ -89,8 +62,6 @@
 
     const incomingBodyClass = (doc.body && typeof doc.body.className === 'string') ? doc.body.className : '';
     document.body.className = incomingBodyClass;
-
-    updateSidebarActiveState(pathnameForActiveState || window.location.pathname);
   }
 
   async function navigateTo(url, options = {}) {
@@ -126,11 +97,10 @@
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       const scriptSources = collectPageScriptSources(doc);
-      const targetUrl = new URL(url, window.location.href);
 
       const scopeId = `page-${Date.now()}`;
       runtime.activateScope(scopeId);
-      applyIncomingDocument(doc, targetUrl.pathname);
+      applyIncomingDocument(doc);
 
       await runtime.runPageScripts(scriptSources, scopeId);
 
@@ -157,28 +127,6 @@
       navigationInFlight = false;
     }
   }
-
-  sidebar.addEventListener('click', (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-
-    const anchor = target.closest('a.nav-item[href]');
-    if (!anchor) return;
-
-    const href = anchor.getAttribute('href');
-    if (!href || href === '#') return;
-    if (!sameOrigin(href)) return;
-    if (isBypassClick(event, anchor)) return;
-
-    const targetUrl = new URL(href, window.location.href);
-    if (targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) {
-      event.preventDefault();
-      return;
-    }
-
-    event.preventDefault();
-    void navigateTo(targetUrl.toString());
-  });
 
   // Nomad Studio's own sub-views (/nomad-studio(/create|refine|mix)) are
   // pure client-side view toggles — nomad_studio.js pushes those history

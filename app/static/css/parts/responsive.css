@@ -6215,15 +6215,6 @@ body.chat-modal-open {
   .models-chat-params-grid {
     grid-template-columns: 1fr;
   }
-
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    position: static;
-    height: auto;
-  }
 }
 
 /* Rename import modal */
@@ -6379,10 +6370,6 @@ body.mobile-page-body .app-shell {
   min-height: unset;
   overflow: hidden;
   grid-template-columns: 1fr;
-}
-
-body.mobile-page-body .sidebar {
-  display: none;
 }
 
 body.mobile-page-body .main-wrap {

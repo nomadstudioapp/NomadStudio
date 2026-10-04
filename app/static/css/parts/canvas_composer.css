@@ -1,19 +1,5 @@
 /* ── Canvas Composer (Mix addon) ─────────────────────────────────────── */
 
-/* ── Sidebar: hidden on Canvas Composer, replaced by the Tray panel ─────── */
-body.cc-page .app-shell {
-  grid-template-columns: 0px 1fr;
-}
-body.cc-page .sidebar {
-  width: 0;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  border-right-color: transparent;
-}
-
 .cc-shell {
   display: flex;
   flex-direction: column;

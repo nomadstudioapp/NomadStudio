@@ -2579,25 +2579,16 @@
       });
     });
 
-    // Mirror model availability LEDs from the (hidden) sidebar so the panel
-    // reflects the same live status without duplicating the polling logic.
-    // A service that goes down (ComfyUI, LM Studio) opens the panel by itself
+    // The model LEDs are painted by services/nav_status.js. A service that goes down (ComfyUI, LM Studio) opens the panel by itself
     // so its warning triangle is seen — once per outage: the set of services
     // down is remembered for this tab, so closing the panel sticks, and it
     // resets once everything answers again.
     var LED_AUTOOPEN_KEY = 'cs-settings-autoopened-v1';
     function syncLeds() {
-      var leds = settingsPanel.querySelectorAll('[data-cs-led-mirror]');
+      var leds = settingsPanel.querySelectorAll('[data-cs-led]');
       var down = [];
       Array.prototype.forEach.call(leds, function (el) {
-        var srcId = el.getAttribute('data-cs-led-mirror');
-        var src = srcId && document.getElementById(srcId);
-        if (!src) return;
-        var isDown = src.classList.contains('unavailable');
-        el.classList.toggle('available', src.classList.contains('available'));
-        el.classList.toggle('unavailable', isDown);
-        if (src.title) el.title = src.title;
-        if (isDown) down.push(srcId);
+        if (el.classList.contains('unavailable')) down.push(el.getAttribute('data-cs-led'));
       });
       var signature = down.sort().join(',');
       var seen = '';

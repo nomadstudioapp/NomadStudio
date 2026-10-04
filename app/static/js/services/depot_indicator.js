@@ -3,9 +3,7 @@
 // goes into it, so the user should see that on every page, not only in
 // Build. Server-side state only (session["active_depot_id"]); this mirrors it.
 //
-// Three places show it:
-//   - the sidebar panel (layout/base.html #sidebar-depot-panel), with a
-//     Deactivate button;
+// Two places show it:
 //   - a badge in each page's top bar (.nsc-topbar-depot): the flow pages,
 //     Session and Build carry it in their templates; every other page with a
 //     .cs-sub-header (Create/Refine/Mix hubs, Album, Settings…) gets one
@@ -70,15 +68,11 @@
 
   function refresh() {
     var badges = ensureBadges();
-    var panel = document.getElementById('sidebar-depot-panel');
-    var panelName = document.getElementById('sidebar-depot-name');
-    if (!panel && !badges.length) return Promise.resolve();
+    if (!badges.length) return Promise.resolve();
     return fetch('/api/depots/active')
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var depot = data && data.depot;
-        if (panel) panel.hidden = !depot;
-        if (depot && panelName) panelName.textContent = depot.name;
         badges.forEach(function (b) {
           b.hidden = !depot;
           var nameEl = b.querySelector('.nsc-topbar-depot-name, #nsc-topbar-depot-name');
@@ -86,20 +80,8 @@
         });
       })
       .catch(function () {
-        if (panel) panel.hidden = true;
         badges.forEach(function (b) { b.hidden = true; });
       });
-  }
-
-  var deactivateBtn = document.getElementById('sidebar-depot-deactivate-btn');
-  if (deactivateBtn) {
-    deactivateBtn.addEventListener('click', function () {
-      deactivateBtn.disabled = true;
-      fetch('/api/depots/deactivate', { method: 'POST' })
-        .then(refresh)
-        .catch(function (err) { console.error('[DepotIndicator] Deactivate failed:', err); })
-        .finally(function () { deactivateBtn.disabled = false; });
-    });
   }
 
   // Build's Activate button changes the state without a page load, and

@@ -233,9 +233,6 @@
 
           setImportStatus('Upscale import deleted.');
           await loadUpscaleSettings();
-          if (typeof window.refreshNavUpscaleLed === 'function') {
-            window.refreshNavUpscaleLed();
-          }
         } catch (error) {
           setImportStatus(error.message || 'Failed to delete import.', true);
         }
@@ -363,9 +360,6 @@
       }
 
       setImportStatus('Upscale import saved. Open Upscale page under Create to run it.');
-      if (typeof window.refreshNavUpscaleLed === 'function') {
-        window.refreshNavUpscaleLed();
-      }
       await loadUpscaleSettings();
     } catch (error) {
       setImportStatus(error.message || 'Failed to save import.', true);

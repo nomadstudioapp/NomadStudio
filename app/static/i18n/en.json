@@ -97,6 +97,12 @@
       "refine": "Install flow packages to start refining your images.",
       "mix": "Install flow packages to start mixing images.",
       "install": "Install a package"
+    },
+    "onboard": {
+      "title": "This is a flow",
+      "text": "Each flow is one way of making images, and inside it is where they get generated. Start with Simple: write what you want to see and press Generate.",
+      "next": "When you have your first image, all the other flows will appear here.",
+      "skip": "Show all flows"
     }
   },
   "who": {

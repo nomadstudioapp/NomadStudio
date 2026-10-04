@@ -98,6 +98,16 @@ def create_viewer():
     }})
 
 
+@viewers_bp.post("/api/viewers/me/create-unlocked")
+def unlock_create():
+    """First image with Simple (or "Show all flows"): Create shows its whole
+    catalogue from now on for this profile. Idempotent."""
+    viewer_id = session.get(SESSION_KEY)
+    if not viewer_id:
+        return jsonify({"ok": False, "error": "no active viewer"}), 400
+    return jsonify({"ok": viewer_service.unlock_create(viewer_id)})
+
+
 @viewers_bp.post("/api/viewers/vanish")
 def select_vanish_viewer():
     """Enter (or re-enter) the singleton "Vanish Session" profile — no name,

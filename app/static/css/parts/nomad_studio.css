@@ -15981,3 +15981,79 @@ body.explore-page-body #album-topbar-toolbar + div {
   flex-shrink: 0;
 }
 .ncf-palette-status { color: var(--danger, #e5484d); }
+
+/* ── Create, first visit of a new profile: Simple + the raccoon ──────────── */
+/* templates/pages/nomad_studio.html `onboarding`. The bubble sits in the
+   card grid right after Simple and takes the rest of the row. */
+.cs-create-locked .cs-tag-filter--sidebar { display: none !important; }
+
+.cs-onboard {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  min-width: 0;
+}
+
+.cs-onboard-raccoon {
+  width: 132px;
+  height: 132px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cs-onboard-bubble {
+  position: relative;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--cs-card-bg, var(--bg-soft));
+  color: var(--text);
+  max-width: 34rem;
+}
+
+.cs-onboard-bubble::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: inherit;
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.cs-onboard-title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+}
+
+.cs-onboard-text {
+  margin: 0 0 0.45rem;
+  color: var(--text-bright, var(--text));
+  line-height: 1.45;
+}
+
+.cs-onboard-skip {
+  margin-top: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm, 0.85rem);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cs-onboard-skip:hover { color: var(--accent); }
+
+@media (max-width: 820px) {
+  .cs-onboard { grid-column: 1 / -1; }
+  .cs-onboard-raccoon { width: 88px; height: 88px; }
+}

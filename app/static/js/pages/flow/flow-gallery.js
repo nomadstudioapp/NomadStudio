@@ -196,7 +196,19 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'ArrowRight') navigateLightbox(1);
 });
 
+// A new profile starts Create with only Simple (nomad_studio.html
+// `onboarding`); its first image there unlocks the whole catalogue. Every
+// generation path ends in addToFeed(), so this is the one place that sees
+// them all. Idempotent on the server: one call per page is enough.
+var _createUnlockSent = false;
+function _unlockCreateAfterSimple() {
+  if (_createUnlockSent || typeof flowId === 'undefined' || flowId !== 'create.simple') return;
+  _createUnlockSent = true;
+  fetch('/api/viewers/me/create-unlocked', { method: 'POST' }).catch(function () {});
+}
+
 function addToFeed(imgUrl, idx, card, params, beforeUrl) {
+  _unlockCreateAfterSimple();
   // If no placeholder card was passed, create a fresh one. Note: this fresh
   // card has no real _genStartTime (it's created right now, not when the
   // generation actually started) — used e.g. when restoring past images from

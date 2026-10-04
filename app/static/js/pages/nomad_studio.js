@@ -241,7 +241,26 @@
     if (tip) tip.textContent = label;
   }
 
-  csApplyFiltersHidden(localStorage.getItem(CS_FILTERS_KEY) === '1');
+  // Hidden unless this browser has opened them at least once.
+  csApplyFiltersHidden(localStorage.getItem(CS_FILTERS_KEY) !== '0');
+
+  // First visit of a new profile: "Show all flows" under the raccoon unlocks
+  // the whole Create catalogue (same call the first Simple image makes).
+  var onboardSkip = document.getElementById('cs-onboard-skip');
+  if (onboardSkip && !onboardSkip.dataset.bound) {
+    onboardSkip.dataset.bound = '1';
+    onboardSkip.addEventListener('click', function () {
+      // Preview (?onboarding=1): just leave it, the profile was never locked.
+      if (new URLSearchParams(window.location.search).get('onboarding') === '1') {
+        window.location.href = window.location.pathname;
+        return;
+      }
+      onboardSkip.disabled = true;
+      fetch('/api/viewers/me/create-unlocked', { method: 'POST' })
+        .then(function () { window.location.reload(); })
+        .catch(function () { onboardSkip.disabled = false; });
+    });
+  }
 
   if (filterToggleBtn && !filterToggleBtn.dataset.filterBound) {
     filterToggleBtn.dataset.filterBound = '1';
@@ -532,10 +551,21 @@
   }
 
   /* ── Category card clicks ──────────────────────────────────────────────── */
+  // Hold F while clicking Create: preview a new profile's first visit
+  // (only Simple + the raccoon) without changing this profile.
+  var _csFHeld = false;
+  document.addEventListener('keydown', function (e) { if (e.key === 'f' || e.key === 'F') _csFHeld = true; });
+  document.addEventListener('keyup', function (e) { if (e.key === 'f' || e.key === 'F') _csFHeld = false; });
+  window.addEventListener('blur', function () { _csFHeld = false; });
+
   document.querySelectorAll('[data-cs-category]').forEach(function (card) {
     card.addEventListener('click', function (e) {
       e.preventDefault();
       var category = card.dataset.csCategory;
+      if (category === 'create' && _csFHeld) {
+        window.location.href = '/nomad-studio/create?onboarding=1';
+        return;
+      }
 
       if (CS_VIEW_ROUTES[category]) {
         var route = CS_VIEW_ROUTES[category];

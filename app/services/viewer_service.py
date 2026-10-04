@@ -149,6 +149,25 @@ def create_agent_viewer(name: str) -> dict[str, Any]:
     return create_viewer(name, _random_agent_avatar(), pin=None, is_agent=True)
 
 
+def is_create_unlocked(viewer: dict[str, Any] | None) -> bool:
+    """Whether Create shows its whole catalogue. Agents, Vanish, no viewer and
+    profiles from before this flag existed (no key) are never locked."""
+    if not viewer or viewer.get("is_agent") or viewer.get("is_vanish"):
+        return True
+    return bool(viewer.get("create_unlocked", True))
+
+
+def unlock_create(viewer_id: str) -> bool:
+    data = _ensure_viewers()
+    viewer = next((v for v in data["viewers"] if v["id"] == viewer_id), None)
+    if viewer is None:
+        return False
+    if viewer.get("create_unlocked") is False:
+        viewer["create_unlocked"] = True
+        _save_viewers(data)
+    return True
+
+
 def get_viewer(viewer_id: str) -> dict[str, Any] | None:
     data = _ensure_viewers()
     return next((v for v in data["viewers"] if v["id"] == viewer_id), None)
@@ -177,6 +196,10 @@ def create_viewer(name: str, avatar: str, pin: str | None, is_agent: bool = Fals
         "pin_hash": None,
         "pin_salt": None,
     }
+    # A new person starts Create with only the Simple flow and the raccoon
+    # explaining it; the full catalogue appears after their first image.
+    if not is_agent:
+        viewer["create_unlocked"] = False
 
     if pin:
         salt = secrets.token_hex(8)

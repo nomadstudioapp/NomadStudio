@@ -329,7 +329,14 @@
       </div>
     {%- endmacro -%}
 
-    <div class="cs-create-body" id="cs-create-body">
+    {#- First visit of a new profile (viewer_service.is_create_unlocked): only
+        Simple, with the raccoon explaining what a flow is. The first image
+        made with Simple (flow-generation.js) unlocks the whole catalogue. -#}
+    {%- set _has_simple = namespace(v=false) -%}
+    {%- for group in create_flow_groups -%}{%- for flow in group.flows -%}{%- if flow.action == 'simple' -%}{%- set _has_simple.v = true -%}{%- endif -%}{%- endfor -%}{%- endfor -%}
+    {%- set onboarding = create_locked and _has_simple.v -%}
+
+    <div class="cs-create-body{% if onboarding %} cs-create-locked{% endif %}" id="cs-create-body">
 
       <aside class="cs-tag-filter cs-tag-filter--sidebar" id="cs-tag-filter-create" role="group" aria-label="Filter create flows by tag" hidden data-i18n-attr="aria-label:tpl.filter_create_flows_by_tag"></aside>
 
@@ -337,18 +344,19 @@
 
         {% if not create_flow_groups and not template_packs %}{{ empty_section('create') }}{% endif %}
 
-        <input type="text" class="nsc-input cs-flow-search" id="cs-flow-search-create"{% if not create_flow_groups and not template_packs %} hidden{% endif %} placeholder="Search create flows…" aria-label="Search create flows" data-i18n-attr="placeholder:hub.sections.searchCreate,aria-label:hub.sections.searchCreate">
+        <input type="text" class="nsc-input cs-flow-search" id="cs-flow-search-create"{% if (not create_flow_groups and not template_packs) or onboarding %} hidden{% endif %} placeholder="Search create flows…" aria-label="Search create flows" data-i18n-attr="placeholder:hub.sections.searchCreate,aria-label:hub.sections.searchCreate">
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-create" hidden>No flows match.</p>
 
         <div class="cs-sub-grid-groups" id="cs-sub-grid-create" aria-label="Create modes" data-i18n-attr="aria-label:tpl.create_modes">
           {% for group in create_flow_groups %}
+          {% if not onboarding or group.flows | selectattr('action', 'equalto', 'simple') | list %}
           <div class="cs-group-block">
           <div class="cs-group-header" data-cs-group="{{ group.id }}">
             <span class="cs-group-header-label" data-i18n-literal="{{ group.label }}">{{ group.label }}</span>
           </div>
           <nav class="cs-sub-grid cs-sub-grid--hero" aria-label="{{ group.label }} flows">
-          {% for flow in group.flows %}
+          {% for flow in group.flows if not onboarding or flow.action == 'simple' %}
           <a href="#"
              class="cs-card{% if flow.card_css_modifier %} cs-card--{{ flow.card_css_modifier }}{% endif %}{% if flow.status == 'planned' %} cs-card--planned{% endif %}"
              data-cs-action="{{ flow.action }}"
@@ -370,11 +378,23 @@
             </div>
           </a>
           {% endfor %}
+          {% if onboarding %}
+          <div class="cs-onboard" role="note">
+            <img class="cs-onboard-raccoon" src="{{ url_for('static', filename='images/avatars/13_raccoon_pencil_point.webp') }}" alt="">
+            <div class="cs-onboard-bubble">
+              <p class="cs-onboard-title" data-i18n="hub.onboard.title">This is a flow</p>
+              <p class="cs-onboard-text" data-i18n="hub.onboard.text">Each flow is one way of making images, and inside it is where they get generated. Start with Simple: write what you want to see and press Generate.</p>
+              <p class="cs-onboard-text" data-i18n="hub.onboard.next">When you have your first image, all the other flows will appear here.</p>
+              <button type="button" class="cs-onboard-skip" id="cs-onboard-skip" data-i18n="hub.onboard.skip">Show all flows</button>
+            </div>
+          </div>
+          {% endif %}
           </nav>
           </div>
+          {% endif %}
           {% endfor %}
 
-          {% if template_packs %}
+          {% if template_packs and not onboarding %}
           {# Imported template packs — one card per pack, its first image as
              the cover so the card shows the quality of what you're importing.
              Opens the pack's theme gallery; a theme opens From Template

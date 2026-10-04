@@ -97,6 +97,12 @@
       "refine": "Instala paquetes de flows para empezar a retocar tus imágenes.",
       "mix": "Instala paquetes de flows para empezar a combinar imágenes.",
       "install": "Instalar un paquete"
+    },
+    "onboard": {
+      "title": "Esto es un flow",
+      "text": "Cada flow es una forma de crear imágenes, y dentro de él es donde se generan. Empieza por Simple: escribe lo que quieres ver y pulsa Generar.",
+      "next": "Cuando tengas tu primera imagen, aquí aparecerán todos los demás flows.",
+      "skip": "Mostrar todos los flows"
     }
   },
   "who": {

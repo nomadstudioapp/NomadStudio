@@ -350,6 +350,16 @@ def _load_mix_flows() -> list[dict]:
 _NOMAD_STUDIO_VIEW_LABELS = {"create": "Create", "refine": "Refine", "mix": "Mix", "session": "Session"}
 
 
+def _create_locked() -> bool:
+    # ?onboarding=1 previews the first visit without touching the profile
+    # (hold F and click Create on the home page, nomad_studio.js).
+    if request.args.get("onboarding") == "1":
+        return True
+    viewer_id = session.get(_VIEWER_SESSION_KEY)
+    viewer = viewer_service.get_viewer(viewer_id) if viewer_id else None
+    return not viewer_service.is_create_unlocked(viewer)
+
+
 def _render_nomad_studio(initial_view: str | None = None):
     create_flows = _load_create_flows()
     refine_flows = _load_refine_flows()
@@ -370,6 +380,7 @@ def _render_nomad_studio(initial_view: str | None = None):
         mix_flow_groups=_group_flows_by_pack(mix_flows),
         initial_view=initial_view,
         initial_view_label=_NOMAD_STUDIO_VIEW_LABELS.get(initial_view or ""),
+        create_locked=_create_locked(),
         **_active_viewer_context(),
     )
     # The cards come from installed packages: never serve a cached hub, or

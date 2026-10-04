@@ -2873,6 +2873,10 @@ def _vintage_flows(source: Path) -> list[dict]:
             "_i18n_overrides": {"label": family["label"], "desc": family["desc"]},
         })
         flow.pop("card", None)
+        # Source flows get this in build_refine_static_group; hand-authored
+        # ones skip that loop, so the clone needs it here (Qwen 2.1 label/steps).
+        for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
+            _update_engine_select_option(flow, option_id, opt_overrides)
         for step in flow["steps"]:
             for field in step.get("fields") or []:
                 if field.get("id") == "prompt":

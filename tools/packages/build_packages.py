@@ -772,7 +772,7 @@ def _extract_qwen2_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Refine",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -863,7 +863,7 @@ def _edit_rgba_qwen2_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Refine",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -945,7 +945,7 @@ def _local_edit_qwen2_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Refine",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -1045,7 +1045,7 @@ def _text_editor_qwen2_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Refine",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -1449,7 +1449,7 @@ def _multi_reference_compose_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Mix",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -1568,7 +1568,7 @@ def _multi_reference_compose_quick_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Mix",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -1758,7 +1758,7 @@ def _multi_composer_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Mix",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
     }
 
 
@@ -2456,7 +2456,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.2"  # 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
+REFINE_PILOT_VERSION = "0.1.3"  # 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/
@@ -2468,13 +2468,13 @@ REFINE_PILOT_VERSION = "0.1.2"  # 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2:
 # Steps field's quick-pick pills to match — Qwen 2.1 (8/16/25, no confirmed
 # fast LoRA) needs different ones than Klein/Boogu's Lightning-style 4/8.
 QWEN_ENGINE_SELECT_OVERRIDES = {
-    "qwen_2511": {"label": "Qwen 2.1 Edit", "steps_quick_options": [8, 16, 25], "steps_default": 25},
+    "qwen_2511": {"label": "Qwen Image 2.1 Edit", "steps_quick_options": [8, 16, 25], "steps_default": 25},
 }
 
 
 def _update_engine_select_option(flow: dict, option_id: str, overrides: dict) -> None:
     """Merges `overrides` onto one option inside an engine_select field (e.g.
-    Outpaint's "qwen_2511" -> label "Qwen 2.1 Edit" + new steps presets) —
+    Outpaint's "qwen_2511" -> label "Qwen Image 2.1 Edit" + new steps presets) —
     same idea as _override_flow_field, but engine_select's options live one
     level deeper, in field.engines[], keyed by their own "id" rather than
     the field's."""
@@ -3019,7 +3019,7 @@ def _bg_swap_qwen2_flow() -> dict:
             {"id": "result", "type": "result_view", "label": "Result"},
         ],
         "entry_category": "Refine",
-        "entry_model": "Qwen 2.1 Edit",
+        "entry_model": "Qwen Image 2.1 Edit",
         "_i18n_overrides": {
             "label": {
                 "en": "Background Swap — Qwen 2.1", "es": "Cambio de fondo — Qwen 2.1",
@@ -3445,7 +3445,7 @@ def _style_transfer_text_flows() -> list[dict]:
                                   "workflows/refine/refine_flux2_klein_4b.json", "76", "139.text",
                                   klein_fields, "edit-fluxklein", "Flux 2 Klein", names("Klein 4B")),
         _style_transfer_text_flow("refine.style_transfer_qwen2", "Qwen 2.1", QWEN_2511_EDIT_WORKFLOW_REL,
-                                  "7", "13.prompt", qwen_fields, "edit-qwen-2511", "Qwen 2.1 Edit",
+                                  "7", "13.prompt", qwen_fields, "edit-qwen-2511", "Qwen Image 2.1 Edit",
                                   names("Qwen 2.1")),
     ]
 
@@ -3788,7 +3788,7 @@ def _style_transfer_qwen21_mix_flow() -> dict:
     }
     flow = _build_mix_flow_definition(meta, STYLE_TRANSFER_QWEN21_WORKFLOW_REL)
     flow["entry_category"] = "Style"
-    flow["entry_model"] = "Qwen 2.1 Edit"
+    flow["entry_model"] = "Qwen Image 2.1 Edit"
     return flow
 
 

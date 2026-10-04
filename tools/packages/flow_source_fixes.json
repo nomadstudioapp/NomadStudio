@@ -11,5 +11,6 @@
  "Quitar sujeto principal": "Remove main subject",
  "Quitar sujeto, conservar fondo": "Remove subject, keep background",
  "Recuperación de altas luces": "Highlight recovery",
- "Reencuadra la escena desde otro angulo de camara con el LoRA de multiples angulos de Qwen 2511. No hace upscale, solo cambia el punto de vista.": "Reframes the scene from another camera angle with Qwen 2511's multiple-angles LoRA. It does not upscale, it only changes the viewpoint."
+ "Reencuadra la escena desde otro angulo de camara con el LoRA de multiples angulos de Qwen 2511. No hace upscale, solo cambia el punto de vista.": "Reframes the scene from another camera angle with Qwen 2511's multiple-angles LoRA. It does not upscale, it only changes the viewpoint.",
+ "Applies on Qwen 2511 Edit and Boogu Edit Turbo. Ignored on the Flux Klein engines, which have no separate negative prompt node.": "Applies on Qwen Image 2.1 Edit and Boogu Edit Turbo. Ignored on the Flux Klein engines, which have no separate negative prompt node."
 }

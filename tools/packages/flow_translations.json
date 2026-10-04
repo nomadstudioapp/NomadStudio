@@ -219,11 +219,6 @@
   "ko": "이미지에 창의적인 예술 효과를 적용합니다 — 회화풍, 이중 노출, 빛샘, 글리치/VHS, 몽환적인 글로우.",
   "zh": "为图片应用创意艺术效果——油画感、双重曝光、漏光、故障/VHS 或梦幻光晕。"
  },
- "Applies on Qwen 2511 Edit and Boogu Edit Turbo. Ignored on the Flux Klein engines, which have no separate negative prompt node.": {
-  "es": "Se aplica en Qwen 2511 Edit y Boogu Edit Turbo. Los motores Flux Klein lo ignoran porque no tienen nodo de prompt negativo aparte.",
-  "ko": "Qwen 2511 Edit와 Boogu Edit Turbo에 적용됩니다. Flux Klein 엔진은 별도의 네거티브 프롬프트 노드가 없어 무시합니다.",
-  "zh": "适用于 Qwen 2511 Edit 和 Boogu Edit Turbo。Flux Klein 引擎会忽略它，因为它们没有单独的负面提示词节点。"
- },
  "Applies the AFTERGLOW look: The preset applies a very distinctive split toning with shadows shifted toward cool cyan-blue and highlights pushed toward pastel rose-lilac, creating a dreamy palette of soft colors. Midtones are lifted slightly to avoid pure blacks, producing an airy, dreamy look. Overall saturation is reduced in oranges and yellows while blue and lavender are boosted, giving an ethereal, romantic sunrise/sunset feel.": {
   "es": "Aplica el look AFTERGLOW: un virado partido muy característico, con las sombras hacia un cian azulado frío y las luces hacia un rosa lila pastel, que crea una paleta onírica de colores suaves. Los medios tonos se levantan un poco para evitar negros puros y dar un aire etéreo. La saturación general baja en naranjas y amarillos mientras suben el azul y el lavanda, con una sensación romántica y etérea de amanecer o atardecer.",
   "ko": "AFTERGLOW 룩 적용: 그림자는 차가운 청록 블루로, 하이라이트는 파스텔 로즈 라일락으로 옮기는 개성 있는 스플릿 토닝으로 부드러운 몽환적 팔레트를 만듭니다. 중간 톤을 살짝 올려 완전한 검정을 피하고 가볍고 몽환적인 느낌을 줍니다. 주황과 노랑의 채도는 낮추고 파랑과 라벤더는 높여 영묘하고 낭만적인 일출/일몰 분위기를 냅니다.",
@@ -2674,10 +2669,10 @@
   "ko": "빠른 역할 선택기(선택 — 타이핑 대신 위의 프롬프트를 채움)",
   "zh": "快速角色选择器（可选——代替打字来填写上方的提示词）"
  },
- "Qwen 2.1 Edit": {
-  "es": "Edición Qwen 2.1",
-  "ko": "Qwen 2.1 편집",
-  "zh": "Qwen 2.1 编辑"
+ "Qwen Image 2.1 Edit": {
+  "es": "Edición Qwen Image 2.1",
+  "ko": "Qwen Image 2.1 편집",
+  "zh": "Qwen Image 2.1 编辑"
  },
  "Qwen Edit 2511": {
   "es": "Edición Qwen 2511",
@@ -4228,5 +4223,10 @@
   "es": "vista de gusano de la parte inferior del cuerpo",
   "ko": "하반신의 벌레 시점",
   "zh": "下半身的虫眼视角"
+ },
+ "Applies on Qwen Image 2.1 Edit and Boogu Edit Turbo. Ignored on the Flux Klein engines, which have no separate negative prompt node.": {
+  "es": "Se aplica en Qwen Image 2.1 Edit y Boogu Edit Turbo. Los motores Flux Klein lo ignoran porque no tienen nodo de prompt negativo aparte.",
+  "ko": "Qwen Image 2.1 Edit와 Boogu Edit Turbo에 적용됩니다. Flux Klein 엔진은 별도의 네거티브 프롬프트 노드가 없어 무시합니다.",
+  "zh": "适用于 Qwen Image 2.1 Edit 和 Boogu Edit Turbo。Flux Klein 引擎会忽略它，因为它们没有单独的负面提示词节点。"
  }
 }

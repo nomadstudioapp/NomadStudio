@@ -558,7 +558,23 @@ def _swap_default_models(files: dict[str, object]) -> None:
                     param["value"] = _swapped_model(param["value"])
 
 
+# Free packs that ship inside the app ("Included" on the marketplace page).
+# Their builders still say dest=DIST_OPTIONAL; write_zip routes them to DIST.
+# Krea2 Roma, CivitAI and Fan Styles stay free downloads. The Cinematic
+# template pack comes from NomadStudioPacks — build_portable.py adds it.
+INCLUDED_FREE = {
+    "nomad.core-refine",
+    "nomad.refine-extract",
+    "nomad.refine-presets-core",
+    "nomad.styles-free",
+}
+
+
 def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
+    if name in INCLUDED_FREE:
+        dest = DIST
+    for other in {DIST, DIST_OPTIONAL} - {dest}:
+        (other / f"{name}.zip").unlink(missing_ok=True)
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{name}.zip"
     path.unlink(missing_ok=True)

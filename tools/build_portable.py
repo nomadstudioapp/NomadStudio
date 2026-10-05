@@ -351,6 +351,10 @@ def main() -> None:
     ap.add_argument("--update-repo", default="juanpaexpedite/NomadStudio")
     ap.add_argument("--packages-dir", type=Path, default=REPO / "dist" / "packages",
                     help="package ZIPs to ship in bundled-packages/ (tools/packages/build_packages.py writes them)")
+    # Included packs built in NomadStudioPacks (a sibling checkout); more can be added.
+    ap.add_argument("--extra-package", type=Path, action="append",
+                    default=[REPO.parent / "NOMADSTUDIO_PACKS" / "dist" / "nomad.templates-cinematic.zip"],
+                    help="another ZIP to ship in bundled-packages/ (default: the Cinematic template pack)")
     args = ap.parse_args()
 
     if platform.system() != "Windows":
@@ -391,6 +395,10 @@ def main() -> None:
     bundled = sorted(args.packages_dir.glob("*.zip")) if args.packages_dir.is_dir() else []
     if not bundled:
         raise SystemExit(f"no package ZIPs in {args.packages_dir} — run tools/packages/build_packages.py first")
+    for z in args.extra_package:
+        if not z.is_file():
+            raise SystemExit(f"missing included package {z} — build it in NomadStudioPacks first")
+    bundled += args.extra_package
     (app_dir / "bundled-packages").mkdir()
     for z in bundled:
         shutil.copy2(z, app_dir / "bundled-packages" / z.name)

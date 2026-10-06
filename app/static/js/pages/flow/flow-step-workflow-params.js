@@ -1935,7 +1935,7 @@ async function _maybeUpscaleOutput(imgUrl, card) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(seedvr2 ? {
-        workflowFile:   'workflows/upscale/refine_upscale_seedvr2.json',
+        workflowFile:   'nomad.core-refine/workflows/refine_upscale_seedvr2.json',
         imageDataUrl:   dataUrl,
         advancedValues: {
           '66:52.unet_name': seedvr2.unetName,
@@ -1943,7 +1943,7 @@ async function _maybeUpscaleOutput(imgUrl, card) {
         },
         imageNodeId:    '1',
       } : {
-        workflowFile:   'workflows/upscale_2026/refine_upscale_model.json',
+        workflowFile:   'nomad.core-refine/workflows/upscale_2026/refine_upscale_model.json',
         imageDataUrl:   dataUrl,
         advancedValues: { '8.model_name': modelName },
         imageNodeId:    '3',

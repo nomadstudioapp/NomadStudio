@@ -12,8 +12,13 @@ are only allowed from the computer Nomad Studio runs on (local_access).
 
 from __future__ import annotations
 
+import hashlib
+import io
+import json
 import os
 import threading
+import zipfile
+from pathlib import Path
 
 from flask import Blueprint, abort, jsonify, request, send_from_directory
 from werkzeug.security import safe_join
@@ -120,9 +125,65 @@ def package_texts():
     return response
 
 
+# The in-app Marketplace catalogue (tools/packages/build_marketplace_catalog.py)
+# carries the sha256 of every zip sold on Ko-fi: a match means the upload is
+# an untouched official Nomad Studio pack. Re-read when the file changes.
+MARKETPLACE_CATALOG = Path(__file__).resolve().parents[1] / "static" / "marketplace" / "catalog.json"
+_official_cache: dict = {"mtime": None, "hashes": frozenset()}
+
+
+def official_hashes() -> frozenset:
+    try:
+        mtime = MARKETPLACE_CATALOG.stat().st_mtime
+    except OSError:
+        return frozenset()
+    if _official_cache["mtime"] != mtime:
+        try:
+            catalog = json.loads(MARKETPLACE_CATALOG.read_text(encoding="utf-8"))
+            hashes = frozenset(h for p in catalog.get("products", []) for h in p.get("sha256", []))
+        except (OSError, ValueError):
+            hashes = frozenset()
+        _official_cache.update(mtime=mtime, hashes=hashes)
+    return _official_cache["hashes"]
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _bundle_members(path: Path) -> list[str] | None:
+    """A bundle (e.g. Studio Pro) is a zip of package zips plus a README, with
+    no manifest of its own. Returns the inner zip names, or None if `path` is
+    an ordinary package."""
+    try:
+        with zipfile.ZipFile(path) as zf:
+            names = [n for n in zf.namelist() if not n.endswith("/")]
+    except zipfile.BadZipFile:
+        return None
+    if "manifest.json" in names:
+        return None
+    inner = [n for n in names if n.lower().endswith(".zip")]
+    rest = [n for n in names if n not in inner]
+    if not inner or any(not n.lower().endswith((".txt", ".md")) for n in rest):
+        return None
+    return inner
+
+
+def _inspect_one(token: str, path: Path, index: dict, builtin: set[str], official: frozenset) -> dict:
+    summary = package_service.inspect_zip(path, index, builtin, _lang())
+    return {"token": token, "package": summary, "official": _file_sha256(path) in official}
+
+
 @packages_bp.post("/api/packages/inspect")
 @local_only
 def inspect_package():
+    """One package, or a bundle of them: the reply always carries `packages`
+    (one {token, package, official} each); `token`/`package` stay for a single
+    package, as older callers read them."""
     upload = request.files.get("file")
     if upload is None or not upload.filename:
         return jsonify({"ok": False, "error": "Choose a package (.zip) to install"}), 400
@@ -130,12 +191,36 @@ def inspect_package():
         token, path = package_service.save_upload(DATA_DIR, upload.stream, upload.filename)
     except PackageError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
+    index = package_service.read_index(DATA_DIR)
+    builtin = _builtin_flow_ids()
+    official = official_hashes()
+    inner = _bundle_members(path)
+    if inner is None:
+        try:
+            item = _inspect_one(token, path, index, builtin, official)
+        except PackageError as exc:
+            package_service.discard_upload(DATA_DIR, token)
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify({"ok": True, "token": token, "package": item["package"], "packages": [item]})
+    # Bundle: each inner zip becomes an upload of its own, inspected (and
+    # later installed) exactly like a package dropped on its own.
+    items: list[dict] = []
     try:
-        summary = package_service.inspect_zip(path, package_service.read_index(DATA_DIR), _builtin_flow_ids(), _lang())
+        with zipfile.ZipFile(path) as zf:
+            for name in inner:
+                inner_token, inner_path = package_service.save_upload(DATA_DIR, io.BytesIO(zf.read(name)), name)
+                try:
+                    items.append(_inspect_one(inner_token, inner_path, index, builtin, official))
+                except PackageError:
+                    package_service.discard_upload(DATA_DIR, inner_token)
+                    raise
     except PackageError as exc:
-        package_service.discard_upload(DATA_DIR, token)
+        for item in items:
+            package_service.discard_upload(DATA_DIR, item["token"])
         return jsonify({"ok": False, "error": str(exc)}), 400
-    return jsonify({"ok": True, "token": token, "package": summary})
+    finally:
+        package_service.discard_upload(DATA_DIR, token)
+    return jsonify({"ok": True, "packages": items, "bundle": True})
 
 
 @packages_bp.post("/api/packages/install")

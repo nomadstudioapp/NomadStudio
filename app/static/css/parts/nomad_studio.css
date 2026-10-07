@@ -3135,6 +3135,504 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
   color: var(--accent);
 }
 
+/* ─── Marketplace (official packs, nomad_studio.js initMarketplace) ───────
+   Globe: fixed just right of the fixed, centred search pill (max 420px),
+   same height, so it reads as part of the same bar. */
+.cs-market-btn {
+  position: fixed;
+  top: 0.45rem;
+  left: calc(50% + min(210px, 50vw) + 0.5rem);
+  z-index: 12;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg);
+  border: 1px solid transparent;
+  box-shadow: 0 0 0 0.5px color-mix(in oklab, var(--line) 62%, var(--text)) inset;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.18s ease, box-shadow 0.18s ease;
+}
+.cs-market-btn:hover {
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.cs-market-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+}
+.cs-market-btn:hover .cs-mode-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Round Back where the catalogues keep their filter toggle (.cs-filter-toggle). */
+.cs-market-back {
+  top: 3.6rem;
+  left: 0.5rem;
+  right: auto;
+}
+/* The active Depot badge belongs to the flow pages, not to the shop. */
+#cs-view-marketplace .nsc-topbar-depot {
+  display: none !important;
+}
+.cs-view--marketplace {
+  display: none;
+  gap: 0;
+  padding: 0 8rem 7rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+@media (max-width: 900px) {
+  .cs-view--marketplace { padding: 0 1rem 8rem; }
+}
+.cs-market-body {
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.cs-market-lead {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary, var(--muted));
+  text-align: center;
+}
+.cs-market-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+.cs-market-group[hidden],
+.cs-market-card[hidden] {
+  display: none;
+}
+/* Same sizing as Album (flex-wrap + the card-zoom width), centred, so a
+   group with a single card (Studio Pro) sits in the middle like any other. */
+.cs-market-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+}
+.cs-market-cards .cs-market-card {
+  width: var(--rp-card-min, 260px);
+  flex: 0 0 auto;
+}
+
+/* Poster card (.rp-card, refine_presets.css): the wide cover sits whole at
+   the top, over a blurred, darkened copy of itself that fills the card;
+   the .rp-card-body scrim then fades into the card's tint under the text. */
+.cs-market-card.rp-card {
+  aspect-ratio: 3 / 4.2;
+}
+.cs-market-media {
+  background: var(--cs-card-bg);
+}
+.cs-market-media .cs-market-blur {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  filter: blur(22px) saturate(1.2) brightness(0.55);
+}
+.rp-card-media .cs-market-cover {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 640 / 366;
+  object-fit: cover;
+}
+.cs-market-card {
+  cursor: pointer;
+}
+/* Denser scrim than Album's: the text here has to read over busy covers. */
+.cs-market-card .rp-card-body {
+  top: 38%;
+  gap: 0.35rem;
+  padding: 0 18px 18px;
+  background: linear-gradient(
+    to top,
+    var(--cs-card-bg) 0%,
+    color-mix(in srgb, var(--cs-card-bg) 92%, transparent) 38%,
+    color-mix(in srgb, var(--cs-card-bg) 45%, transparent) 62%,
+    transparent 100%
+  );
+}
+.cs-market-card .rp-card-name {
+  font-size: calc(var(--fs-lg) * 1.3);
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+.cs-market-card.is-open {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+/* The bundle is a normal card; only its glow sets it apart. */
+.cs-market-card.is-bundle {
+  box-shadow: 0 0 28px -8px color-mix(in srgb, var(--accent) 65%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.cs-market-meta {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent) 45%, #fff);
+  letter-spacing: 0.02em;
+}
+.cs-market-includes {
+  margin: 0;
+  font-size: var(--fs-xs, 0.8rem);
+  color: var(--text-secondary, var(--muted));
+}
+/* Name, contents and state sit together at the bottom of the card (the
+   body is a flex column ending at the bottom), not spread over its height. */
+.cs-market-action {
+  padding-top: 0.5rem;
+}
+/* "Details →": folded away until the card is hovered or focused, then it
+   opens up above the state chip. */
+.cs-market-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  opacity: 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: max-height 0.2s ease, opacity 0.2s ease, margin-top 0.2s ease;
+}
+.cs-market-details svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  fill: none;
+}
+.cs-market-card:hover .cs-market-details,
+.cs-market-card:focus-visible .cs-market-details {
+  max-height: 1.6rem;
+  margin-top: 0.3rem;
+  opacity: 1;
+}
+.cs-market-get,
+.cs-market-btn-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 0;
+  background: linear-gradient(100deg, #4D7CFE, #8B5CF6, #C084FC);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 18px -4px rgba(139, 92, 246, 0.7);
+}
+.cs-market-get:hover,
+.cs-market-btn-main:hover {
+  filter: brightness(1.1);
+}
+.cs-market-btn-main:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.cs-market-btn-ghost {
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.cs-market-state.is-get,
+.cs-market-state.is-update {
+  display: inline-block;
+  padding: 0.35rem 0.95rem;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(100deg, #4D7CFE, #8B5CF6, #C084FC);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.cs-market-state.is-installed {
+  display: inline-block;
+  padding: 0.35rem 0.95rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid color-mix(in srgb, #34d399 55%, var(--line));
+  color: #34d399;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.cs-market-foot {
+  text-align: center;
+  margin: 0.5rem 0 0;
+}
+.cs-market-foot a {
+  color: var(--muted);
+}
+
+/* Side panel (left): a pack's info, its Ko-fi link and the zip drop. The
+   view makes room for it on wide screens; on narrow ones it covers the grid. */
+.cs-market-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  width: min(460px, 100vw);
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--line);
+  box-shadow: 12px 0 40px -12px rgba(0, 0, 0, 0.6);
+  animation: cs-market-panel-in 0.22s ease;
+}
+.cs-market-panel[hidden] {
+  display: none;
+}
+@keyframes cs-market-panel-in {
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.cs-view--marketplace.has-market-panel .cs-market-back {
+  display: none;
+}
+@media (min-width: 1100px) {
+  .cs-view--marketplace.has-market-panel {
+    padding-left: calc(460px + 2rem);
+  }
+}
+/* Same plain X as the Settings panel, over the cover, so a shadow keeps it
+   readable on light images. */
+.cs-market-panel-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+  transition: opacity 0.2s ease;
+}
+.cs-market-panel-close:hover {
+  opacity: 0.75;
+}
+.cs-market-panel-close svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+/* The cover edge to edge, fading into the panel at its foot. */
+.cs-market-panel-hero {
+  position: relative;
+}
+.cs-market-panel-hero img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 640 / 366;
+  object-fit: cover;
+}
+.cs-market-panel-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 38%;
+  background: linear-gradient(to top, var(--bg-panel), transparent);
+}
+.cs-market-panel-content {
+  padding: 0.25rem 1.6rem 2.2rem;
+}
+.cs-market-panel-content--drop {
+  padding-top: 3.5rem;
+}
+.cs-market-panel-name {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: calc(var(--fs-lg) * 1.7);
+  line-height: 1.1;
+  color: var(--text);
+}
+.cs-market-panel-meta {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--accent) 40%, #fff);
+}
+.cs-market-panel-desc {
+  margin: 1rem 0 0;
+  font-size: 1.08rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #f1f3fb;
+}
+/* Section label in the Settings panel's group-label style. */
+.cs-market-panel-section {
+  margin: 2rem 0 0.9rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 0.92rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 35%, #cfd5e6);
+}
+.cs-market-panel-loading {
+  color: var(--muted);
+}
+/* Flows (and the bundle's packs): name over its one-line description. */
+.cs-market-inside-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.cs-market-inside-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.8rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 0 10px 10px 0;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.cs-market-inside-list strong {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.cs-market-inside-list span {
+  color: #d3d8e8;
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+/* Style categories with how many styles each. */
+.cs-market-inside-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cs-market-inside-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+  color: #fff;
+  font-weight: 600;
+}
+.cs-market-inside-rows em {
+  font-style: normal;
+  font-weight: 500;
+  color: #c3c9db;
+  white-space: nowrap;
+}
+/* Template themes as chips. */
+.cs-market-inside-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.cs-market-inside-chips span {
+  padding: 0.32rem 0.75rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.cs-market-panel-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+}
+.cs-market-panel-action .cs-market-get {
+  align-self: stretch;
+  padding: 0.75rem 1.2rem;
+  font-size: 1.02rem;
+}
+/* The drop zone: neon dashed box; the whole window takes the zip while the
+   panel is open, and it lights up while a file is dragged over. */
+.cs-market-drop {
+  padding: 1.4rem 1.2rem;
+  border-radius: 16px;
+  border: 2px dashed #8B5CF6;
+  background: color-mix(in srgb, var(--bg) 85%, #1a1240);
+  box-shadow: 0 0 22px -6px rgba(139, 92, 246, 0.7);
+  text-align: center;
+  cursor: pointer;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.cs-market-drop:hover,
+.cs-market-panel.is-drag .cs-market-drop {
+  border-color: #C084FC;
+  box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.35), 0 0 36px 0 rgba(139, 92, 246, 0.85);
+}
+.cs-market-panel.is-drag .cs-market-drop {
+  transform: scale(1.02);
+}
+.cs-market-wait-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+}
+.cs-market-wait-text {
+  margin: 0.3rem 0 0;
+  color: var(--text-secondary, var(--muted));
+}
+.cs-market-wait-text.is-error,
+.cs-market-review .is-error {
+  color: #f87171;
+}
+.cs-market-review {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text);
+}
+.cs-market-badge {
+  margin: 0.6rem 0 0;
+  font-size: 0.88rem;
+  color: #fbbf24;
+}
+.cs-market-badge.is-official {
+  color: #34d399;
+}
+.cs-market-wait-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
 /* ─── Shared circular icon-button chip ──────────────────────────────────
    Single base for every standalone round corner button: avatar, settings,
    language toggle, history toggle, theme cycle, caption editor tab. All
@@ -3427,6 +3925,27 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
 
 .cs-settings-close:hover {
   color: var(--text);
+}
+
+/* Bell beside the close button: auto-open on outages on / off. */
+.cs-settings-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.cs-settings-autoopen {
+  position: relative;
+}
+.cs-settings-autoopen .cs-autoopen-off,
+.cs-settings-autoopen.is-off .cs-autoopen-on {
+  display: none;
+}
+.cs-settings-autoopen.is-off .cs-autoopen-off {
+  display: block;
+}
+.cs-settings-autoopen:hover .cs-mode-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .cs-settings-body {

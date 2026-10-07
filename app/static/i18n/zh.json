@@ -103,6 +103,51 @@
       "text": "每个 flow 都是一种创作图像的方式，图像就在 flow 里面生成。先从 Simple 开始：写下你想看到的画面，然后点击生成。",
       "next": "生成第一张图片后，这里会出现精选 flow。点击图钉即可查看其余全部。",
       "skip": "跳过"
+    },
+    "market": {
+      "getMore": "获取更多 flow",
+      "title": "资源市场",
+      "lead": "Nomad Studio 官方资源包。在 Ko-fi 获取后，把 .zip 拖到这里。",
+      "all": "全部",
+      "create": "Create",
+      "refine": "Refine",
+      "mix": "Mix",
+      "shop": "在 Ko-fi 查看完整商店",
+      "installed": "已安装",
+      "update": "有可用更新",
+      "getOnKofi": "在 Ko-fi 获取",
+      "notLocal": "请在运行 Nomad Studio 的电脑上安装资源包。",
+      "close": "关闭",
+      "cancel": "取消",
+      "review": "准备安装",
+      "official": "Nomad Studio 官方资源包",
+      "unofficial": "这不是 Nomad Studio 官方资源包：只有在信任其来源时才安装。",
+      "install": "安装",
+      "installing": "正在安装…",
+      "checking": "正在检查…",
+      "waitTitle": "正在等待 {name}",
+      "dropTitle": "把资源包的 .zip 拖到这里",
+      "waitText": "下载完成后，把 .zip 拖到这里，或手动选择。",
+      "choose": "选择 .zip",
+      "installedOk": "已安装：{name}",
+      "goTo": "前往 {tab}",
+      "unit": {
+        "flows": "{n} 个 flow",
+        "looks": "{n} 种调色",
+        "styles": "{n} 种风格",
+        "themes": "{n} 个主题",
+        "packs": "{n} 个资源包"
+      },
+      "group": {
+        "bundle": "Studio Pro",
+        "flows": "更多创作与编辑方式",
+        "looks": "照片调色",
+        "styles": "风格",
+        "templates": "模板合集"
+      },
+      "details": "详情",
+      "inside": "包含内容",
+      "getIt": "获取"
     }
   },
   "who": {
@@ -1695,7 +1740,8 @@
       "sectionEngines": "引擎",
       "sectionFlows": "流程",
       "sectionOther": "其他",
-      "bundled": "Nomad Studio 自带"
+      "bundled": "Nomad Studio 自带",
+      "official": "Nomad Studio 官方资源包：与商店中的版本一致。"
     },
     "agents": {
       "navName": "智能体",
@@ -2428,6 +2474,8 @@
     "essentials_on": "仅显示精选 — 点击显示全部 flow",
     "essentials_off": "全部 flow — 点击仅显示精选",
     "essentials_add": "加入精选",
-    "essentials_remove": "从精选中移除"
+    "essentials_remove": "从精选中移除",
+    "settings_autoopen_on": "服务无响应时自动打开",
+    "settings_autoopen_off": "服务无响应时保持关闭"
   }
 }

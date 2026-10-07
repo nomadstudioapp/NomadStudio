@@ -353,7 +353,52 @@ def _load_mix_flows() -> list[dict]:
     return flows
 
 
-_NOMAD_STUDIO_VIEW_LABELS = {"create": "Create", "refine": "Refine", "mix": "Mix", "session": "Session"}
+_NOMAD_STUDIO_VIEW_LABELS = {"create": "Create", "refine": "Refine", "mix": "Mix", "session": "Session",
+                             "marketplace": "Marketplace"}
+
+# The in-app Marketplace: a copy of the Ko-fi shop made at release time
+# (tools/packages/build_marketplace_catalog.py), so the hub can show what packs
+# exist without going online. Cached until the file changes.
+_MARKET_CATALOG = Path(__file__).parent.parent / "static" / "marketplace" / "catalog.json"
+_market_cache: dict = {"mtime": None, "catalog": {"products": []}}
+
+
+def _version_tuple(v) -> tuple:
+    return tuple(int(x) if x.isdigit() else 0 for x in re.split(r"[.\-+]", str(v or "0")))
+
+
+def _load_marketplace() -> dict:
+    """Catalogue products with this install's state: installed / update /
+    missing. A bundle counts as installed once every pack in it is."""
+    try:
+        mtime = _MARKET_CATALOG.stat().st_mtime
+    except OSError:
+        return {"shop_url": None, "products": []}
+    if _market_cache["mtime"] != mtime:
+        try:
+            _market_cache["catalog"] = json.loads(_MARKET_CATALOG.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            _market_cache["catalog"] = {"products": []}
+        _market_cache["mtime"] = mtime
+    from ..services import package_service
+    from . import packages_routes
+
+    installed = package_service.read_index(packages_routes.DATA_DIR).get("packages", {})
+    products = []
+    for p in _market_cache["catalog"].get("products", []):
+        # The fingerprints stay server-side; "What's inside" (the longest part)
+        # is fetched by the side panel from the static catalogue when opened.
+        item = {k: v for k, v in p.items() if k not in ("sha256", "inside")}
+        if p.get("kind") == "bundle":
+            have = [i for i in p.get("includes", []) if i in installed]
+            item["status"] = "installed" if have and len(have) == len(p.get("includes", [])) else "missing"
+        elif p["id"] in installed:
+            newer = _version_tuple(p.get("version")) > _version_tuple(installed[p["id"]].get("version"))
+            item["status"] = "update" if newer else "installed"
+        else:
+            item["status"] = "missing"
+        products.append(item)
+    return {"shop_url": _market_cache["catalog"].get("shop_url"), "products": products}
 
 
 def _create_locked() -> bool:
@@ -396,6 +441,7 @@ def _render_nomad_studio(initial_view: str | None = None):
         initial_view_label=_NOMAD_STUDIO_VIEW_LABELS.get(initial_view or ""),
         create_locked=_create_locked(),
         essentials_only=viewer_service.essentials_only(viewer),
+        marketplace=_load_marketplace(),
         **_active_viewer_context(),
     )
     # The cards come from installed packages: never serve a cached hub, or
@@ -428,6 +474,11 @@ def nomad_studio_refine_page():
 @main_bp.get("/nomad-studio/mix")
 def nomad_studio_mix_page():
     return _render_nomad_studio("mix")
+
+
+@main_bp.get("/nomad-studio/marketplace")
+def nomad_studio_marketplace_page():
+    return _render_nomad_studio("marketplace")
 
 
 @main_bp.get("/nomad-studio/session")

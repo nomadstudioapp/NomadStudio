@@ -455,6 +455,7 @@
     refine:  { path: '/nomad-studio/refine',  title: 'NomadStudio - Refine',  el: viewRefine },
     mix:     { path: '/nomad-studio/mix',     title: 'NomadStudio - Mix',     el: viewMix },
     session: { path: '/nomad-studio/session', title: 'NomadStudio - Session', el: viewSession },
+    marketplace: { path: '/nomad-studio/marketplace', title: 'NomadStudio - Marketplace', el: document.getElementById('cs-view-marketplace') },
   };
   var CS_MAIN_TITLE = 'NomadStudio';
   var _csCurrentView = null; // null = main hub
@@ -465,7 +466,7 @@
   // .cs-view--entering/exiting from freezing the element at whatever
   // half-finished transform the interrupted keyframe left it at.
   function csClearViewAnimClasses() {
-    [viewMain, viewCreate, viewRefine, viewMix, viewSession].forEach(function (el) {
+    [viewMain, viewCreate, viewRefine, viewMix, viewSession, CS_VIEW_ROUTES.marketplace.el].forEach(function (el) {
       if (el) el.classList.remove('cs-view--entering', 'cs-view--exiting');
     });
   }
@@ -2764,6 +2765,33 @@
     // down is remembered for this tab, so closing the panel sticks, and it
     // resets once everything answers again.
     var LED_AUTOOPEN_KEY = 'cs-settings-autoopened-v1';
+    // The bell next to the close button turns that off for this browser
+    // (the warning triangles still show; only the panel stops opening).
+    var AUTOOPEN_OFF_KEY = 'cs-settings-autoopen-off';
+    var autoOpenBtn = document.getElementById('cs-settings-autoopen');
+    function autoOpenOff() {
+      try { return localStorage.getItem(AUTOOPEN_OFF_KEY) === '1'; } catch (_) { return false; }
+    }
+    function syncAutoOpenBtn() {
+      if (!autoOpenBtn) return;
+      var off = autoOpenOff();
+      var key = off ? 'tpl.settings_autoopen_off' : 'tpl.settings_autoopen_on';
+      var label = csEssT(key, off ? 'Stays closed when a service is down' : 'Open by itself when a service is down');
+      autoOpenBtn.classList.toggle('is-off', off);
+      autoOpenBtn.setAttribute('aria-pressed', String(!off));
+      autoOpenBtn.setAttribute('aria-label', label);
+      autoOpenBtn.setAttribute('data-i18n-attr', 'aria-label:' + key);
+      var tip = autoOpenBtn.querySelector('[data-cs-autoopen-tip]');
+      if (tip) { tip.setAttribute('data-i18n', key); tip.textContent = label; }
+    }
+    if (autoOpenBtn) {
+      autoOpenBtn.addEventListener('click', function () {
+        try { localStorage.setItem(AUTOOPEN_OFF_KEY, autoOpenOff() ? '0' : '1'); } catch (_) {}
+        syncAutoOpenBtn();
+      });
+      document.addEventListener('nomad-i18n-applied', syncAutoOpenBtn);
+      syncAutoOpenBtn();
+    }
     function syncLeds() {
       var leds = settingsPanel.querySelectorAll('[data-cs-led]');
       var down = [];
@@ -2779,7 +2807,7 @@
       }
       if (signature !== seen) {
         try { sessionStorage.setItem(LED_AUTOOPEN_KEY, signature); } catch (_) {}
-        setOpen(true);
+        if (!autoOpenOff()) setOpen(true);
       }
     }
     syncLeds();
@@ -3150,6 +3178,344 @@
   initTagFilter('create');
   initTagFilter('refine');
   initTagFilter('mix');
+
+  /* ── Marketplace: official packs, Ko-fi, and the zip drop ───────────────
+     Products come from static/marketplace/catalog.json (a copy of the Ko-fi
+     shop made at release time), with this install's state added by the
+     server (installed / update / missing). A card opens a side panel with
+     the pack's info, its Ko-fi link and a drop zone: the downloaded .zip is
+     dropped anywhere on the window (or chosen) and installed with the same
+     /api/packages/inspect + install calls Settings uses. */
+  (function initMarketplace() {
+    var view = CS_VIEW_ROUTES.marketplace.el;
+    var dataEl = document.getElementById('cs-market-data');
+    var grid = document.getElementById('cs-market-grid');
+    var panel = document.getElementById('cs-market-panel');
+    var panelBody = document.getElementById('cs-market-panel-body');
+    var fileInput = document.getElementById('cs-market-file');
+    if (!view || !dataEl || !grid || !panel) return;
+    var data = {};
+    try { data = JSON.parse(dataEl.textContent || '{}'); } catch (_) { data = {}; }
+    var products = data.products || [];
+    var fromView = null;      // the catalogue the globe was pressed in
+    var pending = [];         // inspected uploads awaiting Install
+    var busy = false;
+    var isLocal = true;       // installing is only allowed on the computer running the app
+
+    function T(key, fallback, vars) {
+      var s = csEssT('hub.market.' + key, fallback);
+      Object.keys(vars || {}).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    }
+    function lang() { return (window.NomadI18n && window.NomadI18n.getLanguage()) || 'en'; }
+    function txt(map) { map = map || {}; return map[lang()] || map.en || ''; }
+    function byId(id) { return products.filter(function (p) { return p.id === id; })[0]; }
+    function contents(p) {
+      var c = p.contents || {};
+      return T('unit.' + c.unit, '{n} ' + c.unit, { n: c.n });
+    }
+    function tabLabel(tab) { return T(tab, tab.charAt(0).toUpperCase() + tab.slice(1)); }
+
+    // Same poster card as Album / Presets (.rp-card: full-bleed photo, scrim
+    // in the card's tint, display-font title). Only what tells packs apart
+    // at a glance — name, contents, price or "Installed"; the rest is in the
+    // side panel a click opens. The covers are wide and carry the pack's
+    // title painted in, so the cover sits whole at the top over a blurred
+    // copy of itself instead of being cropped to the card's shape.
+    function cardHtml(p) {
+      var cover = '/static/marketplace/' + escHtml(p.cover);
+      var state = p.status === 'installed'
+        ? '<span class="cs-market-state is-installed">' + escHtml(T('installed', 'Installed')) + '</span>'
+        : p.status === 'update'
+          ? '<span class="cs-market-state is-update">' + escHtml(T('update', 'Update available')) + '</span>'
+          : '<span class="cs-market-state is-get">' + escHtml(T('getIt', 'Get it')) + '</span>';
+      return '<article class="rp-card cs-market-card' + (p.kind === 'bundle' ? ' is-bundle' : '') +
+        (current && current.id === p.id ? ' is-open' : '') + '" data-market-id="' + escHtml(p.id) +
+        '" tabindex="0" role="button" aria-label="' + escHtml(txt(p.name)) + '">' +
+        '<div class="rp-card-media cs-market-media"><img class="cs-market-blur" src="' + cover + '" alt="" loading="lazy">' +
+          '<img class="cs-market-cover" src="' + cover + '" alt="" loading="lazy"></div>' +
+        '<div class="rp-card-body cs-market-info">' +
+          '<p class="rp-card-name">' + escHtml(txt(p.name)) + '</p>' +
+          '<p class="cs-market-meta">' + escHtml(contents(p)) + '</p>' +
+          // Shown on hover / focus: says a click opens the side panel.
+          '<span class="cs-market-details">' + escHtml(T('details', 'Details')) +
+            ' <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>' +
+          '<div class="cs-market-action">' + state + '</div>' +
+        '</div></article>';
+    }
+
+    // Grouped like the flow catalogues (a header per group), in the same
+    // groups as the website's marketplace.
+    var GROUPS = [
+      { kind: 'bundle', key: 'group.bundle', label: 'Studio Pro' },
+      { kind: 'flows', key: 'group.flows', label: 'More ways to create and edit' },
+      { kind: 'looks', key: 'group.looks', label: 'Photo looks' },
+      { kind: 'styles', key: 'group.styles', label: 'Styles' },
+      { kind: 'templates', key: 'group.templates', label: 'Template collections' }
+    ];
+
+    function render() {
+      grid.innerHTML = GROUPS.map(function (g) {
+        var items = products.filter(function (p) { return p.kind === g.kind; });
+        if (!items.length) return '';
+        return '<section class="cs-market-group" data-market-group="' + g.kind + '">' +
+          '<div class="cs-group-header"><span class="cs-group-header-label">' + escHtml(T(g.key, g.label)) + '</span></div>' +
+          '<div class="cs-market-cards">' + items.map(cardHtml).join('') + '</div></section>';
+      }).join('');
+    }
+
+    // ── Side panel: the pack's info, its Ko-fi link and the zip drop ──
+    // `current` is the pack on show (null when a zip was dropped with no pack
+    // open); `pending` the inspected uploads awaiting Install; `result` the
+    // message after installing.
+    var current = null, result = null, panelOpen = false;
+
+    // "What's inside" lives in the static catalogue only (it's the longest
+    // part, kept out of the hub page): fetched once, the first time a panel opens.
+    var insideById = null, insideLoading = false;
+    function loadInside() {
+      if (insideById || insideLoading) return;
+      insideLoading = true;
+      fetch('/static/marketplace/catalog.json').then(function (r) { return r.json(); }).then(function (cat) {
+        insideById = {};
+        (cat.products || []).forEach(function (p) { insideById[p.id] = p.inside || {}; });
+        renderPanel();
+      }).catch(function () { insideLoading = false; });
+    }
+
+    function insideHtml(p) {
+      var title = '<h3 class="cs-market-panel-section">' + escHtml(T('inside', "What's inside")) + '</h3>';
+      if (p.kind === 'bundle' && p.includes) {
+        return title + '<ul class="cs-market-inside-list">' + p.includes.map(function (id) {
+          var inc = byId(id);
+          return '<li><strong>' + escHtml(inc ? txt(inc.name) : id) + '</strong>' +
+            (inc ? '<span>' + escHtml(contents(inc)) + ' · ' + escHtml(txt(inc.description)) + '</span>' : '') + '</li>';
+        }).join('') + '</ul>';
+      }
+      var inside = insideById && insideById[p.id];
+      if (!inside) return insideById ? '' : title + '<p class="cs-market-panel-loading">…</p>';
+      if (inside.type === 'flows') {
+        return title + '<ul class="cs-market-inside-list">' + inside.items.map(function (it) {
+          return '<li><strong>' + escHtml(txt(it.label)) + '</strong><span>' + escHtml(txt(it.desc)) + '</span></li>';
+        }).join('') + '</ul>';
+      }
+      if (inside.type === 'styles') {
+        return title + '<ul class="cs-market-inside-rows">' + inside.groups.map(function (g) {
+          return '<li><span>' + escHtml(txt(g.name)) + '</span><em>' + escHtml(T('unit.styles', '{n} styles', { n: g.count })) + '</em></li>';
+        }).join('') + '</ul>';
+      }
+      if (inside.type === 'themes') {
+        return title + '<div class="cs-market-inside-chips">' + inside.items.map(function (t) {
+          return '<span>' + escHtml(txt(t)) + '</span>';
+        }).join('') + '</div>';
+      }
+      return '';
+    }
+
+    // The cover runs edge to edge at the top; the rest sits in a padded
+    // column, opened here and closed by renderPanel after the action + list.
+    function infoHtml(p) {
+      var tab = p.tabs && p.tabs.length === 1 ? ' · ' + tabLabel(p.tabs[0]) : '';
+      return '<div class="cs-market-panel-hero"><img src="/static/marketplace/' + escHtml(p.cover) + '" alt=""></div>' +
+        '<div class="cs-market-panel-content">' +
+          '<h2 class="cs-market-panel-name">' + escHtml(txt(p.name)) + '</h2>' +
+          '<p class="cs-market-panel-meta">' + escHtml(contents(p) + tab) + '</p>' +
+          '<p class="cs-market-panel-desc">' + escHtml(txt(p.description)) + '</p>';
+    }
+
+    function actionHtml() {
+      if (result) return result;
+      if (pending.length) {
+        var ok = pending.filter(function (x) { return x.package; });
+        var official = ok.length && ok.every(function (x) { return x.official; });
+        return '<p class="cs-market-wait-title">' + escHtml(T('review', 'Ready to install')) + '</p><ul class="cs-market-review">' +
+          pending.map(function (x) {
+            return x.package
+              ? '<li><strong>' + escHtml(x.package.name) + '</strong> <small>' + escHtml(x.package.version) + '</small></li>'
+              : '<li class="is-error">' + escHtml(x.file + ': ' + x.error) + '</li>';
+          }).join('') + '</ul>' +
+          (ok.length ? '<p class="cs-market-badge' + (official ? ' is-official' : '') + '">' + escHtml(official
+            ? T('official', 'Official Nomad Studio pack')
+            : T('unofficial', 'Not an official Nomad Studio pack: install it only if you trust where it comes from.')) + '</p>' : '') +
+          '<div class="cs-market-wait-actions">' +
+            '<button type="button" class="cs-market-btn-ghost" data-wait-cancel' + (busy ? ' disabled' : '') + '>' + escHtml(T('cancel', 'Cancel')) + '</button>' +
+            (ok.length ? '<button type="button" class="cs-market-btn-main" data-wait-install' + (busy ? ' disabled' : '') + '>' +
+              escHtml(busy ? T('installing', 'Installing…') : T('install', 'Install')) + '</button>' : '') +
+          '</div>';
+      }
+      var html = '';
+      if (current && current.status === 'installed') {
+        return '<p><span class="cs-market-state is-installed">' + escHtml(T('installed', 'Installed')) + '</span></p>';
+      }
+      if (current) {
+        var label = current.status === 'update' ? T('update', 'Update available') : T('getOnKofi', 'Get it on Ko-fi');
+        html += '<a class="cs-market-get" href="' + escHtml(current.kofi_url) + '" target="_blank" rel="noopener">' + escHtml(label) + '</a>';
+      }
+      if (!isLocal) return html + '<p class="cs-market-wait-text">' + escHtml(T('notLocal', 'Install the pack from the computer Nomad Studio runs on.')) + '</p>';
+      // The drop zone: the whole window takes the zip while the panel is open.
+      return html + '<div class="cs-market-drop" data-wait-choose role="button" tabindex="0">' +
+        '<p class="cs-market-wait-title">' + escHtml(busy ? T('checking', 'Checking…') : T('dropTitle', 'Drop the pack .zip here')) + '</p>' +
+        '<p class="cs-market-wait-text">' + escHtml(T('waitText', 'When the download finishes, drag the .zip here — or choose it.')) + '</p>' +
+        '</div>';
+    }
+
+    function renderPanel() {
+      view.classList.toggle('has-market-panel', panelOpen);
+      if (!panelOpen) { panel.hidden = true; }
+      else {
+        panel.hidden = false;
+        if (current) loadInside();
+        panelBody.innerHTML = (current ? infoHtml(current) : '<div class="cs-market-panel-content cs-market-panel-content--drop">') +
+          '<div class="cs-market-panel-action">' + actionHtml() + '</div>' +
+          (current ? insideHtml(current) : '') + '</div>';
+      }
+      Array.prototype.forEach.call(grid.querySelectorAll('.cs-market-card'), function (c) {
+        c.classList.toggle('is-open', panelOpen && !!current && c.dataset.marketId === current.id);
+      });
+    }
+
+    function openPanel(p) {
+      if (busy) return;
+      discardPending();
+      current = p; result = null; panelOpen = true;
+      renderPanel();
+    }
+    function closePanel() {
+      if (busy) return;
+      discardPending();
+      current = null; result = null; panelOpen = false;
+      renderPanel();
+    }
+
+    function discardPending() {
+      pending.forEach(function (x) {
+        if (x.token) fetch('/api/packages/discard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: x.token }) }).catch(function () {});
+      });
+      pending = [];
+    }
+
+    function inspect(files) {
+      if (busy || !isLocal) return;
+      files = Array.prototype.filter.call(files || [], function (f) { return /\.zip$/i.test(f.name); });
+      if (!files.length) return;
+      discardPending();
+      result = null; busy = true; panelOpen = true; renderPanel();
+      var chain = Promise.resolve();
+      files.forEach(function (file) {
+        chain = chain.then(function () {
+          var form = new FormData();
+          form.append('file', file);
+          form.append('lang', lang());
+          return fetch('/api/packages/inspect', { method: 'POST', body: form })
+            .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.ok) throw new Error(j.error || r.status); return j; }); })
+            .then(function (j) {
+              (j.packages || [{ token: j.token, package: j.package }]).forEach(function (x) {
+                pending.push({ file: file.name, token: x.token, package: x.package, official: !!x.official });
+              });
+            })
+            .catch(function (err) { pending.push({ file: file.name, error: err.message }); });
+        });
+      });
+      chain.then(function () { busy = false; renderPanel(); });
+    }
+
+    function install() {
+      var items = pending.filter(function (x) { return x.package; });
+      busy = true; renderPanel();
+      var done = [], failed = [];
+      var chain = Promise.resolve();
+      items.forEach(function (x) {
+        chain = chain.then(function () {
+          return fetch('/api/packages/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: x.token }) })
+            .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.ok) throw new Error(j.error || r.status); return j; }); })
+            .then(function (j) { done.push(j.package); })
+            .catch(function (err) { failed.push(x.package.name + ': ' + err.message); });
+        });
+      });
+      chain.then(function () {
+        busy = false; pending = [];
+        done.forEach(function (d) { var p = byId(d.id); if (p) p.status = 'installed'; });
+        // A bundle is installed once every pack in it is.
+        products.forEach(function (p) {
+          if (p.kind === 'bundle' && p.includes && p.includes.every(function (id) { var i = byId(id); return i && i.status === 'installed'; })) p.status = 'installed';
+        });
+        // The hub's flow cards are rendered by the server: going to the
+        // catalogue the pack belongs to reloads it with the new flows.
+        var first = done[0] && byId(done[0].id);
+        var tab = (first && first.tabs && first.tabs.length === 1) ? first.tabs[0] : (fromView || 'create');
+        result =
+          (done.length ? '<p class="cs-market-wait-title">' + escHtml(T('installedOk', 'Installed: {name}', { name: done.map(function (d) { return d.name; }).join(', ') })) + '</p>' : '') +
+          (failed.length ? '<p class="cs-market-wait-text is-error">' + escHtml(failed.join(' · ')) + '</p>' : '') +
+          (done.length ? '<div class="cs-market-wait-actions"><a class="cs-market-btn-main" href="' + escHtml(CS_VIEW_ROUTES[tab].path) + '">' +
+            escHtml(T('goTo', 'Go to {tab}', { tab: tabLabel(tab) })) + '</a></div>' : '');
+        render();
+        renderPanel();
+      });
+    }
+
+    grid.addEventListener('click', function (e) {
+      var card = e.target.closest('.cs-market-card');
+      if (card) openPanel(byId(card.dataset.marketId));
+    });
+    grid.addEventListener('keydown', function (e) {
+      var card = e.target.closest('.cs-market-card');
+      if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPanel(byId(card.dataset.marketId)); }
+    });
+    panel.addEventListener('click', function (e) {
+      if (e.target.closest('[data-panel-close]')) { closePanel(); return; }
+      if (e.target.closest('[data-wait-cancel]')) { discardPending(); renderPanel(); return; }
+      if (e.target.closest('[data-wait-install]')) { install(); return; }
+      if (e.target.closest('[data-wait-choose]') && !busy) fileInput.click();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && panelOpen) closePanel(); });
+    fileInput.addEventListener('change', function () { inspect(fileInput.files); fileInput.value = ''; });
+
+    // While the Marketplace is on screen the whole window takes a dropped zip.
+    function marketOnScreen() { return view.getAttribute('aria-hidden') !== 'true' && view.style.display !== 'none'; }
+    document.addEventListener('dragover', function (e) {
+      if (!marketOnScreen()) return;
+      e.preventDefault();
+      if (!panelOpen) { panelOpen = true; renderPanel(); }
+      panel.classList.add('is-drag');
+    });
+    document.addEventListener('dragleave', function (e) { if (!e.relatedTarget) panel.classList.remove('is-drag'); });
+    document.addEventListener('drop', function (e) {
+      if (!marketOnScreen()) return;
+      e.preventDefault();
+      panel.classList.remove('is-drag');
+      inspect(e.dataTransfer && e.dataTransfer.files);
+    });
+
+    // Globe next to each catalogue's search box: open here, on that tab.
+    document.querySelectorAll('.cs-market-btn[data-market-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fromView = btn.dataset.marketTab;
+        transitionTo(CS_VIEW_ROUTES[fromView].el, view);
+        history.pushState({ csView: 'marketplace' }, '', CS_VIEW_ROUTES.marketplace.path);
+        document.title = CS_VIEW_ROUTES.marketplace.title;
+        _csCurrentView = 'marketplace';
+        checkLocal();
+      });
+    });
+    var back = document.getElementById('cs-market-back-btn');
+    if (back) back.addEventListener('click', function () {
+      var to = fromView ? CS_VIEW_ROUTES[fromView] : null;
+      transitionTo(view, to ? to.el : viewMain);
+      history.pushState({ csView: fromView }, '', to ? to.path : '/nomad-studio');
+      document.title = to ? to.title : CS_MAIN_TITLE;
+      _csCurrentView = fromView;
+    });
+
+    function checkLocal() {
+      fetch('/api/packages').then(function (r) { return r.json(); })
+        .then(function (j) { isLocal = j.local !== false; renderPanel(); })
+        .catch(function () {});
+    }
+
+    document.addEventListener('nomad-i18n-applied', function () { render(); renderPanel(); });
+    render();
+    if (marketOnScreen()) checkLocal();
+  })();
 
   /* ── Subtle per-card gradient tint, grouped by primary tag (tag[0]) ─────
      Same logic across Create / Refine / Mix: every card's first tag (the

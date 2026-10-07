@@ -103,6 +103,51 @@
       "text": "Cada flow es una forma de crear imágenes, y dentro de él es donde se generan. Empieza por Simple: escribe lo que quieres ver y pulsa Generar.",
       "next": "Cuando tengas tu primera imagen, aquí aparecerán los flows esenciales. El resto está a un clic en la chincheta.",
       "skip": "Saltar"
+    },
+    "market": {
+      "getMore": "Consigue más flows",
+      "title": "Marketplace",
+      "lead": "Packs oficiales de Nomad Studio. Consíguelo en Ko-fi y suelta aquí su .zip.",
+      "all": "Todos",
+      "create": "Create",
+      "refine": "Refine",
+      "mix": "Mix",
+      "shop": "Ver la tienda completa en Ko-fi",
+      "installed": "Instalado",
+      "update": "Actualización disponible",
+      "getOnKofi": "Consíguelo en Ko-fi",
+      "notLocal": "Instala el pack desde el ordenador donde corre Nomad Studio.",
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "review": "Listo para instalar",
+      "official": "Pack oficial de Nomad Studio",
+      "unofficial": "No es un pack oficial de Nomad Studio: instálalo solo si confías en su origen.",
+      "install": "Instalar",
+      "installing": "Instalando…",
+      "checking": "Comprobando…",
+      "waitTitle": "Esperando {name}",
+      "dropTitle": "Suelta aquí el .zip del pack",
+      "waitText": "Cuando termine la descarga, arrastra aquí el .zip, o elígelo.",
+      "choose": "Elegir el .zip",
+      "installedOk": "Instalado: {name}",
+      "goTo": "Ir a {tab}",
+      "unit": {
+        "flows": "{n} flows",
+        "looks": "{n} looks",
+        "styles": "{n} estilos",
+        "themes": "{n} temas",
+        "packs": "{n} packs"
+      },
+      "group": {
+        "bundle": "Studio Pro",
+        "flows": "Más formas de crear y editar",
+        "looks": "Looks de foto",
+        "styles": "Estilos",
+        "templates": "Colecciones de plantillas"
+      },
+      "details": "Detalles",
+      "inside": "Qué incluye",
+      "getIt": "Consíguelo"
     }
   },
   "who": {
@@ -1695,7 +1740,8 @@
       "sectionEngines": "Motores",
       "sectionFlows": "Flows",
       "sectionOther": "Otros",
-      "bundled": "Incluido con Nomad Studio"
+      "bundled": "Incluido con Nomad Studio",
+      "official": "Pack oficial de Nomad Studio: coincide con el de la tienda."
     },
     "agents": {
       "navName": "Agentes",
@@ -2428,6 +2474,8 @@
     "essentials_on": "Solo essentials — pulsa para ver todos los flows",
     "essentials_off": "Todos los flows — pulsa para ver solo los essentials",
     "essentials_add": "Añadir a Essentials",
-    "essentials_remove": "Quitar de Essentials"
+    "essentials_remove": "Quitar de Essentials",
+    "settings_autoopen_on": "Se abre sola si un servicio no responde",
+    "settings_autoopen_off": "Se queda cerrada aunque un servicio no responda"
   }
 }

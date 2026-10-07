@@ -103,6 +103,51 @@
       "text": "Each flow is one way of making images, and inside it is where they get generated. Start with Simple: write what you want to see and press Generate.",
       "next": "When you have your first image, the essential flows will appear here. The rest are one click away on the pin.",
       "skip": "Skip"
+    },
+    "market": {
+      "getMore": "Get more flows",
+      "title": "Marketplace",
+      "lead": "Official Nomad Studio packs. Get one on Ko-fi, then drop its .zip here.",
+      "all": "All",
+      "create": "Create",
+      "refine": "Refine",
+      "mix": "Mix",
+      "shop": "See the whole shop on Ko-fi",
+      "installed": "Installed",
+      "update": "Update available",
+      "getOnKofi": "Get it on Ko-fi",
+      "notLocal": "Install the pack from the computer Nomad Studio runs on.",
+      "close": "Close",
+      "cancel": "Cancel",
+      "review": "Ready to install",
+      "official": "Official Nomad Studio pack",
+      "unofficial": "Not an official Nomad Studio pack: install it only if you trust where it comes from.",
+      "install": "Install",
+      "installing": "Installing…",
+      "checking": "Checking…",
+      "waitTitle": "Waiting for {name}",
+      "dropTitle": "Drop the pack .zip here",
+      "waitText": "When the download finishes, drag the .zip here — or choose it.",
+      "choose": "Choose the .zip",
+      "installedOk": "Installed: {name}",
+      "goTo": "Go to {tab}",
+      "unit": {
+        "flows": "{n} flows",
+        "looks": "{n} looks",
+        "styles": "{n} styles",
+        "themes": "{n} themes",
+        "packs": "{n} packs"
+      },
+      "group": {
+        "bundle": "Studio Pro",
+        "flows": "More ways to create and edit",
+        "looks": "Photo looks",
+        "styles": "Styles",
+        "templates": "Template collections"
+      },
+      "details": "Details",
+      "inside": "What's inside",
+      "getIt": "Get it"
     }
   },
   "who": {
@@ -1312,7 +1357,8 @@
       "sectionEngines": "Engines",
       "sectionFlows": "Flows",
       "sectionOther": "Other",
-      "bundled": "Included with Nomad Studio"
+      "bundled": "Included with Nomad Studio",
+      "official": "Official Nomad Studio pack: it matches the one in the shop."
     },
     "agents": {
       "navName": "Agents",
@@ -2045,6 +2091,8 @@
     "essentials_on": "Essentials only — click to show all flows",
     "essentials_off": "All flows — click to show only essentials",
     "essentials_add": "Add to Essentials",
-    "essentials_remove": "Remove from Essentials"
+    "essentials_remove": "Remove from Essentials",
+    "settings_autoopen_on": "Open by itself when a service is down",
+    "settings_autoopen_off": "Stays closed when a service is down"
   }
 }

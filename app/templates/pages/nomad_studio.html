@@ -353,6 +353,7 @@
         {% if not create_flow_groups and not template_packs %}{{ empty_section('create') }}{% endif %}
 
         <input type="text" class="nsc-input cs-flow-search" id="cs-flow-search-create"{% if (not create_flow_groups and not template_packs) or onboarding %} hidden{% endif %} placeholder="Search create flows…" aria-label="Search create flows" data-i18n-attr="placeholder:hub.sections.searchCreate,aria-label:hub.sections.searchCreate">
+        <button type="button" class="cs-market-btn" data-market-tab="create" aria-label="Get more flows" data-i18n-attr="aria-label:hub.market.getMore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span class="cs-mode-tip" data-i18n="hub.market.getMore">Get more flows</span></button>
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-create" hidden>No flows match.</p>
 
@@ -471,6 +472,7 @@
         {% if not refine_flow_groups %}{{ empty_section('refine') }}{% endif %}
 
         <input type="text" class="nsc-input cs-flow-search" id="cs-flow-search-refine"{% if not refine_flow_groups %} hidden{% endif %} placeholder="Search refine flows…" aria-label="Search refine flows" data-i18n-attr="placeholder:hub.sections.searchRefine,aria-label:hub.sections.searchRefine">
+        <button type="button" class="cs-market-btn" data-market-tab="refine" aria-label="Get more flows" data-i18n-attr="aria-label:hub.market.getMore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span class="cs-mode-tip" data-i18n="hub.market.getMore">Get more flows</span></button>
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-refine" hidden>No flows match.</p>
 
@@ -574,6 +576,7 @@
         {% if not mix_flow_groups %}{{ empty_section('mix') }}{% endif %}
 
         <input type="text" class="nsc-input cs-flow-search" id="cs-flow-search-mix"{% if not mix_flow_groups %} hidden{% endif %} placeholder="Search mix flows…" aria-label="Search mix flows" data-i18n-attr="placeholder:hub.sections.searchMix,aria-label:hub.sections.searchMix">
+        <button type="button" class="cs-market-btn" data-market-tab="mix" aria-label="Get more flows" data-i18n-attr="aria-label:hub.market.getMore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span class="cs-mode-tip" data-i18n="hub.market.getMore">Get more flows</span></button>
 
         <p class="cs-tag-filter-empty" data-i18n="hub.sections.noMatch" id="cs-tag-filter-empty-mix" hidden>No flows match.</p>
 
@@ -618,6 +621,42 @@
 
     </div>
 
+  </div>
+
+  <!-- ── VIEW: Marketplace (official packs; data from static/marketplace/catalog.json) ── -->
+  <div class="cs-view cs-view--marketplace" id="cs-view-marketplace" aria-hidden="true">
+
+    <div class="cs-sub-header">
+      <p class="cs-breadcrumb">
+        <a href="{{ url_for('main.nomad_studio_page') }}">Nomad Studio</a>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="cs-breadcrumb-current" data-i18n="hub.market.title">Marketplace</span>
+      </p>
+    </div>
+
+    {#- Round Back at the left edge, where the other catalogues keep their filter toggle. -#}
+    <div class="cs-card-zoom cs-market-back">
+      <button class="cs-card-zoom-btn" id="cs-market-back-btn" type="button" aria-label="Back" data-i18n-attr="aria-label:common.back">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span class="cs-mode-tip" data-i18n="common.back">Back</span>
+      </button>
+    </div>
+
+    <div class="cs-market-body">
+      <p class="cs-market-lead" data-i18n="hub.market.lead">Official Nomad Studio packs. Get one on Ko-fi, then drop its .zip here.</p>
+      <div class="cs-market-grid" id="cs-market-grid"></div>
+      {% if marketplace.shop_url %}
+      <p class="cs-market-foot"><a href="{{ marketplace.shop_url }}" target="_blank" rel="noopener" data-i18n="hub.market.shop">See the whole shop on Ko-fi</a></p>
+      {% endif %}
+    </div>
+
+    {#- Side panel: a pack's info, its Ko-fi link and the zip drop (nomad_studio.js initMarketplace). -#}
+    <aside class="cs-market-panel" id="cs-market-panel" hidden aria-live="polite">
+      <button type="button" class="cs-market-panel-close" data-panel-close aria-label="Close" data-i18n-attr="aria-label:hub.market.close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="cs-market-panel-body" id="cs-market-panel-body"></div>
+      <input type="file" id="cs-market-file" accept=".zip" multiple hidden>
+    </aside>
+    <script type="application/json" id="cs-market-data">{{ marketplace | tojson }}</script>
   </div>
 
   <!-- ── VIEW: Session ─────────────────────────────────────────────────────── -->
@@ -757,9 +796,18 @@
     <div class="cs-settings-content" id="cs-settings-content">
       <div class="cs-settings-header">
         <h3 data-i18n="tpl.settings">Settings</h3>
-        <button class="cs-settings-close" id="cs-settings-close" aria-label="Close settings" data-i18n-attr="aria-label:tpl.close_settings">
-          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <span class="cs-settings-header-actions">
+          {#- Bell: open this panel by itself when ComfyUI / LM Studio stop answering (on), or never (off). -#}
+          <button class="cs-settings-close cs-settings-autoopen" id="cs-settings-autoopen" type="button" aria-pressed="true"
+                  aria-label="Open by itself when a service is down" data-i18n-attr="aria-label:tpl.settings_autoopen_on">
+            <svg class="cs-autoopen-on" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <svg class="cs-autoopen-off" viewBox="0 0 24 24"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/></svg>
+            <span class="cs-mode-tip" data-cs-autoopen-tip data-i18n="tpl.settings_autoopen_on">Open by itself when a service is down</span>
+          </button>
+          <button class="cs-settings-close" id="cs-settings-close" aria-label="Close settings" data-i18n-attr="aria-label:tpl.close_settings">
+            <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
       </div>
       <div class="cs-settings-body" id="cs-settings-body">
 

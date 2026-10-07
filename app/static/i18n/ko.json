@@ -103,6 +103,51 @@
       "text": "각 flow는 이미지를 만드는 하나의 방법이며, 이미지는 flow 안에서 생성됩니다. Simple부터 시작하세요: 보고 싶은 장면을 적고 생성을 누르세요.",
       "next": "첫 이미지를 만들면 여기에 필수 flow가 나타납니다. 나머지는 핀을 클릭하면 볼 수 있습니다.",
       "skip": "건너뛰기"
+    },
+    "market": {
+      "getMore": "flow 더 받기",
+      "title": "마켓플레이스",
+      "lead": "Nomad Studio 공식 팩입니다. Ko-fi에서 받은 뒤 .zip을 여기에 놓으세요.",
+      "all": "전체",
+      "create": "Create",
+      "refine": "Refine",
+      "mix": "Mix",
+      "shop": "Ko-fi에서 전체 상점 보기",
+      "installed": "설치됨",
+      "update": "업데이트 있음",
+      "getOnKofi": "Ko-fi에서 받기",
+      "notLocal": "Nomad Studio가 실행 중인 컴퓨터에서 팩을 설치하세요.",
+      "close": "닫기",
+      "cancel": "취소",
+      "review": "설치 준비 완료",
+      "official": "Nomad Studio 공식 팩",
+      "unofficial": "Nomad Studio 공식 팩이 아닙니다. 출처를 신뢰할 때만 설치하세요.",
+      "install": "설치",
+      "installing": "설치 중…",
+      "checking": "확인 중…",
+      "waitTitle": "{name} 기다리는 중",
+      "dropTitle": "팩 .zip을 여기에 놓으세요",
+      "waitText": "다운로드가 끝나면 .zip을 여기로 끌어오거나 선택하세요.",
+      "choose": ".zip 선택",
+      "installedOk": "설치됨: {name}",
+      "goTo": "{tab}(으)로 이동",
+      "unit": {
+        "flows": "flow {n}개",
+        "looks": "룩 {n}개",
+        "styles": "스타일 {n}개",
+        "themes": "테마 {n}개",
+        "packs": "팩 {n}개"
+      },
+      "group": {
+        "bundle": "Studio Pro",
+        "flows": "더 많은 제작·편집 방법",
+        "looks": "사진 룩",
+        "styles": "스타일",
+        "templates": "템플릿 컬렉션"
+      },
+      "details": "자세히",
+      "inside": "구성",
+      "getIt": "받기"
     }
   },
   "who": {
@@ -1695,7 +1740,8 @@
       "sectionEngines": "엔진",
       "sectionFlows": "흐름",
       "sectionOther": "기타",
-      "bundled": "Nomad Studio 기본 포함"
+      "bundled": "Nomad Studio 기본 포함",
+      "official": "Nomad Studio 공식 팩: 상점의 팩과 일치합니다."
     },
     "agents": {
       "navName": "에이전트",
@@ -2428,6 +2474,8 @@
     "essentials_on": "필수 항목만 — 클릭하면 모든 flow 표시",
     "essentials_off": "모든 flow — 클릭하면 필수 항목만 표시",
     "essentials_add": "필수 항목에 추가",
-    "essentials_remove": "필수 항목에서 제거"
+    "essentials_remove": "필수 항목에서 제거",
+    "settings_autoopen_on": "서비스가 응답하지 않으면 자동으로 열기",
+    "settings_autoopen_off": "서비스가 응답하지 않아도 닫아 두기"
   }
 }

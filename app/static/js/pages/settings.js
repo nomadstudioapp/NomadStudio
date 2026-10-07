@@ -1518,8 +1518,13 @@ function t(key, fallback, vars) {
         '</div></div>';
     }).join('');
     reviewEl.hidden = false;
+    // Official = the zip's fingerprint is in the Marketplace catalogue (an
+    // untouched pack from the Nomad Studio shop); anything else gets the warning.
+    const allOfficial = pending.some((x) => x.package) && pending.filter((x) => x.package).every((x) => x.official);
     reviewEl.innerHTML = items +
-      '<p class="settings-field-hint settings-package-unsigned">' + esc(t('settings.packages.unsigned', 'Unofficial package: it is not signed by Nomad Studio. Install it only if you trust where it comes from.')) + '</p>' +
+      (allOfficial
+        ? '<p class="settings-field-hint settings-package-official">' + esc(t('settings.packages.official', 'Official Nomad Studio pack: it matches the one in the shop.')) + '</p>'
+        : '<p class="settings-field-hint settings-package-unsigned">' + esc(t('settings.packages.unsigned', 'Unofficial package: it is not signed by Nomad Studio. Install it only if you trust where it comes from.')) + '</p>') +
       '<div class="settings-backup-actions settings-package-actions">' +
         '<button type="button" class="btn settings-btn-ghost" data-pkg-cancel' + (busy ? ' disabled' : '') + '>' + esc(t('settings.backup.cancel', 'Cancel')) + '</button>' +
         (ok.length ? '<button type="button" class="btn settings-btn-secondary" data-pkg-install' + (busy ? ' disabled' : '') + '>' +
@@ -1599,7 +1604,10 @@ function t(key, fallback, vars) {
         form.append('file', file);
         form.append('lang', lang());
         const res = await api('POST', '/api/packages/inspect', form, true);
-        pending.push({ file: file.name, token: res.token, package: res.package });
+        // A bundle (Studio Pro) answers with one entry per package inside it.
+        (res.packages || [{ token: res.token, package: res.package }]).forEach((x) => {
+          pending.push({ file: file.name, token: x.token, package: x.package, official: !!x.official });
+        });
       } catch (e) {
         pending.push({ file: file.name, error: e.message });
       }

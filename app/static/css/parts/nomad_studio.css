@@ -2827,7 +2827,7 @@
      the heaviest object on screen above a grid of cards. Now it's a capped
      pill with a translucent fill and a hairline edge, and it only gains
      contrast once you're actually in it (see :focus below). */
-  max-width: 420px;
+  max-width: 340px;
   /* Lifted out of the column and into the top bar, centred on the window and
      vertically centred on the breadcrumb row (.cs-sub-header is 45.9px tall,
      this is 31.6px). Fixed rather than moved in the markup because the same
@@ -3136,12 +3136,12 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
 }
 
 /* ─── Marketplace (official packs, nomad_studio.js initMarketplace) ───────
-   Globe: fixed just right of the fixed, centred search pill (max 420px),
+   Globe: fixed just right of the fixed, centred search pill (max 340px),
    same height, so it reads as part of the same bar. */
 .cs-market-btn {
   position: fixed;
   top: 0.45rem;
-  left: calc(50% + min(210px, 50vw) + 0.5rem);
+  left: calc(50% + min(170px, 50vw) + 0.5rem);
   z-index: 12;
   width: 2rem;
   height: 2rem;
@@ -16457,13 +16457,13 @@ body.explore-page-body #album-topbar-toolbar + div {
 }
 
 /* Build: the active-Depot badge sits just right of the search bar, which is
-   fixed and centred in the top bar (.cs-flow-search, max 420px wide) — the
+   fixed and centred in the top bar (.cs-flow-search, max 340px wide) — the
    badge used to be centred too, underneath it. Same top and height as the
    bar so the two line up. */
 .library-page .cs-sub-header .nsc-topbar-center {
   position: fixed;
   top: 0.45rem;
-  left: calc(50% + min(210px, 50vw) + 1rem);
+  left: calc(50% + min(170px, 50vw) + 1rem);
   transform: none;
   height: 2rem;
   z-index: 12;
@@ -16493,8 +16493,13 @@ body.explore-page-body #album-topbar-toolbar + div {
   position: fixed;
   top: 0.45rem;
   height: 2rem;
-  left: calc(50% + min(210px, 50vw) + 1rem);
+  left: calc(50% + min(170px, 50vw) + 1rem);
   z-index: 12;
+}
+/* Create/Refine/Mix: the Marketplace globe takes the slot right of the
+   search, so the badge moves one globe further along. */
+.cs-view:has(.cs-market-btn) .cs-sub-header > .nsc-topbar-depot {
+  left: calc(50% + min(170px, 50vw) + 3.1rem);
 }
 /* Home: next to "What do you want to create today?". */
 .cs-subtitle-row {

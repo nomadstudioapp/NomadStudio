@@ -148,7 +148,8 @@
       "details": "详情",
       "inside": "包含内容",
       "getIt": "获取"
-    }
+    },
+    "sponsor": "支持 Nomad Studio"
   },
   "who": {
     "title": "谁在生成？",

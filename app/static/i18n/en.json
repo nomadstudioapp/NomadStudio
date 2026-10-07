@@ -148,7 +148,8 @@
       "details": "Details",
       "inside": "What's inside",
       "getIt": "Get it"
-    }
+    },
+    "sponsor": "Support Nomad Studio"
   },
   "who": {
     "title": "Who's generating?",

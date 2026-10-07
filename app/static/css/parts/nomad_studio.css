@@ -3138,7 +3138,8 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
 /* ─── Marketplace (official packs, nomad_studio.js initMarketplace) ───────
    Globe: fixed just right of the fixed, centred search pill (max 340px),
    same height, so it reads as part of the same bar. */
-.cs-market-btn {
+.cs-market-btn,
+.cs-sponsor-btn {
   position: fixed;
   top: 0.45rem;
   left: calc(50% + min(170px, 50vw) + 0.5rem);
@@ -3157,20 +3158,34 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
   cursor: pointer;
   transition: color 0.18s ease, box-shadow 0.18s ease;
 }
-.cs-market-btn:hover {
+.cs-market-btn:hover,
+.cs-sponsor-btn:hover {
   color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent) inset, 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
 }
-.cs-market-btn svg {
+.cs-market-btn svg,
+.cs-sponsor-btn svg {
   width: 16px;
   height: 16px;
   stroke: currentColor;
   stroke-width: 1.8;
   fill: none;
 }
-.cs-market-btn:hover .cs-mode-tip {
+.cs-market-btn:hover .cs-mode-tip,
+.cs-sponsor-btn:hover .cs-mode-tip {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Sponsor heart, one slot right of the globe: the Ko-fi page (donations),
+   not the shop. Pink like GitHub's Sponsor button. */
+.cs-sponsor-btn {
+  left: calc(50% + min(170px, 50vw) + 2.9rem);
+  text-decoration: none;
+}
+.cs-sponsor-btn:hover {
+  color: #db61a2;
+  box-shadow: 0 0 0 1px #db61a2 inset, 0 0 14px color-mix(in srgb, #db61a2 45%, transparent);
 }
 
 /* Round Back where the catalogues keep their filter toggle (.cs-filter-toggle). */
@@ -16496,10 +16511,10 @@ body.explore-page-body #album-topbar-toolbar + div {
   left: calc(50% + min(170px, 50vw) + 1rem);
   z-index: 12;
 }
-/* Create/Refine/Mix: the Marketplace globe takes the slot right of the
-   search, so the badge moves one globe further along. */
+/* Create/Refine/Mix: the Marketplace globe and the sponsor heart take the
+   slots right of the search, so the badge moves past both. */
 .cs-view:has(.cs-market-btn) .cs-sub-header > .nsc-topbar-depot {
-  left: calc(50% + min(170px, 50vw) + 3.1rem);
+  left: calc(50% + min(170px, 50vw) + 5.5rem);
 }
 /* Home: next to "What do you want to create today?". */
 .cs-subtitle-row {

@@ -16,6 +16,7 @@ import hashlib
 import random
 import re
 import secrets
+import threading
 import uuid
 from pathlib import Path
 from typing import Any
@@ -166,6 +167,65 @@ def unlock_create(viewer_id: str) -> bool:
         viewer["create_unlocked"] = True
         _save_viewers(data)
     return True
+
+
+# Essentials: the hub's short view (pin next to the filter toggle). Which flows
+# are essential comes from their packages ("essential": true); a profile only
+# stores how it differs from that, so a pack's new essential still shows up
+# unless this person had removed it:
+#   "essentials": {"added": [flow ids], "removed": [flow ids]}
+#   "essentials_only": bool — the pin itself, on unless turned off.
+# Agents, Vanish and "no viewer" get the package defaults and never write.
+_essentials_lock = threading.Lock()
+
+
+def _stores_essentials(viewer: dict[str, Any] | None) -> bool:
+    return bool(viewer) and not viewer.get("is_agent") and not viewer.get("is_vanish")
+
+
+def effective_essentials(viewer: dict[str, Any] | None, flows: list[dict[str, Any]]) -> set[str]:
+    defaults = {f["id"] for f in flows if f.get("essential_default")}
+    if not _stores_essentials(viewer):
+        return defaults
+    own = viewer.get("essentials") or {}
+    return (defaults | set(own.get("added") or [])) - set(own.get("removed") or [])
+
+
+def essentials_only(viewer: dict[str, Any] | None) -> bool:
+    if not _stores_essentials(viewer):
+        return True
+    return bool(viewer.get("essentials_only", True))
+
+
+def set_essential(viewer_id: str, flow_id: str, on: bool, default: bool) -> bool:
+    """Mark or unmark one flow for this profile. `default` is what its package
+    says; matching it just drops the override, so only differences are kept."""
+    with _essentials_lock:
+        data = _ensure_viewers()
+        viewer = next((v for v in data["viewers"] if v["id"] == viewer_id), None)
+        if not _stores_essentials(viewer):
+            return False
+        own = viewer.setdefault("essentials", {})
+        added = [i for i in own.get("added") or [] if i != flow_id]
+        removed = [i for i in own.get("removed") or [] if i != flow_id]
+        if on and not default:
+            added.append(flow_id)
+        elif not on and default:
+            removed.append(flow_id)
+        own["added"], own["removed"] = added, removed
+        _save_viewers(data)
+        return True
+
+
+def set_essentials_only(viewer_id: str, on: bool) -> bool:
+    with _essentials_lock:
+        data = _ensure_viewers()
+        viewer = next((v for v in data["viewers"] if v["id"] == viewer_id), None)
+        if not _stores_essentials(viewer):
+            return False
+        viewer["essentials_only"] = bool(on)
+        _save_viewers(data)
+        return True
 
 
 def get_viewer(viewer_id: str) -> dict[str, Any] | None:

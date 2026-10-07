@@ -101,8 +101,8 @@
     "onboard": {
       "title": "这是一个 flow",
       "text": "每个 flow 都是一种创作图像的方式，图像就在 flow 里面生成。先从 Simple 开始：写下你想看到的画面，然后点击生成。",
-      "next": "生成第一张图像后，其他所有 flow 都会出现在这里。",
-      "skip": "显示所有 flow"
+      "next": "生成第一张图片后，这里会出现精选 flow。点击图钉即可查看其余全部。",
+      "skip": "跳过"
     }
   },
   "who": {
@@ -2424,6 +2424,10 @@
     "load_more": "加载更多",
     "quick_guide_fast_comfyui": "以最快模式启动 ComfyUI 的快速指南（Windows + NVIDIA）。",
     "tip_run_these_commands": "提示：在 ComfyUI 根目录中打开终端运行这些命令。",
-    "nomad_studio_who_is_generating": "Nomad Studio — 谁在生成？"
+    "nomad_studio_who_is_generating": "Nomad Studio — 谁在生成？",
+    "essentials_on": "仅显示精选 — 点击显示全部 flow",
+    "essentials_off": "全部 flow — 点击仅显示精选",
+    "essentials_add": "加入精选",
+    "essentials_remove": "从精选中移除"
   }
 }

@@ -3031,6 +3031,110 @@
   display: none;
 }
 
+/* ─── Essentials (short view of each catalogue) ──────────────────────────
+   The pin sits beside the filter toggle, in a row, so the head of the list
+   makes room for both (html.cs-has-essentials-btn, set by
+   csSyncEssentialsBtn). Filled pin = only Essentials; outline = everything. */
+.cs-filter-toggle {
+  flex-direction: row;
+}
+.cs-has-essentials-btn .cs-tag-filter--sidebar .group-label {
+  padding-left: 86px;
+}
+.cs-essentials-btn.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.cs-essentials-btn.is-active svg {
+  fill: currentColor;
+}
+/* The tooltip of a left-edge button must not run off the screen. */
+.cs-essentials-btn .cs-mode-tip {
+  left: 0;
+  transform: translateY(-3px);
+}
+.cs-essentials-btn:hover .cs-mode-tip {
+  transform: translateY(0);
+}
+
+/* Before nomad_studio.js has sorted the cards, the Essentials view comes from
+   CSS alone, so the full catalogue never flashes on load. Only in a grid that
+   has something pinned; once the script marks it ready its classes rule. */
+html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-card[data-essential="1"]) .cs-card[data-essential="0"],
+html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-card[data-essential="1"]) .cs-card--presets-hub {
+  display: none;
+}
+
+/* Pin on an essential card, left of the complexity bars. Always in the DOM,
+   shown by data-essential, so a right-click toggle is just an attribute. */
+.cs-card-essential {
+  position: absolute;
+  top: 0.75rem;
+  right: 2.2rem;
+  z-index: 2;
+  display: none;
+  color: var(--accent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.cs-card[data-essential="1"] .cs-card-essential {
+  display: block;
+}
+.cs-card-essential svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: currentColor;
+}
+
+/* Right-click / long-press menu on a flow card. */
+.cs-card-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 200px;
+  padding: 4px;
+  background: var(--tooltip-bg, var(--bg-panel));
+  border: 1px solid var(--tooltip-border, var(--line));
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+.cs-card-menu[hidden] {
+  display: none;
+}
+.cs-card-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  color: var(--label-text, var(--text));
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.cs-card-menu-item:hover,
+.cs-card-menu-item:focus-visible {
+  background: var(--bg-toggle);
+  outline: none;
+}
+.cs-card-menu-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+.cs-card-menu-item.is-on svg {
+  fill: currentColor;
+  color: var(--accent);
+}
+
 /* ─── Shared circular icon-button chip ──────────────────────────────────
    Single base for every standalone round corner button: avatar, settings,
    language toggle, history toggle, theme cycle, caption editor tab. All

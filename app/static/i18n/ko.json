@@ -101,8 +101,8 @@
     "onboard": {
       "title": "이것이 flow입니다",
       "text": "각 flow는 이미지를 만드는 하나의 방법이며, 이미지는 flow 안에서 생성됩니다. Simple부터 시작하세요: 보고 싶은 장면을 적고 생성을 누르세요.",
-      "next": "첫 이미지를 만들면 다른 모든 flow가 여기에 나타납니다.",
-      "skip": "모든 flow 보기"
+      "next": "첫 이미지를 만들면 여기에 필수 flow가 나타납니다. 나머지는 핀을 클릭하면 볼 수 있습니다.",
+      "skip": "건너뛰기"
     }
   },
   "who": {
@@ -2424,6 +2424,10 @@
     "load_more": "더 불러오기",
     "quick_guide_fast_comfyui": "ComfyUI를 가장 빠른 모드로 실행하는 빠른 안내(Windows + NVIDIA).",
     "tip_run_these_commands": "팁: ComfyUI 루트 폴더에서 터미널을 열고 이 명령을 실행하세요.",
-    "nomad_studio_who_is_generating": "Nomad Studio — 누가 생성하나요?"
+    "nomad_studio_who_is_generating": "Nomad Studio — 누가 생성하나요?",
+    "essentials_on": "필수 항목만 — 클릭하면 모든 flow 표시",
+    "essentials_off": "모든 flow — 클릭하면 필수 항목만 표시",
+    "essentials_add": "필수 항목에 추가",
+    "essentials_remove": "필수 항목에서 제거"
   }
 }

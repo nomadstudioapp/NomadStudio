@@ -73,6 +73,9 @@ def _load_package_flows(category: str, route_prefix: str) -> list[dict]:
             "group": info.get("group") or "core",
             "preset_meta": definition.get("preset_meta"),
             "package": info.get("package"),
+            # Shown in the hub's short "Essentials" view unless the profile
+            # removed it (viewer_service.effective_essentials).
+            "essential_default": bool(definition.get("essential", False)),
         })
     return flows
 
@@ -112,6 +115,7 @@ def _load_addon_flows(category: str, route_prefix: str) -> list[dict]:
             "group": definition.get("group") or "core",
             "preset_meta": definition.get("preset_meta"),
             "package": f"addon:{addon_flow['addon_id']}",
+            "essential_default": bool(definition.get("essential", False)),
         })
     return flows
 
@@ -160,6 +164,7 @@ def _load_category_flows(category: str, route_prefix: str) -> list[dict]:
             card["complexity"] = flow_data.get("complexity", card["complexity"])
             card["group"] = flow_data.get("group", card["group"])
             card["preset_meta"] = flow_data.get("preset_meta")
+            card["essential_default"] = bool(flow_data.get("essential", False))
         flows.append(card)
     seen = {f["id"] for f in flows}
     flows += [f for f in _load_package_flows(category, route_prefix) if f["id"] not in seen]
@@ -254,6 +259,7 @@ def _load_flows_from_workflows(category: str) -> list[dict]:
             "entry_category": str(meta.get("entry_category", "")),
             "entry_model": str(meta.get("entry_model", "")),
             "group": str(meta.get("group", "core")),
+            "essential_default": bool(meta.get("essential", False)),
         })
         existing_ids.add(flow_id)
     return flows
@@ -364,6 +370,14 @@ def _render_nomad_studio(initial_view: str | None = None):
     create_flows = _load_create_flows()
     refine_flows = _load_refine_flows()
     mix_flows = _load_mix_flows()
+    # Essentials: the package defaults plus this profile's own additions and
+    # removals (right-click on a card); the pin shows only these when on.
+    viewer_id = session.get(_VIEWER_SESSION_KEY)
+    viewer = viewer_service.get_viewer(viewer_id) if viewer_id else None
+    all_flows = create_flows + refine_flows + mix_flows
+    essentials = viewer_service.effective_essentials(viewer, all_flows)
+    for flow in all_flows:
+        flow["essential"] = flow["id"] in essentials
     html = render_template(
         "pages/nomad_studio.html",
         active_page="nomad-studio",
@@ -381,6 +395,7 @@ def _render_nomad_studio(initial_view: str | None = None):
         initial_view=initial_view,
         initial_view_label=_NOMAD_STUDIO_VIEW_LABELS.get(initial_view or ""),
         create_locked=_create_locked(),
+        essentials_only=viewer_service.essentials_only(viewer),
         **_active_viewer_context(),
     )
     # The cards come from installed packages: never serve a cached hub, or

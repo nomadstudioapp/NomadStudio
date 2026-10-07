@@ -1,7 +1,9 @@
 {% extends 'layout/base.html' %}
 
 {% block title %}NomadStudio{% if initial_view_label %} - {{ initial_view_label }}{% endif %}{% endblock %}
-{% block head_prepaint %}{% include 'layout/_ns_prepaint.html' %}{% endblock %}
+{% block head_prepaint %}{% include 'layout/_ns_prepaint.html' %}
+{#- Essentials pin state before first paint, so the short view never flashes the full catalogue. -#}
+<script>document.documentElement.classList.toggle('cs-essentials-only', {{ 'true' if essentials_only else 'false' }});</script>{% endblock %}
 
 {% block body_class %}nomad-studio-page{% endblock %}
 
@@ -242,6 +244,12 @@
       {%- endif -%}
     {%- endmacro -%}
 
+    {#- Essentials pin on a flow card: always rendered, shown by CSS only while
+        the card's data-essential is 1, so a right-click toggle needs no DOM work. -#}
+    {%- macro essential_mark() -%}
+      <span class="cs-card-essential" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></span>
+    {%- endmacro -%}
+
     {#- Real model brand marks (LobeHub Icons mono set), tinted via the card's
         accent color like every other icon — filled shapes, no stroke. -#}
     {%- macro qwen_logo() -%}
@@ -359,11 +367,14 @@
           {% for flow in group.flows if not onboarding or flow.action == 'simple' %}
           <a href="#"
              class="cs-card{% if flow.card_css_modifier %} cs-card--{{ flow.card_css_modifier }}{% endif %}{% if flow.status == 'planned' %} cs-card--planned{% endif %}"
+             data-flow-id="{{ flow.id }}"
+             data-essential="{{ 1 if flow.essential else 0 }}"
+             data-essential-default="{{ 1 if flow.essential_default else 0 }}"
              data-cs-action="{{ flow.action }}"
              data-entry-category="{{ flow.entry_category }}"
              data-entry-model="{{ flow.entry_model }}"
              aria-label="{{ flow.label }}">
-            {{ complexity_icon(flow.complexity) }}
+            {{ complexity_icon(flow.complexity) }}{{ essential_mark() }}
             <div class="cs-card-icon" aria-hidden="true">
               {{ flow_icon(flow.action) }}
             </div>
@@ -384,8 +395,8 @@
             <div class="cs-onboard-bubble">
               <p class="cs-onboard-title" data-i18n="hub.onboard.title">This is a flow</p>
               <p class="cs-onboard-text" data-i18n="hub.onboard.text">Each flow is one way of making images, and inside it is where they get generated. Start with Simple: write what you want to see and press Generate.</p>
-              <p class="cs-onboard-text" data-i18n="hub.onboard.next">When you have your first image, all the other flows will appear here.</p>
-              <button type="button" class="cs-onboard-skip" id="cs-onboard-skip" data-i18n="hub.onboard.skip">Show all flows</button>
+              <p class="cs-onboard-text" data-i18n="hub.onboard.next">When you have your first image, the essential flows will appear here. The rest are one click away on the pin.</p>
+              <button type="button" class="cs-onboard-skip" id="cs-onboard-skip" data-i18n="hub.onboard.skip">Skip</button>
             </div>
           </div>
           {% endif %}
@@ -499,11 +510,14 @@
           {% for flow in group.flows %}
           <a href="#"
              class="cs-card{% if flow.card_css_modifier %} cs-card--{{ flow.card_css_modifier }}{% endif %}{% if flow.status == 'planned' %} cs-card--planned{% endif %}"
+             data-flow-id="{{ flow.id }}"
+             data-essential="{{ 1 if flow.essential else 0 }}"
+             data-essential-default="{{ 1 if flow.essential_default else 0 }}"
              data-cs-refine-action="{{ flow.action }}"
              data-entry-category="{{ flow.entry_category }}"
              data-entry-model="{{ flow.entry_model }}"
              aria-label="{{ flow.label }}">
-            {{ complexity_icon(flow.complexity) }}
+            {{ complexity_icon(flow.complexity) }}{{ essential_mark() }}
             <div class="cs-card-icon" aria-hidden="true">
               {{ refine_icon(flow.action, flow.group) }}
             </div>
@@ -573,11 +587,14 @@
           {% for flow in group.flows %}
           <a href="#"
              class="cs-card{% if flow.card_css_modifier %} cs-card--{{ flow.card_css_modifier }}{% endif %}{% if flow.status == 'planned' %} cs-card--planned{% endif %}"
+             data-flow-id="{{ flow.id }}"
+             data-essential="{{ 1 if flow.essential else 0 }}"
+             data-essential-default="{{ 1 if flow.essential_default else 0 }}"
              data-cs-mix-action="{{ flow.action }}"
              data-entry-category="{{ flow.entry_category }}"
              data-entry-model="{{ flow.entry_model }}"
              aria-label="{{ flow.label }}">
-            {{ complexity_icon(flow.complexity) }}
+            {{ complexity_icon(flow.complexity) }}{{ essential_mark() }}
             <div class="cs-card-icon" aria-hidden="true">
               {{ mix_icon(flow.action) }}
             </div>
@@ -838,6 +855,20 @@
             aria-label="Hide filters" aria-pressed="false" data-i18n-attr="aria-label:tpl.hide_filters">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
       <span class="cs-mode-tip" data-cs-filter-tip data-i18n="tpl.hide_filters">Hide filters</span>
+    </button>
+    {#- Essentials: on = only the pinned flows (filled pin), off = everything. -#}
+    <button class="cs-card-zoom-btn cs-essentials-btn" id="cs-essentials-toggle-btn" type="button"
+            aria-label="Essentials only — click to show all flows" aria-pressed="false" hidden data-i18n-attr="aria-label:tpl.essentials_on">
+      <svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+      <span class="cs-mode-tip" data-cs-essentials-tip data-i18n="tpl.essentials_on">Essentials only — click to show all flows</span>
+    </button>
+  </div>
+
+  {#- Right-click (or long-press) menu on a flow card. -#}
+  <div class="cs-card-menu" id="cs-card-menu" role="menu" hidden>
+    <button type="button" class="cs-card-menu-item" id="cs-card-menu-essential" role="menuitem">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+      <span id="cs-card-menu-essential-label"></span>
     </button>
   </div>
 

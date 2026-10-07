@@ -101,8 +101,8 @@
     "onboard": {
       "title": "Esto es un flow",
       "text": "Cada flow es una forma de crear imágenes, y dentro de él es donde se generan. Empieza por Simple: escribe lo que quieres ver y pulsa Generar.",
-      "next": "Cuando tengas tu primera imagen, aquí aparecerán todos los demás flows.",
-      "skip": "Mostrar todos los flows"
+      "next": "Cuando tengas tu primera imagen, aquí aparecerán los flows esenciales. El resto está a un clic en la chincheta.",
+      "skip": "Saltar"
     }
   },
   "who": {
@@ -2424,6 +2424,10 @@
     "load_more": "Cargar más",
     "quick_guide_fast_comfyui": "Guía rápida para lanzar ComfyUI en su modo más rápido (Windows + NVIDIA).",
     "tip_run_these_commands": "Consejo: ejecuta estos comandos en una terminal dentro de la carpeta raíz de ComfyUI.",
-    "nomad_studio_who_is_generating": "Nomad Studio — ¿Quién genera?"
+    "nomad_studio_who_is_generating": "Nomad Studio — ¿Quién genera?",
+    "essentials_on": "Solo essentials — pulsa para ver todos los flows",
+    "essentials_off": "Todos los flows — pulsa para ver solo los essentials",
+    "essentials_add": "Añadir a Essentials",
+    "essentials_remove": "Quitar de Essentials"
   }
 }

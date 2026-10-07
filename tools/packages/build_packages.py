@@ -291,9 +291,20 @@ def _texts_by_path(flow: dict) -> dict[str, str]:
     return out
 
 
+# Flows the hub shows in its short "Essentials" view by default (the pin next
+# to the filter toggle). Every other flow ships without the field, which the
+# app reads as false; each profile can then add or remove its own.
+ESSENTIAL_FLOWS = {
+    "create.simple", "create.assist",
+    "refine.edit_qwen2_basic", "refine.remove_bg", "refine.upscale_model", "refine.pe_restore",
+}
+
+
 def add_card_texts(flow: dict, table: dict[str, dict[str, str]]) -> dict:
     """Card label and description in every language we have (§7.1). The flat
-    English fields stay for older installs."""
+    English fields stay for older installs. Also marks the ESSENTIAL_FLOWS."""
+    if flow.get("id") in ESSENTIAL_FLOWS:
+        flow["essential"] = True
     def texts(english: str) -> dict[str, str]:
         return {"en": english, **{k: v for k, v in (table.get(english) or {}).items()}}
 

@@ -108,6 +108,33 @@ def unlock_create():
     return jsonify({"ok": viewer_service.unlock_create(viewer_id)})
 
 
+@viewers_bp.post("/api/viewers/me/essentials")
+def set_essential():
+    """Right-click on a hub card: add it to / remove it from this profile's
+    Essentials. `default` is the card's package value (data-essential-default),
+    so only the profile's differences from it get stored."""
+    viewer_id = session.get(SESSION_KEY)
+    body = request.get_json(silent=True) or {}
+    flow_id = str(body.get("flow_id") or "").strip()
+    if not flow_id:
+        return jsonify({"ok": False, "error": "flow_id required"}), 400
+    on = bool(body.get("essential"))
+    if not viewer_id:
+        return jsonify({"ok": False, "essential": on})
+    ok = viewer_service.set_essential(viewer_id, flow_id, on, bool(body.get("default")))
+    return jsonify({"ok": ok, "essential": on})
+
+
+@viewers_bp.post("/api/viewers/me/essentials-mode")
+def set_essentials_mode():
+    """The pin next to the filter toggle: show only Essentials, or everything."""
+    viewer_id = session.get(SESSION_KEY)
+    on = bool((request.get_json(silent=True) or {}).get("on"))
+    if not viewer_id:
+        return jsonify({"ok": False, "on": on})
+    return jsonify({"ok": viewer_service.set_essentials_only(viewer_id, on), "on": on})
+
+
 @viewers_bp.post("/api/viewers/vanish")
 def select_vanish_viewer():
     """Enter (or re-enter) the singleton "Vanish Session" profile — no name,

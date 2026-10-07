@@ -57,6 +57,9 @@
       filterToggleWrap.hidden = !(onSubView && sidebar);
       if (!filterToggleWrap.hidden) csAlignFilterToggle(sidebar);
     }
+    // The Essentials pin rides in the same widget, but only where the view
+    // has essentials (declared further down, hoisted).
+    csSyncEssentialsBtn();
     // Language + History are page-level widgets (siblings of #cs-view-main,
     // not children — nothing else here ever hides them), so they used to
     // float over every sub-view including Session's own recent-sessions
@@ -244,8 +247,9 @@
   // Hidden unless this browser has opened them at least once.
   csApplyFiltersHidden(localStorage.getItem(CS_FILTERS_KEY) !== '0');
 
-  // First visit of a new profile: "Show all flows" under the raccoon unlocks
-  // the whole Create catalogue (same call the first Simple image makes).
+  // First visit of a new profile: "Skip" under the raccoon unlocks Create
+  // (same call the first Simple image makes) — which then opens on its
+  // Essentials view, the rest one click away on the pin.
   var onboardSkip = document.getElementById('cs-onboard-skip');
   if (onboardSkip && !onboardSkip.dataset.bound) {
     onboardSkip.dataset.bound = '1';
@@ -270,6 +274,152 @@
       csApplyFiltersHidden(next);
     });
   }
+
+  /* ── Essentials: the short view of each catalogue ─────────────────────── */
+  // The pin next to the filter toggle shows only the cards whose
+  // data-essential is 1 (their package's default plus this profile's own
+  // right-click changes, viewer_service.effective_essentials). The state is
+  // the profile's (viewers.json), mirrored as a class on <html> that the
+  // template sets before first paint. initTagFilter() does the actual
+  // hiding and listens for 'cs-essentials-changed'.
+  var csEssentials = { only: document.documentElement.classList.contains('cs-essentials-only') };
+  window.csEssentials = csEssentials;
+
+  function csEssT(key, fallback) {
+    var I18N = window.NomadI18n;
+    return I18N && I18N.t ? I18N.t(key, fallback) : fallback;
+  }
+
+  function csEssentialsGrid() {
+    return document.querySelector('.cs-view:not([aria-hidden="true"]) .cs-sub-grid-groups');
+  }
+
+  function csSyncEssentialsBtn() {
+    var btn = document.getElementById('cs-essentials-toggle-btn');
+    // csSyncThemeBtn can call this before the state below is initialised.
+    if (!btn || !csEssentials) return;
+    var grid = csEssentialsGrid();
+    // A catalogue with no essentials at all (Mix, by default) shows
+    // everything, so a pin there would toggle nothing.
+    btn.hidden = !(grid && grid.querySelector('.cs-card[data-flow-id][data-essential="1"]'));
+    // The head of the filter list makes room for the second button.
+    document.documentElement.classList.toggle('cs-has-essentials-btn', !btn.hidden);
+    var key = csEssentials.only ? 'tpl.essentials_on' : 'tpl.essentials_off';
+    var label = csEssentials.only
+      ? csEssT(key, 'Essentials only — click to show all flows')
+      : csEssT(key, 'All flows — click to show only essentials');
+    btn.classList.toggle('is-active', csEssentials.only);
+    btn.setAttribute('aria-pressed', String(csEssentials.only));
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('data-i18n-attr', 'aria-label:' + key);
+    var tip = btn.querySelector('[data-cs-essentials-tip]');
+    if (tip) { tip.setAttribute('data-i18n', key); tip.textContent = label; }
+  }
+
+  function csSetEssentialsOnly(on, persist) {
+    csEssentials.only = on;
+    document.documentElement.classList.toggle('cs-essentials-only', on);
+    csSyncEssentialsBtn();
+    document.dispatchEvent(new CustomEvent('cs-essentials-changed'));
+    if (!persist) return;
+    // Optimistic; the server is the truth, so a failed save puts it back.
+    fetch('/api/viewers/me/essentials-mode', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ on: on })
+    }).then(function (r) { if (!r.ok) throw new Error(r.status); })
+      .catch(function () { csSetEssentialsOnly(!on, false); });
+  }
+  window.csSetEssentialsOnly = csSetEssentialsOnly;
+
+  var essentialsBtn = document.getElementById('cs-essentials-toggle-btn');
+  if (essentialsBtn && !essentialsBtn.dataset.bound) {
+    essentialsBtn.dataset.bound = '1';
+    essentialsBtn.addEventListener('click', function () { csSetEssentialsOnly(!csEssentials.only, true); });
+  }
+  document.addEventListener('nomad-i18n-applied', csSyncEssentialsBtn);
+
+  // Right-click (or a long press on touch screens) on a flow card: add it to
+  // or remove it from this profile's Essentials.
+  (function initCardMenu() {
+    var menu = document.getElementById('cs-card-menu');
+    var item = document.getElementById('cs-card-menu-essential');
+    var itemLabel = document.getElementById('cs-card-menu-essential-label');
+    if (!menu || !item) return;
+    var target = null;
+    var suppressClick = false;
+
+    function close() { menu.hidden = true; target = null; }
+
+    function open(card, x, y) {
+      target = card;
+      var on = card.dataset.essential === '1';
+      itemLabel.textContent = on
+        ? csEssT('tpl.essentials_remove', 'Remove from Essentials')
+        : csEssT('tpl.essentials_add', 'Add to Essentials');
+      item.classList.toggle('is-on', on);
+      menu.hidden = false;
+      var w = menu.offsetWidth, h = menu.offsetHeight;
+      menu.style.left = Math.max(8, Math.min(x, window.innerWidth - w - 8)) + 'px';
+      menu.style.top = Math.max(8, Math.min(y, window.innerHeight - h - 8)) + 'px';
+      item.focus({ preventScroll: true });
+    }
+
+    function cardAt(el) {
+      return el && el.closest ? el.closest('.cs-sub-grid-groups .cs-card[data-flow-id]') : null;
+    }
+
+    document.addEventListener('contextmenu', function (e) {
+      var card = cardAt(e.target);
+      if (!card) { close(); return; }
+      e.preventDefault();
+      open(card, e.clientX, e.clientY);
+    });
+
+    // iOS Safari never fires contextmenu, so a long press opens it there too.
+    var pressTimer = null, pressX = 0, pressY = 0;
+    document.addEventListener('touchstart', function (e) {
+      var card = cardAt(e.target);
+      if (!card || e.touches.length !== 1) return;
+      pressX = e.touches[0].clientX; pressY = e.touches[0].clientY;
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(function () { suppressClick = true; open(card, pressX, pressY); }, 550);
+    }, { passive: true });
+    ['touchend', 'touchcancel'].forEach(function (ev) {
+      document.addEventListener(ev, function () { clearTimeout(pressTimer); }, { passive: true });
+    });
+    document.addEventListener('touchmove', function (e) {
+      var t = e.touches[0];
+      if (t && (Math.abs(t.clientX - pressX) > 10 || Math.abs(t.clientY - pressY) > 10)) clearTimeout(pressTimer);
+    }, { passive: true });
+    // The tap that ended a long press must not also open the flow.
+    document.addEventListener('click', function (e) {
+      if (suppressClick) { suppressClick = false; if (cardAt(e.target)) { e.preventDefault(); e.stopPropagation(); } }
+    }, true);
+
+    item.addEventListener('click', function () {
+      var card = target;
+      close();
+      if (!card) return;
+      var on = card.dataset.essential !== '1';
+      function apply(v) {
+        card.dataset.essential = v ? '1' : '0';
+        csSyncEssentialsBtn();
+        document.dispatchEvent(new CustomEvent('cs-essentials-changed'));
+      }
+      apply(on);
+      fetch('/api/viewers/me/essentials', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flow_id: card.dataset.flowId, essential: on, default: card.dataset.essentialDefault === '1' })
+      }).then(function (r) { if (!r.ok) throw new Error(r.status); })
+        .catch(function () { apply(!on); });
+    });
+
+    document.addEventListener('mousedown', function (e) { if (!menu.hidden && !menu.contains(e.target)) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) close(); });
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    window.addEventListener('popstate', close);
+  })();
 
   /* ── UI mode toggle (Guided / Custom) ─────────────────────────────────── */
   var NS_MODE_KEY = 'ns-ui-mode';
@@ -2768,6 +2918,9 @@
       var cards = Array.prototype.slice.call(grid.querySelectorAll('.cs-card'))
         .filter(function (card) { return !card.classList.contains('cs-card--presets-hub'); });
       if (!cards.length) return;
+      // Those pack cards are "more of the catalogue" too: the Essentials
+      // view hides them, the full view always shows them.
+      var hubCards = Array.prototype.slice.call(grid.querySelectorAll('.cs-card--presets-hub'));
 
       // Collect tags + searchable text per card, and tag frequency across
       // all cards (name/desc used by the free-text search box below).
@@ -2821,16 +2974,37 @@
 
       var clearBtnId = 'cs-tag-filter-clear-' + viewKey;
 
+      // Essentials (see csEssentials above): on, with something pinned in
+      // this catalogue and no search typed — a search always looks through
+      // everything, and a catalogue with nothing pinned shows everything.
+      function viewHasEssentials() {
+        return !!grid.querySelector('.cs-card[data-flow-id][data-essential="1"]');
+      }
+      function essentialsActive() {
+        return !!(window.csEssentials && window.csEssentials.only) && !searchQuery && viewHasEssentials();
+      }
+      function essentialPass(entry) {
+        return !essentialsActive() || entry.card.dataset.essential === '1';
+      }
+
       function renderChips() {
+        // Counts follow what the Essentials view leaves on screen, so the
+        // sidebar shortens with it and never offers a tag that leads to no
+        // cards. The selected tag stays listed even at zero, to be cleared.
+        counts = {};
+        cardTagMap.forEach(function (entry) {
+          if (!essentialPass(entry)) return;
+          entry.tags.forEach(function (t) { counts[t] = (counts[t] || 0) + 1; });
+        });
         // Same nav-item/nav-model-left/models-ready-text classes as the
         // app's own WORKSPACE/MODELS sidebar and Build's category nav —
         // reused as-is so this reads as the same list style everywhere.
-        var html = allTags.map(function (tag) {
+        var html = allTags.filter(function (tag) { return counts[tag] || activeTags.has(tag); }).map(function (tag) {
           var active = activeTags.has(tag);
           return '<button type="button" class="nav-item nav-item-btn nav-item-model' + (active ? ' active' : '') +
             '" data-tag="' + escHtml(tag) + '" aria-pressed="' + active + '">' +
             '<span class="nav-model-left">' + tagIconSvg(tag) + '<span>' + escHtml(tagLabel(tag)) + '</span></span>' +
-            '<span class="models-ready-text">' + counts[tag] + '</span></button>';
+            '<span class="models-ready-text">' + (counts[tag] || 0) + '</span></button>';
         }).join('');
         if (activeTags.size) {
           html += '<button type="button" class="cs-tag-filter-clear" id="' + clearBtnId + '">' +
@@ -2869,42 +3043,53 @@
         });
       }
 
+      function setShown(card, show) {
+        // Cancel any leftover listener/timeout from a previous, interrupted
+        // hide-or-show pass — otherwise a stale transitionend can re-hide a
+        // card right after it fades back in.
+        clearPending(card);
+        if (show) {
+          // Already on screen: leave it be (no fade replay on every pass).
+          if (!card.classList.contains('cs-card--tag-out') && !card.classList.contains('cs-card--tag-hidden')) return;
+          card.classList.remove('cs-card--tag-hidden');
+          // Force reflow so the fade-in transition replays.
+          void card.offsetWidth;
+          card.classList.remove('cs-card--tag-out');
+        } else {
+          if (card.classList.contains('cs-card--tag-hidden')) return;
+          card.classList.add('cs-card--tag-out');
+          var listener = function (ev) {
+            if (ev && ev.target !== card) return;
+            card.classList.add('cs-card--tag-hidden');
+            clearPending(card);
+          };
+          var timeoutId = setTimeout(function () {
+            // Fallback in case transitionend doesn't fire (e.g. reduced motion).
+            if (card.classList.contains('cs-card--tag-out')) card.classList.add('cs-card--tag-hidden');
+            clearPending(card);
+          }, 220);
+          card.addEventListener('transitionend', listener);
+          pending.set(card, { timeoutId: timeoutId, listener: listener });
+        }
+      }
+
       function applyFilter() {
         var visibleCount = 0;
         cardTagMap.forEach(function (entry) {
           var tagMatch = activeTags.size === 0 || entry.tags.some(function (t) { return activeTags.has(t); });
           var searchMatch = !searchQuery || searchTextFor(entry).indexOf(searchQuery) !== -1;
-          var match = tagMatch && searchMatch;
-          var card = entry.card;
-          // Cancel any leftover listener/timeout from a previous, interrupted
-          // hide-or-show pass — otherwise a stale transitionend can re-hide a
-          // card right after it fades back in.
-          clearPending(card);
-          if (match) {
-            visibleCount++;
-            card.classList.remove('cs-card--tag-hidden');
-            // Force reflow so the fade-in transition replays.
-            void card.offsetWidth;
-            card.classList.remove('cs-card--tag-out');
-          } else {
-            card.classList.add('cs-card--tag-out');
-            var listener = function (ev) {
-              if (ev && ev.target !== card) return;
-              card.classList.add('cs-card--tag-hidden');
-              clearPending(card);
-            };
-            var timeoutId = setTimeout(function () {
-              // Fallback in case transitionend doesn't fire (e.g. reduced motion).
-              if (card.classList.contains('cs-card--tag-out')) card.classList.add('cs-card--tag-hidden');
-              clearPending(card);
-            }, 220);
-            card.addEventListener('transitionend', listener);
-            pending.set(card, { timeoutId: timeoutId, listener: listener });
-          }
+          var match = tagMatch && searchMatch && essentialPass(entry);
+          if (match) visibleCount++;
+          setShown(entry.card, match);
         });
+        var shortView = essentialsActive();
+        hubCards.forEach(function (card) { setShown(card, !shortView); });
         updateGroupBlocks();
         if (emptyEl) emptyEl.hidden = visibleCount !== 0;
       }
+
+      // Pin toggled, or a card added to / removed from Essentials.
+      document.addEventListener('cs-essentials-changed', function () { renderChips(); applyFilter(); });
 
       bar.addEventListener('click', function (e) {
         var clearBtn = e.target.closest('#' + clearBtnId);
@@ -2928,7 +3113,11 @@
 
       if (searchInput) {
         searchInput.addEventListener('input', function () {
+          var wasShort = essentialsActive();
           searchQuery = searchInput.value.trim().toLowerCase();
+          // Typing leaves the Essentials view (search looks through
+          // everything) and clearing goes back: the counts follow.
+          if (essentialsActive() !== wasShort) renderChips();
           applyFilter();
         });
       }
@@ -2938,6 +3127,17 @@
       document.addEventListener('nomad-i18n-applied', renderChips);
 
       renderChips();
+      // First pass with no fade: the Essentials view must be there on the
+      // first frame. Until now the html.cs-essentials-only CSS rule covered
+      // it; from here the classes below take over (cs-essentials-ready).
+      if (essentialsActive()) {
+        cardTagMap.forEach(function (entry) {
+          if (!essentialPass(entry)) entry.card.classList.add('cs-card--tag-out', 'cs-card--tag-hidden');
+        });
+        hubCards.forEach(function (card) { card.classList.add('cs-card--tag-out', 'cs-card--tag-hidden'); });
+        updateGroupBlocks();
+      }
+      grid.classList.add('cs-essentials-ready');
     }
 
     if (document.readyState === 'loading') {

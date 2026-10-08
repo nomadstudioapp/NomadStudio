@@ -40,6 +40,7 @@ from app.services.flow_engine import _DISPLAY_KEYS, _PROMPT_KEYS  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from vintage_presets import FAMILIES as VINTAGE_FAMILIES, UI_TEXTS as VINTAGE_UI_TEXTS  # noqa: E402
+import pixel_art_generic  # noqa: E402
 
 DIST = REPO / "dist" / "packages"
 # Packages that ship with the app go in DIST — paths.BUNDLED_PACKAGES_DIR
@@ -2873,12 +2874,14 @@ BACKGROUND_TOOLS_GROUP_OVERRIDES = {fid: "background-tools" for fid in BACKGROUN
 SKIN_DETAILER_FLOWS = ["refine.skin_detailer_klein_4b", "refine.skin_detailer_klein_9b"]
 SKIN_DETAILER_GROUP_OVERRIDES = {fid: "upscale" for fid in SKIN_DETAILER_FLOWS}
 # Style Transfer (re-render in a saved Style's visual language) and Pixel Art
-# (70+ curated style presets) are both "restyle the whole image" tools —
+# (52 curated style presets) are both "restyle the whole image" tools —
 # last 3 of the original 13 core-tagged leftovers, rounding out the Refine
 # packaging work.
 # Style Transfer Klein 4B/9B are rebuilt by hand (_style_transfer_text_flows) —
 # their OPENHIKER flow.json targets nodes the source graph no longer has.
-STYLING_FLOWS = ["refine.pixel_art_klein_9b"]
+# Pixel Art Klein 9B is built by hand (_pixel_art_klein9b_flow) so its
+# presets can be renamed (pixel_art_generic.py, NomadStudio#35).
+STYLING_FLOWS: list[str] = []
 STYLING_GROUP_OVERRIDES = {fid: "styling" for fid in STYLING_FLOWS}
 REFINE_GROUPS_VERSION = "0.1.0"
 
@@ -3172,22 +3175,31 @@ def build_skin_detailer(source: Path, version: str) -> Path:
     )
 
 
+def _pixel_art_klein9b_flow(source: Path) -> dict:
+    """Pixel Art on Klein 9B, straight from the source but with every preset
+    renamed to a plain description (pixel_art_generic.py, NomadStudio#35)."""
+    flow = pixel_art_generic.apply(json.loads(json.dumps(flow_from_source(source, "refine.pixel_art_klein_9b"))))
+    flow["group"] = "styling"
+    flow["description"] = flow["description"].replace("70+ styles", "52 styles")
+    return flow
+
+
 def _pixel_art_qwen2_flow(source: Path) -> dict:
     """Pixel Art, retargeted to the Qwen 2.1 engine — reuses the Klein 9B
-    source's 70+ style presets (10 groups) verbatim, only rewiring
+    presets (52, 10 groups, renamed by pixel_art_generic) verbatim, only rewiring
     adv_key/workflow_file/image_node to the Qwen 2.1 graph's node ids
     (13=TextEncodeQwenImage21, 15=KSampler) instead of Klein 9B's
     (165=CLIPTextEncode, 159=Flux2Scheduler, 154=RandomNoise). Hand-tested
     by the user and confirmed working — unlike Camera Shoot's Qwen 2.1
     attempt, kept as a second engine option alongside Klein 9B rather than
     replacing it, since both are known-good."""
-    flow = json.loads(json.dumps(flow_from_source(source, "refine.pixel_art_klein_9b")))
+    flow = _pixel_art_klein9b_flow(source)
     flow["id"] = "refine.pixel_art_qwen2"
     flow["label"] = "Pixel Art — Qwen 2.1"
     flow["group"] = "styling"
     flow["card_css_modifier"] = "edit-qwen-2511"
-    flow["description"] = "Apply a curated pixel-art visual style to your image using Qwen Image 2.1. 70+ styles in 10 groups."
-    flow["card_desc"] = "70+ curated pixel-art styles, on Qwen Image 2.1."
+    flow["description"] = "Apply a curated pixel-art visual style to your image using Qwen Image 2.1. 52 styles in 10 groups."
+    flow["card_desc"] = "52 curated pixel-art styles, on Qwen Image 2.1."
     flow["card_tags"] = ["Qwen", "2.1", "Pixel Art", "Style"]
     for step in flow.get("steps", []):
         if step.get("type") != "workflow_params":
@@ -3210,10 +3222,10 @@ def _pixel_art_qwen2_flow(source: Path) -> dict:
             "zh": "像素艺术 — Qwen 2.1", "ko": "픽셀 아트 — Qwen 2.1",
         },
         "desc": {
-            "en": "70+ curated pixel-art styles, on Qwen Image 2.1.",
-            "es": "Más de 70 estilos curados de pixel art, en Qwen Image 2.1.",
-            "zh": "70 多种精选像素艺术风格，基于 Qwen Image 2.1。",
-            "ko": "70개 이상의 엄선된 픽셀 아트 스타일, Qwen Image 2.1 기반.",
+            "en": "52 curated pixel-art styles, on Qwen Image 2.1.",
+            "es": "52 estilos curados de pixel art, en Qwen Image 2.1.",
+            "zh": "52 种精选像素艺术风格，基于 Qwen Image 2.1。",
+            "ko": "엄선된 픽셀 아트 스타일 52개, Qwen Image 2.1 기반.",
         },
     }
     return flow
@@ -3970,15 +3982,15 @@ STYLE_TRANSFER_UI_TEXTS = {
     "Prompt preview": {"es": "Vista previa del prompt", "zh": "提示词预览", "ko": "프롬프트 미리보기"},
     _ST_TEXT_DESC["en"]: {k: v for k, v in _ST_TEXT_DESC.items() if k != "en"},
     _ST_REF_DESC["en"]: {k: v for k, v in _ST_REF_DESC.items() if k != "en"},
-    "Apply a curated visual style to your image using Flux 2 Klein 9B. 70+ styles in 10 groups.": {
-        "es": "Aplica a tu imagen un estilo visual curado con Flux 2 Klein 9B. Más de 70 estilos en 10 grupos.",
-        "zh": "使用 Flux 2 Klein 9B 为图像套用精选视觉风格。10 组共 70 多种风格。",
-        "ko": "Flux 2 Klein 9B로 이미지에 엄선된 비주얼 스타일을 적용합니다. 10개 그룹, 70개 이상의 스타일.",
+    "Apply a curated visual style to your image using Flux 2 Klein 9B. 52 styles in 10 groups.": {
+        "es": "Aplica a tu imagen un estilo visual curado con Flux 2 Klein 9B. 52 estilos en 10 grupos.",
+        "zh": "使用 Flux 2 Klein 9B 为图像套用精选视觉风格。10 组共 52 种风格。",
+        "ko": "Flux 2 Klein 9B로 이미지에 엄선된 비주얼 스타일을 적용합니다. 10개 그룹, 52개 스타일.",
     },
-    "Apply a curated pixel-art visual style to your image using Qwen Image 2.1. 70+ styles in 10 groups.": {
-        "es": "Aplica a tu imagen un estilo de pixel art curado con Qwen Image 2.1. Más de 70 estilos en 10 grupos.",
-        "zh": "使用 Qwen Image 2.1 为图像套用精选像素艺术风格。10 组共 70 多种风格。",
-        "ko": "Qwen Image 2.1로 이미지에 엄선된 픽셀 아트 스타일을 적용합니다. 10개 그룹, 70개 이상의 스타일.",
+    "Apply a curated pixel-art visual style to your image using Qwen Image 2.1. 52 styles in 10 groups.": {
+        "es": "Aplica a tu imagen un estilo de pixel art curado con Qwen Image 2.1. 52 estilos en 10 grupos.",
+        "zh": "使用 Qwen Image 2.1 为图像套用精选像素艺术风格。10 组共 52 种风格。",
+        "ko": "Qwen Image 2.1로 이미지에 엄선된 픽셀 아트 스타일을 적용합니다. 10개 그룹, 52개 스타일.",
     },
     "Colors and light only": {"es": "Solo colores y luz", "zh": "仅颜色与光线", "ko": "색과 빛만"},
     "Medium and texture": {"es": "Técnica y textura", "zh": "媒介与质感", "ko": "매체와 질감"},
@@ -4002,26 +4014,26 @@ def build_styling(source: Path, version: str) -> Path:
         name={"en": "Styling", "es": "Estilizado", "zh": "风格化", "ko": "스타일링"},
         summary={
             "en": "Everything style — in Create, write an idea and wrap it in one of your saved Styles (directly or blended by the AI); in Refine, restyle the whole image with one of your saved Styles as text (Klein 9B/4B, Qwen 2.1), "
-                  "with a reference image as the style (Anima, USO, Z-Image), with one of 70+ curated pixel-art "
+                  "with a reference image as the style (Anima, USO, Z-Image), with one of 52 curated pixel-art "
                   "presets (Klein 9B, Qwen Image 2.1), or convert to pixel art locally (no AI) with Pixel Matcher.",
             "es": "Todo lo de estilo — en Create, escribe una idea y envuélvela en uno de tus Estilos guardados (directo o fundido por la IA); en Refine, reestiliza toda la imagen con uno de tus Estilos guardados como texto (Klein 9B/4B, Qwen 2.1), "
-                  "con una imagen de referencia como estilo (Anima, USO, Z-Image), con uno de más de 70 presets "
+                  "con una imagen de referencia como estilo (Anima, USO, Z-Image), con uno de 52 presets "
                   "curados de pixel art (Klein 9B, Qwen Image 2.1), o conviértela a pixel art localmente (sin IA) "
                   "con Pixel Matcher.",
             "zh": "风格相关的一切——在 Create 中写下想法并用已保存的风格包裹（直接或由 AI 融合）；在 Refine 中重新设计整张图像的风格——以已保存的风格作为文本（Klein 9B/4B、Qwen 2.1），以参考图作为风格"
-                  "（Anima、USO、Z-Image），套用 70 多种精选像素艺术预设之一（Klein 9B、Qwen Image 2.1），"
+                  "（Anima、USO、Z-Image），套用 52 种精选像素艺术预设之一（Klein 9B、Qwen Image 2.1），"
                   "或用 Pixel Matcher 在本地（无 AI）转换为像素艺术。",
             "ko": "스타일의 모든 것 — Create에서는 아이디어를 저장된 스타일로 감싸고(직접 또는 AI로 융합), Refine에서는 이미지 전체를 재스타일링 — 저장된 스타일을 텍스트로(Klein 9B/4B, Qwen 2.1), 참조 이미지를 스타일로"
-                  "(Anima, USO, Z-Image), 70개 이상의 엄선된 픽셀 아트 프리셋으로(Klein 9B, Qwen Image 2.1) 적용하거나, "
+                  "(Anima, USO, Z-Image), 엄선된 픽셀 아트 프리셋 52개로(Klein 9B, Qwen Image 2.1) 적용하거나, "
                   "Pixel Matcher로 로컬(AI 없이)에서 픽셀 아트로 변환합니다.",
         },
         flow_ids=STYLING_FLOWS,
         group_overrides=STYLING_GROUP_OVERRIDES,
         hand_authored=[*_create_style_flows(), *_style_transfer_text_flows(), *_style_reference_refine_flows(source),
-                       _pixel_art_qwen2_flow(source)],
+                       _pixel_art_klein9b_flow(source), _pixel_art_qwen2_flow(source)],
         extra_files=addon_files,
         extra_contributes=addon_contributes,
-        extra_texts=STYLE_TRANSFER_UI_TEXTS,
+        extra_texts={**STYLE_TRANSFER_UI_TEXTS, **pixel_art_generic.TEXTS},
         extra_i18n=addon_i18n,
     )
 

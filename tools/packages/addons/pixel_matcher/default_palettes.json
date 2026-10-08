@@ -39,10 +39,10 @@
       ]
     },
     {
-      "id": "builtin-nintendo-gameboy-bgb",
-      "name": "Game Boy",
-      "author": "Nintendo",
-      "source": "https://lospec.com/palette-list/nintendo-gameboy-bgb",
+      "id": "builtin-green-4",
+      "name": "4-Shade Green",
+      "author": "",
+      "source": "",
       "colors": [
         "#081820",
         "#346856",
@@ -51,10 +51,10 @@
       ]
     },
     {
-      "id": "builtin-color-graphics-adapter",
-      "name": "CGA",
-      "author": "IBM",
-      "source": "https://lospec.com/palette-list/color-graphics-adapter",
+      "id": "builtin-early-pc-4",
+      "name": "4-Colour Early PC",
+      "author": "",
+      "source": "",
       "colors": [
         "#000000",
         "#555555",
@@ -75,10 +75,10 @@
       ]
     },
     {
-      "id": "builtin-zx-spectrum",
-      "name": "ZX Spectrum",
-      "author": "Sinclair",
-      "source": "https://lospec.com/palette-list/zx-spectrum",
+      "id": "builtin-8bit-15",
+      "name": "15-Colour 8-bit Computer",
+      "author": "",
+      "source": "",
       "colors": [
         "#000000",
         "#0000d8",
@@ -98,10 +98,10 @@
       ]
     },
     {
-      "id": "builtin-commodore64",
-      "name": "Commodore 64",
-      "author": "Commodore",
-      "source": "https://lospec.com/palette-list/commodore64",
+      "id": "builtin-8bit-16-muted",
+      "name": "16-Colour Muted 8-bit",
+      "author": "",
+      "source": "",
       "colors": [
         "#000000",
         "#626262",
@@ -122,10 +122,10 @@
       ]
     },
     {
-      "id": "builtin-pico-8",
-      "name": "PICO-8",
-      "author": "Lexaloffle",
-      "source": "https://lospec.com/palette-list/pico-8",
+      "id": "builtin-fantasy-16",
+      "name": "16-Colour Fantasy Console",
+      "author": "",
+      "source": "",
       "colors": [
         "#000000",
         "#1d2b53",

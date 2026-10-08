@@ -432,6 +432,13 @@ def _create_locked() -> bool:
     return not viewer_service.is_create_unlocked(viewer)
 
 
+# Same ids as tools/packages/build_packages.py ESSENTIAL_FLOWS.
+_ESSENTIAL_DEFAULTS = frozenset({
+    "create.simple", "create.assist",
+    "refine.edit_qwen2_basic", "refine.remove_bg", "refine.upscale_model", "refine.pe_restore",
+})
+
+
 def _render_nomad_studio(initial_view: str | None = None):
     create_flows = _load_create_flows()
     refine_flows = _load_refine_flows()
@@ -441,6 +448,12 @@ def _render_nomad_studio(initial_view: str | None = None):
     viewer_id = session.get(_VIEWER_SESSION_KEY)
     viewer = viewer_service.get_viewer(viewer_id) if viewer_id else None
     all_flows = create_flows + refine_flows + mix_flows
+    # Packages mark their essential flows ("essential": true, build_packages
+    # ESSENTIAL_FLOWS); a zip built before that field existed still gets the
+    # same defaults from this list, so a pack already sold isn't rebuilt for it.
+    for flow in all_flows:
+        if flow["id"] in _ESSENTIAL_DEFAULTS:
+            flow["essential_default"] = True
     essentials = viewer_service.effective_essentials(viewer, all_flows)
     for flow in all_flows:
         flow["essential"] = flow["id"] in essentials

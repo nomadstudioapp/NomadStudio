@@ -23,16 +23,16 @@
    },
    "cover": "covers/bundle.studio-pro.webp",
    "sha256": [
-    "0260670ed8c3582ff94378ff561fb83d7edaa03b7cfce42350441fd76ecf29be",
-    "f807082759f2fe7f290ec681ed13632e3428f6a2785571099766ae887c009ad2",
-    "79782b85940b5ded1f317bf0afcf6e17399f7846470c741f56f47116a5b851f3",
-    "731f0bfffc94f1e2560a015fc7197957820188dad1cf2006490c5ef7f7257387",
-    "d34c79076b709dcc141271b11bcf780c0105d4995e179710cb777546750e98dd",
-    "9439d63121ab3f8ffe42141e7479256aa2f12b50d32dc155e688cd0401c6d451",
-    "41d83409df727a2b4b4c5e0b09291b9bd7da62a76ed466445c44ed69c8f2b2a6",
-    "f15ed76e9a1b509e26d2f171c2bdca02fee633ed4ef11c25ddc99e74aa21a5ec",
-    "6d3b9be3db1f1a81cf8fa5406450ec975b0143a1b7e4ab86dcbace7212178914",
-    "0c3563842592eca8cbeb985ac38141188e6e65b856bdcc8987a29f1b5795f3b9"
+    "4a6b423942f6af4012c4038e5b74dd437a430507b8c3fff3110215bc62d8cadb",
+    "a3229fc1aca814d8885e0c9a7115ebd19fcc130288f9bf4191d836b1a63381f7",
+    "aff5ae0bb57d2aa3f0bd765ae95a38d9a01e6c89e7e7b79df73dad0d21ecc41a",
+    "1f7ea9aca610c10da074f531416c6a3f7c0f783627f134eaee48d57035bbc56a",
+    "b997db46f0078904d66f7900ed9ace99b7bdb8595a8834e515e7fab52acd101b",
+    "143984c23346b517fdfde721963bf8b44371a583f63ff831dbda88c3e586fe6d",
+    "1533d55d678b44f0ca7d96dfa18bdc61f4852a7233d203c5db20b590e9072bf1",
+    "e5296821ef81e1cb3c10f203cac94e2df94436d4145a966c77b9f7bd63a0c6fa",
+    "decea5d3ec1d27da3c5ea22ee7a01bae39df2522b4832d5ba14cc4d0262a0c4b",
+    "7ac0cb69ab34e9ba7d82d7f3c7af2b21df0a25a5a155fb80d3310aa96bf55969"
    ],
    "name": {
     "en": "Studio Pro",
@@ -71,7 +71,7 @@
    },
    "cover": "covers/nomad.templates-abstract-canvas.webp",
    "sha256": [
-    "e1366e20194a73753ffc157c0dee7e0c4578732bbe0cd02a7d0a1fb636303021"
+    "d899fc89ada8f8bb13262b1371896dccd6a839186d0d62c38a99d7a861336716"
    ],
    "name": {
     "en": "Abstract Canvas",
@@ -79,7 +79,7 @@
     "zh": "抽象画布",
     "ko": "추상 캔버스"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -219,7 +219,7 @@
    },
    "cover": "covers/nomad.templates-arcana-tarot.webp",
    "sha256": [
-    "68dcf71cc3c76cdaa7fe89d2f9634b08ef06764aa81ab28cf2702bc91465ea85"
+    "d30c10405e0a4ff1ef942b776a0a274d6501eccd5bd26cefa7e5e298e2e0f9d2"
    ],
    "name": {
     "en": "Arcana",
@@ -227,7 +227,7 @@
     "zh": "奥秘塔罗",
     "ko": "아르카나"
    },
-   "version": "0.1.1",
+   "version": "0.1.2",
    "inside": {
     "type": "themes",
     "items": [
@@ -703,6 +703,522 @@
    }
   },
   {
+   "id": "nomad.templates-cinematic",
+   "kind": "templates",
+   "tabs": [
+    "create"
+   ],
+   "kofi_url": "https://ko-fi.com/s/8b36aa8ba0",
+   "contents": {
+    "n": 24,
+    "unit": "themes"
+   },
+   "description": {
+    "en": "Photorealistic production stills across film and TV genres.",
+    "es": "Fotogramas fotorrealistas de rodaje de todos los géneros de cine y series.",
+    "zh": "涵盖各类影视题材的写实剧照。",
+    "ko": "영화와 드라마 장르를 아우르는 사실적인 촬영 스틸."
+   },
+   "cover": "covers/nomad.templates-cinematic.webp",
+   "sha256": [
+    "118344fe65162af3f35e839638704e743a422b946da6813e61412184ff99afa0"
+   ],
+   "name": {
+    "en": "Cinematic",
+    "es": "Cinematográfico",
+    "zh": "电影感",
+    "ko": "시네마틱"
+   },
+   "version": "0.1.2",
+   "inside": {
+    "type": "themes",
+    "items": [
+     {
+      "en": "1920s Flapper",
+      "es": "Flapper de los años 20",
+      "zh": "1920年代摩登女郎",
+      "ko": "1920년대 플래퍼"
+     },
+     {
+      "en": "90s Smalltown",
+      "es": "Pueblo de los 90",
+      "zh": "90年代小镇",
+      "ko": "90년대 작은 마을"
+     },
+     {
+      "en": "Cyberpunk Hacker",
+      "es": "Hacker cyberpunk",
+      "zh": "赛博朋克黑客",
+      "ko": "사이버펑크 해커"
+     },
+     {
+      "en": "Desert Nomad",
+      "es": "Nómada del desierto",
+      "zh": "沙漠游牧者",
+      "ko": "사막의 유목민"
+     },
+     {
+      "en": "Fantasy Ranger",
+      "es": "Explorador de fantasía",
+      "zh": "奇幻游侠",
+      "ko": "판타지 레인저"
+     },
+     {
+      "en": "Fantasy Sorceress",
+      "es": "Hechicera de fantasía",
+      "zh": "奇幻女巫师",
+      "ko": "판타지 마법사"
+     },
+     {
+      "en": "Gothic Moor",
+      "es": "Páramo gótico",
+      "zh": "哥特荒原",
+      "ko": "고딕 황야"
+     },
+     {
+      "en": "Highland Romance",
+      "es": "Romance en las Highlands",
+      "zh": "高地浪漫",
+      "ko": "하이랜드 로맨스"
+     },
+     {
+      "en": "Jungle Explorer",
+      "es": "Explorador de la jungla",
+      "zh": "丛林探险家",
+      "ko": "정글 탐험가"
+     },
+     {
+      "en": "Medieval Knight",
+      "es": "Caballero medieval",
+      "zh": "中世纪骑士",
+      "ko": "중세 기사"
+     },
+     {
+      "en": "Medieval Queen",
+      "es": "Reina medieval",
+      "zh": "中世纪女王",
+      "ko": "중세 여왕"
+     },
+     {
+      "en": "Noir Detective",
+      "es": "Detective noir",
+      "zh": "黑色侦探",
+      "ko": "누아르 탐정"
+     },
+     {
+      "en": "Noir Femme Fatale",
+      "es": "Femme fatale noir",
+      "zh": "黑色蛇蝎美人",
+      "ko": "누아르 팜파탈"
+     },
+     {
+      "en": "Pirate Captain",
+      "es": "Capitán pirata",
+      "zh": "海盗船长",
+      "ko": "해적 선장"
+     },
+     {
+      "en": "Post-Apocalyptic Survivor",
+      "es": "Superviviente postapocalíptico",
+      "zh": "末日幸存者",
+      "ko": "포스트 아포칼립스 생존자"
+     },
+     {
+      "en": "Regency Ball",
+      "es": "Baile de la Regencia",
+      "zh": "摄政时期舞会",
+      "ko": "리젠시 무도회"
+     },
+     {
+      "en": "Samurai at Dusk",
+      "es": "Samurái al anochecer",
+      "zh": "黄昏武士",
+      "ko": "황혼의 사무라이"
+     },
+     {
+      "en": "Sci-Fi Spacer",
+      "es": "Astronauta de ciencia ficción",
+      "zh": "科幻太空人",
+      "ko": "SF 우주인"
+     },
+     {
+      "en": "70s Spy",
+      "es": "Espía de los 70",
+      "zh": "70年代间谍",
+      "ko": "70년대 스파이"
+     },
+     {
+      "en": "Submarine Officer",
+      "es": "Oficial de submarino",
+      "zh": "潜艇军官",
+      "ko": "잠수함 장교"
+     },
+     {
+      "en": "Viking Shieldmaiden",
+      "es": "Escudera vikinga",
+      "zh": "维京盾女",
+      "ko": "바이킹 방패 처녀"
+     },
+     {
+      "en": "Western Frontierwoman",
+      "es": "Pionera del Oeste",
+      "zh": "西部拓荒女性",
+      "ko": "서부 개척 여성"
+     },
+     {
+      "en": "Western Gunslinger",
+      "es": "Pistolero del Oeste",
+      "zh": "西部枪手",
+      "ko": "서부 총잡이"
+     },
+     {
+      "en": "WWII Resistance",
+      "es": "Resistencia en la 2.ª Guerra Mundial",
+      "zh": "二战抵抗运动",
+      "ko": "2차 대전 레지스탕스"
+     }
+    ]
+   }
+  },
+  {
+   "id": "nomad.templates-creature-kingdom",
+   "kind": "templates",
+   "tabs": [
+    "create"
+   ],
+   "kofi_url": "https://ko-fi.com/s/d9ed77ed83",
+   "contents": {
+    "n": 25,
+    "unit": "themes"
+   },
+   "description": {
+    "en": "Animals real and imagined: wildlife photography, cute 3D characters, stickers, sketches and logos.",
+    "es": "Animales reales e imaginarios: fotografía de fauna, personajes 3D adorables, pegatinas, bocetos y logotipos.",
+    "zh": "真实与想象的动物：野生动物摄影、可爱 3D 角色、贴纸、素描与标志。",
+    "ko": "실제와 상상의 동물: 야생동물 사진, 귀여운 3D 캐릭터, 스티커, 스케치, 로고."
+   },
+   "cover": "covers/nomad.templates-creature-kingdom.webp",
+   "sha256": [
+    "a791751935912eb4ce55ddb9a02de33db523bebeb098775d28232fe3a455d6d2"
+   ],
+   "name": {
+    "en": "Creature Kingdom",
+    "es": "Reino animal",
+    "zh": "生灵王国",
+    "ko": "크리처 킹덤"
+   },
+   "version": "0.1.1",
+   "inside": {
+    "type": "themes",
+    "items": [
+     {
+      "en": "Animal Athletes",
+      "es": "Animales deportistas",
+      "zh": "动物运动员",
+      "ko": "동물 운동선수"
+     },
+     {
+      "en": "Storybook Animal Characters",
+      "es": "Personajes animales de cuento",
+      "zh": "童话动物角色",
+      "ko": "동화 속 동물 캐릭터"
+     },
+     {
+      "en": "Cozy 3D Animals",
+      "es": "Animales 3D acogedores",
+      "zh": "温馨 3D 动物",
+      "ko": "포근한 3D 동물"
+     },
+     {
+      "en": "Animal Emblems",
+      "es": "Emblemas animales",
+      "zh": "动物徽标",
+      "ko": "동물 엠블럼"
+     },
+     {
+      "en": "Animal Print Patterns",
+      "es": "Estampados animales",
+      "zh": "动物纹样",
+      "ko": "애니멀 프린트 패턴"
+     },
+     {
+      "en": "Wildlife in a Bottle",
+      "es": "Fauna en una botella",
+      "zh": "瓶中生灵",
+      "ko": "병 속의 야생"
+     },
+     {
+      "en": "Animals at Rest",
+      "es": "Animales durmiendo",
+      "zh": "安睡的动物",
+      "ko": "잠든 동물"
+     },
+     {
+      "en": "Animal Silhouette Tees",
+      "es": "Camisetas con siluetas animales",
+      "zh": "动物剪影T恤",
+      "ko": "동물 실루엣 티셔츠"
+     },
+     {
+      "en": "Ballpoint Sketches",
+      "es": "Bocetos a bolígrafo",
+      "zh": "圆珠笔素描",
+      "ko": "볼펜 스케치"
+     },
+     {
+      "en": "Animal Character Portraits",
+      "es": "Retratos con carácter animal",
+      "zh": "动物性格肖像",
+      "ko": "동물 캐릭터 초상"
+     },
+     {
+      "en": "Tiny Cubs",
+      "es": "Cachorros diminutos",
+      "zh": "迷你幼崽",
+      "ko": "아기 동물"
+     },
+     {
+      "en": "Wild Encounters",
+      "es": "Encuentros salvajes",
+      "zh": "野外邂逅",
+      "ko": "야생의 만남"
+     },
+     {
+      "en": "Graphite Animal Studies",
+      "es": "Estudios de animales a grafito",
+      "zh": "石墨动物习作",
+      "ko": "흑연 동물 습작"
+     },
+     {
+      "en": "Kawaii Animal Stickers",
+      "es": "Pegatinas de animales kawaii",
+      "zh": "可爱动物贴纸",
+      "ko": "귀여운 동물 스티커"
+     },
+     {
+      "en": "Cartoon Animals with Quotes",
+      "es": "Animales de dibujos con frases",
+      "zh": "卡通动物语录",
+      "ko": "문구가 있는 만화 동물"
+     },
+     {
+      "en": "Party Animal Invitations",
+      "es": "Invitaciones con animales",
+      "zh": "动物派对请柬",
+      "ko": "동물 파티 초대장"
+     },
+     {
+      "en": "Sleepy Baby Animals",
+      "es": "Bebés animales dormidos",
+      "zh": "熟睡的动物宝宝",
+      "ko": "잠든 아기 동물"
+     },
+     {
+      "en": "Dogs in Style",
+      "es": "Perros con estilo",
+      "zh": "型格狗狗",
+      "ko": "스타일리시한 강아지"
+     },
+     {
+      "en": "Epic Wildlife",
+      "es": "Fauna épica",
+      "zh": "史诗野生动物",
+      "ko": "장대한 야생동물"
+     },
+     {
+      "en": "Animal Sticker Sheets",
+      "es": "Láminas de pegatinas animales",
+      "zh": "动物贴纸页",
+      "ko": "동물 스티커 시트"
+     },
+     {
+      "en": "Sketchy Cartoon Animals",
+      "es": "Animales de dibujo a trazo suelto",
+      "zh": "手绘卡通动物",
+      "ko": "스케치풍 만화 동물"
+     },
+     {
+      "en": "Mystical Beings",
+      "es": "Seres místicos",
+      "zh": "神秘生灵",
+      "ko": "신비로운 존재"
+     },
+     {
+      "en": "Tiny Animals in Hands",
+      "es": "Animalitos en las manos",
+      "zh": "掌心小动物",
+      "ko": "손 위의 작은 동물"
+     },
+     {
+      "en": "Neon Baby Animals",
+      "es": "Bebés animales de neón",
+      "zh": "霓虹动物宝宝",
+      "ko": "네온 아기 동물"
+     },
+     {
+      "en": "Intense Gaze Portraits",
+      "es": "Retratos de mirada intensa",
+      "zh": "深邃目光肖像",
+      "ko": "강렬한 눈빛 초상"
+     }
+    ]
+   }
+  },
+  {
+   "id": "nomad.templates-flat-and-vector",
+   "kind": "templates",
+   "tabs": [
+    "create"
+   ],
+   "kofi_url": "https://ko-fi.com/s/f6e6d073a4",
+   "contents": {
+    "n": 20,
+    "unit": "themes"
+   },
+   "description": {
+    "en": "Clean vector looks: logos, icons, clipart, stickers, T-shirt graphics and product renders.",
+    "es": "Estética vectorial limpia: logotipos, iconos, clipart, pegatinas, gráficos para camisetas y renders de producto.",
+    "zh": "干净的矢量风格：标志、图标、剪贴画、贴纸、T恤图案与产品渲染。",
+    "ko": "깔끔한 벡터 스타일: 로고, 아이콘, 클립아트, 스티커, 티셔츠 그래픽, 제품 렌더."
+   },
+   "cover": "covers/nomad.templates-flat-and-vector.webp",
+   "sha256": [
+    "0b9fa4839671d70e8138790a60b600de3b1c32aefce2f92cfc826c9647b6635e"
+   ],
+   "name": {
+    "en": "Flat & Vector",
+    "es": "Plano y vectorial",
+    "zh": "扁平与矢量",
+    "ko": "플랫 & 벡터"
+   },
+   "version": "0.1.1",
+   "inside": {
+    "type": "themes",
+    "items": [
+     {
+      "en": "Minimal Emblem Logos",
+      "es": "Logotipos emblema minimalistas",
+      "zh": "极简徽标",
+      "ko": "미니멀 엠블럼 로고"
+     },
+     {
+      "en": "Holographic Icons",
+      "es": "Iconos holográficos",
+      "zh": "全息图标",
+      "ko": "홀로그램 아이콘"
+     },
+     {
+      "en": "Character Caricatures",
+      "es": "Caricaturas de personajes",
+      "zh": "角色漫画像",
+      "ko": "캐릭터 캐리커처"
+     },
+     {
+      "en": "Storybook Clipart Characters",
+      "es": "Personajes clipart de cuento",
+      "zh": "童话剪贴画角色",
+      "ko": "동화 클립아트 캐릭터"
+     },
+     {
+      "en": "Flat Vector Scenes",
+      "es": "Escenas vectoriales planas",
+      "zh": "扁平矢量场景",
+      "ko": "플랫 벡터 장면"
+     },
+     {
+      "en": "Fashion Vector Illustrations",
+      "es": "Ilustraciones vectoriales de moda",
+      "zh": "时尚矢量插画",
+      "ko": "패션 벡터 일러스트"
+     },
+     {
+      "en": "Nursery Watercolors",
+      "es": "Acuarelas infantiles",
+      "zh": "婴儿房水彩",
+      "ko": "아기방 수채화"
+     },
+     {
+      "en": "Family Moments Stickers",
+      "es": "Pegatinas de momentos en familia",
+      "zh": "家庭时光贴纸",
+      "ko": "가족의 순간 스티커"
+     },
+     {
+      "en": "T-Shirt Design Mockups",
+      "es": "Maquetas de diseño de camisetas",
+      "zh": "T恤设计样机",
+      "ko": "티셔츠 디자인 목업"
+     },
+     {
+      "en": "Modern Flat Graphics",
+      "es": "Gráficos planos modernos",
+      "zh": "现代扁平图形",
+      "ko": "모던 플랫 그래픽"
+     },
+     {
+      "en": "Blush Watercolor Animals",
+      "es": "Animales en acuarela rosa",
+      "zh": "粉调水彩动物",
+      "ko": "핑크 수채 동물"
+     },
+     {
+      "en": "Retro T-Shirt Graphics",
+      "es": "Gráficos retro para camisetas",
+      "zh": "复古T恤图案",
+      "ko": "레트로 티셔츠 그래픽"
+     },
+     {
+      "en": "Brand Mockup Renders",
+      "es": "Renders de maqueta de marca",
+      "zh": "品牌样机渲染",
+      "ko": "브랜드 목업 렌더"
+     },
+     {
+      "en": "Vector Figure Art",
+      "es": "Figuras vectoriales",
+      "zh": "矢量人物艺术",
+      "ko": "벡터 인물 아트"
+     },
+     {
+      "en": "Styled Object Illustrations",
+      "es": "Ilustraciones de objetos",
+      "zh": "风格化物件插画",
+      "ko": "스타일 오브젝트 일러스트"
+     },
+     {
+      "en": "Minimal Product Renders",
+      "es": "Renders de producto minimalistas",
+      "zh": "极简产品渲染",
+      "ko": "미니멀 제품 렌더"
+     },
+     {
+      "en": "App Icon Sets",
+      "es": "Conjuntos de iconos de app",
+      "zh": "应用图标集",
+      "ko": "앱 아이콘 세트"
+     },
+     {
+      "en": "Gradient Logo Effects",
+      "es": "Efectos de logotipo con degradado",
+      "zh": "渐变标志效果",
+      "ko": "그라데이션 로고 효과"
+     },
+     {
+      "en": "Bold Lettering Logos",
+      "es": "Logotipos de letras audaces",
+      "zh": "醒目字母标志",
+      "ko": "굵은 레터링 로고"
+     },
+     {
+      "en": "Ornamental Vector Art",
+      "es": "Arte vectorial ornamental",
+      "zh": "装饰矢量艺术",
+      "ko": "장식 벡터 아트"
+     }
+    ]
+   }
+  },
+  {
    "id": "nomad.templates-imperia-roman",
    "kind": "templates",
    "tabs": [
@@ -721,7 +1237,7 @@
    },
    "cover": "covers/nomad.templates-imperia-roman.webp",
    "sha256": [
-    "fe5857c403df4eea70218582c64fd8d32fb8c473e79e8e0f8576e21c0f16172a"
+    "132074787b306df9f27621e8ba4f05e447f108dcddfb6e931400c44e8b04acb1"
    ],
    "name": {
     "en": "Imperia",
@@ -729,7 +1245,7 @@
     "zh": "帝国",
     "ko": "임페리아"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -755,6 +1271,392 @@
    }
   },
   {
+   "id": "nomad.templates-interiors",
+   "kind": "templates",
+   "tabs": [
+    "create"
+   ],
+   "kofi_url": "https://ko-fi.com/s/12c48dc0e6",
+   "contents": {
+    "n": 20,
+    "unit": "themes"
+   },
+   "description": {
+    "en": "Cinematic interior spaces, from cozy living rooms to spaceships, shot like a design magazine.",
+    "es": "Espacios interiores cinematográficos, del salón acogedor a la nave espacial, fotografiados como en una revista de diseño.",
+    "zh": "电影感的室内空间，从温馨客厅到太空飞船，拍得像设计杂志。",
+    "ko": "아늑한 거실부터 우주선까지, 디자인 잡지처럼 촬영한 시네마틱 실내 공간."
+   },
+   "cover": "covers/nomad.templates-interiors.webp",
+   "sha256": [
+    "a356af6d45035b269c3f030852c556e754c256fcd12408a9e3357dcaed7dacc4"
+   ],
+   "name": {
+    "en": "Interiors",
+    "es": "Interiores",
+    "zh": "室内空间",
+    "ko": "인테리어"
+   },
+   "version": "0.1.1",
+   "inside": {
+    "type": "themes",
+    "items": [
+     {
+      "en": "Scandinavian Living Room",
+      "es": "Salón escandinavo",
+      "zh": "北欧风客厅",
+      "ko": "스칸디나비아 거실"
+     },
+     {
+      "en": "Japandi Bedroom",
+      "es": "Dormitorio japandi",
+      "zh": "日式北欧风卧室",
+      "ko": "재팬디 침실"
+     },
+     {
+      "en": "Industrial Loft",
+      "es": "Loft industrial",
+      "zh": "工业风阁楼",
+      "ko": "인더스트리얼 로프트"
+     },
+     {
+      "en": "Mid-Century Living Room",
+      "es": "Salón mid-century",
+      "zh": "中世纪现代风客厅",
+      "ko": "미드센추리 거실"
+     },
+     {
+      "en": "Bohemian Lounge",
+      "es": "Salón bohemio",
+      "zh": "波西米亚休息室",
+      "ko": "보헤미안 라운지"
+     },
+     {
+      "en": "Luxury Penthouse",
+      "es": "Ático de lujo",
+      "zh": "豪华顶层公寓",
+      "ko": "럭셔리 펜트하우스"
+     },
+     {
+      "en": "Minimalist White Interior",
+      "es": "Interior blanco minimalista",
+      "zh": "极简白色室内",
+      "ko": "미니멀 화이트 인테리어"
+     },
+     {
+      "en": "Rustic Farmhouse Kitchen",
+      "es": "Cocina rústica de granja",
+      "zh": "乡村农舍厨房",
+      "ko": "시골 농가 주방"
+     },
+     {
+      "en": "Art Deco Lounge",
+      "es": "Salón art déco",
+      "zh": "装饰艺术风休息室",
+      "ko": "아르데코 라운지"
+     },
+     {
+      "en": "Noir Apartment",
+      "es": "Apartamento noir",
+      "zh": "黑色电影风公寓",
+      "ko": "누아르 아파트"
+     },
+     {
+      "en": "Cozy Log Cabin",
+      "es": "Cabaña de troncos acogedora",
+      "zh": "温馨小木屋",
+      "ko": "아늑한 통나무집"
+     },
+     {
+      "en": "Grand Library",
+      "es": "Gran biblioteca",
+      "zh": "宏伟图书馆",
+      "ko": "웅장한 도서관"
+     },
+     {
+      "en": "Rainy Corner Cafe",
+      "es": "Café de esquina con lluvia",
+      "zh": "雨天街角咖啡馆",
+      "ko": "비 오는 모퉁이 카페"
+     },
+     {
+      "en": "Ornate Theater",
+      "es": "Teatro ornamentado",
+      "zh": "华丽剧院",
+      "ko": "화려한 극장"
+     },
+     {
+      "en": "Grand Ballroom",
+      "es": "Gran salón de baile",
+      "zh": "宏伟舞厅",
+      "ko": "웅장한 무도회장"
+     },
+     {
+      "en": "Cyberpunk Apartment",
+      "es": "Apartamento cyberpunk",
+      "zh": "赛博朋克公寓",
+      "ko": "사이버펑크 아파트"
+     },
+     {
+      "en": "Spaceship Interior",
+      "es": "Interior de nave espacial",
+      "zh": "飞船内部",
+      "ko": "우주선 내부"
+     },
+     {
+      "en": "Victorian Study",
+      "es": "Despacho victoriano",
+      "zh": "维多利亚式书房",
+      "ko": "빅토리아풍 서재"
+     },
+     {
+      "en": "Glasshouse Conservatory",
+      "es": "Invernadero de cristal",
+      "zh": "玻璃温室",
+      "ko": "유리 온실"
+     },
+     {
+      "en": "Artist's Studio",
+      "es": "Estudio de artista",
+      "zh": "艺术家工作室",
+      "ko": "화가의 작업실"
+     }
+    ]
+   }
+  },
+  {
+   "id": "nomad.templates-lifelike-portraits",
+   "kind": "templates",
+   "tabs": [
+    "create"
+   ],
+   "kofi_url": "https://ko-fi.com/s/25ff898c1f",
+   "contents": {
+    "n": 33,
+    "unit": "themes"
+   },
+   "description": {
+    "en": "Photoreal portraits and headshots: studio, corporate, family, selfies, fashion and character portraits.",
+    "es": "Retratos fotorrealistas: de estudio, corporativos, familiares, selfies, de moda y de personaje.",
+    "zh": "逼真人像与头像：棚拍、商务、家庭、自拍、时尚与角色人像。",
+    "ko": "사실적인 인물 사진: 스튜디오, 비즈니스, 가족, 셀피, 패션, 캐릭터 초상."
+   },
+   "cover": "covers/nomad.templates-lifelike-portraits.webp",
+   "sha256": [
+    "dd98910be35c7cf0c2ddcb001f2478281c2c1f7b50406f37891ad1d5cfa39d74"
+   ],
+   "name": {
+    "en": "Lifelike Portraits",
+    "es": "Retratos realistas",
+    "zh": "逼真人像",
+    "ko": "실사 인물 사진"
+   },
+   "version": "0.1.1",
+   "inside": {
+    "type": "themes",
+    "items": [
+     {
+      "en": "Named Character Portraits",
+      "es": "Retratos de personajes con nombre",
+      "zh": "具名角色人像",
+      "ko": "이름 있는 인물 초상"
+     },
+     {
+      "en": "Studio Fashion Portraits",
+      "es": "Retratos de moda en estudio",
+      "zh": "棚拍时尚人像",
+      "ko": "스튜디오 패션 인물"
+     },
+     {
+      "en": "Business Suit Portraits",
+      "es": "Retratos con traje",
+      "zh": "西装商务人像",
+      "ko": "정장 비즈니스 인물"
+     },
+     {
+      "en": "Business Profile Photos",
+      "es": "Fotos de perfil profesional",
+      "zh": "商务形象照",
+      "ko": "비즈니스 프로필 사진"
+     },
+     {
+      "en": "Neon Studio Portraits",
+      "es": "Retratos de estudio con neón",
+      "zh": "霓虹棚拍人像",
+      "ko": "네온 스튜디오 인물"
+     },
+     {
+      "en": "Monochrome Color Portraits",
+      "es": "Retratos en un solo color",
+      "zh": "单色调人像",
+      "ko": "단색 컬러 인물"
+     },
+     {
+      "en": "Executive Portraits",
+      "es": "Retratos ejecutivos",
+      "zh": "高管人像",
+      "ko": "임원 인물 사진"
+     },
+     {
+      "en": "Noir Gazes",
+      "es": "Miradas noir",
+      "zh": "黑色凝视",
+      "ko": "누아르의 시선"
+     },
+     {
+      "en": "Character Studies",
+      "es": "Estudios de personaje",
+      "zh": "人物研究",
+      "ko": "인물 연구"
+     },
+     {
+      "en": "Skyline Office Portraits",
+      "es": "Retratos en oficina con vistas",
+      "zh": "城市景观办公室人像",
+      "ko": "스카이라인 오피스 인물"
+     },
+     {
+      "en": "Colorful Selfies",
+      "es": "Selfies coloridos",
+      "zh": "多彩自拍",
+      "ko": "컬러풀 셀피"
+     },
+     {
+      "en": "Cinematic Fashion Portraits",
+      "es": "Retratos de moda cinematográficos",
+      "zh": "电影感时尚人像",
+      "ko": "시네마틱 패션 인물"
+     },
+     {
+      "en": "Golden Light Portraits",
+      "es": "Retratos con luz dorada",
+      "zh": "金色光线人像",
+      "ko": "황금빛 인물 사진"
+     },
+     {
+      "en": "Tailored Executive Portraits",
+      "es": "Retratos ejecutivos a medida",
+      "zh": "定制西装高管人像",
+      "ko": "맞춤 정장 임원 인물"
+     },
+     {
+      "en": "Colorful Sketch Art",
+      "es": "Arte de boceto colorido",
+      "zh": "彩色速写艺术",
+      "ko": "컬러 스케치 아트"
+     },
+     {
+      "en": "Steampunk Characters",
+      "es": "Personajes steampunk",
+      "zh": "蒸汽朋克角色",
+      "ko": "스팀펑크 캐릭터"
+     },
+     {
+      "en": "Craft & Character",
+      "es": "Oficio y carácter",
+      "zh": "匠心与人物",
+      "ko": "장인과 인물"
+     },
+     {
+      "en": "Gothic Portraits",
+      "es": "Retratos góticos",
+      "zh": "哥特人像",
+      "ko": "고딕 인물 사진"
+     },
+     {
+      "en": "Generations",
+      "es": "Generaciones",
+      "zh": "几代同堂",
+      "ko": "세대"
+     },
+     {
+      "en": "Trusted Professional Portraits",
+      "es": "Retratos profesionales de confianza",
+      "zh": "值得信赖的职业人像",
+      "ko": "신뢰감 있는 전문가 인물"
+     },
+     {
+      "en": "Classic Painted Portraits",
+      "es": "Retratos clásicos pintados",
+      "zh": "古典绘画人像",
+      "ko": "클래식 회화 초상"
+     },
+     {
+      "en": "Christmas at Home",
+      "es": "Navidad en casa",
+      "zh": "居家圣诞",
+      "ko": "집에서 보내는 크리스마스"
+     },
+     {
+      "en": "Professional Headshots",
+      "es": "Retratos profesionales de busto",
+      "zh": "职业头像",
+      "ko": "프로필 헤드샷"
+     },
+     {
+      "en": "Natural Elegance",
+      "es": "Elegancia natural",
+      "zh": "自然优雅",
+      "ko": "자연스러운 우아함"
+     },
+     {
+      "en": "Studio Family Portraits",
+      "es": "Retratos familiares de estudio",
+      "zh": "棚拍全家福",
+      "ko": "스튜디오 가족사진"
+     },
+     {
+      "en": "Surreal Fashion",
+      "es": "Moda surrealista",
+      "zh": "超现实时尚",
+      "ko": "초현실 패션"
+     },
+     {
+      "en": "Casual Selfies",
+      "es": "Selfies informales",
+      "zh": "休闲自拍",
+      "ko": "캐주얼 셀피"
+     },
+     {
+      "en": "Cinematic Product Shots",
+      "es": "Fotos de producto cinematográficas",
+      "zh": "电影感产品图",
+      "ko": "시네마틱 제품 사진"
+     },
+     {
+      "en": "Skin Detail Close-Ups",
+      "es": "Primeros planos de piel",
+      "zh": "肌肤细节特写",
+      "ko": "피부 디테일 클로즈업"
+     },
+     {
+      "en": "Geometric Portraits",
+      "es": "Retratos geométricos",
+      "zh": "几何人像",
+      "ko": "기하학 인물"
+     },
+     {
+      "en": "True-to-Life Portraits",
+      "es": "Retratos fieles a la vida",
+      "zh": "栩栩如生的人像",
+      "ko": "생생한 인물 사진"
+     },
+     {
+      "en": "Mythical Beings at Work",
+      "es": "Seres míticos trabajando",
+      "zh": "神话生物上班记",
+      "ko": "일하는 신화 속 존재"
+     },
+     {
+      "en": "Mirror Selfie Lookbook",
+      "es": "Lookbook de selfies en el espejo",
+      "zh": "镜前自拍造型",
+      "ko": "거울 셀피 룩북"
+     }
+    ]
+   }
+  },
+  {
    "id": "nomad.templates-line-and-color",
    "kind": "templates",
    "tabs": [
@@ -773,7 +1675,7 @@
    },
    "cover": "covers/nomad.templates-line-and-color.webp",
    "sha256": [
-    "a7c4bd61357d565f484d4959f82892130c8f9d30e0ec0c905abcd9f52fe2e2f9"
+    "913e2c576b88c32a0f1d7b6133709a4ff41d81bd0560cc25cff89cdf3ad60c09"
    ],
    "name": {
     "en": "Line & Color",
@@ -781,7 +1683,7 @@
     "zh": "线条与色彩",
     "ko": "라인 & 컬러"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -921,7 +1823,7 @@
    },
    "cover": "covers/nomad.templates-mythic-and-cosmos.webp",
    "sha256": [
-    "08edfecd32b61ccc88ed91a45fb46a6648e4403139c6a3139d25546d372fb4e0"
+    "8a7a5d2b041cdec7139b02648acd5565dbba2be145a3e19e6e09092a834f1559"
    ],
    "name": {
     "en": "Mythic & Cosmos",
@@ -929,7 +1831,7 @@
     "zh": "神话与宇宙",
     "ko": "신화와 우주"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -1189,7 +2091,7 @@
    },
    "cover": "covers/nomad.templates-neon-avatars.webp",
    "sha256": [
-    "c26b1c25495152e397b495db5ae42cf8a77c04654e0745bd62cda8c18340906b"
+    "559250c4efe85155efdc6488577bdf8d5c59bf56e254956cd0836df53a4ab9db"
    ],
    "name": {
     "en": "Neon Avatars",
@@ -1197,7 +2099,7 @@
     "zh": "霓虹头像",
     "ko": "네온 아바타"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -1433,7 +2335,7 @@
    },
    "cover": "covers/nomad.templates-poster-lab.webp",
    "sha256": [
-    "ba64030bd418137fee569b4e25aafda4c1272b0d479f5d2abf1955f0333e65e8"
+    "39cc13ebd6dcdeaa41ad78b63ba880abb67c2de7de477ece38d729cad626d8c3"
    ],
    "name": {
     "en": "Poster Lab",
@@ -1441,7 +2343,7 @@
     "zh": "海报实验室",
     "ko": "포스터 랩"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -1509,7 +2411,7 @@
    },
    "cover": "covers/nomad.styles-pro-creative.webp",
    "sha256": [
-    "2619418224f091b5d05cf80272a91841ddba552deec0c945de8e007ad48e4ddd"
+    "b01abdb1d31c118da3c0d9e382ce4329f5568771e4bb80ab7ebd61bf617419f0"
    ],
    "name": {
     "en": "Pro Creative & Genre",
@@ -1517,7 +2419,7 @@
     "zh": "专业创意与题材",
     "ko": "프로 크리에이티브 & 장르"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "styles",
     "groups": [
@@ -1624,7 +2526,7 @@
    },
    "cover": "covers/nomad.styles-pro-photography.webp",
    "sha256": [
-    "ffb8091bf3550e6d08deb5b39bb20b62909c10153486999d31d532733cc19a59"
+    "4a351217c004fa918c74ff2bdab628d99705d7faf53c7fdbd06f22f7cd3eb53d"
    ],
    "name": {
     "en": "Pro Photography & Commercial",
@@ -1632,7 +2534,7 @@
     "zh": "专业摄影与商业",
     "ko": "프로 포토그래피 & 커머셜"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "styles",
     "groups": [
@@ -1721,7 +2623,7 @@
    },
    "cover": "covers/nomad.templates-retro-film.webp",
    "sha256": [
-    "36d3970aead6da1d6395fac037cf897c6fea431f1ac3a60821d9bda12666574f"
+    "7e3aa10d4e50d1d67e212b28421d72b26378afead45f368b7348ee425e5e8c91"
    ],
    "name": {
     "en": "Retro Film",
@@ -1729,7 +2631,7 @@
     "zh": "复古胶片",
     "ko": "레트로 필름"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -1857,7 +2759,7 @@
    },
    "cover": "covers/nomad.templates-runway-editorial.webp",
    "sha256": [
-    "3c41cd1f756a9576eddeba524d4996943fe00628f07fe49c33675a720eb2927f"
+    "928d85b7ff407d4db418a46f0990bceaf0df045665e3fe84636751c799bfb04b"
    ],
    "name": {
     "en": "Runway Editorial",
@@ -1865,7 +2767,7 @@
     "zh": "秀场大片",
     "ko": "런웨이 에디토리얼"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -2029,7 +2931,7 @@
    },
    "cover": "covers/nomad.templates-seasonal-cards.webp",
    "sha256": [
-    "b750ba605899156165910b276e1ad96cc3c33fe09101d680991c1de42f38992b"
+    "8177e0a828a114d743a5ab748b45f8c6910c78a17692ff44ae9e7b2b95b37532"
    ],
    "name": {
     "en": "Seasonal Cards",
@@ -2037,7 +2939,7 @@
     "zh": "节日贺卡",
     "ko": "시즌 카드"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -2165,7 +3067,7 @@
    },
    "cover": "covers/nomad.templates-spark-social.webp",
    "sha256": [
-    "b77693ab1ef2a3aceb623adeb0675c6bd2047b23d9940935993c5cffecd440d1"
+    "818e45b8f15ba98b70cb4f86544f5e90fd4933d44f8e4caeee3d28390973dea9"
    ],
    "name": {
     "en": "Spark",
@@ -2173,7 +3075,7 @@
     "zh": "Spark",
     "ko": "Spark"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -2241,7 +3143,7 @@
    },
    "cover": "covers/nomad.templates-thumbnail-lab.webp",
    "sha256": [
-    "2ce610f1c5567379796081be6ce4967ad7429f21be607e6c8be9acffbaab8092"
+    "6137f928006322555bc9223b39ab15947b39f1f45b870de0acadce9861acf79a"
    ],
    "name": {
     "en": "Thumbnail Lab",
@@ -2249,7 +3151,7 @@
     "zh": "缩略图实验室",
     "ko": "썸네일 랩"
    },
-   "version": "0.1.1",
+   "version": "0.1.2",
    "inside": {
     "type": "themes",
     "items": [
@@ -2359,7 +3261,7 @@
    },
    "cover": "covers/nomad.templates-vista-wallpapers.webp",
    "sha256": [
-    "aeb7447bc69b8838c855a10159f7d7a5669a32dc869ebe30a2773b94bba532b2"
+    "44373c661b4845105a3c1ccb2a4667ba7c5c25140ba938dc9978f3e6e9870394"
    ],
    "name": {
     "en": "Vista",
@@ -2367,7 +3269,7 @@
     "zh": "远景",
     "ko": "비스타"
    },
-   "version": "0.1.0",
+   "version": "0.1.1",
    "inside": {
     "type": "themes",
     "items": [
@@ -2429,6 +3331,112 @@
    }
   },
   {
+   "id": "nomad.templates-wild-horizons",
+   "kind": "templates",
+   "tabs": [
+    "create"
+   ],
+   "kofi_url": "https://ko-fi.com/s/4d3b5358a4",
+   "contents": {
+    "n": 12,
+    "unit": "themes"
+   },
+   "description": {
+    "en": "Landscapes and places: aerial views, enchanted forests, sunsets, underwater and travel posters.",
+    "es": "Paisajes y lugares: vistas aéreas, bosques encantados, atardeceres, fondos marinos y carteles de viaje.",
+    "zh": "风景与地点：航拍、魔法森林、落日、水下世界与旅行海报。",
+    "ko": "풍경과 장소: 항공 뷰, 마법의 숲, 노을, 수중 세계, 여행 포스터."
+   },
+   "cover": "covers/nomad.templates-wild-horizons.webp",
+   "sha256": [
+    "39d0121e222024663a2ae7111a74a42ff2554d14ed19d84888c03bbb5a21627d"
+   ],
+   "name": {
+    "en": "Wild Horizons",
+    "es": "Horizontes salvajes",
+    "zh": "狂野地平线",
+    "ko": "와일드 호라이즌"
+   },
+   "version": "0.1.1",
+   "inside": {
+    "type": "themes",
+    "items": [
+     {
+      "en": "Flat Landscape Posters",
+      "es": "Carteles de paisaje planos",
+      "zh": "扁平风景海报",
+      "ko": "플랫 풍경 포스터"
+     },
+     {
+      "en": "Enchanted Forest",
+      "es": "Bosque encantado",
+      "zh": "魔法森林",
+      "ko": "마법의 숲"
+     },
+     {
+      "en": "Dream Houses",
+      "es": "Casas de ensueño",
+      "zh": "梦想之家",
+      "ko": "꿈의 집"
+     },
+     {
+      "en": "Architecture in Nature",
+      "es": "Arquitectura en la naturaleza",
+      "zh": "自然中的建筑",
+      "ko": "자연 속 건축"
+     },
+     {
+      "en": "Sunset T-Shirt Mockups",
+      "es": "Maquetas de camisetas con atardecer",
+      "zh": "日落T恤样机",
+      "ko": "노을 티셔츠 목업"
+     },
+     {
+      "en": "Botanical Silhouettes",
+      "es": "Siluetas botánicas",
+      "zh": "植物剪影",
+      "ko": "식물 실루엣"
+     },
+     {
+      "en": "Decorative Surface Art",
+      "es": "Arte decorativo sobre superficies",
+      "zh": "装饰表面艺术",
+      "ko": "장식 표면 아트"
+     },
+     {
+      "en": "Abandoned Places",
+      "es": "Lugares abandonados",
+      "zh": "废弃之地",
+      "ko": "버려진 장소"
+     },
+     {
+      "en": "Winter Sunsets",
+      "es": "Atardeceres de invierno",
+      "zh": "冬日落日",
+      "ko": "겨울 노을"
+     },
+     {
+      "en": "Aerial Landscapes",
+      "es": "Paisajes aéreos",
+      "zh": "航拍风景",
+      "ko": "항공 풍경"
+     },
+     {
+      "en": "Illustrated Travel Posters",
+      "es": "Carteles de viaje ilustrados",
+      "zh": "插画旅行海报",
+      "ko": "일러스트 여행 포스터"
+     },
+     {
+      "en": "Underwater Scenes",
+      "es": "Escenas submarinas",
+      "zh": "水下场景",
+      "ko": "수중 장면"
+     }
+    ]
+   }
+  },
+  {
    "id": "nomad.refine-background-tools",
    "kind": "flows",
    "tabs": [
@@ -2447,7 +3455,7 @@
    },
    "cover": "covers/nomad.refine-background-tools.webp",
    "sha256": [
-    "731f0bfffc94f1e2560a015fc7197957820188dad1cf2006490c5ef7f7257387"
+    "1f7ea9aca610c10da074f531416c6a3f7c0f783627f134eaee48d57035bbc56a"
    ],
    "name": {
     "en": "Background Tools",
@@ -2455,7 +3463,7 @@
     "zh": "背景工具",
     "ko": "배경 도구"
    },
-   "version": "0.1.7",
+   "version": "0.1.8",
    "inside": {
     "type": "flows",
     "items": [
@@ -2579,7 +3587,7 @@
    },
    "cover": "covers/nomad.refine-camera.webp",
    "sha256": [
-    "d34c79076b709dcc141271b11bcf780c0105d4995e179710cb777546750e98dd"
+    "b997db46f0078904d66f7900ed9ace99b7bdb8595a8834e515e7fab52acd101b"
    ],
    "name": {
     "en": "Camera",
@@ -2587,7 +3595,7 @@
     "zh": "相机",
     "ko": "카메라"
    },
-   "version": "0.1.7",
+   "version": "0.1.8",
    "inside": {
     "type": "flows",
     "items": [
@@ -2641,7 +3649,7 @@
    },
    "cover": "covers/nomad.refine-creator-pack.webp",
    "sha256": [
-    "9439d63121ab3f8ffe42141e7479256aa2f12b50d32dc155e688cd0401c6d451"
+    "143984c23346b517fdfde721963bf8b44371a583f63ff831dbda88c3e586fe6d"
    ],
    "name": {
     "en": "Creator Pack",
@@ -2649,7 +3657,7 @@
     "zh": "创作者礼包",
     "ko": "크리에이터 팩"
    },
-   "version": "0.1.7",
+   "version": "0.1.8",
    "inside": {
     "type": "flows",
     "items": [
@@ -2801,7 +3809,7 @@
    },
    "cover": "covers/nomad.refine-presets-film-shadow.webp",
    "sha256": [
-    "9eb0adb18b1f45148ea4a5f6bcecd3433ef5bc1319b78f819fb339b9b962cb9b"
+    "82a996174666603c5fa5e0f4efa20f9dfc8062066d6acba88192b1600dbb422e"
    ],
    "name": {
     "en": "Film & Shadow",
@@ -2809,7 +3817,7 @@
     "zh": "Film & Shadow",
     "ko": "Film & Shadow"
    },
-   "version": "0.1.8",
+   "version": "0.1.9",
    "inside": {
     "type": "flows",
     "items": [
@@ -3129,7 +4137,7 @@
    },
    "cover": "covers/nomad.refine-presets-open-air.webp",
    "sha256": [
-    "935539aae2acd2745e1c35d5a58b67771b5ee9eec98ad65a2c15805b0f95d99a"
+    "c0046c5504e1667d8aa9c2bd29d7a8a07536caf00257a82ad365ddb96aabbdd3"
    ],
    "name": {
     "en": "Open Air",
@@ -3137,7 +4145,7 @@
     "zh": "Open Air",
     "ko": "Open Air"
    },
-   "version": "0.1.8",
+   "version": "0.1.9",
    "inside": {
     "type": "flows",
     "items": [
@@ -3457,7 +4465,7 @@
    },
    "cover": "covers/nomad.refine-photo-editing.webp",
    "sha256": [
-    "41d83409df727a2b4b4c5e0b09291b9bd7da62a76ed466445c44ed69c8f2b2a6"
+    "1533d55d678b44f0ca7d96dfa18bdc61f4852a7233d203c5db20b590e9072bf1"
    ],
    "name": {
     "en": "Photo Editing",
@@ -3465,7 +4473,7 @@
     "zh": "照片编辑",
     "ko": "사진 편집"
    },
-   "version": "0.1.9",
+   "version": "0.1.10",
    "inside": {
     "type": "flows",
     "items": [
@@ -3779,13 +4787,13 @@
    },
    "description": {
     "en": "Retouch eyes, hair, expression and lighting with focused portrait tools.",
-    "es": "Retoca ojos, pelo, expresión e iluminación con herramientas específicas para retratos.",
+    "es": "Retoca ojos, pelo, expresión e iluminación con flows específicos para retratos.",
     "zh": "使用专用肖像工具，修饰眼睛、头发、表情和光线。",
     "ko": "눈, 머리카락, 표정과 조명을 인물 전용 도구로 보정하세요."
    },
    "cover": "covers/nomad.refine-portrait-fix.webp",
    "sha256": [
-    "f15ed76e9a1b509e26d2f171c2bdca02fee633ed4ef11c25ddc99e74aa21a5ec"
+    "e5296821ef81e1cb3c10f203cac94e2df94436d4145a966c77b9f7bd63a0c6fa"
    ],
    "name": {
     "en": "Portrait Fix",
@@ -3793,7 +4801,7 @@
     "zh": "人像修饰",
     "ko": "인물 보정"
    },
-   "version": "0.1.7",
+   "version": "0.1.8",
    "inside": {
     "type": "flows",
     "items": [
@@ -3959,7 +4967,7 @@
    },
    "cover": "covers/nomad.refine-skin-detailer.webp",
    "sha256": [
-    "6d3b9be3db1f1a81cf8fa5406450ec975b0143a1b7e4ab86dcbace7212178914"
+    "decea5d3ec1d27da3c5ea22ee7a01bae39df2522b4832d5ba14cc4d0262a0c4b"
    ],
    "name": {
     "en": "Skin Detailer",
@@ -3967,7 +4975,7 @@
     "zh": "皮肤细节",
     "ko": "피부 디테일"
    },
-   "version": "0.1.6",
+   "version": "0.1.7",
    "inside": {
     "type": "flows",
     "items": [
@@ -4021,7 +5029,7 @@
    },
    "cover": "covers/nomad.refine-styling.webp",
    "sha256": [
-    "0c3563842592eca8cbeb985ac38141188e6e65b856bdcc8987a29f1b5795f3b9"
+    "7ac0cb69ab34e9ba7d82d7f3c7af2b21df0a25a5a155fb80d3310aa96bf55969"
    ],
    "name": {
     "en": "Styling",
@@ -4029,24 +5037,10 @@
     "zh": "风格化",
     "ko": "스타일링"
    },
-   "version": "0.1.7",
+   "version": "0.1.9",
    "inside": {
     "type": "flows",
     "items": [
-     {
-      "label": {
-       "en": "Pixel Art · Klein 9B",
-       "es": "Pixel Art · Klein 9B",
-       "zh": "像素画 · Klein 9B",
-       "ko": "픽셀 아트 · Klein 9B"
-      },
-      "desc": {
-       "en": "Apply cinematic, photographic, art, digital or game styles to any image with Klein 9B.",
-       "es": "Aplica estilos de cine, fotografía, arte, digital o videojuego a cualquier imagen con Klein 9B.",
-       "zh": "用 Klein 9B 为任意图片应用电影、摄影、艺术、数字或游戏风格。",
-       "ko": "Klein 9B로 어떤 이미지에든 영화, 사진, 아트, 디지털, 게임 스타일을 적용합니다."
-      }
-     },
      {
       "label": {
        "en": "Style",
@@ -4133,16 +5127,30 @@
      },
      {
       "label": {
+       "en": "Pixel Art · Klein 9B",
+       "es": "Pixel Art · Klein 9B",
+       "zh": "像素画 · Klein 9B",
+       "ko": "픽셀 아트 · Klein 9B"
+      },
+      "desc": {
+       "en": "Apply cinematic, photographic, art, digital or game styles to any image with Klein 9B.",
+       "es": "Aplica estilos de cine, fotografía, arte, digital o videojuego a cualquier imagen con Klein 9B.",
+       "zh": "用 Klein 9B 为任意图片应用电影、摄影、艺术、数字或游戏风格。",
+       "ko": "Klein 9B로 어떤 이미지에든 영화, 사진, 아트, 디지털, 게임 스타일을 적용합니다."
+      }
+     },
+     {
+      "label": {
        "en": "Pixel Art — Qwen 2.1",
        "es": "Pixel Art — Qwen 2.1",
        "zh": "像素艺术 — Qwen 2.1",
        "ko": "픽셀 아트 — Qwen 2.1"
       },
       "desc": {
-       "en": "70+ curated pixel-art styles, on Qwen Image 2.1.",
-       "es": "Más de 70 estilos curados de pixel art, en Qwen Image 2.1.",
-       "zh": "70 多种精选像素艺术风格，基于 Qwen Image 2.1。",
-       "ko": "70개 이상의 엄선된 픽셀 아트 스타일, Qwen Image 2.1 기반."
+       "en": "52 curated pixel-art styles, on Qwen Image 2.1.",
+       "es": "52 estilos curados de pixel art, en Qwen Image 2.1.",
+       "zh": "52 种精选像素艺术风格，基于 Qwen Image 2.1。",
+       "ko": "엄선된 픽셀 아트 스타일 52개, Qwen Image 2.1 기반."
       }
      }
     ]
@@ -4167,7 +5175,7 @@
    },
    "cover": "covers/nomad.mix-multi-reference.webp",
    "sha256": [
-    "f807082759f2fe7f290ec681ed13632e3428f6a2785571099766ae887c009ad2"
+    "a3229fc1aca814d8885e0c9a7115ebd19fcc130288f9bf4191d836b1a63381f7"
    ],
    "name": {
     "en": "Multi-Reference Compose",
@@ -4175,7 +5183,7 @@
     "zh": "多参考图合成",
     "ko": "다중 참조 합성"
    },
-   "version": "0.1.7",
+   "version": "0.1.8",
    "inside": {
     "type": "flows",
     "items": [
@@ -4243,7 +5251,7 @@
    },
    "cover": "covers/nomad.mix-style-transfer.webp",
    "sha256": [
-    "79782b85940b5ded1f317bf0afcf6e17399f7846470c741f56f47116a5b851f3"
+    "aff5ae0bb57d2aa3f0bd765ae95a38d9a01e6c89e7e7b79df73dad0d21ecc41a"
    ],
    "name": {
     "en": "Style Transfer (Mix)",
@@ -4251,7 +5259,7 @@
     "zh": "风格迁移（Mix）",
     "ko": "스타일 전이 (Mix)"
    },
-   "version": "0.1.6",
+   "version": "0.1.7",
    "inside": {
     "type": "flows",
     "items": [

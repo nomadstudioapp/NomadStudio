@@ -1,4 +1,4 @@
-NOMAD STUDIO PACK LICENSE (ROYALTY FREE) — version 1.0
+NOMAD STUDIO PACK LICENSE (ROYALTY FREE) — version 1.1
 Copyright (c) Nomad Studio — https://nomadstudio.app — studio@nomadstudio.app
 
 The English text is the binding one; the translations below are for convenience.
@@ -29,7 +29,9 @@ and commercial work.
    use; each model has its own license from its authors, and some do not allow
    commercial use. Check them before using the images commercially.
 
-6. The pack is provided "as is", without warranty of any kind. All rights not
+6. The pack is guaranteed to install and run as described (see the pack terms
+   at https://nomadstudio.app/legal.html#packs). The images you generate with it
+   depend on the AI model and are not covered by that guarantee. All rights not
    granted here are reserved by Nomad Studio.
 
 Questions: studio@nomadstudio.app
@@ -63,8 +65,11 @@ educativo y comercial.
    no permiten uso comercial. Revísalas antes de usar las imágenes
    comercialmente.
 
-6. El pack se ofrece "tal cual", sin garantía de ningún tipo. Nomad Studio se
-   reserva todos los derechos no concedidos aquí.
+6. Se garantiza que el pack se instala y funciona como se describe (ver las
+   condiciones de los packs en https://nomadstudio.app/legal.html#packs). Las
+   imágenes que generes con él dependen del modelo de IA y no están cubiertas
+   por esa garantía. Nomad Studio se reserva todos los derechos no concedidos
+   aquí.
 
 Preguntas: studio@nomadstudio.app
 
@@ -91,8 +96,9 @@ Preguntas: studio@nomadstudio.app
 5. 不包含 AI 模型。素材包只告诉 Nomad Studio 使用哪些模型；每个模型都有其作者规定
    的许可证，有些不允许商业使用。在商业使用图片之前请先查看。
 
-6. 本素材包按“原样”提供，不附带任何形式的保证。本许可证未授予的所有权利均由
-   Nomad Studio 保留。
+6. 保证本素材包能按描述安装和运行（见素材包条款：
+   https://nomadstudio.app/legal.html#packs）。你用它生成的图片取决于 AI 模型，
+   不在该保证范围内。本许可证未授予的所有权利均由 Nomad Studio 保留。
 
 问题请联系：studio@nomadstudio.app
 
@@ -122,7 +128,9 @@ Preguntas: studio@nomadstudio.app
    알려 줍니다. 각 모델에는 제작자가 정한 라이선스가 있으며 일부는 상업적
    사용을 허용하지 않습니다. 이미지를 상업적으로 쓰기 전에 확인하세요.
 
-6. 이 팩은 어떠한 보증도 없이 "있는 그대로" 제공됩니다. 여기에서 허락하지 않은
-   모든 권리는 Nomad Studio가 보유합니다.
+6. 이 팩은 설명대로 설치되고 작동함을 보증합니다(팩 이용 조건:
+   https://nomadstudio.app/legal.html#packs 참고). 이 팩으로 생성한 이미지는 AI
+   모델에 따라 달라지므로 이 보증의 대상이 아닙니다. 여기에서 허락하지 않은 모든
+   권리는 Nomad Studio가 보유합니다.
 
 문의: studio@nomadstudio.app

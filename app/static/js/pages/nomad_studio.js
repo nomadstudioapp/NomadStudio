@@ -2944,7 +2944,12 @@
       // Excluded from tag collection entirely, so they're also never
       // hidden by an unrelated filter — they're navigation, not content.
       var cards = Array.prototype.slice.call(grid.querySelectorAll('.cs-card'))
-        .filter(function (card) { return !card.classList.contains('cs-card--presets-hub'); });
+        .filter(function (card) {
+          return !card.classList.contains('cs-card--presets-hub') && !card.classList.contains('cs-card--market');
+        });
+      // The Marketplace card closing the catalogue (market_more_card): not a
+      // flow, so no tags; it steps aside while a search or a tag is active.
+      var marketCards = Array.prototype.slice.call(grid.querySelectorAll('.cs-card--market'));
       if (!cards.length) return;
       // Those pack cards are "more of the catalogue" too: the Essentials
       // view hides them, the full view always shows them.
@@ -3112,6 +3117,7 @@
         });
         var shortView = essentialsActive();
         hubCards.forEach(function (card) { setShown(card, !shortView); });
+        marketCards.forEach(function (card) { setShown(card, !searchQuery && activeTags.size === 0); });
         updateGroupBlocks();
         if (emptyEl) emptyEl.hidden = visibleCount !== 0;
       }
@@ -3486,9 +3492,26 @@
       inspect(e.dataTransfer && e.dataTransfer.files);
     });
 
-    // Globe next to each catalogue's search box: open here, on that tab.
-    document.querySelectorAll('.cs-market-btn[data-market-tab]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
+    // The card closing each catalogue: "N packs for Refine: A, B, C…", the
+    // names in the app language (the server renders only the count).
+    function renderMore() {
+      document.querySelectorAll('.cs-card--market[data-market-ids]').forEach(function (card) {
+        var items = card.dataset.marketIds.split(',').map(byId).filter(Boolean);
+        var line = card.querySelector('.cs-market-more-line');
+        if (!line || !items.length) return;
+        var names = items.slice(0, 3).map(function (p) { return txt(p.name); }).join(', ') + (items.length > 3 ? '…' : '');
+        var updates = items.filter(function (p) { return p.status === 'update'; }).length;
+        line.textContent = T(items.length === 1 ? 'more.lineOne' : 'more.line', '{n} packs for {tab}: {names}',
+          { n: items.length, tab: tabLabel(card.dataset.marketTab), names: names }) +
+          (updates ? ' · ' + T('more.updates', '{n} with updates', { n: updates }) : '');
+      });
+    }
+
+    // Globe next to each catalogue's search box, and the card at the end of
+    // it: open here, on that tab.
+    document.querySelectorAll('.cs-market-btn[data-market-tab], .cs-card--market[data-market-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
         fromView = btn.dataset.marketTab;
         transitionTo(CS_VIEW_ROUTES[fromView].el, view);
         history.pushState({ csView: 'marketplace' }, '', CS_VIEW_ROUTES.marketplace.path);
@@ -3512,8 +3535,9 @@
         .catch(function () {});
     }
 
-    document.addEventListener('nomad-i18n-applied', function () { render(); renderPanel(); });
+    document.addEventListener('nomad-i18n-applied', function () { render(); renderPanel(); renderMore(); });
     render();
+    renderMore();
     if (marketOnScreen()) checkLocal();
   })();
 

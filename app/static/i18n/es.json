@@ -147,7 +147,17 @@
       },
       "details": "Detalles",
       "inside": "Qué incluye",
-      "getIt": "Consíguelo"
+      "getIt": "Consíguelo",
+      "more": {
+        "eye": "Packs oficiales",
+        "create": "Más formas de crear",
+        "refine": "Más formas de editar",
+        "mix": "Más formas de mezclar",
+        "line": "{n} packs para {tab}: {names}",
+        "lineOne": "1 pack para {tab}: {names}",
+        "updates": "{n} con actualización",
+        "cta": "Ver los packs"
+      }
     },
     "sponsor": "Apoya Nomad Studio"
   },

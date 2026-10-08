@@ -147,7 +147,17 @@
       },
       "details": "详情",
       "inside": "包含内容",
-      "getIt": "获取"
+      "getIt": "获取",
+      "more": {
+        "eye": "官方内容包",
+        "create": "更多创作方式",
+        "refine": "更多编辑方式",
+        "mix": "更多融合方式",
+        "line": "{n} 个适用于 {tab} 的内容包：{names}",
+        "lineOne": "1 个适用于 {tab} 的内容包：{names}",
+        "updates": "{n} 个可更新",
+        "cta": "查看内容包"
+      }
     },
     "sponsor": "支持 Nomad Studio"
   },

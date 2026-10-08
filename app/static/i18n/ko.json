@@ -147,7 +147,17 @@
       },
       "details": "자세히",
       "inside": "구성",
-      "getIt": "받기"
+      "getIt": "받기",
+      "more": {
+        "eye": "공식 팩",
+        "create": "더 많은 제작 방법",
+        "refine": "더 많은 편집 방법",
+        "mix": "더 많은 믹스 방법",
+        "line": "{tab}용 팩 {n}개: {names}",
+        "lineOne": "{tab}용 팩 1개: {names}",
+        "updates": "{n}개 업데이트 가능",
+        "cta": "팩 보기"
+      }
     },
     "sponsor": "Nomad Studio 후원하기"
   },

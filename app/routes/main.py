@@ -401,6 +401,27 @@ def _load_marketplace() -> dict:
     return {"shop_url": _market_cache["catalog"].get("shop_url"), "products": products}
 
 
+_MARKET_KIND_ORDER = {"flows": 0, "looks": 1, "styles": 2, "templates": 3}
+
+
+def _market_more(market: dict) -> dict:
+    """Per hub tab, the official packs this install still lacks (or can
+    update): the "More flows" card at the end of each catalogue. Only real
+    packs, flows first; a tab with nothing left to get has no card."""
+    more = {}
+    for tab in ("create", "refine", "mix"):
+        items = [p for p in market.get("products", [])
+                 if p.get("kind") != "bundle" and tab in p.get("tabs", []) and p.get("status") != "installed"]
+        if not items:
+            continue
+        items.sort(key=lambda p: (_MARKET_KIND_ORDER.get(p.get("kind"), 9), p["status"] != "update"))
+        more[tab] = {
+            "ids": [p["id"] for p in items],
+            "covers": [p["cover"] for p in items[:3]],
+        }
+    return more
+
+
 def _create_locked() -> bool:
     # ?onboarding=1 previews the first visit without touching the profile
     # (hold F and click Create on the home page, nomad_studio.js).
@@ -423,6 +444,7 @@ def _render_nomad_studio(initial_view: str | None = None):
     essentials = viewer_service.effective_essentials(viewer, all_flows)
     for flow in all_flows:
         flow["essential"] = flow["id"] in essentials
+    marketplace = _load_marketplace()
     html = render_template(
         "pages/nomad_studio.html",
         active_page="nomad-studio",
@@ -441,7 +463,8 @@ def _render_nomad_studio(initial_view: str | None = None):
         initial_view_label=_NOMAD_STUDIO_VIEW_LABELS.get(initial_view or ""),
         create_locked=_create_locked(),
         essentials_only=viewer_service.essentials_only(viewer),
-        marketplace=_load_marketplace(),
+        marketplace=marketplace,
+        market_more=_market_more(marketplace),
         **_active_viewer_context(),
     )
     # The cards come from installed packages: never serve a cached hub, or

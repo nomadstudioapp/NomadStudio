@@ -147,7 +147,17 @@
       },
       "details": "Details",
       "inside": "What's inside",
-      "getIt": "Get it"
+      "getIt": "Get it",
+      "more": {
+        "eye": "Official packs",
+        "create": "More ways to create",
+        "refine": "More ways to edit",
+        "mix": "More ways to mix",
+        "line": "{n} packs for {tab}: {names}",
+        "lineOne": "1 pack for {tab}: {names}",
+        "updates": "{n} with updates",
+        "cta": "See the packs"
+      }
     },
     "sponsor": "Support Nomad Studio"
   },

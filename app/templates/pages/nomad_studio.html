@@ -337,6 +337,37 @@
       </div>
     {%- endmacro -%}
 
+    {#- Last group of each catalogue: the official packs this install still
+        lacks for this tab (main._market_more), as a card that opens the
+        Marketplace view. Plain facts — how many packs and which — no price,
+        no urgency; it disappears once everything for the tab is installed.
+        The line naming the packs is filled in the app language by
+        initMarketplace (nomad_studio.js). -#}
+    {%- macro market_more_card(tab) -%}
+      {%- set more = market_more.get(tab) -%}
+      {%- if more -%}
+      <div class="cs-group-block cs-market-more-block">
+      <div class="cs-group-header" data-cs-group="marketplace">
+        <span class="cs-group-header-label">Marketplace</span>
+      </div>
+      <nav class="cs-sub-grid cs-sub-grid--hero" aria-label="Marketplace">
+        <a href="#" class="cs-card cs-card--market" data-market-tab="{{ tab }}" data-market-ids="{{ more.ids | join(',') }}">
+          <span class="cs-market-more-covers" aria-hidden="true">
+            {%- for cover in more.covers %}<img src="{{ url_for('static', filename='marketplace/' ~ cover) }}" alt="" loading="lazy">{% endfor -%}
+          </span>
+          <div class="cs-card-body">
+            <p class="cs-market-more-eye" data-i18n="hub.market.more.eye">Official packs</p>
+            <p class="cs-card-name" data-i18n="hub.market.more.{{ tab }}">More flows</p>
+            <p class="cs-card-desc cs-market-more-line">{{ more.ids | length }}</p>
+            <span class="cs-market-more-cta"><span data-i18n="hub.market.more.cta">See the packs</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+      </nav>
+      </div>
+      {%- endif -%}
+    {%- endmacro -%}
+
     {#- First visit of a new profile (viewer_service.is_create_unlocked): only
         Simple, with the raccoon explaining what a flow is. The first image
         made with Simple (flow-generation.js) unlocks the whole catalogue. -#}
@@ -435,6 +466,7 @@
           </nav>
           </div>
           {% endif %}
+          {% if not onboarding %}{{ market_more_card('create') }}{% endif %}
         </div>
 
       </div>
@@ -540,6 +572,7 @@
           </nav>
           </div>
           {% endfor %}
+          {{ market_more_card('refine') }}
         </div>
 
       </div>
@@ -618,6 +651,7 @@
           </nav>
           </div>
           {% endfor %}
+          {{ market_more_card('mix') }}
         </div>
 
       </div>

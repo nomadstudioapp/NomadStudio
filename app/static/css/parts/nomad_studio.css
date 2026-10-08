@@ -3188,9 +3188,10 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
   box-shadow: 0 0 0 1px #db61a2 inset, 0 0 14px color-mix(in srgb, #db61a2 45%, transparent);
 }
 
-/* Round Back where the catalogues keep their filter toggle (.cs-filter-toggle). */
+/* Round Back, top left, centred on the language toggle's row (that one is
+   top 0.5rem and 40px tall; this is 34px). */
 .cs-market-back {
-  top: 3.6rem;
+  top: calc(0.5rem + 3px);
   left: 0.5rem;
   right: auto;
 }
@@ -16699,4 +16700,109 @@ body.explore-page-body #album-topbar-toolbar + div {
 @media (max-width: 820px) {
   .cs-onboard { grid-column: 1 / -1; }
   .cs-onboard-raccoon { width: 88px; height: 88px; }
+}
+
+/* ─── "More flows" card closing each catalogue (market_more_card) ────────
+   Same size as a flow card, but plainly not one: the brand gradient with a
+   neon edge, and a fan of the covers of packs this install doesn't have yet.
+   Text keeps to the left; the covers lean in from the right. */
+.cs-sub-grid--hero .cs-card--market {
+  overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, #db61a2 38%, transparent), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 55%, #0b0f1e) 0%, #241a4d 55%, #120d26 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 70%, #db61a2) inset,
+    0 0 22px -4px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cs-sub-grid--hero .cs-card--market:hover {
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, #db61a2 48%, transparent), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 65%, #0b0f1e) 0%, #2b1f5c 55%, #150f2e 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 85%, #db61a2) inset,
+    0 0 30px -2px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.cs-market-more-covers {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 52%;
+  pointer-events: none;
+}
+.cs-market-more-covers img {
+  position: absolute;
+  width: 78%;
+  aspect-ratio: 640 / 366;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+  transition: transform 0.3s ease;
+}
+.cs-market-more-covers img:nth-child(1) { top: 10%; right: -14%; transform: rotate(9deg); z-index: 1; opacity: 0.7; }
+.cs-market-more-covers img:nth-child(2) { top: 30%; right: 2%; transform: rotate(3deg); z-index: 2; opacity: 0.85; }
+.cs-market-more-covers img:nth-child(3) { top: 52%; right: 16%; transform: rotate(-4deg); z-index: 3; }
+.cs-card--market:hover .cs-market-more-covers img:nth-child(1) { transform: rotate(11deg) translateY(-4px); }
+.cs-card--market:hover .cs-market-more-covers img:nth-child(2) { transform: rotate(4deg) translateY(-6px); }
+.cs-card--market:hover .cs-market-more-covers img:nth-child(3) { transform: rotate(-5deg) translateY(-8px); }
+/* A scrim on the left so the text never sits on a cover. */
+.cs-sub-grid--hero .cs-card--market::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(10, 8, 26, 0.85) 0%, rgba(10, 8, 26, 0.55) 45%, transparent 70%);
+  opacity: 1;
+}
+.cs-sub-grid--hero .cs-card--market:hover::after {
+  opacity: 1;
+}
+.cs-sub-grid--hero .cs-card--market .cs-card-body {
+  max-width: 58%;
+  z-index: 4;
+}
+.cs-market-more-eye {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #db61a2 60%, #fff);
+}
+.cs-card--market .cs-card-name {
+  color: #fff;
+}
+.cs-card--market .cs-card-desc {
+  color: rgba(255, 255, 255, 0.82);
+}
+.cs-market-more-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill, 999px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 650;
+  transition: background 0.2s ease;
+}
+.cs-card--market:hover .cs-market-more-cta {
+  background: rgba(255, 255, 255, 0.22);
+}
+.cs-market-more-cta svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  transition: transform 0.2s ease;
+}
+.cs-card--market:hover .cs-market-more-cta svg {
+  transform: translateX(3px);
 }

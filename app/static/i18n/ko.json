@@ -1202,7 +1202,7 @@
       "Use the result as-is.": "결과를 그대로 사용합니다.",
       "Run RealESRGAN 2x on the result before showing it.": "표시하기 전에 결과에 RealESRGAN 2x를 적용합니다.",
       "Run RealESRGAN 4x on the result before showing it.": "표시하기 전에 결과에 RealESRGAN 4x를 적용합니다.",
-      "Run UltraSharp V2 4x on the result before showing it. Great for low resolution images.": "표시하기 전에 결과에 UltraSharp V2 4x를 적용합니다. 저해상도 이미지에 좋습니다.",
+      "Run 4xBHI RealPLKSR (by Philip Hofmann, CC BY 4.0) on the result before showing it. Sharp and fast, great for low resolution images.": "표시하기 전에 결과에 4xBHI RealPLKSR(제작 Philip Hofmann, CC BY 4.0)를 적용합니다. 선명하고 빠르며 저해상도 이미지에 좋습니다.",
       "Run SeedVR2 3B (2x) on the result before showing it. Diffusion-based restoration, higher quality, slower.": "표시하기 전에 결과에 SeedVR2 3B(2x)를 적용합니다. 확산 기반 복원으로 품질이 높지만 느립니다.",
       "Run SeedVR2 7B (4x) on the result before showing it. Diffusion-based restoration, highest quality, slowest.": "표시하기 전에 결과에 SeedVR2 7B(4x)를 적용합니다. 확산 기반 복원으로 품질이 가장 높지만 가장 느립니다.",
       "Backgrounds": "배경",

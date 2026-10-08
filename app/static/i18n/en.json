@@ -872,7 +872,7 @@
       "Use the result as-is.": "Use the result as-is.",
       "Run RealESRGAN 2x on the result before showing it.": "Run RealESRGAN 2x on the result before showing it.",
       "Run RealESRGAN 4x on the result before showing it.": "Run RealESRGAN 4x on the result before showing it.",
-      "Run UltraSharp V2 4x on the result before showing it. Great for low resolution images.": "Run UltraSharp V2 4x on the result before showing it. Great for low resolution images.",
+      "Run 4xBHI RealPLKSR (by Philip Hofmann, CC BY 4.0) on the result before showing it. Sharp and fast, great for low resolution images.": "Run 4xBHI RealPLKSR (by Philip Hofmann, CC BY 4.0) on the result before showing it. Sharp and fast, great for low resolution images.",
       "Run SeedVR2 3B (2x) on the result before showing it. Diffusion-based restoration, higher quality, slower.": "Run SeedVR2 3B (2x) on the result before showing it. Diffusion-based restoration, higher quality, slower.",
       "Run SeedVR2 7B (4x) on the result before showing it. Diffusion-based restoration, highest quality, slowest.": "Run SeedVR2 7B (4x) on the result before showing it. Diffusion-based restoration, highest quality, slowest.",
       "Characters": "Characters",

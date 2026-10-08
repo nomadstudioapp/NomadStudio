@@ -1,7 +1,43 @@
 {
  "schema_version": 1,
- "updated": "2026-09-28",
+ "updated": "2026-10-08",
  "models": [
+  {
+   "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+   "size": 67061725,
+   "names": [
+    "RealESRGAN_x2plus.pth"
+   ],
+   "folder": "upscale_models",
+   "sources": [
+    {
+     "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
+     "host": "github"
+    }
+   ],
+   "license": {
+    "name": "BSD 3-Clause",
+    "url": "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"
+   }
+  },
+  {
+   "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
+   "size": 67040989,
+   "names": [
+    "RealESRGAN_x4plus.pth"
+   ],
+   "folder": "upscale_models",
+   "sources": [
+    {
+     "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+     "host": "github"
+    }
+   ],
+   "license": {
+    "name": "BSD 3-Clause",
+    "url": "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"
+   }
+  },
   {
    "sha256": "94d368b633614958f84f335b129fd85abd30200e8fbc575b859ba6762116222b",
    "size": 20099337,
@@ -1068,6 +1104,24 @@
      "host": "huggingface"
     }
    ]
+  },
+  {
+   "sha256": "c5051594b7177e2b12d5a254a4a7cd6f22b3a43cefa07a6aaa910e30f4ab8232",
+   "size": 29641748,
+   "names": [
+    "4xBHI_realplksr_dysample_multiblur.safetensors"
+   ],
+   "folder": "upscale_models",
+   "sources": [
+    {
+     "url": "https://github.com/Phhofm/models/releases/download/4xbhi_realplksr/4xBHI_realplksr_dysample_multiblur.safetensors",
+     "host": "github"
+    }
+   ],
+   "license": {
+    "name": "CC BY 4.0 — Philip Hofmann",
+    "url": "https://github.com/Phhofm/models/releases/tag/4xbhi_realplksr"
+   }
   }
  ]
 }

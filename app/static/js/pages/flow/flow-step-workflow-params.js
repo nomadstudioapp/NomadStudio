@@ -1897,7 +1897,7 @@ async function _maybeDefringeImage(imgUrl, advancedValues, persist) {
 // upscaleOutputMode global (flow-state.js) set by the None/2xFast/4xFast/
 // 4xSharp/2x/4x pill above the Generate button (renderAction, flow-render-all.js).
 // 2xFast/4xFast/4xSharp run the classic single-node "Upscale (Model)" workflow
-// Refine already uses (ESRGAN/UltraSharp); 2x/4x instead route through the
+// Refine already uses (ESRGAN/RealPLKSR); 2x/4x instead route through the
 // SeedVR2 diffusion upscaler (3B/7B) for higher quality at the cost of speed —
 // see UPSCALE_OUTPUT_SEEDVR2 in flow-state.js. Both paths go through the same
 // generic /api/models/refine/prepare route, no dedicated backend endpoint

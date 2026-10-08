@@ -452,7 +452,7 @@ var generateBtn = null; // assigned by other modules once the DOM exists, not re
 var UPSCALE_OUTPUT_MODELS = {
   '2x_fast': 'RealESRGAN_x2plus.pth',
   '4x_fast': 'RealESRGAN_x4plus.pth',
-  '4x_sharp': '4x-UltraSharpV2.safetensors',
+  '4x_sharp': '4xBHI_realplksr_dysample_multiblur.safetensors',  // CC BY 4.0, Philip Hofmann (#34)
 };
 
 // '2x'/'4x' route through the SeedVR2 diffusion upscaler (app/workflows/upscale/refine_upscale_seedvr2.json)

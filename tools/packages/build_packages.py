@@ -506,6 +506,32 @@ def requirements_for(graphs: list[dict]) -> tuple[list[dict], list[dict], list[s
     return sorted(models.values(), key=lambda m: m["file"].lower()), list(nodes.values()), sorted(set(unknown))
 
 
+# Models a package needs that none of its graphs loads: the app builds the
+# node itself. The Upscale output buttons (2xFast/4xFast/4xSharp,
+# UPSCALE_OUTPUT_MODELS in flow-state.js) swap in a single upscale-model node
+# on any flow's result, so Core Refine declares their files (#34). Each must
+# be in the models catalog, which says where to download it.
+EXTRA_REQUIRED_MODELS = {
+    "nomad.core-refine": [
+        "RealESRGAN_x2plus.pth",
+        "RealESRGAN_x4plus.pth",
+        "4xBHI_realplksr_dysample_multiblur.safetensors",
+    ],
+}
+
+
+def _extra_requirements(name: str) -> list[dict]:
+    catalog = _models_catalog().get("models", [])
+    by_name = {n.lower(): m for m in catalog for n in m.get("names", [])}
+    out = []
+    for file in EXTRA_REQUIRED_MODELS.get(name, []):
+        entry = by_name.get(file.lower())
+        if not entry:
+            raise SystemExit(f"{name}: {file} is not in the models catalog")
+        out.append({"file": file, "folder": entry["folder"], "size": entry["size"], "sha256": entry["sha256"]})
+    return out
+
+
 def _add_requirements(name: str, files: dict[str, object]) -> None:
     manifest = files.get("manifest.json")
     if not isinstance(manifest, dict):
@@ -513,9 +539,12 @@ def _add_requirements(name: str, files: dict[str, object]) -> None:
     graphs = [c for rel, c in files.items() if rel.startswith("workflows/") and isinstance(c, dict)]
     graphs += [c["workflow"] for rel, c in files.items()
                if rel.startswith("engines/") and isinstance(c, dict) and isinstance(c.get("workflow"), dict)]
-    if not graphs:
+    if not graphs and name not in EXTRA_REQUIRED_MODELS:
         return
     models, nodes, unknown = requirements_for(graphs)
+    have = {m["file"].lower() for m in models}
+    models = sorted(models + [m for m in _extra_requirements(name) if m["file"].lower() not in have],
+                    key=lambda m: m["file"].lower())
     requires = manifest.setdefault("requires", {})
     if models:
         requires["models"] = models

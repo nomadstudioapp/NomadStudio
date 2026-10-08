@@ -1202,7 +1202,7 @@
       "Use the result as-is.": "直接使用结果。",
       "Run RealESRGAN 2x on the result before showing it.": "显示前用 RealESRGAN 2x 处理结果。",
       "Run RealESRGAN 4x on the result before showing it.": "显示前用 RealESRGAN 4x 处理结果。",
-      "Run UltraSharp V2 4x on the result before showing it. Great for low resolution images.": "显示前用 UltraSharp V2 4x 处理结果。非常适合低分辨率图片。",
+      "Run 4xBHI RealPLKSR (by Philip Hofmann, CC BY 4.0) on the result before showing it. Sharp and fast, great for low resolution images.": "显示前用 4xBHI RealPLKSR（作者 Philip Hofmann，CC BY 4.0）处理结果。清晰且快速，非常适合低分辨率图像。",
       "Run SeedVR2 3B (2x) on the result before showing it. Diffusion-based restoration, higher quality, slower.": "显示前用 SeedVR2 3B（2x）处理结果。基于扩散的修复，质量更高，速度更慢。",
       "Run SeedVR2 7B (4x) on the result before showing it. Diffusion-based restoration, highest quality, slowest.": "显示前用 SeedVR2 7B（4x）处理结果。基于扩散的修复，质量最高，速度最慢。",
       "Backgrounds": "背景",

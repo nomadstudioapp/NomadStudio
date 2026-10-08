@@ -1202,7 +1202,7 @@
       "Use the result as-is.": "Usar el resultado tal cual.",
       "Run RealESRGAN 2x on the result before showing it.": "Pasar RealESRGAN 2x al resultado antes de mostrarlo.",
       "Run RealESRGAN 4x on the result before showing it.": "Pasar RealESRGAN 4x al resultado antes de mostrarlo.",
-      "Run UltraSharp V2 4x on the result before showing it. Great for low resolution images.": "Pasar UltraSharp V2 4x al resultado antes de mostrarlo. Muy bueno para imágenes de poca resolución.",
+      "Run 4xBHI RealPLKSR (by Philip Hofmann, CC BY 4.0) on the result before showing it. Sharp and fast, great for low resolution images.": "Pasar 4xBHI RealPLKSR (de Philip Hofmann, CC BY 4.0) al resultado antes de mostrarlo. Nítido y rápido, ideal para imágenes de baja resolución.",
       "Run SeedVR2 3B (2x) on the result before showing it. Diffusion-based restoration, higher quality, slower.": "Pasar SeedVR2 3B (2x) al resultado antes de mostrarlo. Restauración por difusión: más calidad, más lento.",
       "Run SeedVR2 7B (4x) on the result before showing it. Diffusion-based restoration, highest quality, slowest.": "Pasar SeedVR2 7B (4x) al resultado antes de mostrarlo. Restauración por difusión: la mejor calidad, la más lenta.",
       "Backgrounds": "Fondos",

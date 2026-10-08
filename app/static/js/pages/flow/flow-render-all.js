@@ -5,7 +5,7 @@ var UPSCALE_OUTPUT_OPTIONS = [
   { id: 'none', label: 'None', title: 'Use the result as-is.' },
   { id: '2x_fast', label: '2xFast', title: 'Run RealESRGAN 2x on the result before showing it.' },
   { id: '4x_fast', label: '4xFast', title: 'Run RealESRGAN 4x on the result before showing it.' },
-  { id: '4x_sharp', label: '4xSharp', title: 'Run UltraSharp V2 4x on the result before showing it. Great for low resolution images.' },
+  { id: '4x_sharp', label: '4xSharp', title: 'Run 4xBHI RealPLKSR (by Philip Hofmann, CC BY 4.0) on the result before showing it. Sharp and fast, great for low resolution images.' },
   { id: '2x', label: '2x', title: 'Run SeedVR2 3B (2x) on the result before showing it. Diffusion-based restoration, higher quality, slower.' },
   { id: '4x', label: '4x', title: 'Run SeedVR2 7B (4x) on the result before showing it. Diffusion-based restoration, highest quality, slowest.' },
 ];

@@ -1790,10 +1790,8 @@ def _multi_composer_flow() -> dict:
     }
 
 
-def build_mix_multi_reference(source: Path, version: str) -> Path:
-    table = load_translations(source)
-    files: dict[str, object] = {}
-    workflow_refs: set[str] = set()
+def _multi_reference_flows(table: dict) -> list[dict]:
+    """Multi-Reference Compose, its Quick variant and MultiComposer (Qwen Image 2.1)."""
 
     flow1 = add_card_texts(_multi_reference_compose_flow(), table)
     flow1["card"]["label"] = {
@@ -1830,52 +1828,7 @@ def build_mix_multi_reference(source: Path, version: str) -> Path:
         "ko": "배경에 색상 구역을 표시하고 각 구역에 참조 이미지를 넣습니다.",
     }
 
-    flows = [flow1, flow2, flow3]
-    for flow in flows:
-        _upgrade_seed_fields_to_similarity(flow)
-        files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
-        workflow_refs |= _collect_workflow_file_refs(flow)
-
-    for ref in sorted(workflow_refs):
-        graph = _load_workflow_ref(source, ref)
-        _strip_foreign_flow_data(graph)
-        files[ref] = graph
-
-    i18n, counts = flow_i18n(flows, table)
-    manifest = {
-        "schema_version": 1,
-        "id": "nomad.mix-multi-reference",
-        "version": version,
-        "default_lang": "en",
-        "name": {"en": "Multi-Reference Compose", "es": "Composición multi-referencia",
-                  "zh": "多参考图合成", "ko": "다중 참조 합성"},
-        "summary": {
-            "en": "Combine 2-4 reference images into one coherent final image — write an idea and let AI "
-                  "compose the prompt, pick each image's role from a quick dropdown, or mark colored zones "
-                  "on a background and drop a reference into each one. Qwen Image 2.1.",
-            "es": "Combina de 2 a 4 imágenes de referencia en una sola imagen final — escribe una idea y deja "
-                  "que la IA componga el prompt, elige el rol de cada imagen en un desplegable rápido, o marca "
-                  "zonas de color en un fondo y coloca una referencia en cada una. Qwen Image 2.1.",
-            "zh": "将 2 到 4 张参考图合成为一张连贯的最终图像——写下想法让 AI 生成提示词，从下拉菜单快速选择"
-                  "每张图的角色，或在背景上标记彩色区域并放入参考图。由 Qwen Image 2.1 驱动。",
-            "ko": "2~4장의 참조 이미지를 하나의 최종 이미지로 합성 — 아이디어를 적으면 AI가 프롬프트를 작성하거나, "
-                  "드롭다운에서 각 이미지의 역할을 빠르게 선택하거나, 배경에 색상 구역을 표시하고 참조 이미지를 "
-                  "넣습니다. Qwen Image 2.1 기반.",
-        },
-        "author": AUTHOR,
-        "license": "proprietary",
-        "group": {"id": "compose", "label": {"en": "Compose"}},
-        "requires": {"engines": [{"category": "image"}]},
-        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
-        "contributes": {
-            "flows": [f"flows/{flow['id'].split('.', 1)[1]}.json" for flow in flows],
-            "workflows": sorted(workflow_refs),
-        },
-    }
-    print(f"  mix-multi-reference texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
-    return write_zip("nomad.mix-multi-reference", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
-                                                     **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
-                      dest=DIST_OPTIONAL)
+    return [flow1, flow2, flow3]
 
 
 # ── Qwen 2.1 Outpaint (replaces outpaint_qwen_2511.json, one of Outpaint's
@@ -1978,20 +1931,6 @@ def _qwen_image_21_outpaint_workflow() -> dict:
 # camera/lens/lighting look reliably, Klein 9B stays the only engine here.
 CAMERA_PACK_FLOWS = ["refine.pf_relight", "refine.camera_shoot_klein_9b"]
 
-
-def build_camera_pack(source: Path, version: str) -> Path:
-    return build_refine_static_group(
-        source, version, "nomad.refine-camera", "camera",
-        name={"en": "Camera", "es": "Cámara", "zh": "相机", "ko": "카메라"},
-        summary={
-            "en": "Cinematic camera looks — real camera/lens/lighting/color-grading presets — plus directional relighting.",
-            "es": "Looks cinematográficos de cámara — presets reales de cámara/lente/luz/color — más relighting direccional.",
-            "zh": "电影感相机风格——真实相机/镜头/灯光/调色预设——以及方向性重新布光。",
-            "ko": "시네마틱 카메라 룩 — 실제 카메라/렌즈/조명/컬러 그레이딩 프리셋 — 과 방향성 재조명.",
-        },
-        flow_ids=CAMERA_PACK_FLOWS,
-        group_overrides={fid: "camera" for fid in CAMERA_PACK_FLOWS},
-    )
 
 
 def build_qwen_image_21_engine(version: str) -> Path:
@@ -2697,6 +2636,7 @@ def build_refine_static_group(
     extra_texts: dict[str, dict[str, str]] | None = None,
     extra_i18n: dict[str, dict] | None = None,
     cover_image: Path | None = None,
+    replaces: list[str] | None = None,
 ) -> Path:
     """A Refine package whose flows all already have an authored flow.json
     (contributes.flows only, no flow_data-only ones — see build_refine_pilot
@@ -2819,6 +2759,10 @@ def build_refine_static_group(
     if cover_image is not None:
         manifest["cover_image"] = "images/cover.webp"
         files["images/cover.webp"] = cover_image.read_bytes()
+    # Older packages whose flows moved in here (2026-10-08 regrouping): the
+    # app uninstalls them when this one is installed (package_service).
+    if replaces:
+        manifest["replaces"] = list(replaces)
     print(f"  {pkg_id} texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
     return write_zip(pkg_id, {"manifest.json": manifest, **files, **extra_files, "LICENSE": LICENSE_TEXT,
                                **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
@@ -2922,15 +2866,22 @@ def build_photo_editing(source: Path, version: str) -> Path:
         source, version, "nomad.refine-photo-editing", "photo-editing",
         name={"en": "Photo Editing", "es": "Edición de fotos", "zh": "照片编辑", "ko": "사진 편집"},
         summary={
-            "en": "Color grading, cinematic looks, restoration, watermark/glare removal, camera-angle changes, "
-                  "region-based local editing and in-image text replacement.",
-            "es": "Gradación de color, looks cinematográficos, restauración, quitar marcas de agua/brillos, "
-                  "cambio de ángulo de cámara, edición local por región y sustitución de texto en la imagen.",
-            "zh": "调色、电影感风格、修复、去除水印/眩光、机位角度调整、基于区域的局部编辑以及图像内文字替换。",
-            "ko": "컬러 그레이딩, 시네마틱 룩, 복원, 워터마크/글레어 제거, 카메라 앵글 변경, 영역 기반 로컬 편집, "
-                  "이미지 내 텍스트 교체.",
+            "en": "Color grading, cinematic looks, relighting and real camera/lens looks, restoration, "
+                  "watermark/glare removal, camera-angle changes, region-based local editing and in-image "
+                  "text replacement.",
+            "es": "Gradación de color, looks cinematográficos, reiluminación y looks de cámara/objetivo reales, "
+                  "restauración, quitar marcas de agua/brillos, cambio de ángulo de cámara, edición local por "
+                  "región y sustitución de texto en la imagen.",
+            "zh": "调色、电影感风格、重新布光与真实相机/镜头风格、修复、去除水印/眩光、机位角度调整、"
+                  "基于区域的局部编辑以及图像内文字替换。",
+            "ko": "컬러 그레이딩, 시네마틱 룩, 리라이팅과 실제 카메라/렌즈 룩, 복원, 워터마크/글레어 제거, "
+                  "카메라 앵글 변경, 영역 기반 로컬 편집, 이미지 내 텍스트 교체.",
         },
-        flow_ids=PHOTO_EDITING_FLOWS,
+        # Camera (Relight, Camera Shoot) was a 2-flow pack of its own until
+        # 2026-10-08; it lives here now and this package replaces it.
+        flow_ids=PHOTO_EDITING_FLOWS + CAMERA_PACK_FLOWS,
+        group_overrides={fid: "photo-editing" for fid in CAMERA_PACK_FLOWS},
+        replaces=["nomad.refine-camera"],
         unregistered=PHOTO_EDITING_UNREGISTERED,
         # Angles was migrated to bare Qwen 2.1 (no LoRA) earlier, but
         # hand-testing showed 2.1 doesn't reproduce the viewpoint change
@@ -2950,12 +2901,18 @@ def build_portrait_fix(source: Path, version: str) -> Path:
         source, version, "nomad.refine-portrait-fix", "portrait-fix",
         name={"en": "Portrait Fix", "es": "Retoque de retrato", "zh": "人像修饰", "ko": "인물 보정"},
         summary={
-            "en": "Targeted portrait fixes: hair color/style, dark circles, expression, relight, red-eye, glare and more.",
-            "es": "Arreglos concretos de retrato: color/estilo de pelo, ojeras, expresión, relight, ojos rojos, brillos y más.",
-            "zh": "针对性人像修饰：发色/发型、黑眼圈、表情、重新布光、红眼、眩光等。",
-            "ko": "타깃 인물 보정: 헤어 컬러/스타일, 다크서클, 표정, 리라이팅, 적목 현상, 글레어 등.",
+            "en": "Targeted portrait fixes: hair color/style, dark circles, expression, red-eye, glare, plus "
+                  "realistic skin texture and pore detail (Skin Detailer).",
+            "es": "Arreglos concretos de retrato: color/estilo de pelo, ojeras, expresión, ojos rojos, brillos, "
+                  "más textura de piel y poro realista (Skin Detailer).",
+            "zh": "针对性人像修饰：发色/发型、黑眼圈、表情、红眼、眩光，以及逼真的皮肤纹理与毛孔细节（Skin Detailer）。",
+            "ko": "타깃 인물 보정: 헤어 컬러/스타일, 다크서클, 표정, 적목 현상, 글레어, 그리고 사실적인 피부 "
+                  "텍스처와 모공 디테일(Skin Detailer).",
         },
-        flow_ids=PORTRAIT_FIX_FLOWS,
+        # Skin Detailer was a 2-flow pack of its own until 2026-10-08.
+        flow_ids=PORTRAIT_FIX_FLOWS + SKIN_DETAILER_FLOWS,
+        group_overrides={fid: "portrait-fix" for fid in SKIN_DETAILER_FLOWS},
+        replaces=["nomad.refine-skin-detailer"],
     )
 
 
@@ -3159,20 +3116,6 @@ def build_background_tools(source: Path, version: str) -> Path:
         hand_authored=[_bg_swap_qwen2_flow(), _bg_swap_klein9b_flow()],
     )
 
-
-def build_skin_detailer(source: Path, version: str) -> Path:
-    return build_refine_static_group(
-        source, version, "nomad.refine-skin-detailer", "upscale",
-        name={"en": "Skin Detailer", "es": "Detalle de piel", "zh": "皮肤细节", "ko": "피부 디테일"},
-        summary={
-            "en": "Add realistic skin texture and pore detail to a portrait, preserving color, exposure and identity — Klein 4B or Klein 9B.",
-            "es": "Añade textura de piel y detalle de poro realista a un retrato, preservando color, exposición e identidad — Klein 4B o Klein 9B.",
-            "zh": "为人像添加逼真的皮肤纹理和毛孔细节，保留颜色、曝光和身份特征——Klein 4B 或 Klein 9B。",
-            "ko": "인물 사진에 사실적인 피부 텍스처와 모공 디테일을 추가하며 색상, 노출, 정체성을 유지합니다 — Klein 4B 또는 Klein 9B.",
-        },
-        flow_ids=SKIN_DETAILER_FLOWS,
-        group_overrides=SKIN_DETAILER_GROUP_OVERRIDES,
-    )
 
 
 def _pixel_art_klein9b_flow(source: Path) -> dict:
@@ -3831,12 +3774,9 @@ def _style_transfer_qwen21_mix_flow() -> dict:
     return flow
 
 
-def build_mix_style_transfer(source: Path, version: str) -> Path:
-    table = load_translations(source)
-    for text, langs in STYLE_TRANSFER_UI_TEXTS.items():  # only fills gaps
-        table.setdefault(text, {}).update({k: v for k, v in langs.items() if k not in table.get(text, {})})
-    files: dict[str, object] = {}
-    workflow_refs: set[str] = set()
+def _style_transfer_mix_flows(source: Path, table: dict) -> list[dict]:
+    """The image + image Style Transfer flows (Klein, Qwen 2511, Klein Styler,
+    Klein Migration, USO)."""
     flows = []
     for rel, _ in STYLE_TRANSFER_MIX_SOURCES:
         flows.append(_flow_from_embedded_flow_data(source, rel, "style-transfer"))
@@ -3853,8 +3793,26 @@ def build_mix_style_transfer(source: Path, version: str) -> Path:
         flow = add_card_texts(flow, table)
         flow["card"]["label"] = texts["label"]
         flow["card"]["desc"] = texts["desc"]
-        _upgrade_seed_fields_to_similarity(flow)
         flows[i] = flow
+    return flows
+
+
+# Mix Studio (2026-10-08): Multi-Reference Compose (3 flows) and Style
+# Transfer (5) were two small packs of their own; together they are every
+# image + image flow of Mix, and this package replaces both.
+MIX_STUDIO_ID = "nomad.mix-studio"
+
+
+def build_mix_studio(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    for text, langs in STYLE_TRANSFER_UI_TEXTS.items():  # only fills gaps
+        table.setdefault(text, {}).update({k: v for k, v in langs.items() if k not in table.get(text, {})})
+    flows = _multi_reference_flows(table) + _style_transfer_mix_flows(source, table)
+    files: dict[str, object] = {}
+    workflow_refs: set[str] = set()
+    for flow in flows:
+        flow["group"] = "mix-studio"
+        _upgrade_seed_fields_to_similarity(flow)
         files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
         workflow_refs |= _collect_workflow_file_refs(flow)
     for ref in sorted(workflow_refs):
@@ -3863,39 +3821,41 @@ def build_mix_style_transfer(source: Path, version: str) -> Path:
         files[ref] = graph
 
     i18n, counts = flow_i18n(flows, table)
+    name = {"en": "Mix Studio", "es": "Mix Studio", "zh": "Mix 工作室", "ko": "Mix 스튜디오"}
     manifest = {
         "schema_version": 1,
-        "id": "nomad.mix-style-transfer",
+        "id": MIX_STUDIO_ID,
         "version": version,
         "default_lang": "en",
-        "name": {"en": "Style Transfer (Mix)", "es": "Transferencia de estilo (Mix)",
-                 "zh": "风格迁移（Mix）", "ko": "스타일 전이 (Mix)"},
+        "name": name,
         "summary": {
-            "en": "Image + image: restyle a photo with the look of a separate reference picture — five engines "
-                  "and techniques (Qwen 2511, Flux 2 Klein RF Inversion, Klein Styler, Klein "
-                  "Migration, USO Style + Subject).",
-            "es": "Imagen + imagen: reestiliza una foto con el look de otra imagen de referencia — cinco motores "
-                  "y técnicas (Qwen 2511, Flux 2 Klein RF Inversion, Klein Styler, Klein "
-                  "Migration, USO Estilo + sujeto).",
-            "zh": "图像 + 图像：以另一张参考图的风格重新演绎照片——五种引擎与技术（Qwen 2511、"
-                  "Flux 2 Klein RF Inversion、Klein Styler、Klein Migration、USO 风格 + 主体）。",
-            "ko": "이미지 + 이미지: 별도 참조 이미지의 룩으로 사진을 재스타일링 — 5가지 엔진과 기법 ("
-                  "Qwen 2511, Flux 2 Klein RF Inversion, Klein Styler, Klein Migration, USO 스타일 + 피사체).",
+            "en": "Image + image: combine 2-4 references into one scene (Multi-Reference Compose, MultiComposer — "
+                  "Qwen Image 2.1), or restyle a photo with the look of another picture (Style Transfer on "
+                  "Flux 2 Klein, Qwen 2511, Klein Styler, Klein Migration, USO).",
+            "es": "Imagen + imagen: combina de 2 a 4 referencias en una escena (Composición multi-referencia, "
+                  "MultiComposer — Qwen Image 2.1), o reestiliza una foto con el look de otra imagen "
+                  "(Transferencia de estilo con Flux 2 Klein, Qwen 2511, Klein Styler, Klein Migration, USO).",
+            "zh": "图像 + 图像：将 2 到 4 张参考图合成为一个场景（多参考图合成、MultiComposer——Qwen Image 2.1），"
+                  "或以另一张图片的风格重新演绎照片（风格迁移：Flux 2 Klein、Qwen 2511、Klein Styler、"
+                  "Klein Migration、USO）。",
+            "ko": "이미지 + 이미지: 참조 이미지 2~4장을 한 장면으로 합성(다중 참조 합성, MultiComposer — "
+                  "Qwen Image 2.1)하거나, 다른 이미지의 룩으로 사진을 재스타일링(스타일 전이: Flux 2 Klein, "
+                  "Qwen 2511, Klein Styler, Klein Migration, USO).",
         },
         "author": AUTHOR,
         "license": "proprietary",
-        "group": {"id": "style-transfer", "label": {"en": "Style Transfer", "es": "Transferencia de estilo",
-                                                    "zh": "风格迁移", "ko": "스타일 전이"}},
+        "group": {"id": "mix-studio", "label": name},
         "requires": {"engines": [{"category": "image"}]},
         "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "replaces": ["nomad.mix-multi-reference", "nomad.mix-style-transfer"],
         "contributes": {
             "flows": [f"flows/{flow['id'].split('.', 1)[1]}.json" for flow in flows],
             "workflows": sorted(workflow_refs),
         },
     }
-    print(f"  mix-style-transfer texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
-    return write_zip("nomad.mix-style-transfer", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
-                                                    **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+    print(f"  mix-studio texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip(MIX_STUDIO_ID, {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                     **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
                       dest=DIST_OPTIONAL)
 
 
@@ -4505,7 +4465,7 @@ def main() -> None:
     ap.add_argument("--refine-groups", action="store_true")
     # Style packs only (they don't depend on the rest): skips engines/flows.
     ap.add_argument("--style-packs", action="store_true")
-    # Just the Styling (Refine) + Style Transfer (Mix) packages.
+    # Just the Styling (Refine) + Mix Studio (Mix) packages.
     ap.add_argument("--style-transfer", action="store_true")
     # Folder Build > Styles saved previews into (<dir>/<engine id>/<key>.webp),
     # e.g. "C:\Users\<you>\Nomad Studio\style-previews" — or the app data
@@ -4513,7 +4473,7 @@ def main() -> None:
     ap.add_argument("--style-images", type=Path)
     args = ap.parse_args()
     if args.style_transfer:
-        for path in (build_styling(args.source, args.version), build_mix_style_transfer(args.source, args.version)):
+        for path in (build_styling(args.source, args.version), build_mix_studio(args.source, args.version)):
             summary = validate(path)
             print(f"{path.name:40} {path.stat().st_size / 1024:5.0f} KB · {summary['id']} {summary['version']}"
                   f" · flows={[f['id'] for f in summary['flows']]}")
@@ -4536,12 +4496,10 @@ def main() -> None:
     if args.refine_groups:
         paths += [build_photo_editing(args.source, args.version), build_portrait_fix(args.source, args.version),
                   build_creator_pack(args.source, args.version), build_background_tools(args.source, args.version),
-                  build_camera_pack(args.source, args.version), build_skin_detailer(args.source, args.version),
                   build_extract_pack(args.source, args.version), build_styling(args.source, args.version),
                   build_presets_core(args.source, args.version), build_presets_open_air(args.source, args.version),
                   build_presets_film_shadow(args.source, args.version),
-                  build_mix_multi_reference(args.source, args.version),
-                  build_mix_style_transfer(args.source, args.version)]
+                  build_mix_studio(args.source, args.version)]
     for path in paths:
         summary = validate(path)
         engine_note = ""

@@ -653,6 +653,12 @@ def texts_for(data_dir: Path, lang: str) -> dict[str, str]:
 # ── Inspect (upload → summary) ──────────────────────────────────────────────
 
 
+def replaced_packages(manifest: dict[str, Any]) -> set[str]:
+    """`replaces` (§10.3): ids of older packages whose contents moved into this
+    one. Installing it removes them, so regrouping packs never duplicates flows."""
+    return {str(p) for p in (manifest.get("replaces") or []) if str(p) and str(p) != manifest.get("id")}
+
+
 def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str], lang: str = "en") -> dict[str, Any]:
     """Validate a package without installing it and describe what it would do."""
     manifest, members = _read_container(zip_path)
@@ -661,6 +667,8 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
     pkg_id = manifest["id"]
     contributes = manifest["contributes"]
     default_lang = manifest["default_lang"]
+    # A package that replaces older ones (regrouped packs) may take over their flow ids.
+    replaced = replaced_packages(manifest)
 
     engines: list[dict[str, Any]] = []
     flows: list[dict[str, Any]] = []
@@ -676,7 +684,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
             flow = _load_json_member(zf, rel)
             validate_flow(flow, rel, files)
             owner = (index.get("flows", {}).get(flow["id"]) or {}).get("package")
-            if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id):
+            if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id and owner not in replaced):
                 raise PackageError(f"Flow id already in use: {flow['id']}")
             card = card_fields(flow, lang, default_lang)
             flows.append({"id": flow["id"], "category": flow["category"], "label": card["label"], "desc": card["desc"]})
@@ -684,7 +692,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
         for rel, flow in _workflow_derived_flows(zf, contributes.get("workflows", []), skip_ids=static_flow_ids):
             validate_flow(flow, rel, files)
             owner = (index.get("flows", {}).get(flow["id"]) or {}).get("package")
-            if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id):
+            if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id and owner not in replaced):
                 raise PackageError(f"Flow id already in use: {flow['id']}")
             card = card_fields(flow, lang, default_lang)
             flows.append({"id": flow["id"], "category": flow["category"], "label": card["label"], "desc": card["desc"]})
@@ -858,6 +866,12 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         shutil.rmtree(stage, ignore_errors=True)
         raise
 
+    # The packages this one replaces go away (files, index); apply_to_registry
+    # drops them from the registry too.
+    replaced = [p for p in sorted(replaced_packages(manifest)) if p in index.get("packages", {})]
+    for old_id in replaced:
+        uninstall(data_dir, old_id, index)
+
     # Index (§12.2)
     for flow_id, info in list(index.get("flows", {}).items()):
         if info.get("package") == pkg_id:
@@ -900,7 +914,7 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         "has_code": bool(manifest["contributes"].get("addon")),
         "bundled": was_bundled,
     }
-    return {"manifest": manifest, "engine": engine, "flows": flows, "summary": summary}
+    return {"manifest": manifest, "engine": engine, "flows": flows, "summary": summary, "replaced": replaced}
 
 
 def _group_id(manifest: dict[str, Any], flow: dict[str, Any]) -> str:
@@ -1001,6 +1015,8 @@ def apply_to_registry(data: dict[str, Any], data_dir: Path, result: dict[str, An
     manifest = result["manifest"]
     pkg_id = manifest["id"]
     engine = result["engine"]
+    for old_id in result.get("replaced", []):
+        remove_from_registry(data, old_id)
     imports = data.setdefault("imports", [])
     if engine:
         previous = next((r for r in imports if r.get("id") == pkg_id), None)

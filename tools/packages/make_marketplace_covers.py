@@ -22,9 +22,10 @@ OUT = Path(__file__).resolve().parent / "marketplace_covers"
 
 def studio_pro(p: dict, by_id: dict) -> Image.Image:
     # As make_kofi_images.make_bundle, minus the price in the subtitle.
-    cw = (k.SIZE - 12) // 3
-    tiles = [k.fit(Image.open(k.WEB_COVERS / by_id[i]["cover"]), cw, cw, (1.0, 0.6)) for i in p["includes"]]
-    cover = k.collage(tiles, 3, 3)
+    rows = -(-len(p["includes"]) // 3)  # 3 per row, no empty row
+    cw, ch = (k.SIZE - 12) // 3, (k.SIZE - 6 * (rows - 1)) // rows
+    tiles = [k.fit(Image.open(k.WEB_COVERS / by_id[i]["cover"]), cw, ch, (1.0, 0.6)) for i in p["includes"]]
+    cover = k.collage(tiles, 3, rows)
     k.title_band(cover, p["name"], f"{len(p['includes'])} packs")
     return cover
 

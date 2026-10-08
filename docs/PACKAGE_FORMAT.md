@@ -791,7 +791,7 @@ Cada look es un flow con `preset_meta` (formato actual: `pack_id`, `pack_name`, 
 - Un estilo que el usuario **editó** o para el que **generó imágenes** no se pisa nunca: si el paquete lo quita o se desinstala, se queda como estilo del usuario.
 - Las imágenes son por modelo (`model_images`) y se generan en Build > Styles, que puede guardarlas en WebP y dejar una copia con nombre estable en `<output>/<subcarpeta>/<modelo>/<key>.webp`.
 - Un estilo PUEDE llevar sus previews dentro del paquete: `"images": {"<id de motor>": "images/<id de motor>/<key>.webp"}`. Al instalar se sirven desde la carpeta del paquete para ese modelo, pero nunca sustituyen una imagen que el usuario haya generado para ese mismo modelo. Si el estilo pasa a ser del usuario (editado, o el paquete lo quita), esas imágenes del paquete se descartan.
-- `replaces` (en el manifest): ids de paquetes antiguos cuyos estilos pasan a este. Al instalarlo, sus estilos se adoptan por `key` (mismo id, mismas ediciones e imágenes), de modo que reagrupar packs no duplica nada. Después se desinstalan los antiguos.
+- `replaces` (en el manifest): ids de paquetes antiguos cuyos estilos pasan a este. Al instalarlo, sus estilos se adoptan por `key` (mismo id, mismas ediciones e imágenes), de modo que reagrupar packs no duplica nada. Después se desinstalan los antiguos. Vale para cualquier paquete, no solo de estilos: sus flows pueden reutilizar los ids de flow de los paquetes que reemplaza (la comprobación de «Flow id already in use» los ignora) y, al instalarlo, la app desinstala esos paquetes antiguos (archivos, índice y registro). Así se fusionaron Camera en Photo Editing, Skin Detailer en Portrait Fix y Multi-Reference + Style Transfer en Mix Studio (2026-10-08).
 
 ---
 

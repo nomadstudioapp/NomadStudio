@@ -12,7 +12,7 @@
    ],
    "kofi_url": "https://ko-fi.com/s/bf1c5405b7",
    "contents": {
-    "n": 9,
+    "n": 6,
     "unit": "packs"
    },
    "description": {
@@ -23,15 +23,12 @@
    },
    "cover": "covers/bundle.studio-pro.webp",
    "sha256": [
-    "4a6b423942f6af4012c4038e5b74dd437a430507b8c3fff3110215bc62d8cadb",
-    "a3229fc1aca814d8885e0c9a7115ebd19fcc130288f9bf4191d836b1a63381f7",
-    "aff5ae0bb57d2aa3f0bd765ae95a38d9a01e6c89e7e7b79df73dad0d21ecc41a",
+    "d81772f564535d5d01e6437d77b287d1ede3a09e8bc9ff5b741303e38da1711b",
+    "449864002725424478888fc6b9fb7fa41dd90382a1ce67f72fdb2eaa37d9c6e8",
     "1f7ea9aca610c10da074f531416c6a3f7c0f783627f134eaee48d57035bbc56a",
-    "b997db46f0078904d66f7900ed9ace99b7bdb8595a8834e515e7fab52acd101b",
     "143984c23346b517fdfde721963bf8b44371a583f63ff831dbda88c3e586fe6d",
-    "1533d55d678b44f0ca7d96dfa18bdc61f4852a7233d203c5db20b590e9072bf1",
-    "e5296821ef81e1cb3c10f203cac94e2df94436d4145a966c77b9f7bd63a0c6fa",
-    "decea5d3ec1d27da3c5ea22ee7a01bae39df2522b4832d5ba14cc4d0262a0c4b",
+    "e8e9a406775bc8772bc919ddda7b93317bb287a444879e225ed0c0ba367ca09d",
+    "9ad290f864866b4f539085d0dd5bdc05ae477cb61e9dfa2e2b60a444fd6e0968",
     "7ac0cb69ab34e9ba7d82d7f3c7af2b21df0a25a5a155fb80d3310aa96bf55969"
    ],
    "name": {
@@ -41,14 +38,11 @@
     "ko": "Studio Pro"
    },
    "includes": [
-    "nomad.mix-multi-reference",
-    "nomad.mix-style-transfer",
+    "nomad.mix-studio",
     "nomad.refine-background-tools",
-    "nomad.refine-camera",
     "nomad.refine-creator-pack",
     "nomad.refine-photo-editing",
     "nomad.refine-portrait-fix",
-    "nomad.refine-skin-detailer",
     "nomad.refine-styling"
    ]
   },
@@ -3569,68 +3563,6 @@
    }
   },
   {
-   "id": "nomad.refine-camera",
-   "kind": "flows",
-   "tabs": [
-    "refine"
-   ],
-   "kofi_url": "https://ko-fi.com/s/c4ecfc8c07",
-   "contents": {
-    "n": 2,
-    "unit": "flows"
-   },
-   "description": {
-    "en": "Explore camera looks and change the direction of the light.",
-    "es": "Prueba acabados de cámara y cambia la dirección de la luz.",
-    "zh": "尝试不同的镜头效果，改变光线方向。",
-    "ko": "다양한 카메라 느낌을 적용하고 빛의 방향을 바꾸세요."
-   },
-   "cover": "covers/nomad.refine-camera.webp",
-   "sha256": [
-    "b997db46f0078904d66f7900ed9ace99b7bdb8595a8834e515e7fab52acd101b"
-   ],
-   "name": {
-    "en": "Camera",
-    "es": "Cámara",
-    "zh": "相机",
-    "ko": "카메라"
-   },
-   "version": "0.1.8",
-   "inside": {
-    "type": "flows",
-    "items": [
-     {
-      "label": {
-       "en": "Relight",
-       "es": "Reiluminar",
-       "zh": "重新打光",
-       "ko": "리라이팅"
-      },
-      "desc": {
-       "en": "Changes lighting direction and mood: golden hour, studio, dramatic and more.",
-       "es": "Cambia la dirección y el ambiente de la luz: hora dorada, estudio, dramática y más.",
-       "zh": "改变光线方向和氛围：黄金时刻、影棚、戏剧化等。",
-       "ko": "조명의 방향과 분위기를 바꿉니다: 골든아워, 스튜디오, 드라마틱 등."
-      }
-     },
-     {
-      "label": {
-       "en": "Camera Shoot · Klein 9B",
-       "es": "Sesión de cámara · Klein 9B",
-       "zh": "相机拍摄 · Klein 9B",
-       "ko": "카메라 촬영 · Klein 9B"
-      },
-      "desc": {
-       "en": "Transform your image with real-world camera models, focal lengths, aperture, lighting and color palettes.",
-       "es": "Transforma tu imagen con modelos de cámara reales, distancias focales, apertura, iluminación y paletas de color.",
-       "zh": "用真实的相机型号、焦距、光圈、布光和色板来改造你的图片。",
-       "ko": "실제 카메라 기종, 초점 거리, 조리개, 조명, 색상 팔레트로 이미지를 바꿔 보세요."
-      }
-     }
-    ]
-   }
-  },
-  {
    "id": "nomad.refine-creator-pack",
    "kind": "flows",
    "tabs": [
@@ -4454,18 +4386,18 @@
    ],
    "kofi_url": "https://ko-fi.com/s/dc88745e05",
    "contents": {
-    "n": 21,
+    "n": 23,
     "unit": "flows"
    },
    "description": {
-    "en": "Adjust colour, restore photos, retouch an area or replace text inside an image.",
-    "es": "Ajusta el color, restaura fotos, retoca una zona o cambia el texto de una imagen.",
-    "zh": "调整色彩、修复照片、局部润饰或替换图片中的文字。",
-    "ko": "색상 조정, 사진 복원, 부분 보정, 이미지 속 글자 교체를 할 수 있습니다."
+    "en": "Adjust colour and light, restore photos, retouch an area or replace text inside an image.",
+    "es": "Ajusta el color y la luz, restaura fotos, retoca una zona o cambia el texto de una imagen.",
+    "zh": "调整色彩与光线、修复照片、局部润饰或替换图片中的文字。",
+    "ko": "색상과 조명 조정, 사진 복원, 부분 보정, 이미지 속 글자 교체를 할 수 있습니다."
    },
    "cover": "covers/nomad.refine-photo-editing.webp",
    "sha256": [
-    "1533d55d678b44f0ca7d96dfa18bdc61f4852a7233d203c5db20b590e9072bf1"
+    "e8e9a406775bc8772bc919ddda7b93317bb287a444879e225ed0c0ba367ca09d"
    ],
    "name": {
     "en": "Photo Editing",
@@ -4473,7 +4405,7 @@
     "zh": "照片编辑",
     "ko": "사진 편집"
    },
-   "version": "0.1.10",
+   "version": "0.2.0",
    "inside": {
     "type": "flows",
     "items": [
@@ -4675,6 +4607,34 @@
      },
      {
       "label": {
+       "en": "Relight",
+       "es": "Reiluminar",
+       "zh": "重新打光",
+       "ko": "리라이팅"
+      },
+      "desc": {
+       "en": "Changes lighting direction and mood: golden hour, studio, dramatic and more.",
+       "es": "Cambia la dirección y el ambiente de la luz: hora dorada, estudio, dramática y más.",
+       "zh": "改变光线方向和氛围：黄金时刻、影棚、戏剧化等。",
+       "ko": "조명의 방향과 분위기를 바꿉니다: 골든아워, 스튜디오, 드라마틱 등."
+      }
+     },
+     {
+      "label": {
+       "en": "Camera Shoot · Klein 9B",
+       "es": "Sesión de cámara · Klein 9B",
+       "zh": "相机拍摄 · Klein 9B",
+       "ko": "카메라 촬영 · Klein 9B"
+      },
+      "desc": {
+       "en": "Transform your image with real-world camera models, focal lengths, aperture, lighting and color palettes.",
+       "es": "Transforma tu imagen con modelos de cámara reales, distancias focales, apertura, iluminación y paletas de color.",
+       "zh": "用真实的相机型号、焦距、光圈、布光和色板来改造你的图片。",
+       "ko": "실제 카메라 기종, 초점 거리, 조리개, 조명, 색상 팔레트로 이미지를 바꿔 보세요."
+      }
+     },
+     {
+      "label": {
        "en": "Local Editing: Region Selection",
        "es": "Edición local: selección de región",
        "zh": "局部编辑：区域选择",
@@ -4782,18 +4742,18 @@
    ],
    "kofi_url": "https://ko-fi.com/s/b561f078ee",
    "contents": {
-    "n": 10,
+    "n": 12,
     "unit": "flows"
    },
    "description": {
-    "en": "Retouch eyes, hair, expression and lighting with focused portrait tools.",
-    "es": "Retoca ojos, pelo, expresión e iluminación con flows específicos para retratos.",
-    "zh": "使用专用肖像工具，修饰眼睛、头发、表情和光线。",
-    "ko": "눈, 머리카락, 표정과 조명을 인물 전용 도구로 보정하세요."
+    "en": "Retouch eyes, hair and expression, and bring back real skin texture, with focused portrait tools.",
+    "es": "Retoca ojos, pelo y expresión, y devuelve a la piel su textura real, con flows específicos para retratos.",
+    "zh": "使用专用肖像工具修饰眼睛、头发和表情，并找回真实的皮肤质感。",
+    "ko": "눈, 머리카락, 표정을 보정하고 진짜 피부 질감을 되살리는 인물 전용 도구."
    },
    "cover": "covers/nomad.refine-portrait-fix.webp",
    "sha256": [
-    "e5296821ef81e1cb3c10f203cac94e2df94436d4145a966c77b9f7bd63a0c6fa"
+    "9ad290f864866b4f539085d0dd5bdc05ae477cb61e9dfa2e2b60a444fd6e0968"
    ],
    "name": {
     "en": "Portrait Fix",
@@ -4801,7 +4761,7 @@
     "zh": "人像修饰",
     "ko": "인물 보정"
    },
-   "version": "0.1.8",
+   "version": "0.2.0",
    "inside": {
     "type": "flows",
     "items": [
@@ -4944,41 +4904,7 @@
        "zh": "去除皮肤上的镜面油光。",
        "ko": "피부의 번들거리는 반사광을 제거합니다."
       }
-     }
-    ]
-   }
-  },
-  {
-   "id": "nomad.refine-skin-detailer",
-   "kind": "flows",
-   "tabs": [
-    "refine"
-   ],
-   "kofi_url": "https://ko-fi.com/s/e041a62d21",
-   "contents": {
-    "n": 2,
-    "unit": "flows"
-   },
-   "description": {
-    "en": "Add natural-looking skin texture while preserving facial features and colour.",
-    "es": "Añade textura natural a la piel conservando los rasgos y el color del retrato.",
-    "zh": "保留面部特征和色彩，增添自然的皮肤质感。",
-    "ko": "얼굴 특징과 색감을 유지하면서 자연스러운 피부 질감을 더하세요."
-   },
-   "cover": "covers/nomad.refine-skin-detailer.webp",
-   "sha256": [
-    "decea5d3ec1d27da3c5ea22ee7a01bae39df2522b4832d5ba14cc4d0262a0c4b"
-   ],
-   "name": {
-    "en": "Skin Detailer",
-    "es": "Detalle de piel",
-    "zh": "皮肤细节",
-    "ko": "피부 디테일"
-   },
-   "version": "0.1.7",
-   "inside": {
-    "type": "flows",
-    "items": [
+     },
      {
       "label": {
        "en": "Skin Detailer · Klein 4B",
@@ -5157,33 +5083,33 @@
    }
   },
   {
-   "id": "nomad.mix-multi-reference",
+   "id": "nomad.mix-studio",
    "kind": "flows",
    "tabs": [
     "mix"
    ],
-   "kofi_url": "https://ko-fi.com/s/bd0b3aadc8",
+   "kofi_url": "https://ko-fi.com/s/3dca5c835e",
    "contents": {
-    "n": 3,
+    "n": 8,
     "unit": "flows"
    },
    "description": {
-    "en": "Combine two to four reference images into one scene. Choose what each image contributes.",
-    "es": "Combina de dos a cuatro referencias en una escena. Decide qué aporta cada imagen.",
-    "zh": "将两到四张参考图合成一个场景，选择每张图的作用。",
-    "ko": "참조 이미지 2~4장을 한 장면으로 합치고 각 이미지의 역할을 정하세요."
+    "en": "Combine two to four references into one scene, or give a photo the look of another image.",
+    "es": "Combina de dos a cuatro referencias en una escena, o dale a una foto el estilo de otra imagen.",
+    "zh": "将两到四张参考图合成一个场景，或为照片应用另一张图片的风格。",
+    "ko": "참조 이미지 2~4장을 한 장면으로 합치거나, 다른 이미지의 스타일을 사진에 입히세요."
    },
-   "cover": "covers/nomad.mix-multi-reference.webp",
+   "cover": "covers/nomad.mix-studio.webp",
    "sha256": [
-    "a3229fc1aca814d8885e0c9a7115ebd19fcc130288f9bf4191d836b1a63381f7"
+    "449864002725424478888fc6b9fb7fa41dd90382a1ce67f72fdb2eaa37d9c6e8"
    ],
    "name": {
-    "en": "Multi-Reference Compose",
-    "es": "Composición multi-referencia",
-    "zh": "多参考图合成",
-    "ko": "다중 참조 합성"
+    "en": "Mix Studio",
+    "es": "Mix Studio",
+    "zh": "Mix 工作室",
+    "ko": "Mix 스튜디오"
    },
-   "version": "0.1.8",
+   "version": "0.1.0",
    "inside": {
     "type": "flows",
     "items": [
@@ -5228,41 +5154,7 @@
        "zh": "在背景图上标记彩色区域，为每个区域放入一张参考图。",
        "ko": "배경에 색상 구역을 표시하고 각 구역에 참조 이미지를 넣습니다."
       }
-     }
-    ]
-   }
-  },
-  {
-   "id": "nomad.mix-style-transfer",
-   "kind": "flows",
-   "tabs": [
-    "mix"
-   ],
-   "kofi_url": "https://ko-fi.com/s/3dca5c835e",
-   "contents": {
-    "n": 5,
-    "unit": "flows"
-   },
-   "description": {
-    "en": "Give a photo the look of another image while keeping your subject recognisable.",
-    "es": "Dale a una foto el estilo de otra imagen manteniendo reconocible al protagonista.",
-    "zh": "保留主体特征，为照片应用另一张图片的风格。",
-    "ko": "피사체를 알아볼 수 있게 유지하면서 다른 이미지의 스타일을 입히세요."
-   },
-   "cover": "covers/nomad.mix-style-transfer.webp",
-   "sha256": [
-    "aff5ae0bb57d2aa3f0bd765ae95a38d9a01e6c89e7e7b79df73dad0d21ecc41a"
-   ],
-   "name": {
-    "en": "Style Transfer (Mix)",
-    "es": "Transferencia de estilo (Mix)",
-    "zh": "风格迁移（Mix）",
-    "ko": "스타일 전이 (Mix)"
-   },
-   "version": "0.1.7",
-   "inside": {
-    "type": "flows",
-    "items": [
+     },
      {
       "label": {
        "en": "Style Transfer — Flux 2 Klein",

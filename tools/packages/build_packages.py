@@ -114,10 +114,10 @@ ENGINES = {
 # never added to ENGINES above, never built by the default `main()` run.
 ENGINES_OPTIONAL = {
     "Krea2 Roma": ("krea2-roma", {
-        "en": "Krea 2 with a Midjourney-style LoRA for a stronger stylized look. Ships third-party files under their own published licenses — one of them (the Midjourney-style LoRA) requires credit and restricts commercial use to CivitAI's rental program.",
-        "es": "Krea 2 con una LoRA de estilo Midjourney para un look más marcado. Incluye ficheros de terceros bajo sus propias licencias — una de ellas (la LoRA de estilo Midjourney) exige crédito y restringe el uso comercial al programa de alquiler de CivitAI.",
-        "zh": "搭配 Midjourney 风格 LoRA 的 Krea 2，风格更强烈。包含第三方文件，遵循各自发布的许可条款——其中一个（Midjourney 风格 LoRA）要求署名，且商业用途仅限 CivitAI 的租赁计划。",
-        "ko": "더 강한 스타일을 위한 Midjourney 스타일 LoRA가 포함된 Krea 2. 각자의 라이선스를 따르는 서드파티 파일을 포함합니다 — 그중 하나(Midjourney 스타일 LoRA)는 크레딧 표기가 필요하며 상업적 이용은 CivitAI 대여 프로그램으로 제한됩니다.",
+        "en": "Krea 2 with a Midjourney-style LoRA for a stronger stylized look. The models are downloaded from their authors under their own licenses: the Midjourney-style LoRA requires credit and allows commercial use only through CivitAI's rental program.",
+        "es": "Krea 2 con una LoRA de estilo Midjourney para un look más marcado. Los modelos se descargan de sus autores con sus propias licencias: la LoRA de estilo Midjourney exige crédito y solo permite uso comercial a través del programa de alquiler de CivitAI.",
+        "zh": "搭配 Midjourney 风格 LoRA 的 Krea 2，风格更强烈。模型从其作者处下载，遵循各自的许可：Midjourney 风格 LoRA 要求署名，且仅允许通过 CivitAI 的租赁计划进行商业使用。",
+        "ko": "더 강한 스타일을 위한 Midjourney 스타일 LoRA가 포함된 Krea 2. 모델은 각 제작자에게서 해당 라이선스에 따라 다운로드합니다. Midjourney 스타일 LoRA는 크레딧 표기가 필요하며 상업적 이용은 CivitAI 대여 프로그램을 통해서만 가능합니다.",
     }),
 }
 

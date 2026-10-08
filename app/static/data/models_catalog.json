@@ -518,7 +518,12 @@
      "url": "https://civitai.com/api/download/models/3252404?fileId=3135445",
      "host": "civitai"
     }
-   ]
+   ],
+   "license": {
+    "name": "CivitAI: credit required; commercial use only through CivitAI's rental program",
+    "url": "https://civitai.com/models/601666",
+    "non_commercial": true
+   }
   },
   {
    "sha256": "96a10c01869ce8ce82f820f8217881d4a998487b1058eb3057a33c74419645f8",

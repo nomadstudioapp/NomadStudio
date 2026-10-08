@@ -246,6 +246,9 @@ PBS_ASSETS = {
     "macos-arm64": "cpython-3.13.3+20250409-aarch64-apple-darwin-install_only.tar.gz",
 }
 # uv's target for the dependency wheels, and the launcher each one ships.
+# Free template packs shipped inside the app (also on Ko-fi at 0 USD).
+INCLUDED_TEMPLATE_PACKS = ("cinematic", "creature-kingdom", "flat-and-vector", "interiors",
+                           "lifelike-portraits", "wild-horizons")
 UV_TARGETS = {"linux-x64": "x86_64-manylinux_2_28", "macos-arm64": "aarch64-apple-darwin"}
 LAUNCHERS = {"linux-x64": "NomadStudio.sh", "macos-arm64": "NomadStudio.command"}
 PBS_BASE = f"https://github.com/astral-sh/python-build-standalone/releases/download/{PBS_TAG}/"
@@ -351,10 +354,12 @@ def main() -> None:
     ap.add_argument("--update-repo", default="juanpaexpedite/NomadStudio")
     ap.add_argument("--packages-dir", type=Path, default=REPO / "dist" / "packages",
                     help="package ZIPs to ship in bundled-packages/ (tools/packages/build_packages.py writes them)")
-    # Included packs built in NomadStudioPacks (a sibling checkout); more can be added.
+    # Included packs built in NomadStudioPacks (a sibling checkout): the free
+    # template packs the website and the Marketplace list as "Included".
     ap.add_argument("--extra-package", type=Path, action="append",
-                    default=[REPO.parent / "NOMADSTUDIO_PACKS" / "dist" / "nomad.templates-cinematic.zip"],
-                    help="another ZIP to ship in bundled-packages/ (default: the Cinematic template pack)")
+                    default=[REPO.parent / "NOMADSTUDIO_PACKS" / "dist" / f"nomad.templates-{name}.zip"
+                             for name in INCLUDED_TEMPLATE_PACKS],
+                    help="another ZIP to ship in bundled-packages/ (default: the free template packs)")
     args = ap.parse_args()
 
     if platform.system() != "Windows":

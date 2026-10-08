@@ -54,6 +54,25 @@ var NcfRequirements = (function () {
     return files;
   }
 
+  // The Upscale output pill (2xFast/4xFast/4xSharp/2x/4x, flow-render-all.js)
+  // runs one more graph after the flow's own, with its model swapped in
+  // (_maybeUpscaleOutput, flow-step-workflow-params.js). It is checked too,
+  // with the same values, so a missing upscale model is offered for download
+  // like any other file instead of failing after the image is made (#34).
+  function _extraWorkflows() {
+    var mode = typeof upscaleOutputMode !== 'undefined' ? upscaleOutputMode : 'none';
+    if (!mode || mode === 'none') return [];
+    var seedvr2 = typeof UPSCALE_OUTPUT_SEEDVR2 !== 'undefined' ? UPSCALE_OUTPUT_SEEDVR2[mode] : null;
+    if (seedvr2) {
+      return [{ file: 'nomad.core-refine/workflows/refine_upscale_seedvr2.json',
+                values: { '66:52.unet_name': seedvr2.unetName } }];
+    }
+    var model = typeof UPSCALE_OUTPUT_MODELS !== 'undefined' ? UPSCALE_OUTPUT_MODELS[mode] : null;
+    if (!model) return [];
+    return [{ file: 'nomad.core-refine/workflows/upscale_2026/refine_upscale_model.json',
+              values: { '8.model_name': model } }];
+  }
+
   function _missingCount(r) {
     if (!r) return { files: 0, packs: 0 };
     return {
@@ -95,12 +114,13 @@ var NcfRequirements = (function () {
   function check(opts) {
     opts = opts || {};
     var files = _workflowFiles();
+    var extra = _extraWorkflows();
     var seq = ++_seq;
-    if (!files.length) { _last = null; _lastFiles = []; _renderBanner(); return Promise.resolve(null); }
+    if (!files.length && !extra.length) { _last = null; _lastFiles = []; _renderBanner(); return Promise.resolve(null); }
     return fetch('/api/models/flows/requirements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workflowFiles: files, refresh: !!opts.refresh }),
+      body: JSON.stringify({ workflowFiles: files, extraWorkflows: extra, refresh: !!opts.refresh }),
     })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (res) {

@@ -458,6 +458,23 @@ def flow_requirements():
             workflows.append(_load_workflow_file(rel))
         except (ValueError, OSError, json.JSONDecodeError):
             continue  # a flow pointing at a graph that is gone is a different problem
+    # Graphs the app runs after the flow's own (the Upscale output pill), with
+    # the values it will set: {"file": ..., "values": {"<node>.<input>": v}}.
+    for extra in payload.get("extraWorkflows") or []:
+        if not isinstance(extra, dict) or not str(extra.get("file") or "").strip():
+            continue
+        rel = str(extra["file"]).strip()
+        try:
+            graph = _load_workflow_file(rel)
+        except (ValueError, OSError, json.JSONDecodeError):
+            continue
+        for key, value in (extra.get("values") or {}).items():
+            node_id, _, input_name = str(key).partition(".")
+            node = graph.get(node_id)
+            if input_name and "." not in input_name and isinstance(node, dict) and isinstance(value, (str, int, float)):
+                node.setdefault("inputs", {})[input_name] = value
+        workflows.append(graph)
+        files.append(rel)
     if not workflows:
         return jsonify({"ok": True, "checked": 0})
 

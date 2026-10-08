@@ -43,6 +43,9 @@ function _buildUpscaleOutputGrid(container, onChange) {
       btn.classList.add('is-active');
       btn.setAttribute('aria-checked', 'true');
       if (onChange) onChange(opt.id);
+      // Its model may not be in ComfyUI yet: the files panel offers it now,
+      // not as a failed upscale after the image is made.
+      if (typeof NcfRequirements !== 'undefined') NcfRequirements.check({ open: true });
     });
     list.appendChild(btn);
   });

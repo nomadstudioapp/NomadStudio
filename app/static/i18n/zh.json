@@ -2078,7 +2078,7 @@
     },
     "apps": {
       "start": "启动 {name}",
-      "starting": "正在启动 {name}…可能需要一分钟。",
+      "starting": "正在启动 {name}…首次启动可能需要几分钟。",
       "install": "安装",
       "installComfy": "安装 ComfyUI",
       "installLms": "安装 LM Studio",

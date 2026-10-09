@@ -1695,7 +1695,7 @@
     },
     "apps": {
       "start": "Start {name}",
-      "starting": "Starting {name}… this can take a minute.",
+      "starting": "Starting {name}… the first time it can take a few minutes.",
       "install": "Install",
       "installComfy": "Install ComfyUI",
       "installLms": "Install LM Studio",

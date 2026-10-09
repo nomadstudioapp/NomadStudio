@@ -2078,7 +2078,7 @@
     },
     "apps": {
       "start": "Arrancar {name}",
-      "starting": "Arrancando {name}… puede tardar un minuto.",
+      "starting": "Arrancando {name}… la primera vez puede tardar unos minutos.",
       "install": "Instalar",
       "installComfy": "Instalar ComfyUI",
       "installLms": "Instalar LM Studio",

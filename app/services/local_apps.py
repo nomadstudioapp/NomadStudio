@@ -22,7 +22,9 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
+import time
 import urllib.request
 import uuid
 from pathlib import Path
@@ -41,6 +43,14 @@ LMSTUDIO_INSTALLER_URL = "https://lmstudio.ai/download/latest/win32/x64"
 WINDOWS_TAR = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "tar.exe"
 SEVEN_ZIP = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "7-Zip" / "7z.exe"
 MIN_FREE_BYTES = 8 * 2**30  # ~2 GB archive + ~5 GB unpacked, with room to spare
+# Microsoft's Visual C++ runtime, which PyTorch inside ComfyUI loads. A fresh
+# Windows does not have it, and the portable ComfyUI then closes as soon as it
+# starts ("Error loading c10.dll") — found installing on a clean Windows 11 VM.
+# Official permalink to the current x64 installer.
+VCREDIST_URL = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+_VC_RUNTIME_DLLS = ("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")
+VCREDIST_WAIT_SECONDS = 600
+LMSTUDIO_INSTALLER_WAIT_SECONDS = 1800
 
 
 # ── This machine ────────────────────────────────────────────────────────────
@@ -76,6 +86,15 @@ def gpu_vendor() -> str:
         if any(n in names for n in needles):
             return vendor
     return ""
+
+
+def vc_runtime_installed() -> bool:
+    """Whether the Visual C++ runtime PyTorch needs is on this machine: the
+    DLLs themselves, which is what ComfyUI fails to load without it."""
+    if not sys.platform.startswith("win"):
+        return True
+    system32 = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32"
+    return all((system32 / dll).is_file() for dll in _VC_RUNTIME_DLLS)
 
 
 # ── Finding what is already installed ───────────────────────────────────────
@@ -145,6 +164,16 @@ def find_comfyui() -> dict[str, Any] | None:
     return (find_comfyui_all() or [None])[0]
 
 
+def comfy_models_dir(info: dict[str, Any] | None) -> str:
+    """The models folder of a portable ComfyUI, so the wizard can fill it in
+    instead of asking a new user for a path they have never seen."""
+    if info and info.get("kind") == "portable":
+        models = Path(info["path"]) / "ComfyUI" / "models"
+        if models.is_dir():
+            return str(models)
+    return ""
+
+
 def find_lmstudio() -> dict[str, Any] | None:
     """LM Studio on this machine, plus its `lms` command line tool when it is
     there (it can start the server without the window)."""
@@ -174,11 +203,14 @@ def find_lmstudio() -> dict[str, Any] | None:
 def state() -> dict[str, Any]:
     """What the wizard needs to decide what to offer."""
     vendor = gpu_vendor()
+    comfy = find_comfyui()
     return {
         "gpus": gpu_names(),
         "gpuVendor": vendor,
         "canInstallComfy": sys.platform.startswith("win") and _extractor() is not None,
-        "comfy": find_comfyui(),
+        "vcRuntime": vc_runtime_installed(),
+        "comfy": comfy,
+        "comfyModelsDir": comfy_models_dir(comfy),
         "comfyAll": find_comfyui_all(),
         "comfyCanListen": can_listen(),
         "lmstudio": find_lmstudio(),
@@ -190,8 +222,8 @@ def state() -> dict[str, Any]:
 # ── Starting them ───────────────────────────────────────────────────────────
 
 
-def _spawn(args: list[str], cwd: str | None = None) -> None:
-    subprocess.Popen(  # noqa: S603 — paths we found ourselves, local app
+def _spawn(args: list[str], cwd: str | None = None) -> subprocess.Popen:
+    return subprocess.Popen(  # noqa: S603 — paths we found ourselves, local app
         args, cwd=cwd, close_fds=True,
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if args[0].endswith(".exe") else 0,
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -215,12 +247,27 @@ def start_comfyui(listen: bool = False) -> dict[str, Any]:
     info = find_comfyui()
     if not info or not info.get("launcher"):
         return {"ok": False, "error": "No ComfyUI installation was found on this computer"}
-    if listen and can_listen(info):
+    # Its console would open and close again at once, leaving the wizard
+    # waiting for nothing: ask for the runtime first.
+    if info.get("kind") == "portable" and not vc_runtime_installed():
+        return {"ok": False, "needsVcRuntime": True,
+                "error": "ComfyUI needs the Microsoft Visual C++ runtime, which this computer does not have yet"}
+    nvidia_bat = Path(info["launcher"]).name.lower() == "run_nvidia_gpu.bat"
+    if can_listen(info) and (listen or nvidia_bat):
+        # Its own Python directly rather than run_nvidia_gpu.bat (which runs
+        # exactly this): the .bat opens ComfyUI's page in the browser, which
+        # jumped in front of the wizard on a first install. Other .bat files
+        # may add flags of their own, so they still run as they are. cmd /k
+        # keeps the console open if ComfyUI stops, like the .bat's "pause",
+        # so its error stays readable; minimized, like Nomad Studio's own
+        # console, so it does not cover the wizard.
         root = Path(info["path"])
-        _spawn(["cmd.exe", "/c", "start", "", str(root / "python_embeded" / "python.exe"),
-                "-s", str(root / "ComfyUI" / "main.py"), "--windows-standalone-build",
-                "--listen", "0.0.0.0"], cwd=info["path"])
-        return {"ok": True, "started": info["path"], "listening": True}
+        args = ["cmd.exe", "/c", "start", "", "/min", "cmd.exe", "/k", str(root / "python_embeded" / "python.exe"),
+                "-s", str(root / "ComfyUI" / "main.py"), "--windows-standalone-build", "--disable-auto-launch"]
+        if listen:
+            args += ["--listen", "0.0.0.0"]
+        _spawn(args, cwd=info["path"])
+        return {"ok": True, "started": info["path"], "listening": listen}
     launcher = info["launcher"]
     if launcher.lower().endswith(".bat"):
         _spawn(["cmd.exe", "/c", "start", "", launcher], cwd=info["path"])
@@ -282,43 +329,96 @@ def _set(**fields: Any) -> None:
             _job.update(fields)
 
 
+def _download_installer(url: str, target_dir: Path, fallback_name: str) -> Path:
+    """Download a Windows installer into *target_dir*, reporting progress to
+    the current job. Its name comes from the URL the redirects end at."""
+    target_dir.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(url, headers={"User-Agent": "NomadStudio"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        name = os.path.basename(response.url.split("?", 1)[0]) or fallback_name
+        if not name.lower().endswith(".exe"):
+            raise ValueError("That download is not a Windows installer")
+        total = int(response.headers.get("Content-Length") or 0)
+        _set(total=total, asset=name)
+        installer = target_dir / name
+        partial = installer.with_suffix(".part")
+        with partial.open("wb") as out:
+            done = 0
+            while True:
+                chunk = response.read(1 << 20)
+                if not chunk:
+                    break
+                out.write(chunk)
+                done += len(chunk)
+                _set(done=done)
+        os.replace(partial, installer)
+    return installer
+
+
+def _new_job(app: str) -> None:
+    global _job
+    with _job_lock:
+        if _job and _job.get("state") == "running":
+            raise ValueError("Something else is already being installed")
+        _job = {"id": uuid.uuid4().hex[:12], "app": app, "state": "running", "phase": "download",
+                "done": 0, "total": 0, "error": "", "result": None}
+
+
+def start_install_vcredist() -> dict[str, Any]:
+    """Download Microsoft's Visual C++ runtime installer and run it. It needs
+    administrator rights, so Windows shows its permission prompt; we wait
+    until the runtime's DLLs are there (or the user said no)."""
+    if not sys.platform.startswith("win"):
+        raise ValueError("The Visual C++ runtime is only needed on Windows")
+    _new_job("vcredist")
+
+    def work() -> None:
+        try:
+            installer = _download_installer(VCREDIST_URL, Path(tempfile.gettempdir()) / "NomadStudio",
+                                            "vc_redist.x64.exe")
+            _set(phase="installer")
+            try:
+                # ShellExecute, not Popen: only it raises the elevation prompt
+                # an installer that requires administrator rights needs.
+                os.startfile(str(installer), "open", "/install /passive /norestart")  # noqa: S606
+            except OSError as exc:
+                if getattr(exc, "winerror", None) == 1223:  # ERROR_CANCELLED: "No" in the prompt
+                    raise ValueError("Windows did not get permission to install the Visual C++ runtime") from exc
+                raise
+            deadline = time.monotonic() + VCREDIST_WAIT_SECONDS
+            while not vc_runtime_installed():
+                if time.monotonic() > deadline:
+                    raise ValueError("The Visual C++ runtime installer did not finish")
+                time.sleep(2)
+            _set(state="done", phase="ready", result={"installer": str(installer)})
+            logger.info("Visual C++ runtime installed")
+        except Exception as exc:  # noqa: BLE001 — shown in the wizard
+            logger.exception("installing the Visual C++ runtime failed")
+            _set(state="error", error=str(exc))
+
+    threading.Thread(target=work, daemon=True, name="install-vcredist").start()
+    return get_job() or {}
+
+
 def start_install_lmstudio(target_dir: Path) -> dict[str, Any]:
     """Download LM Studio's own installer and open it. It installs itself with
     its own window, so this gets the file and hands over — unlike ComfyUI,
     which is a portable folder we can unpack."""
-    global _job
     if not sys.platform.startswith("win"):
         raise ValueError("Installing LM Studio from here is only available on Windows for now")
-    with _job_lock:
-        if _job and _job.get("state") == "running":
-            raise ValueError("Something else is already being installed")
-        _job = {"id": uuid.uuid4().hex[:12], "app": "lmstudio", "state": "running", "phase": "download",
-                "done": 0, "total": 0, "error": "", "result": None}
+    _new_job("lmstudio")
 
     def work() -> None:
         try:
-            target_dir.mkdir(parents=True, exist_ok=True)
-            request = urllib.request.Request(LMSTUDIO_INSTALLER_URL, headers={"User-Agent": "NomadStudio"})
-            with urllib.request.urlopen(request, timeout=60) as response:
-                name = os.path.basename(response.url.split("?", 1)[0]) or "LM-Studio-Setup.exe"
-                if not name.lower().endswith(".exe"):
-                    raise ValueError("That download is not a Windows installer")
-                total = int(response.headers.get("Content-Length") or 0)
-                _set(total=total, asset=name)
-                installer = target_dir / name
-                partial = installer.with_suffix(".part")
-                with partial.open("wb") as out:
-                    done = 0
-                    while True:
-                        chunk = response.read(1 << 20)
-                        if not chunk:
-                            break
-                        out.write(chunk)
-                        done += len(chunk)
-                        _set(done=done)
-                os.replace(partial, installer)
+            installer = _download_installer(LMSTUDIO_INSTALLER_URL, target_dir, "LM-Studio-Setup.exe")
             _set(phase="installer")
-            _spawn([str(installer)])
+            # Wait for the user to finish it: LM Studio.exe is among the first
+            # files it copies, and starting it before the installer was done
+            # crashed it ("Cannot find module ...\index.js", clean Windows VM).
+            try:
+                _spawn([str(installer)]).wait(timeout=LMSTUDIO_INSTALLER_WAIT_SECONDS)
+            except subprocess.TimeoutExpired:
+                logger.info("LM Studio installer still open after %ss; carrying on", LMSTUDIO_INSTALLER_WAIT_SECONDS)
             _set(state="done", phase="ready", result={"installer": str(installer), "needsUserToFinish": True})
             logger.info("LM Studio installer downloaded to %s and started", installer)
         except Exception as exc:  # noqa: BLE001 — shown in the wizard

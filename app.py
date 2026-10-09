@@ -5,6 +5,19 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
+# Python on Windows checks HTTPS against the system certificate store, which on
+# a fresh install holds only the roots Windows has fetched so far: every
+# download (ComfyUI from GitHub, LM Studio, models from Hugging Face) then
+# failed with CERTIFICATE_VERIFY_FAILED — found installing on a clean Windows 11
+# VM. SSL_CERT_FILE adds certifi's bundle on top of the system store
+# (ssl.SSLContext.load_default_certs reads both), before any request is made.
+try:
+    import certifi
+
+    os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+except ImportError:
+    pass
+
 from app import create_app
 
 app = create_app()

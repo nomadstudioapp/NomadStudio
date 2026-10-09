@@ -1953,7 +1953,8 @@
       "bad": "ComfyUI 不是从这个文件夹读取模型的。请选择 ComfyUI 安装目录中的 \"models\" 文件夹。",
       "free": "剩余 {free}",
       "label": "ComfyUI 模型文件夹（仅下载时需要）",
-      "ok": "这是 ComfyUI 使用的文件夹（找到 {m} 个文件中的 {n} 个）。"
+      "ok": "这是 ComfyUI 使用的文件夹（找到 {m} 个文件中的 {n} 个）。",
+      "okEmpty": "下载的文件会保存到你的 ComfyUI 的这个文件夹。"
     },
     "format": {
       "changeLater": "你可以随时在设置中更改。已保存的图片不会被转换。",
@@ -2079,6 +2080,14 @@
       "start": "启动 {name}",
       "starting": "正在启动 {name}…可能需要一分钟。",
       "install": "安装",
+      "installComfy": "安装 ComfyUI",
+      "installLms": "安装 LM Studio",
+      "vcTitle": "ComfyUI 需要 Microsoft Visual C++ 运行库",
+      "vcText": "这台电脑还没有安装它，缺少它时 ComfyUI 一启动就会关闭。",
+      "installVc": "安装 Visual C++ 运行库",
+      "vcNote": "约 25 MB，来自 Microsoft。Windows 会请求一次你的许可。",
+      "vcInstalling": "正在安装 Visual C++ 运行库…Windows 会请求许可，请选择“是”。如果看不到该窗口，请点击任务栏中闪烁的图标。",
+      "noAnswer": "{name} 没有响应。如果它的窗口已关闭或显示错误，该错误会说明原因。",
       "installIn": "将 ComfyUI 安装到",
       "installNote": "约 2 GB，来自 ComfyUI 官方发布版。",
       "downloading": "正在下载 ComfyUI…{pct}%",
@@ -2089,7 +2098,7 @@
       "preferPortable": "Nomad Studio 与便携版配合得最好。",
       "listen": "允许我网络中的其他电脑使用它",
       "downloadingApp": "正在下载 {name}…{pct}%",
-      "installerOpen": "请在刚打开的窗口中完成安装。",
+      "installerOpen": "请在刚打开的窗口中完成安装。如果看不到该窗口，请点击任务栏中它的图标。",
       "downloadTo": "将 LM Studio 下载到",
       "lmsNote": "安装程序会自动打开，我们在这里等你。"
     }

@@ -175,7 +175,13 @@ def local_apps_start():
 def install_local_app(app_id: str):
     """Get ComfyUI or LM Studio for a user who has neither: ComfyUI is
     unpacked into the chosen folder, LM Studio's own installer is downloaded
-    and opened (app/services/local_apps.py)."""
+    and opened (app/services/local_apps.py). "vcredist" is the Visual C++
+    runtime ComfyUI needs on a fresh Windows; it takes no folder."""
+    if app_id == "vcredist":
+        try:
+            return jsonify({"ok": True, "job": local_apps.start_install_vcredist()})
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
     payload = request.get_json(silent=True) or {}
     raw = str(payload.get("dir", "") or "").strip()
     if not raw or not os.path.isabs(raw):

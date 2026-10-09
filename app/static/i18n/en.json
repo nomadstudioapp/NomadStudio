@@ -1570,7 +1570,8 @@
       "bad": "ComfyUI does not read its models from this folder. Choose the \"models\" folder inside your ComfyUI installation.",
       "free": "{free} free",
       "label": "ComfyUI models folder (only needed to download)",
-      "ok": "This is the folder ComfyUI uses ({n} of {m} files found)."
+      "ok": "This is the folder ComfyUI uses ({n} of {m} files found).",
+      "okEmpty": "Downloads go to this folder of your ComfyUI."
     },
     "format": {
       "changeLater": "You can change this in Settings at any time. Images already saved are not converted.",
@@ -1696,6 +1697,14 @@
       "start": "Start {name}",
       "starting": "Starting {name}… this can take a minute.",
       "install": "Install",
+      "installComfy": "Install ComfyUI",
+      "installLms": "Install LM Studio",
+      "vcTitle": "ComfyUI needs the Microsoft Visual C++ Runtime",
+      "vcText": "This computer does not have it yet, and without it ComfyUI closes as soon as it starts.",
+      "installVc": "Install Visual C++ Runtime",
+      "vcNote": "About 25 MB from Microsoft. Windows will ask for your permission once.",
+      "vcInstalling": "Installing the Visual C++ Runtime… Windows asks for permission: answer Yes. If you do not see its window, click the blinking icon in the taskbar.",
+      "noAnswer": "{name} did not answer. If its window closed or shows an error, that error says why.",
       "installIn": "Install ComfyUI in",
       "installNote": "About 2 GB from the official ComfyUI release.",
       "downloading": "Downloading ComfyUI… {pct}%",
@@ -1706,7 +1715,7 @@
       "preferPortable": "The portable build is the one Nomad Studio works best with.",
       "listen": "Let other computers on my network use it",
       "downloadingApp": "Downloading {name}… {pct}%",
-      "installerOpen": "Finish the installation in the window that just opened.",
+      "installerOpen": "Finish the installation in the window that just opened. If you do not see it, click its icon in the taskbar.",
       "downloadTo": "Download LM Studio to",
       "lmsNote": "Its installer opens by itself; we wait for you here."
     }

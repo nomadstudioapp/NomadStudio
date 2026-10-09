@@ -97,6 +97,15 @@ def _load_package_addons(app: Flask) -> None:
 def _load_addon(app: Flask, addon_id: str, path: Path) -> None:
     """Import a single addon package and call its register() function."""
     module_name = f"addons.{addon_id}"
+    if "addons" not in sys.modules:
+        # The parent every addon module hangs from: without it ``from . import
+        # x`` inside an addon fails. A portable build has no source-tree
+        # addons/ folder, so load_addons() never created it there and
+        # refine-extract did not load (found on a clean Windows 11 VM).
+        addons_pkg = types.ModuleType("addons")
+        addons_pkg.__path__ = []  # type: ignore[attr-defined]
+        addons_pkg.__package__ = "addons"
+        sys.modules["addons"] = addons_pkg
     try:
         spec = importlib.util.spec_from_file_location(
             module_name, path / "__init__.py",

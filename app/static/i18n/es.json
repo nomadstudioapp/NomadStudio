@@ -1953,7 +1953,8 @@
       "bad": "ComfyUI no lee sus modelos de esta carpeta. Elige la carpeta \"models\" de tu instalación de ComfyUI.",
       "free": "{free} libres",
       "label": "Carpeta de modelos de ComfyUI (solo hace falta para descargar)",
-      "ok": "Es la carpeta que usa ComfyUI ({n} de {m} ficheros encontrados)."
+      "ok": "Es la carpeta que usa ComfyUI ({n} de {m} ficheros encontrados).",
+      "okEmpty": "Las descargas van a esta carpeta de tu ComfyUI."
     },
     "format": {
       "changeLater": "Puedes cambiarlo en Ajustes cuando quieras. Las imágenes ya guardadas no se convierten.",
@@ -2079,6 +2080,14 @@
       "start": "Arrancar {name}",
       "starting": "Arrancando {name}… puede tardar un minuto.",
       "install": "Instalar",
+      "installComfy": "Instalar ComfyUI",
+      "installLms": "Instalar LM Studio",
+      "vcTitle": "ComfyUI necesita Microsoft Visual C++ Runtime",
+      "vcText": "Este ordenador todavía no lo tiene, y sin él ComfyUI se cierra nada más arrancar.",
+      "installVc": "Instalar Visual C++ Runtime",
+      "vcNote": "Unos 25 MB de Microsoft. Windows te pedirá permiso una vez.",
+      "vcInstalling": "Instalando Visual C++ Runtime… Windows pide permiso: responde Sí. Si no ves su ventana, pulsa el icono que parpadea en la barra de tareas.",
+      "noAnswer": "{name} no ha respondido. Si su ventana se cerró o muestra un error, ese error explica el motivo.",
       "installIn": "Instalar ComfyUI en",
       "installNote": "Unos 2 GB desde la versión oficial de ComfyUI.",
       "downloading": "Descargando ComfyUI… {pct}%",
@@ -2089,7 +2098,7 @@
       "preferPortable": "La versión portable es con la que mejor funciona Nomad Studio.",
       "listen": "Que otros equipos de mi red puedan usarlo",
       "downloadingApp": "Descargando {name}… {pct}%",
-      "installerOpen": "Termina la instalación en la ventana que se acaba de abrir.",
+      "installerOpen": "Termina la instalación en la ventana que se acaba de abrir. Si no la ves, pulsa su icono en la barra de tareas.",
       "downloadTo": "Descargar LM Studio en",
       "lmsNote": "Su instalador se abre solo; te esperamos aquí."
     }

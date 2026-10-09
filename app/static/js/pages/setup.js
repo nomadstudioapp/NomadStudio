@@ -256,6 +256,21 @@
     });
   }
 
+  // A portable ComfyUI on this computer (often the one the wizard just
+  // installed) has a known models folder: fill it in and check it, instead of
+  // asking a new user for a path they have never seen.
+  function suggestModelsFolder() {
+    if (S.settings.comfyModelsFolder || S.folderSuggested || S.draftModelsFolder != null) return;
+    S.folderSuggested = true;
+    api('GET', '/api/setup/local-apps').then(function (res) {
+      var dir = res && res.ok && res.comfyModelsDir;
+      if (!dir || S.settings.comfyModelsFolder) return;
+      S.draftModelsFolder = dir;
+      render();
+      validateFolder();
+    });
+  }
+
   function validateFolder() {
     var path = (document.getElementById('su-models-folder') || {}).value || '';
     S.folderCheck = { busy: true }; render();
@@ -398,8 +413,12 @@
 
   function startApp(kind) {
     S.appsStarting = kind;
+    S.appsNoAnswer = null;
     render();
     api('POST', '/api/setup/local-apps/start', { app: kind === 'comfy' ? 'comfy' : 'lmstudio', listen: kind === 'comfy' && S.comfyListen }).then(function (res) {
+      // A fresh Windows lacks the Visual C++ runtime: reload what this
+      // computer has so the install button for it shows up.
+      if (res && res.needsVcRuntime) { S.appsStarting = null; S.apps = null; return loadApps(); }
       if (!res.ok) { S.appsStarting = null; S.error = res.error || ''; return render(); }
       // ComfyUI takes a while to come up: keep checking instead of asking again.
       var tries = 0;
@@ -407,7 +426,12 @@
         var check = kind === 'comfy' ? checkComfy : checkLms;
         check().then(function () {
           var ok = kind === 'comfy' ? (S.comfy && S.comfy.ok) : (S.lms && S.lms.ok);
-          if (ok || ++tries > 20) { S.appsStarting = null; return render(); }
+          if (ok || ++tries > 20) {
+            S.appsStarting = null;
+            // Not silently back to "not found": its console says why.
+            if (!ok) S.appsNoAnswer = kind;
+            return render();
+          }
           setTimeout(poll, 4000);
         });
       })();
@@ -429,9 +453,10 @@
           if (S.installJob && S.installJob.state === 'done') {
             S.apps = null;
             loadApps();
-            // ComfyUI is unpacked and ready to start; LM Studio opened its own
-            // installer, so we wait for the user to finish it.
-            if (app === 'comfyui') startApp('comfy');
+            // ComfyUI is unpacked (or has its runtime now) and ready to start;
+            // LM Studio opened its own installer, so we wait for the user to
+            // finish it.
+            if (app === 'comfyui' || app === 'vcredist') startApp('comfy');
             else waitForLmStudio(0);
           }
         });
@@ -457,7 +482,9 @@
     if (S.appsStarting === kind) {
       return statusBox('busy', esc(t('setup.apps.starting', 'Starting {name}… this can take a minute.', { name: name })));
     }
-    var job = S.installJob && S.installJob.app === (isComfy ? 'comfy' : 'lmstudio') ? S.installJob : null;
+    var job = S.installJob && (isComfy ? S.installJob.app === 'comfy' || S.installJob.app === 'vcredist'
+      : S.installJob.app === 'lmstudio') ? S.installJob : null;
+    var isVc = !!job && job.app === 'vcredist';
     if (!isComfy && S.apps && !S.apps.lmstudio && S.installJob && S.installJob.state === 'done'
         && S.installJob.app === 'lmstudio') {
       return statusBox('busy', esc(t('setup.apps.installerOpen', 'Finish the installation in the window that just opened.')));
@@ -466,11 +493,26 @@
       var pct = job.total ? Math.round(job.done * 100 / job.total) : 0;
       return statusBox('busy', esc(job.phase === 'extract'
         ? t('setup.apps.extracting', 'Unpacking ComfyUI…')
-        : job.phase === 'installer' ? t('setup.apps.installerOpen', 'Finish the installation in the window that just opened.')
-        : t('setup.apps.downloadingApp', 'Downloading {name}… {pct}%', { name: name, pct: pct })));
+        : job.phase === 'installer' ? (isVc
+          ? t('setup.apps.vcInstalling', 'Installing the Visual C++ Runtime… if Windows asks for permission, answer Yes.')
+          : t('setup.apps.installerOpen', 'Finish the installation in the window that just opened.'))
+        : t('setup.apps.downloadingApp', 'Downloading {name}… {pct}%', { name: isVc ? 'Visual C++ Runtime' : name, pct: pct })));
     }
-    if (job && job.state === 'error') return statusBox('bad', esc(job.error || ''));
+    if (job && job.state === 'error' && !(isVc && apps && apps.vcRuntime === false)) return statusBox('bad', esc(job.error || ''));
     if (!apps || !apps.local) return '';
+    // Portable ComfyUI on a fresh Windows: it would close as soon as it
+    // starts, so the runtime comes first (app/services/local_apps.py).
+    if (isComfy && found && found.kind === 'portable' && apps.vcRuntime === false) {
+      return (job && job.state === 'error' ? statusBox('bad', esc(job.error || '')) : '') +
+        statusBox('warn', '<strong>' + esc(t('setup.apps.vcTitle', 'ComfyUI needs the Microsoft Visual C++ Runtime')) + '</strong><br>' +
+          esc(t('setup.apps.vcText', 'This computer does not have it yet, and without it ComfyUI closes as soon as it starts.'))) +
+        '<div class="su-row"><button type="button" class="su-btn su-btn-install" id="su-install-vc">' +
+          esc(t('setup.apps.installVc', 'Install Visual C++ Runtime')) + '</button></div>' +
+        '<p class="su-hint">' + esc(t('setup.apps.vcNote', 'About 25 MB from Microsoft. Windows will ask for your permission once.')) + '</p>';
+    }
+    var noAnswer = S.appsNoAnswer === kind
+      ? statusBox('bad', esc(t('setup.apps.noAnswer', '{name} did not answer. If its window closed or shows an error, that error says why.', { name: name })))
+      : '';
     if (found && found.launcher) {
       var kindLabel = found.kind === 'desktop' ? t('setup.apps.desktop', 'desktop app')
         : found.kind === 'portable' ? t('setup.apps.portable', 'portable build') : '';
@@ -485,15 +527,15 @@
           '<span>' + esc(t('setup.apps.listen', 'Let other computers on my network use it')) + '</span></label>';
       }
       if (isComfy && found.kind === 'desktop' && apps.canInstallComfy) {
-        return startRow + '<p class="su-hint">' + esc(t('setup.apps.preferPortable',
+        return noAnswer + startRow + '<p class="su-hint">' + esc(t('setup.apps.preferPortable',
           'The portable build is the one Nomad Studio works best with.')) + '</p>' + comfyInstallForm(apps, true);
       }
-      return startRow;
+      return noAnswer + startRow;
     }
     if (!isComfy) {
       return '<label class="su-label" for="su-lms-dir">' + esc(t('setup.apps.downloadTo', 'Download LM Studio to')) + '</label>' +
         '<div class="su-row"><input class="su-input" id="su-lms-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +
-        '<button type="button" class="su-btn su-btn-ghost" id="su-install-lms">' + esc(t('setup.apps.install', 'Install')) + '</button></div>' +
+        '<button type="button" class="su-btn su-btn-install" id="su-install-lms">' + esc(t('setup.apps.installLms', 'Install LM Studio')) + '</button></div>' +
         '<p class="su-hint">' + esc(t('setup.apps.lmsNote', 'Its installer opens by itself; we wait for you here.')) + '</p>';
     }
     if (!apps.canInstallComfy) return '';
@@ -505,7 +547,7 @@
     return (noGpu && !compact ? '<p class="su-hint">' + esc(t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.')) + '</p>' : '') +
       '<label class="su-label" for="su-comfy-dir">' + esc(t('setup.apps.installIn', 'Install ComfyUI in')) + '</label>' +
       '<div class="su-row"><input class="su-input" id="su-comfy-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +
-      '<button type="button" class="su-btn su-btn-ghost" id="su-install-comfy">' + esc(t('setup.apps.install', 'Install')) + '</button></div>' +
+      '<button type="button" class="su-btn su-btn-install" id="su-install-comfy">' + esc(t('setup.apps.installComfy', 'Install ComfyUI')) + '</button></div>' +
       '<p class="su-hint">' + esc(t('setup.apps.installNote', 'About 2 GB from the official ComfyUI release.')) + '</p>';
   }
 
@@ -752,10 +794,13 @@
 
     var anyMissing = engines.some(function (e) { return e.status !== 'ready'; });
     var folderBox = '';
+    if (!remote && anyMissing) suggestModelsFolder();
     if (!remote && (anyMissing || S.openEngine)) {
       var fc = S.folderCheck;
       var fstatus = !fc ? '' : fc.busy ? statusBox('busy', esc(t('setup.common.checking', 'Checking…')))
-        : fc.ok ? statusBox('ok', esc(t('setup.folder.ok', 'This is the folder ComfyUI uses ({n} of {m} files found).', { n: fc.matched, m: fc.checked })) + (fc.freeBytes != null ? ' · ' + esc(t('setup.folder.free', '{free} free', { free: bytes(fc.freeBytes) })) : ''))
+        : fc.ok ? statusBox('ok', esc(fc.reason === 'comfy_has_no_models'
+            ? t('setup.folder.okEmpty', 'Downloads go to this folder of your ComfyUI.')
+            : t('setup.folder.ok', 'This is the folder ComfyUI uses ({n} of {m} files found).', { n: fc.matched, m: fc.checked })) + (fc.freeBytes != null ? ' · ' + esc(t('setup.folder.free', '{free} free', { free: bytes(fc.freeBytes) })) : ''))
         : statusBox('bad', esc(t('setup.folder.bad', 'ComfyUI does not read its models from this folder. Choose the "models" folder inside your ComfyUI installation.')));
       folderBox = '<div class="su-folder-box"><label class="su-label" for="su-models-folder">' + esc(t('setup.folder.label', 'ComfyUI models folder (only needed to download)')) + '</label>' +
         '<div class="su-row"><input class="su-input" id="su-models-folder" value="' + esc(S.draftModelsFolder != null ? S.draftModelsFolder : (S.settings.comfyModelsFolder || '')) + '" placeholder="C:\\ComfyUI\\models" spellcheck="false">' +
@@ -928,7 +973,15 @@
     if (id === 'comfy' || id === 'lmstudio') loadApps();
     if (id === 'comfy' && !S.comfy && !S.comfyBusy) checkComfy();
     if (id === 'lmstudio' && !S.lms && !S.lmsBusy) checkLms();
-    if (id === 'engines' && S.comfy && S.comfy.ok && !S.engines && !S.enginesBusy) detectEngines();
+    // Engines and the summary need ComfyUI checked first: after a reload in
+    // the middle of the wizard nothing is checked yet, and the summary said
+    // "Not connected" with ComfyUI running (found on a clean Windows VM).
+    if ((id === 'engines' || id === 'done') && !S.engines && !S.enginesBusy) {
+      if (S.comfy && S.comfy.ok) detectEngines();
+      else if (!S.comfy && !S.comfyBusy) checkComfy().then(function () { if (S.comfy && S.comfy.ok) detectEngines(); });
+    }
+    if (id === 'done' && !S.lms && !S.lmsBusy) checkLms().then(function () { if (S.lms && S.lms.ok && !S.llm) detectLlm(); });
+    else if (id === 'done' && S.lms && S.lms.ok && !S.llm && !S.llmBusy) detectLlm();
     // Pre-fill the proposed image folder (checked and saved on Next, as usual).
     if (id === 'output' && !S.settings.outputDir && S.suggestedOutputDir) S.settings.outputDir = S.suggestedOutputDir;
     if (id === 'models' && !S.llm && !S.llmBusy) {
@@ -1016,6 +1069,7 @@
     if ((el = e.target.closest('[data-start-app]'))) return startApp(el.dataset.startApp);
     if (e.target.closest('#su-install-comfy')) return installApp('comfyui');
     if (e.target.closest('#su-install-lms')) return installApp('lmstudio');
+    if (e.target.closest('#su-install-vc')) return installApp('vcredist');
     if (e.target.closest('#su-comfy-check')) return checkComfy();
     if (e.target.closest('#su-lms-check')) return checkLms();
     if (e.target.closest('#su-engines-retry')) return detectEngines();

@@ -1953,7 +1953,8 @@
       "bad": "ComfyUI는 이 폴더에서 모델을 읽지 않습니다. ComfyUI 설치 폴더 안의 \"models\" 폴더를 선택하세요.",
       "free": "{free} 남음",
       "label": "ComfyUI 모델 폴더 (다운로드할 때만 필요)",
-      "ok": "ComfyUI가 사용하는 폴더입니다 (파일 {m}개 중 {n}개 확인)."
+      "ok": "ComfyUI가 사용하는 폴더입니다 (파일 {m}개 중 {n}개 확인).",
+      "okEmpty": "다운로드한 파일은 ComfyUI의 이 폴더에 저장됩니다."
     },
     "format": {
       "changeLater": "설정에서 언제든지 바꿀 수 있습니다. 이미 저장된 이미지는 변환되지 않습니다.",
@@ -2079,6 +2080,14 @@
       "start": "{name} 실행",
       "starting": "{name} 시작 중… 1분 정도 걸릴 수 있습니다.",
       "install": "설치",
+      "installComfy": "ComfyUI 설치",
+      "installLms": "LM Studio 설치",
+      "vcTitle": "ComfyUI에는 Microsoft Visual C++ 런타임이 필요합니다",
+      "vcText": "이 컴퓨터에는 아직 설치되어 있지 않으며, 없으면 ComfyUI가 시작하자마자 종료됩니다.",
+      "installVc": "Visual C++ 런타임 설치",
+      "vcNote": "Microsoft에서 받는 약 25MB 파일입니다. Windows가 한 번 권한을 요청합니다.",
+      "vcInstalling": "Visual C++ 런타임 설치 중… Windows가 권한을 요청하면 '예'를 선택하세요. 창이 보이지 않으면 작업 표시줄에서 깜박이는 아이콘을 클릭하세요.",
+      "noAnswer": "{name}이(가) 응답하지 않았습니다. 창이 닫혔거나 오류가 표시되면 그 오류에 원인이 나와 있습니다.",
       "installIn": "ComfyUI 설치 위치",
       "installNote": "ComfyUI 공식 릴리스에서 약 2 GB를 받습니다.",
       "downloading": "ComfyUI 내려받는 중… {pct}%",
@@ -2089,7 +2098,7 @@
       "preferPortable": "Nomad Studio는 포터블 버전과 가장 잘 맞습니다.",
       "listen": "네트워크의 다른 컴퓨터도 사용하도록 허용",
       "downloadingApp": "{name} 내려받는 중… {pct}%",
-      "installerOpen": "방금 열린 창에서 설치를 마치세요.",
+      "installerOpen": "방금 열린 창에서 설치를 마치세요. 창이 보이지 않으면 작업 표시줄에서 해당 아이콘을 클릭하세요.",
       "downloadTo": "LM Studio 내려받을 위치",
       "lmsNote": "설치 프로그램이 자동으로 열립니다. 여기서 기다릴게요."
     }

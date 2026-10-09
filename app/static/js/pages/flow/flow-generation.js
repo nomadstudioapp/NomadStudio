@@ -236,10 +236,10 @@ async function submitWorkflowAndWait(wfId, positivePrompt, seedVal, card, dims) 
   });
   var prepData = await prepRes.json();
   if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
-  var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+  var submitRes = await fetch('/api/images/comfy/prompt', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+    body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) {
@@ -257,7 +257,7 @@ async function pollComfy(promptId, comfyUrl) {
   var failures = 0;
   for (var i = 0; i < 720; i++) {
     try {
-      var res  = await fetch(comfyUrl + '/history/' + promptId, { cache: 'no-store' });
+      var res  = await fetch('/api/images/comfy/history/' + encodeURIComponent(promptId) + '?comfyApiUrl=' + encodeURIComponent(comfyUrl), { cache: 'no-store' });
       var data = await res.json();
       var entry = data && data[promptId];
       if (entry && entry.status && (entry.status.completed || entry.status.status_str === 'success')) {
@@ -719,10 +719,10 @@ async function _generateOneCard(card, ta, statusDot, statusLabel, queueBtn) {
     var prepData = await prepRes.json();
     if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
 
-    var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+    var submitRes = await fetch('/api/images/comfy/prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+      body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
     });
     var submitData = await submitRes.json();
     if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);

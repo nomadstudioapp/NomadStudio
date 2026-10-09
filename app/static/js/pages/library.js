@@ -2788,7 +2788,7 @@
     for (var i = 0; i < 600; i++) {
       var res, data;
       try {
-        res = await fetch(comfyUrl + '/history/' + promptId, { cache: 'no-store' });
+        res = await fetch('/api/images/comfy/history/' + encodeURIComponent(promptId) + '?comfyApiUrl=' + encodeURIComponent(comfyUrl), { cache: 'no-store' });
         data = await res.json();
         failures = 0;
       } catch (err) {
@@ -2893,10 +2893,10 @@
     if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
     lastComfyApiUrl = prepData.comfyApiUrl;
 
-    var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+    var submitRes = await fetch('/api/images/comfy/prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+      body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
     });
     var submitData = await submitRes.json();
     if (!submitRes.ok || submitData.error) throw new Error(tF('ComfyUI queue rejected the job'));
@@ -2945,7 +2945,7 @@
   function stopBulkGeneration() {
     cancelRequested = true;
     if (lastComfyApiUrl) {
-      fetch(lastComfyApiUrl + '/interrupt', { method: 'POST' }).catch(function () {});
+      fetch('/api/images/comfy/interrupt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comfyApiUrl: lastComfyApiUrl }) }).catch(function () {});
     }
   }
 

@@ -644,6 +644,79 @@ def clear_comfyui_queue():
     return jsonify({"ok": any_success, "results": results}), status_code
 
 
+# ── Browser → ComfyUI, through this server ──────────────────────────────────
+# The pages used to POST /prompt, GET /history and POST /interrupt straight to
+# ComfyUI. A browser sends those cross-origin (the page is on :5123, ComfyUI on
+# :8188), and a stock ComfyUI answers 403 unless it was started with
+# --enable-cors-header — so on a fresh install every generation failed with a
+# bare "Failed to fetch" (found on a clean Windows 11 VM). Server to server
+# there is no CORS: these routes forward the request and hand back ComfyUI's
+# own status and body, so the pages' error handling reads them as before.
+
+
+def _comfy_passthrough(comfy_url: str, path: str, method: str = "GET", body: bytes | None = None) -> Response:
+    import urllib.error
+    import urllib.request
+
+    req = urllib.request.Request(
+        f"{comfy_url}{path}", data=body, method=method,
+        headers={"Content-Type": "application/json"} if body is not None else {},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 — http(s) checked by _safe_comfy_url
+            status, content = resp.status, resp.read()
+    except urllib.error.HTTPError as exc:
+        status, content = exc.code, exc.read()
+    except Exception as exc:  # noqa: BLE001 — ComfyUI not running or unreachable
+        return jsonify({"error": {"type": "comfy_unreachable", "message": f"ComfyUI did not answer at {comfy_url}: {exc}"}}), 502
+    out = make_response(content, status)
+    out.headers["Content-Type"] = "application/json"
+    out.headers["Cache-Control"] = "no-store"
+    return out
+
+
+def _comfy_url_arg(raw: str) -> str:
+    raw = (raw or "").strip() or str(_ensure_registry().get("settings", {}).get("comfyApiUrl", "")).strip()
+    return _safe_comfy_url(raw)
+
+
+@models_api_bp.post("/images/comfy/prompt")
+def comfy_prompt_proxy():
+    """Queue a prepared workflow on ComfyUI (its POST /prompt)."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        comfy_url = _comfy_url_arg(str(payload.get("comfyApiUrl", "")))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    import json as _json
+
+    body = {"prompt": payload.get("prompt"), "client_id": payload.get("client_id")}
+    return _comfy_passthrough(comfy_url, "/prompt", "POST", _json.dumps(body).encode("utf-8"))
+
+
+@models_api_bp.get("/images/comfy/history/<prompt_id>")
+def comfy_history_proxy(prompt_id: str):
+    """ComfyUI's GET /history/<prompt_id>: whether a queued job finished."""
+    from urllib.parse import quote
+
+    try:
+        comfy_url = _comfy_url_arg(request.args.get("comfyApiUrl", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return _comfy_passthrough(comfy_url, "/history/" + quote(prompt_id, safe=""))
+
+
+@models_api_bp.post("/images/comfy/interrupt")
+def comfy_interrupt_proxy():
+    """ComfyUI's POST /interrupt: stop the job that is running."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        comfy_url = _comfy_url_arg(str(payload.get("comfyApiUrl", "")))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return _comfy_passthrough(comfy_url, "/interrupt", "POST", b"{}")
+
+
 @models_api_bp.get("/images/comfy/progress-stream")
 def comfy_progress_stream():
     """Proxy ComfyUI WebSocket progress events to the browser as Server-Sent Events (SSE).

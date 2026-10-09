@@ -1222,10 +1222,10 @@ async function _submitOneImage(positivePrompt) {
   var prepData = await prepRes.json();
   if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
 
-  var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+  var submitRes = await fetch('/api/images/comfy/prompt', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+    body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
@@ -1604,10 +1604,10 @@ async function _runUpscale(stepDef, ctx) {
   var prepData = await prepRes.json();
   if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
 
-  var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+  var submitRes = await fetch('/api/images/comfy/prompt', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+    body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
@@ -1811,10 +1811,10 @@ async function _runRefine(stepDef, ctx) {
     await new Promise(function (r) { setTimeout(r, 2500); });
   }
 
-  var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+  var submitRes = await fetch('/api/images/comfy/prompt', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+    body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
@@ -1883,10 +1883,10 @@ async function _runMix(stepDef, ctx) {
   var prepData = await prepRes.json();
   if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
 
-  var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+  var submitRes = await fetch('/api/images/comfy/prompt', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+    body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
   });
   var submitData = await submitRes.json();
   if (!submitRes.ok || submitData.error) throw _queueRejected(submitData);
@@ -2124,9 +2124,9 @@ async function runGenerate(stepDef, ctx) {
         var prepData = await prepRes.json();
         if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
 
-        var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+        var submitRes = await fetch('/api/images/comfy/prompt', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+          body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
         });
         var submitData = await submitRes.json();
         if (!submitRes.ok || submitData.error) {

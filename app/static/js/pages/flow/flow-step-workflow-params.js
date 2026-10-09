@@ -1955,10 +1955,10 @@ async function _maybeUpscaleOutput(imgUrl, card) {
       return imgUrl;
     }
 
-    var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+    var submitRes = await fetch('/api/images/comfy/prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+      body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
     });
     var submitData = await submitRes.json();
     if (!submitRes.ok || submitData.error || !submitData.prompt_id) {
@@ -2219,10 +2219,10 @@ function _buildLivePreviewPanel(stepDef, parentEl, onReady) {
       if (myToken !== _runToken) return; // superseded by a newer edit
       if (!prepRes.ok || prepData.error) throw new Error(prepData.error || 'Prepare failed');
 
-      var submitRes = await fetch(prepData.comfyApiUrl + '/prompt', {
+      var submitRes = await fetch('/api/images/comfy/prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prepData.workflow, client_id: prepData.clientId }),
+        body: JSON.stringify({ comfyApiUrl: prepData.comfyApiUrl, prompt: prepData.workflow, client_id: prepData.clientId }),
       });
       var submitData = await submitRes.json();
       if (myToken !== _runToken) return;

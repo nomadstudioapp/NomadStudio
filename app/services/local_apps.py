@@ -32,6 +32,8 @@ from typing import Any
 
 import logging
 
+from app.services.http_client import download_url
+
 logger = logging.getLogger(__name__)
 
 COMFY_RELEASES_API = "https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest"
@@ -333,7 +335,7 @@ def _download_installer(url: str, target_dir: Path, fallback_name: str) -> Path:
     """Download a Windows installer into *target_dir*, reporting progress to
     the current job. Its name comes from the URL the redirects end at."""
     target_dir.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": "NomadStudio"})
+    request = urllib.request.Request(download_url(url), headers={"User-Agent": "NomadStudio"})
     with urllib.request.urlopen(request, timeout=60) as response:
         name = os.path.basename(response.url.split("?", 1)[0]) or fallback_name
         if not name.lower().endswith(".exe"):
@@ -463,7 +465,7 @@ def start_install_comfyui(target_dir: Path) -> dict[str, Any]:
             archive = target_dir / asset["name"]
             partial = archive.with_suffix(archive.suffix + ".part")
             _set(phase="download", total=size, version=release.get("tag_name"), asset=asset["name"])
-            with urllib.request.urlopen(asset["browser_download_url"], timeout=60) as response, partial.open("wb") as out:
+            with urllib.request.urlopen(download_url(asset["browser_download_url"]), timeout=60) as response, partial.open("wb") as out:
                 done = 0
                 while True:
                     chunk = response.read(1 << 20)

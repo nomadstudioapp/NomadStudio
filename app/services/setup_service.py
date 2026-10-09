@@ -22,6 +22,8 @@ from typing import Any
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+from app.services.http_client import download_url
+
 from .http_client import http_json
 
 logger = logging.getLogger(__name__)
@@ -556,7 +558,7 @@ def remote_sizes(urls: list[str]) -> dict[str, int | None]:
 
     def head(url: str) -> tuple[str, int | None]:
         try:
-            req = Request(url, headers=_UA, method="HEAD")
+            req = Request(download_url(url), headers=_UA, method="HEAD")
             with urlopen(req, timeout=15) as resp:
                 length = resp.headers.get("Content-Length")
                 return url, int(length) if length and length.isdigit() else None

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from typing import Any
 from urllib.error import HTTPError
@@ -53,6 +54,21 @@ def http_json(
         with gpu_coordinator.held(gpu_category):
             return _do_request()
     return _do_request()
+
+
+def download_url(url: str) -> str:
+    """Where to fetch a public download (model files, ComfyUI, installers).
+
+    Normally the URL itself. With NOMAD_DOWNLOAD_MIRROR set (e.g.
+    http://127.0.0.1:8890), https://host/path?q becomes <mirror>/host/path?q:
+    a local copy for recording install tutorials without waiting for the same
+    gigabytes again; the mirror redirects to the original URL for anything it
+    does not hold. Not a user setting — an environment variable for that one
+    use."""
+    mirror = os.environ.get("NOMAD_DOWNLOAD_MIRROR", "").strip().rstrip("/")
+    if mirror and url.startswith("https://"):
+        return f"{mirror}/{url[len('https://'):]}"
+    return url
 
 
 def http_bytes(url: str, timeout: int = 90) -> bytes:

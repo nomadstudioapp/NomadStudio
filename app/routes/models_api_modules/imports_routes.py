@@ -14,7 +14,7 @@ from flask import Response, jsonify, make_response, request
 from app.config import DEFAULT_COMFY_URL, MAX_IMPORT_NAME_LENGTH
 from app import paths
 from app.services import import_slugs
-from app.services.http_client import http_json
+from app.services.http_client import download_url, http_json
 from app.services.workflow_service import (
     _apply_basic_values_to_workflow,
     _normalize_clip_last_layer_advanced_values,
@@ -1765,7 +1765,7 @@ def download_import_file():
                 hf_token = str(settings.get("huggingfaceToken", "") or "").strip()
                 if hf_token:
                     headers["Authorization"] = f"Bearer {hf_token}"
-            req = Request(url=url, headers=headers, method="GET")
+            req = Request(url=download_url(url), headers=headers, method="GET")
             try:
                 resp_cm = urlopen(req, timeout=60)
             except HTTPError as exc:

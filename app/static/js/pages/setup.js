@@ -923,6 +923,12 @@
       row(t('setup.steps.output', 'Image folder'), '<span class="su-code">' + esc(S.settings.outputDir || '—') + '</span>') +
       row(t('setup.steps.format', 'Image format'), esc(fmt)) +
       '</ul>' +
+      // Shortcut to this copy on the Desktop and in the Start menu, made on
+      // Start (local_apps.create_shortcuts): next time, no hunting for the folder.
+      (S.canShortcut && !PREVIEW
+        ? '<label class="su-check"><input type="checkbox" id="su-shortcut"' + (S.makeShortcut ? ' checked' : '') + '>' +
+          '<span>' + esc(t('setup.done.shortcut', 'Create a Nomad Studio shortcut on the desktop and in the Start menu')) + '</span></label>'
+        : '') +
       (S.downloading ? statusBox('busy', esc(t('setup.done.downloading', 'Downloads are still running. Keep this page open until they finish.'))) : '');
   }
 
@@ -1049,7 +1055,10 @@
     }
     if (id === 'done') {
       if (PREVIEW) { window.location.href = root.dataset.settingsUrl || '/settings'; return; }
-      return save({ setupCompleted: true, wizardStep: 1 }).then(function () {
+      var shortcut = S.canShortcut && S.makeShortcut
+        ? api('POST', '/api/setup/shortcuts', { desktop: true, startMenu: true })
+        : Promise.resolve(null);
+      return shortcut.then(function () { return save({ setupCompleted: true, wizardStep: 1 }); }).then(function () {
         window.location.href = root.dataset.nextUrl || '/who';
       });
     }
@@ -1134,6 +1143,7 @@
 
   bodyEl.addEventListener('change', function (e) {
     if (e.target.id === 'su-comfy-listen') { S.comfyListen = e.target.checked; return; }
+    if (e.target.id === 'su-shortcut') { S.makeShortcut = e.target.checked; return; }
     if (e.target.id === 'su-skip-copy') return save({ skipComfyOutputCopy: e.target.checked });
     if (e.target.name === 'su-format') return save({ imageFormat: e.target.value }).then(render);
     if (e.target.id === 'su-pin-on') { readInputs(); S.profile.pinOn = e.target.checked; return render(); }
@@ -1173,6 +1183,8 @@
     S.viewers = st.viewers || 0;
     S.dataDir = st.dataDir || {};
     S.suggestedOutputDir = st.suggestedOutputDir || '';
+    S.canShortcut = st.canCreateShortcuts === true;
+    S.makeShortcut = S.canShortcut;
     var startAt = (!PREVIEW && !st.setupCompleted && S.settings.wizardStep) ? S.settings.wizardStep : 1;
     S.maxReached = startAt;
     enter(startAt);

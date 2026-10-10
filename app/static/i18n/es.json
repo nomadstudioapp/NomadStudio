@@ -1914,6 +1914,11 @@
     },
     "done": {
       "connected": "Conectado",
+      "shortcut": "Crear un acceso directo a Nomad Studio en el escritorio y en el menú Inicio",
+      "shortcutMade": "Accesos directos creados.",
+      "shortcutSettingsLabel": "Accesos directos",
+      "shortcutSettingsHint": "¿Has movido la carpeta de Nomad Studio? Vuelve a crear los accesos directos del escritorio y del menú Inicio para que abran esta copia.",
+      "shortcutSettingsBtn": "Crear accesos directos",
       "downloading": "Todavía hay descargas en curso. Deja esta página abierta hasta que terminen.",
       "lead": "Este es el resumen. Puedes cambiar cualquier cosa después en Ajustes.",
       "notChecked": "Sin comprobar",

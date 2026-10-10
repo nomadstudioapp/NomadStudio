@@ -87,6 +87,7 @@ def get_state():
         "settings": _settings_payload(),
         "viewers": len(viewer_service.list_viewers()),
         "dataDir": {"path": str(_DATA_DIR), "writable": data_writable, "portable": paths.IS_PORTABLE},
+        "canCreateShortcuts": local_apps.can_create_shortcuts(),
         # Proposed image folder: short, always writable, not a synced or
         # antivirus-protected folder (Documents/Pictures), and no second drive
         # needed (laptops often have only C:).
@@ -193,6 +194,16 @@ def autostart_start():
     settings = dict(_ensure_registry().get("settings", {}))
     threading.Thread(target=local_apps.start_and_wait, args=(app_id, settings), daemon=True).start()
     return jsonify({"ok": True})
+
+
+@setup_bp.post("/api/setup/shortcuts")
+@local_only
+def make_shortcuts():
+    """Desktop / Start menu shortcuts to this copy of Nomad Studio (local_apps.py)."""
+    payload = request.get_json(silent=True) or {}
+    res = local_apps.create_shortcuts(desktop=payload.get("desktop", True) is not False,
+                                      start_menu=payload.get("startMenu", True) is not False)
+    return jsonify(res), (200 if res.get("ok") else 400)
 
 
 @setup_bp.post("/api/setup/install/<app_id>")

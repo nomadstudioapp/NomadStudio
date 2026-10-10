@@ -302,6 +302,64 @@ def start_lmstudio() -> dict[str, Any]:
     return {"ok": False, "error": "LM Studio is installed but could not be started"}
 
 
+# ── Shortcuts to Nomad Studio itself ────────────────────────────────────────
+# A .lnk stores an absolute path, so none can ship inside the portable ZIP
+# (it is unpacked anywhere). Created here instead, at the end of the setup
+# wizard, pointing at wherever this copy lives: the user's own Desktop and
+# Start menu, which need no administrator rights. Updates only swap app\,
+# so NomadStudio.bat — what the shortcut opens — stays where it was.
+
+def _portable_launcher() -> Path | None:
+    from app import paths
+    if not sys.platform.startswith("win") or not paths.IS_PORTABLE:
+        return None
+    bat = paths.REPO_DIR.parent / "NomadStudio.bat"
+    return bat if bat.is_file() else None
+
+
+def can_create_shortcuts() -> bool:
+    return _portable_launcher() is not None
+
+
+def create_shortcuts(desktop: bool = True, start_menu: bool = True) -> dict[str, Any]:
+    bat = _portable_launcher()
+    if bat is None:
+        return {"ok": False, "error": "Shortcuts are only made for the Windows portable build"}
+    from app import paths
+    icon = paths.REPO_DIR / "launcher" / "nomad.ico"
+    targets = []
+    if desktop:
+        targets.append("[Environment]::GetFolderPath('Desktop')")
+    if start_menu:
+        targets.append("[Environment]::GetFolderPath('Programs')")
+    if not targets:
+        return {"ok": True, "created": []}
+
+    def ps(s: str) -> str:  # PowerShell single-quoted literal
+        return "'" + str(s).replace("'", "''") + "'"
+
+    script = (
+        "$ws = New-Object -ComObject WScript.Shell; $made = @(); "
+        f"foreach ($dir in @({', '.join(targets)})) {{ "
+        "  $lnk = $ws.CreateShortcut((Join-Path $dir 'Nomad Studio.lnk')); "
+        f"  $lnk.TargetPath = {ps(bat)}; $lnk.WorkingDirectory = {ps(bat.parent)}; "
+        "  $lnk.WindowStyle = 7; $lnk.Description = 'Nomad Studio'; "
+        + (f"  $lnk.IconLocation = {ps(str(icon) + ',0')}; " if icon.is_file() else "")
+        + "  $lnk.Save(); $made += $lnk.FullName }; $made -join \"`n\""
+    )
+    try:
+        out = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+                             capture_output=True, text=True, timeout=30,
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except Exception as exc:  # noqa: BLE001 — shown in the wizard
+        return {"ok": False, "error": str(exc)}
+    if out.returncode != 0:
+        return {"ok": False, "error": (out.stderr or out.stdout).strip()[:300]}
+    created = [line for line in out.stdout.splitlines() if line.strip()]
+    logger.info("shortcuts created: %s", created)
+    return {"ok": True, "created": created}
+
+
 # ── Starting them with Nomad Studio ─────────────────────────────────────────
 # After a reboot a new user opened Nomad Studio and found ComfyUI "off" with
 # no idea how to start it: only the setup wizard had a Start button. Now the

@@ -1531,6 +1531,11 @@
     },
     "done": {
       "connected": "Connected",
+      "shortcut": "Create a Nomad Studio shortcut on the desktop and in the Start menu",
+      "shortcutMade": "Shortcuts created.",
+      "shortcutSettingsLabel": "Shortcuts",
+      "shortcutSettingsHint": "Moved the Nomad Studio folder? Make the desktop and Start menu shortcuts again so they open this copy.",
+      "shortcutSettingsBtn": "Create shortcuts",
       "downloading": "Downloads are still running. Keep this page open until they finish.",
       "lead": "Here is a summary. You can change any of it later in Settings.",
       "notChecked": "Not checked",

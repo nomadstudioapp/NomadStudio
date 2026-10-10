@@ -1914,6 +1914,11 @@
     },
     "done": {
       "connected": "已连接",
+      "shortcut": "在桌面和开始菜单中创建 Nomad Studio 快捷方式",
+      "shortcutMade": "快捷方式已创建。",
+      "shortcutSettingsLabel": "快捷方式",
+      "shortcutSettingsHint": "移动过 Nomad Studio 文件夹？请重新创建桌面和开始菜单中的快捷方式，让它们打开当前这份。",
+      "shortcutSettingsBtn": "创建快捷方式",
       "downloading": "仍有下载正在进行。请保持此页面打开，直到下载完成。",
       "lead": "以下是摘要。之后可以在设置中修改任何内容。",
       "notChecked": "未检查",

@@ -2447,6 +2447,38 @@ secretKeySection({
   });
 })();
 
+// Desktop / Start menu shortcuts again (e.g. after moving the folder) —
+// app/services/local_apps.py create_shortcuts. Windows portable build only.
+(async function shortcutSection() {
+  const block = document.getElementById('shortcut-block');
+  const btn = document.getElementById('shortcut-btn');
+  const statusEl = document.getElementById('shortcut-status');
+  if (!block || !btn || !statusEl) return;
+  try {
+    const st = await fetch('/api/setup/state', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null));
+    block.hidden = !(st && st.canCreateShortcuts === true);
+  } catch { return; }
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    statusEl.classList.remove('status-error');
+    statusEl.textContent = t('settings.common.saving', 'Saving...');
+    try {
+      const res = await fetch('/api/setup/shortcuts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ desktop: true, startMenu: true }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json || json.ok === false) throw new Error((json && json.error) || '');
+      statusEl.textContent = t('setup.done.shortcutMade', 'Shortcuts created.');
+    } catch (error) {
+      statusEl.textContent = error.message || 'Error';
+      statusEl.classList.add('status-error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+
 (async function skipComfyOutputToggleSection() {
   const toggleEl = document.getElementById('skip-comfy-output-toggle');
   const statusEl = document.getElementById('skip-comfy-output-status');

@@ -421,10 +421,10 @@
       if (res && res.needsVcRuntime) { S.appsStarting = null; S.apps = null; return loadApps(); }
       if (!res.ok) { S.appsStarting = null; S.error = res.error || ''; return render(); }
       // ComfyUI takes a while to come up: keep checking instead of asking again.
-      // Its first start on a new install took 3-5 minutes on a clean Windows
-      // VM (loading PyTorch cold), so it gets 6 minutes; LM Studio 80 s.
+      // Its first start on a new install took 3-9 minutes on a clean Windows
+      // VM (loading PyTorch cold), so it gets 10 minutes; LM Studio 80 s.
       var tries = 0;
-      var maxTries = kind === 'comfy' ? 90 : 20;
+      var maxTries = kind === 'comfy' ? 150 : 20;
       (function poll() {
         var check = kind === 'comfy' ? checkComfy : checkLms;
         check().then(function () {

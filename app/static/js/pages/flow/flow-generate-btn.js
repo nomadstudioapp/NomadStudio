@@ -103,12 +103,43 @@ function updateGenerateBtn() {
 // ══════════════════════════════════════════════════════════════════════════
 // WORKFLOW LOADING (Scenes pattern)
 // ══════════════════════════════════════════════════════════════════════════
+// Engines whose model files ComfyUI does not have yet (the bundled engines are
+// all imported from the start, but a new user downloads one or two). Asked of
+// the same check the setup wizard uses; null when it cannot tell (ComfyUI not
+// running, or on another machine) — then nothing is hidden.
+async function _enginesWithoutFiles() {
+  try {
+    var res = await fetch('/api/setup/engines', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+    });
+    var data = await res.json();
+    if (!data || !data.ok || !Array.isArray(data.engines)) return null;
+    var missing = {};
+    data.engines.forEach(function (e) { if (e && e.status !== 'ready') missing[String(e.id)] = true; });
+    return missing;
+  } catch (_) { return null; }
+}
+
 async function loadWorkflows(selectEl, hintEl, recommendedIds) {
   try {
-    var listRes  = await fetch('/api/models/imports');
+    var results = await Promise.all([fetch('/api/models/imports'), _enginesWithoutFiles()]);
+    var listRes = results[0];
     if (!listRes.ok) throw new Error('imports list ' + listRes.status);
     var listData = await listRes.json();
     var allImports = Array.isArray(listData.imports) ? listData.imports : [];
+    // Only the engines that can generate right now, in their usual order:
+    // installing another one later puts it back in its place. Imports the
+    // check does not know about (the user's own) always stay.
+    var missing = results[1];
+    if (missing) {
+      var usable = allImports.filter(function (imp) { return !missing[String(imp.id)]; });
+      if (usable.length) {
+        allImports = usable;
+        var visible = usable.map(function (imp) { return String(imp.id); });
+        var kept = getGlobalWorkflows().filter(function (id) { return visible.indexOf(String(id)) !== -1; });
+        if (kept.length !== getGlobalWorkflows().length) setGlobalWorkflows(kept);
+      }
+    }
     // Some flows name the engines they were built around (Character Sheet:
     // Ideogram 4 and Krea2 Monaco). They used to be a filter and everything else
     // was hidden — which assumes we know what the user has. We don't: engines
@@ -144,6 +175,9 @@ async function loadWorkflows(selectEl, hintEl, recommendedIds) {
       }
     } catch (_) {}
 
+    serverActiveIds = serverActiveIds.filter(function (id) {
+      return allImports.some(function (imp) { return String(imp.id) === String(id); });
+    });
     // Auto-init global workflow selection if nothing saved yet
     if (!getGlobalWorkflows().length && serverActiveIds.length) {
       setGlobalWorkflows(serverActiveIds);

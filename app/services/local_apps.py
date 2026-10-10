@@ -287,9 +287,13 @@ def start_lmstudio() -> dict[str, Any]:
     # `lms server start` brings the API up without opening the window.
     if info.get("cli"):
         try:
-            subprocess.run([info["cli"], "server", "start"], capture_output=True, timeout=30,  # noqa: S603
-                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-            return {"ok": True, "started": info["cli"]}
+            res = subprocess.run([info["cli"], "server", "start"], capture_output=True, timeout=30,  # noqa: S603
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            # It fails (non-zero) while LM Studio's own first-run welcome is not
+            # done: then open the window below so the user sees it.
+            if res.returncode == 0:
+                return {"ok": True, "started": info["cli"]}
+            logger.info("lms server start returned %s; opening LM Studio instead", res.returncode)
         except Exception:  # noqa: BLE001 — fall back to opening the app
             logger.debug("lms server start failed", exc_info=True)
     if info.get("launcher"):
@@ -386,6 +390,11 @@ def start_and_wait(app: str, settings: dict[str, Any]) -> str:
             logger.info("autostart: %s is running", app)
             return "running"
         time.sleep(3)
+    # LM Studio opened as a window (its server did not start): most likely its
+    # own welcome is waiting for the user.
+    if app == "lmstudio" and res.get("needsServerToggle"):
+        _set_state(app, "needsUser")
+        return "needsUser"
     _set_state(app, "failed")
     logger.warning("autostart: %s did not answer within %ss", app, wait)
     return "failed"

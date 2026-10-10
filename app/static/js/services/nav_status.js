@@ -160,7 +160,9 @@
       } else if (ledDown(app.led) && state !== 'remote' && state !== 'notInstalled') {
         const why = state === 'needsVcRuntime'
           ? tr('needsVc', '{name} needs the Visual C++ Runtime: open the setup wizard.', { name: app.name })
-          : tr('off', '{name} is not running.', { name: app.name });
+          : state === 'needsUser'
+            ? tr('needsUser', '{name} is open: finish its welcome screens, then press Start.', { name: app.name })
+            : tr('off', '{name} is not running.', { name: app.name });
         rows.push(`<div class="cs-settings-app-row"><span>${why}</span>` +
           (state === 'needsVcRuntime' ? '' : `<button type="button" class="cs-settings-app-btn" data-cs-app-start="${app.id}">${tr('start', 'Start {name}', { name: app.name })}</button>`) +
           '</div>');

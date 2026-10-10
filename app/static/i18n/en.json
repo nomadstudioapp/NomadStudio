@@ -2119,6 +2119,7 @@
     "starting": "Starting {name}… the first time it can take a few minutes.",
     "off": "{name} is not running.",
     "start": "Start {name}",
+    "needsUser": "{name} is open: finish its welcome screens, then press Start.",
     "needsVc": "{name} needs the Visual C++ Runtime: open the setup wizard.",
     "settingLabel": "Start ComfyUI and LM Studio with Nomad Studio",
     "settingHint": "When Nomad Studio opens, it starts ComfyUI and LM Studio if they are installed on this computer and not running yet. Turn it off if you prefer to start them yourself."

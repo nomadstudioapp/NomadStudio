@@ -2502,6 +2502,7 @@
     "starting": "Arrancando {name}… la primera vez puede tardar unos minutos.",
     "off": "{name} no está en marcha.",
     "start": "Arrancar {name}",
+    "needsUser": "{name} está abierto: termina sus pantallas de bienvenida y pulsa Arrancar.",
     "needsVc": "{name} necesita Visual C++ Runtime: abre el asistente de configuración.",
     "settingLabel": "Arrancar ComfyUI y LM Studio con Nomad Studio",
     "settingHint": "Al abrirse, Nomad Studio arranca ComfyUI y LM Studio si están instalados en este ordenador y aún no están en marcha. Desactívalo si prefieres arrancarlos tú."

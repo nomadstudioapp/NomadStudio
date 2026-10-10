@@ -2502,6 +2502,7 @@
     "starting": "{name} 시작 중… 처음에는 몇 분 걸릴 수 있습니다.",
     "off": "{name}이(가) 실행 중이 아닙니다.",
     "start": "{name} 시작",
+    "needsUser": "{name}이(가) 열려 있습니다. 시작 화면을 마친 뒤 시작을 누르세요.",
     "needsVc": "{name}에는 Visual C++ 런타임이 필요합니다. 설정 마법사를 여세요.",
     "settingLabel": "Nomad Studio와 함께 ComfyUI와 LM Studio 시작",
     "settingHint": "Nomad Studio가 열릴 때 이 컴퓨터에 설치된 ComfyUI와 LM Studio가 아직 실행 중이 아니면 시작합니다. 직접 시작하려면 끄세요."

@@ -2502,6 +2502,7 @@
     "starting": "正在启动 {name}…首次启动可能需要几分钟。",
     "off": "{name} 未运行。",
     "start": "启动 {name}",
+    "needsUser": "{name} 已打开：请完成它的欢迎页面，然后点击启动。",
     "needsVc": "{name} 需要 Visual C++ 运行库：请打开设置向导。",
     "settingLabel": "随 Nomad Studio 启动 ComfyUI 和 LM Studio",
     "settingHint": "Nomad Studio 打开时，如果这台电脑上已安装 ComfyUI 和 LM Studio 且尚未运行，会自动启动它们。如果你想自己启动，请关闭此选项。"

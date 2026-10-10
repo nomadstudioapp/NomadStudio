@@ -202,6 +202,19 @@
     });
   }
 
+  // LM Studio says "completed" a moment before it lists the model as
+  // downloaded: checked right away, the card went back to "Install" (found on
+  // a clean Windows VM). Ask again for a few seconds until it shows up.
+  function detectLlmUntilListed(id, tries) {
+    return detectLlm().then(function () {
+      var m = S.llm && (S.llm.models || []).filter(function (x) { return x.id === id; })[0];
+      if ((m && m.installedKey) || tries >= 10) return;
+      S.llmJobs[id] = { status: 'downloading', pct: 100 };
+      render();
+      setTimeout(function () { detectLlmUntilListed(id, tries + 1); }, 1500);
+    });
+  }
+
   function pollLlm(id) {
     var job = S.llmJobs[id];
     if (!job || !job.jobId) return;
@@ -209,7 +222,7 @@
       if (!res.ok) { job.status = 'failed'; job.error = res.error || 'error'; return render(); }
       job.status = res.status;
       if (res.totalBytes) job.pct = Math.min(100, Math.round((res.downloadedBytes || 0) * 100 / res.totalBytes));
-      if (res.status === 'completed') { job.pct = 100; render(); return detectLlm(); }
+      if (res.status === 'completed') { job.pct = 100; render(); return detectLlmUntilListed(id, 0); }
       if (res.status === 'failed') { job.error = t('setup.models.dlFailed', 'LM Studio could not download it.'); return render(); }
       render();
       setTimeout(function () { pollLlm(id); }, 1500);

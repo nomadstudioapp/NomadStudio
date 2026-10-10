@@ -5,7 +5,8 @@
   after writing start-config.js next to it with the port. No server of its
   own: it knows Nomad Studio is up when the app's own logo loads from
   127.0.0.1, then hands over to the app. ComfyUI and LM Studio are shown for
-  information only — the launcher doesn't start them.
+  information: the Nomad Studio server starts them itself when they are
+  installed on this computer (app/services/local_apps.py, autoStartApps).
 -->
 <html lang="en">
 <head>
@@ -205,19 +206,19 @@
       en: { starting: 'Starting Nomad Studio…', opening: 'Ready. Opening Nomad Studio…',
             late: 'Nomad Studio is taking too long. Open the “Nomad Studio” window in the taskbar to see what happened.',
             on: 'Running', off: 'Off', booting: 'Starting…', slow: 'Not answering', retry: 'Keep waiting',
-            hint: 'ComfyUI and LM Studio start on their own: turn them on to generate images and use the AI.' },
+            hint: 'Nomad Studio starts ComfyUI and LM Studio for you. The first time, ComfyUI can take a few minutes.' },
       es: { starting: 'Arrancando Nomad Studio…', opening: 'Listo. Abriendo Nomad Studio…',
             late: 'Nomad Studio está tardando demasiado. Abre la ventana «Nomad Studio» de la barra de tareas para ver qué ha pasado.',
             on: 'Encendido', off: 'Apagado', booting: 'Arrancando…', slow: 'No responde', retry: 'Seguir esperando',
-            hint: 'ComfyUI y LM Studio se arrancan aparte: enciéndelos para generar imágenes y usar la IA.' },
+            hint: 'Nomad Studio arranca ComfyUI y LM Studio por ti. La primera vez, ComfyUI puede tardar unos minutos.' },
       zh: { starting: '正在启动 Nomad Studio…', opening: '已就绪，正在打开 Nomad Studio…',
             late: 'Nomad Studio 启动时间过长。请打开任务栏中的“Nomad Studio”窗口查看原因。',
             on: '运行中', off: '未运行', booting: '启动中…', slow: '无响应', retry: '继续等待',
-            hint: 'ComfyUI 和 LM Studio 需单独启动：打开它们才能生成图片和使用 AI。' },
+            hint: 'Nomad Studio 会为你启动 ComfyUI 和 LM Studio。首次启动时，ComfyUI 可能需要几分钟。' },
       ko: { starting: 'Nomad Studio 시작 중…', opening: '준비 완료. Nomad Studio를 여는 중…',
             late: 'Nomad Studio가 너무 오래 걸립니다. 작업 표시줄의 “Nomad Studio” 창을 열어 무슨 일인지 확인하세요.',
             on: '실행 중', off: '꺼짐', booting: '시작 중…', slow: '응답 없음', retry: '계속 기다리기',
-            hint: 'ComfyUI와 LM Studio는 따로 시작합니다. 이미지 생성과 AI를 쓰려면 켜 주세요.' }
+            hint: 'Nomad Studio가 ComfyUI와 LM Studio를 대신 시작합니다. 처음에는 ComfyUI가 몇 분 걸릴 수 있습니다.' }
     };
     var lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
     var T = TEXT[lang] || TEXT.en;

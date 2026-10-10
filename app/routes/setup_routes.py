@@ -56,6 +56,7 @@ def _settings_payload() -> dict:
         "comfyModelsFolder": s.get("comfyModelsFolder", ""),
         "imageFormat": s.get("imageFormat", "png"),
         "skipComfyOutputCopy": s.get("skipComfyOutputCopy") is True,  # off by default (docs/SETUP_WIZARD.md)
+        "autoStartApps": s.get("autoStartApps") is not False,  # on by default (local_apps.py)
         "wizardStep": int(s.get("wizardStep", 1) or 1),
     }
 
@@ -132,6 +133,8 @@ def patch_state():
             s["lmStudioVisionModel"] = str(payload["lmStudioVisionModel"] or "").strip()[:200]
         if "skipComfyOutputCopy" in payload:
             s["skipComfyOutputCopy"] = bool(payload["skipComfyOutputCopy"])
+        if "autoStartApps" in payload:
+            s["autoStartApps"] = bool(payload["autoStartApps"])
         if "wizardStep" in payload:
             try:
                 s["wizardStep"] = max(1, min(_WIZARD_STEPS, int(payload["wizardStep"])))
@@ -168,6 +171,28 @@ def local_apps_start():
     if app_id == "lmstudio":
         return jsonify(local_apps.start_lmstudio())
     return jsonify({"ok": False, "error": "Unknown app"}), 400
+
+
+@setup_bp.get("/api/setup/autostart")
+def autostart_status():
+    """Whether Nomad Studio is starting ComfyUI / LM Studio (local_apps.py).
+    Read by the launcher's start screen, a file:// page: hence the CORS header.
+    Only states, no paths."""
+    resp = jsonify({"ok": True, **local_apps.autostart_state()})
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
+
+
+@setup_bp.post("/api/setup/autostart/start")
+@local_only
+def autostart_start():
+    """Start ComfyUI or LM Studio from the settings panel's Start button."""
+    app_id = str((request.get_json(silent=True) or {}).get("app", ""))
+    if app_id not in {"comfy", "lmstudio"}:
+        return jsonify({"ok": False, "error": "Unknown app"}), 400
+    settings = dict(_ensure_registry().get("settings", {}))
+    threading.Thread(target=local_apps.start_and_wait, args=(app_id, settings), daemon=True).start()
+    return jsonify({"ok": True})
 
 
 @setup_bp.post("/api/setup/install/<app_id>")

@@ -4085,6 +4085,36 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
   min-width: 0;
 }
 
+/* ComfyUI / LM Studio off: what Nomad Studio is doing about it, or a Start
+   button (nav_status.js). */
+.cs-settings-apps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0.35rem 0.3rem 0;
+}
+.cs-settings-apps[hidden] { display: none; }
+.cs-settings-app-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.cs-settings-app-row .cs-settings-app-btn {
+  flex-shrink: 0;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: none;
+  background: #6fb87f;
+  color: #0b1a10;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cs-settings-app-row .cs-settings-app-btn:hover { opacity: 0.9; }
+
 .cs-settings-item-name {
   font-size: var(--fs-md);
   font-weight: 600;

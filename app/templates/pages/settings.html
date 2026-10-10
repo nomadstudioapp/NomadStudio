@@ -461,6 +461,18 @@
       </div>
 
       <div class="settings-field-block">
+        <label class="settings-chip-toggle" for="auto-start-apps-toggle">
+          <input type="checkbox" id="auto-start-apps-toggle" />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="autostart.settingLabel">Start ComfyUI and LM Studio with Nomad Studio</span>
+        </label>
+        <p class="settings-field-hint" data-i18n="autostart.settingHint">When Nomad Studio opens, it starts ComfyUI and LM Studio if they are installed on this computer and not running yet. Turn it off if you prefer to start them yourself.</p>
+        <div class="settings-inline-status" id="auto-start-apps-status"></div>
+      </div>
+
+      <div class="settings-field-block">
         <label class="settings-chip-toggle" for="skip-comfy-output-toggle">
           <input type="checkbox" id="skip-comfy-output-toggle" />
           <span class="settings-chip-toggle-track">

@@ -2412,6 +2412,41 @@ secretKeySection({
 // Advanced toggle — save space: SaveImage → PreviewImage (docs/SETUP_WIZARD.md)
 // Shares the setup wizard's whitelisted state endpoint.
 // ---------------------------------------------------------------------------
+// Same pattern for "Start ComfyUI and LM Studio with Nomad Studio" (autoStartApps,
+// on by default — app/services/local_apps.py).
+(async function autoStartAppsToggleSection() {
+  const toggleEl = document.getElementById('auto-start-apps-toggle');
+  const statusEl = document.getElementById('auto-start-apps-status');
+  if (!toggleEl || !statusEl) return;
+  function setInlineStatus(message, isError = false) {
+    statusEl.textContent = message;
+    statusEl.classList.toggle('status-error', isError);
+  }
+  try {
+    const res = await fetch('/api/setup/state', { cache: 'no-store' });
+    const json = res.ok ? await res.json() : null;
+    toggleEl.checked = !(json && json.settings && json.settings.autoStartApps === false);
+  } catch (error) {
+    setInlineStatus(t('settings.common.toggleLoadFailed', 'Failed to load toggle settings: ' + error.message, { reason: error.message }), true);
+  }
+  toggleEl.addEventListener('change', async () => {
+    setInlineStatus(t('settings.common.saving', 'Saving...'));
+    try {
+      const res = await fetch('/api/setup/state', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoStartApps: toggleEl.checked }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json || json.ok === false) throw new Error((json && json.error) || '');
+      setInlineStatus(t('settings.common.saved', 'Saved.'));
+    } catch (error) {
+      toggleEl.checked = !toggleEl.checked;
+      setInlineStatus(error.message || t('settings.common.toggleSaveFailed', 'Failed to save toggle.'), true);
+    }
+  });
+})();
+
 (async function skipComfyOutputToggleSection() {
   const toggleEl = document.getElementById('skip-comfy-output-toggle');
   const statusEl = document.getElementById('skip-comfy-output-status');

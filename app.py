@@ -49,4 +49,17 @@ if __name__ == "__main__":
     # process so a debug run doesn't open two tabs.
     if os.getenv("NOMAD_OPEN_BROWSER") == "1" and os.getenv("WERKZEUG_RUN_MAIN") != "true":
         threading.Thread(target=_open_browser_when_ready, args=(port,), daemon=True).start()
+    # Start ComfyUI / LM Studio if they are installed here and not running
+    # (app/services/local_apps.py): after a reboot a new user had no idea how.
+    # Only in the process that serves (with the debug reloader, the child), only
+    # once setup is done (the wizard starts them itself), never in the build's
+    # smoke test (NOMAD_NO_AUTOSTART).
+    if (not debug or os.getenv("WERKZEUG_RUN_MAIN") == "true") and not os.getenv("NOMAD_NO_AUTOSTART"):
+        with app.app_context():
+            from app.routes.setup_routes import setup_completed
+            from app.routes.models_api_shared import _ensure_registry
+            from app.services import local_apps
+
+            if setup_completed():
+                local_apps.autostart_in_background(dict(_ensure_registry().get("settings", {})))
     app.run(debug=debug, host="0.0.0.0", port=port, threaded=True)

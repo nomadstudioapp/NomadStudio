@@ -165,7 +165,8 @@ def smoke_test(app_dir: Path, version: str) -> None:
     # the smoke test must not create or touch that folder on the build machine.
     data_dir = Path(tempfile.mkdtemp(prefix="nomad-smoke-data-"))
     env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "VIRTUAL_ENV", "NOMAD_"))}
-    env.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1", PORT=str(port), NOMAD_DATA_DIR=str(data_dir))  # lib/ comes from nomad-lib.pth
+    env.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1", PORT=str(port), NOMAD_DATA_DIR=str(data_dir),  # lib/ comes from nomad-lib.pth
+               NOMAD_NO_AUTOSTART="1")  # never start the build machine's ComfyUI / LM Studio
     proc = subprocess.Popen([str(app_dir / "python" / "python.exe"), str(app_dir / "app.py")],
                             cwd=app_dir, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:

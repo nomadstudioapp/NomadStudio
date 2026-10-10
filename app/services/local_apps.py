@@ -25,6 +25,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
@@ -295,6 +296,110 @@ def start_lmstudio() -> dict[str, Any]:
         _spawn([info["launcher"]])
         return {"ok": True, "started": info["launcher"], "needsServerToggle": True}
     return {"ok": False, "error": "LM Studio is installed but could not be started"}
+
+
+# ── Starting them with Nomad Studio ─────────────────────────────────────────
+# After a reboot a new user opened Nomad Studio and found ComfyUI "off" with
+# no idea how to start it: only the setup wizard had a Start button. Now the
+# server starts the ones installed on this computer by itself (setting
+# autoStartApps, on by default) and tracks how it went for the start screen
+# and the settings panel.
+
+DEFAULT_COMFY_URL = "http://127.0.0.1:8188"
+DEFAULT_LMSTUDIO_URL = "http://127.0.0.1:1234"
+COMFY_START_WAIT = 600     # first start of a fresh portable install: 3-9 minutes
+LMSTUDIO_START_WAIT = 120
+
+_autostart: dict[str, str] = {"comfy": "idle", "lmstudio": "idle"}
+_autostart_lock = threading.Lock()
+
+
+def _is_local(url: str) -> bool:
+    from urllib.parse import urlparse
+    return (urlparse(url).hostname or "").lower() in {"127.0.0.1", "localhost", "::1"}
+
+
+def _answers(url: str) -> bool:
+    try:
+        with urllib.request.urlopen(url, timeout=3):  # noqa: S310 — local service
+            return True
+    except urllib.error.HTTPError:
+        return True  # it answered, even if with an error
+    except Exception:  # noqa: BLE001 — not running
+        return False
+
+
+def _probe(app: str, settings: dict[str, Any]) -> tuple[str, str]:
+    """(base url, url to probe) for this app from the saved settings."""
+    if app == "comfy":
+        base = str(settings.get("comfyApiUrl") or DEFAULT_COMFY_URL).strip().rstrip("/")
+        return base, base + "/system_stats"
+    base = str(settings.get("lmStudioApiUrl") or DEFAULT_LMSTUDIO_URL).strip().rstrip("/")
+    root = base.split("/v1")[0].split("/api/")[0]
+    return root, root + "/v1/models"
+
+
+def autostart_state() -> dict[str, str]:
+    with _autostart_lock:
+        return dict(_autostart)
+
+
+def _set_state(app: str, value: str) -> None:
+    with _autostart_lock:
+        _autostart[app] = value
+
+
+def start_and_wait(app: str, settings: dict[str, Any]) -> str:
+    """Start one app if it is installed here and not answering; wait until it
+    answers. Returns the final state: running, remote, notInstalled, needsVcRuntime
+    or failed."""
+    base, probe = _probe(app, settings)
+    if not _is_local(base):
+        _set_state(app, "remote")
+        return "remote"
+    if _answers(probe):
+        _set_state(app, "running")
+        return "running"
+    if app == "comfy":
+        if not find_comfyui():
+            _set_state(app, "notInstalled")
+            return "notInstalled"
+        _set_state(app, "starting")
+        res = start_comfyui(listen=bool(settings.get("comfyListen")))
+        wait = COMFY_START_WAIT
+    else:
+        if not find_lmstudio():
+            _set_state(app, "notInstalled")
+            return "notInstalled"
+        _set_state(app, "starting")
+        res = start_lmstudio()
+        wait = LMSTUDIO_START_WAIT
+    if not res.get("ok"):
+        state = "needsVcRuntime" if res.get("needsVcRuntime") else "failed"
+        _set_state(app, state)
+        logger.warning("autostart %s: %s", app, res.get("error"))
+        return state
+    deadline = time.monotonic() + wait
+    while time.monotonic() < deadline:
+        if _answers(probe):
+            _set_state(app, "running")
+            logger.info("autostart: %s is running", app)
+            return "running"
+        time.sleep(3)
+    _set_state(app, "failed")
+    logger.warning("autostart: %s did not answer within %ss", app, wait)
+    return "failed"
+
+
+def autostart_in_background(settings: dict[str, Any]) -> None:
+    """Called once when the server starts (app.py)."""
+    if settings.get("autoStartApps") is False:
+        _set_state("comfy", "disabled")
+        _set_state("lmstudio", "disabled")
+        return
+    for app in ("comfy", "lmstudio"):
+        threading.Thread(target=start_and_wait, args=(app, settings), daemon=True,
+                         name=f"autostart-{app}").start()
 
 
 # ── Installing ComfyUI portable ─────────────────────────────────────────────

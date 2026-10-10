@@ -125,8 +125,77 @@
 
   window.refreshNavImagesLed = refreshImagesAvailability;
 
-  function refreshAll() {
-    return Promise.all([refreshImagesAvailability(), refreshChatAvailability()]);
+  // ── ComfyUI / LM Studio off: starting, or a Start button ─────────────────
+  // The server starts them by itself when it boots (app/services/local_apps.py);
+  // this says so while it happens, and offers Start when one is off and
+  // installed on this computer (e.g. its window was closed).
+  const APPS = [
+    { id: 'comfy', led: 'images', name: 'ComfyUI' },
+    { id: 'lmstudio', led: 'chat', name: 'LM Studio' },
+  ];
+  let appsTimer = null;
+  function tr(key, fallback, vars) {
+    let s = window.NomadI18n ? window.NomadI18n.t('autostart.' + key, fallback) : fallback;
+    Object.keys(vars || {}).forEach((k) => { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  }
+  function ledDown(name) {
+    return Array.prototype.some.call(leds(name), (el) => el.classList.contains('unavailable'));
+  }
+  async function refreshApps() {
+    const box = document.querySelector('[data-cs-apps]');
+    if (!box) return;
+    let st = null;
+    try {
+      st = await fetch('/api/setup/autostart', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null));
+    } catch { st = null; }
+    if (!st) { box.hidden = true; return; }
+    const rows = [];
+    let busy = false;
+    APPS.forEach((app) => {
+      const state = st[app.id];
+      if (state === 'starting') {
+        busy = true;
+        rows.push(`<div class="cs-settings-app-row"><span>${tr('starting', 'Starting {name}… the first time it can take a few minutes.', { name: app.name })}</span></div>`);
+      } else if (ledDown(app.led) && state !== 'remote' && state !== 'notInstalled') {
+        const why = state === 'needsVcRuntime'
+          ? tr('needsVc', '{name} needs the Visual C++ Runtime: open the setup wizard.', { name: app.name })
+          : tr('off', '{name} is not running.', { name: app.name });
+        rows.push(`<div class="cs-settings-app-row"><span>${why}</span>` +
+          (state === 'needsVcRuntime' ? '' : `<button type="button" class="cs-settings-app-btn" data-cs-app-start="${app.id}">${tr('start', 'Start {name}', { name: app.name })}</button>`) +
+          '</div>');
+      }
+    });
+    box.innerHTML = rows.join('');
+    box.hidden = !rows.length;
+    // Follow a start until it is done, then repaint the LEDs.
+    if (busy && !appsTimer) {
+      appsTimer = setInterval(async () => {
+        await refreshApps();
+        const now = await fetch('/api/setup/autostart', { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+        if (!now || (now.comfy !== 'starting' && now.lmstudio !== 'starting')) {
+          clearInterval(appsTimer); appsTimer = null;
+          refreshAll();
+        }
+      }, 4000);
+    }
+  }
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest && e.target.closest('[data-cs-app-start]');
+    if (!btn) return;
+    e.preventDefault();
+    btn.disabled = true;
+    await fetch('/api/setup/autostart/start', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app: btn.getAttribute('data-cs-app-start') }),
+    }).catch(() => null);
+    setTimeout(refreshApps, 800);
+  });
+  document.addEventListener('nomad-i18n-applied', refreshApps);
+
+  async function refreshAll() {
+    await Promise.all([refreshImagesAvailability(), refreshChatAvailability()]);
+    refreshApps();
   }
 
   // Polling starts automatically only for unavailable services.

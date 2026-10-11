@@ -61,8 +61,14 @@ function Invoke-WithRetry([scriptblock]$Action, [string]$What) {
 function Start-NomadStudio {
     # The browser tab that asked for the update reloads by itself.
     $env:NOMAD_OPEN_BROWSER = '0'
+    # Minimized from the start, like a normal launch: started from here the
+    # .bat's own "start /min" re-launch came up as a full window (Windows
+    # Terminal, Windows 11) covering the page that was reloading. With
+    # NOMAD_LAUNCHER_MIN set the .bat runs the app in this very window, so
+    # the process we get back is still the one that runs it.
+    $env:NOMAD_LAUNCHER_MIN = '1'
     Log 'starting NomadStudio.bat'
-    return Start-Process -FilePath $Launcher -WorkingDirectory $Root -PassThru
+    return Start-Process -FilePath $Launcher -WorkingDirectory $Root -WindowStyle Minimized -PassThru
 }
 
 function Stop-AppProcesses([string]$Folder, $LauncherProcess) {

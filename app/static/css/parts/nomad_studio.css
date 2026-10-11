@@ -4388,6 +4388,23 @@ html.cs-essentials-only .cs-sub-grid-groups:not(.cs-essentials-ready):has(.cs-ca
 #cs-settings-detail-embed .settings-layout-v2 {
   height: auto;
   max-width: 100%;
+  /* .settings-layout is a grid with an auto column: in this narrow flyout
+     the column grew to the widest unbreakable line, so hints did not wrap
+     and the right side was cut off — the Update review's Prepare / Restart
+     buttons included (seen recording the update tutorial). */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#cs-settings-detail-embed .settings-layout > *,
+#cs-settings-detail-embed .settings-section-body,
+#cs-settings-detail-embed .settings-field-block,
+#cs-settings-detail-embed .settings-package-review {
+  min-width: 0;
+}
+
+#cs-settings-detail-embed .settings-field-hint,
+#cs-settings-detail-embed .settings-backup-meta {
+  overflow-wrap: anywhere;
 }
 
 /* Section headers ("Imports", "Active Imports", panel titles, etc.) —

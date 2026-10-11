@@ -541,7 +541,7 @@
       }
       var proc = isComfy && S.comfyProc && S.comfyProc.running ? S.comfyProc : null;
       return statusBox('busy', esc(t('setup.apps.starting', 'Starting {name}… this can take a minute.', { name: name })) + clock +
-        (proc && proc.memMb ? '<br>' + esc(t('setup.apps.comfyLoading', 'It is working: {size} loaded so far. The first start takes several minutes; that is normal.',
+        (proc && proc.memMb ? '<br>' + esc(t('setup.apps.comfyLoading', 'It is working: {size} loaded so far.',
           { size: (proc.memMb / 1024).toFixed(1) + ' GB' })) : ''));
     }
     var job = S.installJob && (isComfy ? S.installJob.app === 'comfy' || S.installJob.app === 'vcredist'

@@ -2084,7 +2084,7 @@
     "apps": {
       "start": "启动 {name}",
       "starting": "正在启动 {name}…首次启动可能需要几分钟。",
-      "comfyLoading": "正在运行：目前已加载 {size}。首次启动需要几分钟，这是正常的。",
+      "comfyLoading": "正在运行：目前已加载 {size}。",
       "lmsWelcome": "LM Studio 已打开其窗口：请在那里完成欢迎页面。它一就绪我们就会连接。",
       "install": "安装",
       "installComfy": "安装 ComfyUI",

@@ -61,6 +61,21 @@ LMSTUDIO_INSTALLER_WAIT_SECONDS = 1800
 _gpus: list[str] | None = None
 
 
+def _powershell(script: str, timeout: float) -> subprocess.CompletedProcess:
+    """Run a PowerShell command and read what it prints as UTF-8.
+
+    PowerShell writes in the console code page (850 on a Spanish Windows),
+    and the launcher sets PYTHONUTF8=1, so Python read it as UTF-8: one
+    accented letter ("Vídeo de Microsoft Hyper-V", a user called "Begoña")
+    made the whole output None. Seen recording the Spanish install: the
+    wizard said there was no NVIDIA card on an RTX 4060 Ti."""
+    return subprocess.run(  # noqa: S603,S607 — our own fixed commands
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+         "[Console]::OutputEncoding = [Text.Encoding]::UTF8; " + script],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+
+
 def gpu_names() -> list[str]:
     """Graphics cards in this computer, read without ComfyUI's help so the
     wizard can warn before a 2 GB download. Empty list when unknown."""
@@ -70,16 +85,12 @@ def gpu_names() -> list[str]:
     names: list[str] = []
     if sys.platform.startswith("win"):
         try:
-            out = subprocess.run(  # noqa: S603,S607 — fixed command
-                ["powershell", "-NoProfile", "-Command",
-                 "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"],
-                capture_output=True, text=True, timeout=45, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-            names = [line.strip() for line in out.stdout.splitlines() if line.strip()]
+            out = _powershell("Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name", 45)
+            names = [line.strip() for line in (out.stdout or "").splitlines() if line.strip()]
         except Exception:  # noqa: BLE001 — never block the wizard
             logger.debug("could not read the GPU list", exc_info=True)
-    # Kept only when it worked. Right after Windows starts the query can
-    # time out (seen on a clean VM): caching that empty answer told the
-    # wizard "no NVIDIA or AMD card" for the whole session.
+    # Kept only when it worked, so a slow or failed first try is not
+    # remembered as "no graphics card" for the whole session.
     if names:
         _gpus = names
     return names
@@ -447,14 +458,12 @@ def create_shortcuts(desktop: bool = True, start_menu: bool = True) -> dict[str,
         + "  $lnk.Save(); $made += $lnk.FullName }; $made -join \"`n\""
     )
     try:
-        out = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
-                             capture_output=True, text=True, timeout=30,
-                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        out = _powershell(script, 30)
     except Exception as exc:  # noqa: BLE001 — shown in the wizard
         return {"ok": False, "error": str(exc)}
     if out.returncode != 0:
-        return {"ok": False, "error": (out.stderr or out.stdout).strip()[:300]}
-    created = [line for line in out.stdout.splitlines() if line.strip()]
+        return {"ok": False, "error": (out.stderr or out.stdout or "").strip()[:300]}
+    created = [line for line in (out.stdout or "").splitlines() if line.strip()]
     logger.info("shortcuts created: %s", created)
     return {"ok": True, "created": created}
 
@@ -749,7 +758,7 @@ def start_install_comfyui(target_dir: Path) -> dict[str, Any]:
 
             _set(phase="extract", done=0, total=0)
             result = subprocess.run([*extractor, str(archive)], cwd=str(target_dir),  # noqa: S603
-                                    capture_output=True, text=True,
+                                    capture_output=True, text=True, errors="replace",
                                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             if result.returncode != 0:
                 raise ValueError("The download could not be unpacked: " + (result.stderr or "")[:200])

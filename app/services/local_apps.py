@@ -67,17 +67,22 @@ def gpu_names() -> list[str]:
     global _gpus
     if _gpus is not None:
         return _gpus
-    _gpus = []
+    names: list[str] = []
     if sys.platform.startswith("win"):
         try:
             out = subprocess.run(  # noqa: S603,S607 — fixed command
                 ["powershell", "-NoProfile", "-Command",
                  "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"],
-                capture_output=True, text=True, timeout=20, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-            _gpus = [line.strip() for line in out.stdout.splitlines() if line.strip()]
+                capture_output=True, text=True, timeout=45, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            names = [line.strip() for line in out.stdout.splitlines() if line.strip()]
         except Exception:  # noqa: BLE001 — never block the wizard
             logger.debug("could not read the GPU list", exc_info=True)
-    return _gpus
+    # Kept only when it worked. Right after Windows starts the query can
+    # time out (seen on a clean VM): caching that empty answer told the
+    # wizard "no NVIDIA or AMD card" for the whole session.
+    if names:
+        _gpus = names
+    return names
 
 
 def gpu_vendor() -> str:

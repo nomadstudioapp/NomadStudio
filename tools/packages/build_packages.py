@@ -127,6 +127,7 @@ ENGINES_OPTIONAL = {
 ENGINE_SLUGS = {
     "krea-2-turbo": "krea", "z-image-turbo": "zimage", "flux-klein": "klein", "ideogram-4": "ideogram",
     "z-anime": "anime", "krea2-monaco": "monaco", "krea2-roma": "roma", "qwen-image": "qwen",
+    "qwen-image-turbo": "qwenturbo",
 }
 
 # Downloads the source workflows do not declare (vault: "Modelos - Descargas").
@@ -660,9 +661,21 @@ QWEN_IMAGE_21_QUANTIZATION = {
 }
 
 
-def _qwen_image_21_config_node(**extra) -> dict:
+# Qwen Image 2.1 Turbo (Comfy-Org/Qwen-Image-2.1, released 2026-10): the
+# full distilled checkpoint, not the LoRA extraction (an approximation, and
+# unproven on the INT8 convrot weights). Same text encoder and VAE as 2.1, so
+# having both engines downloads those once. 8 steps, CFG 1 (its model card).
+QWEN_IMAGE_21_TURBO_QUANTIZATION = {
+    "int8": {"unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+             "clip_name": "qwen3vl_8b_int8_convrot.safetensors"},
+    "bf16": {"unet_name": "qwen_image_2.1_turbo_bf16.safetensors",
+             "clip_name": "qwen3vl_8b_bf16.safetensors", "label": "BF16"},
+}
+
+
+def _qwen_image_21_config_node(quantization: dict = QWEN_IMAGE_21_QUANTIZATION, **extra) -> dict:
     return {
-        "inputs": {"value": json.dumps({**extra, "quantization": QWEN_IMAGE_21_QUANTIZATION})},
+        "inputs": {"value": json.dumps({**extra, "quantization": quantization})},
         "class_type": "PrimitiveStringMultiline",
         "_meta": {"title": "config"},
     }
@@ -1990,6 +2003,53 @@ def build_qwen_image_21_engine(version: str) -> Path:
             "es": "Qwen Image 2.1: texto a imagen rápido, con generación nativa de fondo transparente.",
             "zh": "Qwen Image 2.1：快速文生图，原生支持透明背景生成。",
             "ko": "Qwen Image 2.1: 빠른 텍스트-이미지 생성, 네이티브 투명 배경 지원.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "order": 50,
+        "contributes": {"engines": [file_rel]},
+    }
+    return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT})
+
+
+def _qwen_image_21_turbo_workflow() -> dict:
+    workflow = _qwen_image_21_workflow()
+    workflow["config"] = _qwen_image_21_config_node(QWEN_IMAGE_21_TURBO_QUANTIZATION,
+                                                    name="Qwen Image 2.1 Turbo", downloads="")
+    workflow["29"]["inputs"]["filename_prefix"] = "qwen-image-2.1-turbo-create-simple"
+    workflow["53"]["inputs"]["steps"] = 8
+    workflow["55"]["inputs"]["unet_name"] = QWEN_IMAGE_21_TURBO_QUANTIZATION["int8"]["unet_name"]
+    return workflow
+
+
+def build_qwen_image_21_turbo_engine(version: str) -> Path:
+    from app.services.workflow_service import _analyze_workflow
+
+    workflow = _qwen_image_21_turbo_workflow()
+    analysis = _analyze_workflow(workflow)
+    engine = {
+        "category": "image",
+        "name": "Qwen Image 2.1 Turbo",
+        "slug": ENGINE_SLUGS["qwen-image-turbo"],
+        "workflow": workflow,
+        "analysis": analysis,
+        "basicValues": analysis.get("basicValues", {}),
+        "advancedValues": {p["key"]: p["value"] for p in analysis.get("advancedParameters", []) if not p.get("isLinked")},
+        "annotation": {"downloads": [], "loras": [], "optionalSubgraphs": []},
+    }
+    pkg_id = "nomad.engine.qwen-image-turbo"
+    file_rel = "engines/qwen_image_turbo.json"
+    manifest = {
+        "schema_version": 1,
+        "id": pkg_id,
+        "version": version,
+        "default_lang": "en",
+        "name": {lang: "Qwen Image 2.1 Turbo" for lang in ("en", "es", "zh", "ko")},
+        "summary": {
+            "en": "Qwen Image 2.1 Turbo: Qwen Image 2.1 distilled to 8 steps, for fast text-to-image.",
+            "es": "Qwen Image 2.1 Turbo: Qwen Image 2.1 destilado a 8 pasos, para generar imágenes rápido a partir de texto.",
+            "zh": "Qwen Image 2.1 Turbo：蒸馏至 8 步的 Qwen Image 2.1，快速文生图。",
+            "ko": "Qwen Image 2.1 Turbo: 8단계로 증류한 Qwen Image 2.1, 빠른 텍스트-이미지 생성.",
         },
         "author": AUTHOR,
         "license": "proprietary",
@@ -4514,7 +4574,7 @@ def main() -> None:
                   f" · styles={summary['styles']}")
         return
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
-        build_qwen_image_21_engine(args.version),
+        build_qwen_image_21_engine(args.version), build_qwen_image_21_turbo_engine(args.version),
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
         build_core_civitai(args.source, args.version)]
     if args.optional:

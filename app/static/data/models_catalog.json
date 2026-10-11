@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-10-08",
+ "updated": "2026-10-11",
  "models": [
   {
    "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
@@ -776,6 +776,34 @@
    "sources": [
     {
      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+     "host": "huggingface"
+    }
+   ]
+  },
+  {
+   "sha256": "8144a0182964aa8403ad6dbc011db837304167d235161b9aabaa8532e967314c",
+   "size": 7256787829,
+   "names": [
+    "qwen_image_2.1_turbo_int8_convrot.safetensors"
+   ],
+   "folder": "diffusion_models",
+   "sources": [
+    {
+     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_turbo_int8_convrot.safetensors",
+     "host": "huggingface"
+    }
+   ]
+  },
+  {
+   "sha256": "8b74237a7f505773e2c66726fa696444b4c704585c93a347cff9044937f7914a",
+   "size": 14230280616,
+   "names": [
+    "qwen_image_2.1_turbo_bf16.safetensors"
+   ],
+   "folder": "diffusion_models",
+   "sources": [
+    {
+     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_turbo_bf16.safetensors",
      "host": "huggingface"
     }
    ]

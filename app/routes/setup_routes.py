@@ -170,8 +170,15 @@ def local_apps_start():
     if app_id == "comfy":
         return jsonify(local_apps.start_comfyui(listen=bool(payload.get("listen"))))
     if app_id == "lmstudio":
-        return jsonify(local_apps.start_lmstudio())
+        return jsonify(local_apps.start_lmstudio(server_only=bool(payload.get("serverOnly"))))
     return jsonify({"ok": False, "error": "Unknown app"}), 400
+
+
+@setup_bp.get("/api/setup/local-apps/comfy-progress")
+@local_only
+def local_apps_comfy_progress():
+    """ComfyUI still starting: is it running, how much has it loaded."""
+    return jsonify({"ok": True, **local_apps.comfy_progress()})
 
 
 @setup_bp.get("/api/setup/autostart")

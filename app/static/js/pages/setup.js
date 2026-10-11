@@ -426,32 +426,71 @@
 
   function startApp(kind) {
     S.appsStarting = kind;
+    S.appsStartedAt = Date.now();
+    S.appsWelcome = false;
+    S.comfyProc = null;
     S.appsNoAnswer = null;
     render();
+    tickElapsed();
     api('POST', '/api/setup/local-apps/start', { app: kind === 'comfy' ? 'comfy' : 'lmstudio', listen: kind === 'comfy' && S.comfyListen }).then(function (res) {
       // A fresh Windows lacks the Visual C++ runtime: reload what this
       // computer has so the install button for it shows up.
       if (res && res.needsVcRuntime) { S.appsStarting = null; S.apps = null; return loadApps(); }
       if (!res.ok) { S.appsStarting = null; S.error = res.error || ''; return render(); }
+      // LM Studio could not start its server and opened its window instead:
+      // on a new install that is its welcome, which the user goes through at
+      // their own pace. Keep trying its server (no window) meanwhile, instead
+      // of "did not answer" after 80 s and a Start button to press.
+      S.appsWelcome = kind === 'lmstudio' && !!res.needsServerToggle;
       // ComfyUI takes a while to come up: keep checking instead of asking again.
       // Its first start on a new install took 3-9 minutes on a clean Windows
-      // VM (loading PyTorch cold), so it gets 10 minutes; LM Studio 80 s.
+      // VM (loading PyTorch cold), so it gets 10 minutes; LM Studio 80 s, or
+      // 10 minutes while its welcome is open.
       var tries = 0;
-      var maxTries = kind === 'comfy' ? 150 : 20;
+      var maxTries = kind === 'comfy' || S.appsWelcome ? 150 : 20;
+      var gone = 0;
       (function poll() {
         var check = kind === 'comfy' ? checkComfy : checkLms;
         check().then(function () {
           var ok = kind === 'comfy' ? (S.comfy && S.comfy.ok) : (S.lms && S.lms.ok);
-          if (ok || ++tries > maxTries) {
+          if (ok || ++tries > maxTries || gone >= 2) {
             S.appsStarting = null;
+            S.appsWelcome = false;
             // Not silently back to "not found": its console says why.
             if (!ok) S.appsNoAnswer = kind;
             return render();
           }
-          setTimeout(poll, 4000);
+          var extra = null;
+          if (kind === 'comfy') {
+            // Running and loading, or closed (its console shows the error):
+            // no reason to wait the whole 10 minutes for that.
+            extra = api('GET', '/api/setup/local-apps/comfy-progress').then(function (p) {
+              S.comfyProc = p && p.ok ? p : null;
+              var closed = S.comfyProc && S.comfyProc.running === false && Date.now() - S.appsStartedAt > 20000;
+              gone = closed ? gone + 1 : 0;
+              render();
+            });
+          } else if (S.appsWelcome && tries % 3 === 0) {
+            extra = api('POST', '/api/setup/local-apps/start', { app: 'lmstudio', serverOnly: true });
+          }
+          Promise.resolve(extra).then(function () { setTimeout(poll, 4000); });
         });
       })();
     });
+  }
+  // The clock next to "Starting ComfyUI…", so a long first start is seen to
+  // be going on. Updates the text only, not the whole step.
+  function elapsedText() {
+    var s = Math.max(0, Math.floor((Date.now() - (S.appsStartedAt || Date.now())) / 1000));
+    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+  function tickElapsed() {
+    if (S.elapsedTimer) return;
+    S.elapsedTimer = setInterval(function () {
+      if (!S.appsStarting) { clearInterval(S.elapsedTimer); S.elapsedTimer = null; return; }
+      var el = document.getElementById('su-elapsed');
+      if (el) el.textContent = elapsedText();
+    }, 1000);
   }
 
   function installApp(app) {
@@ -496,7 +535,14 @@
     var found = apps && (isComfy ? apps.comfy : apps.lmstudio);
     var name = serverName(kind);
     if (S.appsStarting === kind) {
-      return statusBox('busy', esc(t('setup.apps.starting', 'Starting {name}… this can take a minute.', { name: name })));
+      var clock = ' <span class="su-elapsed" id="su-elapsed">' + elapsedText() + '</span>';
+      if (S.appsWelcome) {
+        return statusBox('busy', esc(t('setup.apps.lmsWelcome', 'LM Studio opened its window: go through its welcome screens there. We connect as soon as it is ready.')) + clock);
+      }
+      var proc = isComfy && S.comfyProc && S.comfyProc.running ? S.comfyProc : null;
+      return statusBox('busy', esc(t('setup.apps.starting', 'Starting {name}… this can take a minute.', { name: name })) + clock +
+        (proc && proc.memMb ? '<br>' + esc(t('setup.apps.comfyLoading', 'It is working: {size} loaded so far. The first start takes several minutes; that is normal.',
+          { size: (proc.memMb / 1024).toFixed(1) + ' GB' })) : ''));
     }
     var job = S.installJob && (isComfy ? S.installJob.app === 'comfy' || S.installJob.app === 'vcredist'
       : S.installJob.app === 'lmstudio') ? S.installJob : null;
@@ -594,8 +640,14 @@
     var list = serverList(kind);
     var html = '';
     var showInstall = false;
+    // Being started (installBlock): its own box stays put while we keep
+    // checking every few seconds, instead of flashing "Checking…".
+    var starting = S.appsStarting === kind && !connected;
+    if (starting) checking = false;
 
-    if (checking || (S.discoveryBusy && !connected)) {
+    if (starting) {
+      showInstall = true;
+    } else if (checking || (S.discoveryBusy && !connected)) {
       html += statusBox('busy', esc(checking
         ? t('setup.network.checking', 'Checking {name} at {url}…', { name: name, url: url })
         : t('setup.network.searchingFor', 'Looking for {name} on this computer and on your network…', { name: name })));
@@ -624,7 +676,7 @@
     }
 
     // Address box: only when asked for, or when there is nothing to choose.
-    var manual = S.manual[kind] || (!!check && !connected && !list.length && !checking);
+    var manual = S.manual[kind] || (!!check && !connected && !list.length && !checking && !starting);
     if (manual) {
       html += '<label class="su-label" for="su-' + idk + '-url">' + esc(isComfy ? t('setup.comfy.urlLabel', 'ComfyUI address') : t('setup.lms.urlLabel', 'LM Studio address')) + '</label>' +
         '<div class="su-row"><input class="su-input" id="su-' + idk + '-url" value="' + esc(url) + '" spellcheck="false">' +

@@ -156,6 +156,7 @@
   line-height: 1.5;
 }
 .su-status strong { color: var(--text); font-weight: 500; }
+.su-elapsed { margin-left: 6px; color: var(--text); font-variant-numeric: tabular-nums; }
 .su-status-icon { flex: 0 0 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--muted); }
 .su-status.is-ok .su-status-icon { background: var(--good, #6fb87f); }
 .su-status.is-bad .su-status-icon { background: #e0665a; }

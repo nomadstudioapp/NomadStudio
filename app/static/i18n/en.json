@@ -1701,6 +1701,8 @@
     "apps": {
       "start": "Start {name}",
       "starting": "Starting {name}… the first time it can take a few minutes.",
+      "comfyLoading": "It is working: {size} loaded so far. The first start takes several minutes; that is normal.",
+      "lmsWelcome": "LM Studio opened its window: go through its welcome screens there. We connect as soon as it is ready.",
       "install": "Install",
       "installComfy": "Install ComfyUI",
       "installLms": "Install LM Studio",

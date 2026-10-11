@@ -280,10 +280,104 @@ def start_comfyui(listen: bool = False) -> dict[str, Any]:
     return {"ok": True, "started": launcher, "listening": False, "listenUnavailable": bool(listen)}
 
 
-def start_lmstudio() -> dict[str, Any]:
+def _python_processes_under(folder: Path) -> list[int] | None:
+    """Memory in use (bytes) of each python.exe running from inside *folder*,
+    or None where we cannot tell (not Windows, or the lookup failed). Plain
+    Win32 calls through ctypes: the portable build has no psutil."""
+    if not sys.platform.startswith("win"):
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+        class Entry(ctypes.Structure):
+            _fields_ = [("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD),
+                        ("th32ProcessID", wintypes.DWORD), ("th32DefaultHeapID", ctypes.c_size_t),
+                        ("th32ModuleID", wintypes.DWORD), ("cntThreads", wintypes.DWORD),
+                        ("th32ParentProcessID", wintypes.DWORD), ("pcPriClassBase", ctypes.c_long),
+                        ("dwFlags", wintypes.DWORD), ("szExeFile", ctypes.c_wchar * 260)]
+
+        class Counters(ctypes.Structure):
+            _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD)] + [
+                (n, ctypes.c_size_t) for n in ("PeakWorkingSetSize", "WorkingSetSize", "QuotaPeakPagedPoolUsage",
+                                               "QuotaPagedPoolUsage", "QuotaPeakNonPagedPoolUsage",
+                                               "QuotaNonPagedPoolUsage", "PagefileUsage", "PeakPagefileUsage")]
+
+        k32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+        k32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+        k32.Process32FirstW.argtypes = k32.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(Entry)]
+        k32.OpenProcess.restype = wintypes.HANDLE
+        k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        k32.QueryFullProcessImageNameW.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPWSTR,
+                                                   ctypes.POINTER(wintypes.DWORD)]
+        k32.K32GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+        k32.CloseHandle.argtypes = [wintypes.HANDLE]
+
+        snap = k32.CreateToolhelp32Snapshot(0x2, 0)  # TH32CS_SNAPPROCESS
+        if not snap or snap == wintypes.HANDLE(-1).value:
+            return None
+        prefix = str(folder.resolve()).lower().rstrip("\\") + "\\"
+        found: list[int] = []
+        try:
+            entry = Entry()
+            entry.dwSize = ctypes.sizeof(Entry)
+            more = k32.Process32FirstW(snap, ctypes.byref(entry))
+            while more:
+                if entry.szExeFile.lower() == "python.exe":
+                    h = k32.OpenProcess(0x1000, False, entry.th32ProcessID)  # QUERY_LIMITED_INFORMATION
+                    if h:
+                        try:
+                            buf = ctypes.create_unicode_buffer(1024)
+                            size = wintypes.DWORD(1024)
+                            if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)) \
+                                    and buf.value.lower().startswith(prefix):
+                                mem = Counters()
+                                mem.cb = ctypes.sizeof(Counters)
+                                ok = k32.K32GetProcessMemoryInfo(h, ctypes.byref(mem), mem.cb)
+                                found.append(int(mem.WorkingSetSize) if ok else 0)
+                        finally:
+                            k32.CloseHandle(h)
+                more = k32.Process32NextW(snap, ctypes.byref(entry))
+        finally:
+            k32.CloseHandle(snap)
+        return found
+    except Exception:  # noqa: BLE001 — only a progress hint
+        logger.debug("process lookup failed", exc_info=True)
+        return None
+
+
+def comfy_progress() -> dict[str, Any]:
+    """Whether the portable ComfyUI we started is still running, and how much
+    it has loaded. Its first start on a new install takes minutes with nothing
+    to see, which looked broken: the wizard shows this while it waits, and
+    can tell at once when ComfyUI closed instead of waiting the full time."""
+    info = find_comfyui()
+    if not info or info.get("kind") != "portable":
+        return {"running": None}
+    procs = _python_processes_under(Path(info["path"]))
+    if procs is None:
+        return {"running": None}
+    return {"running": bool(procs), "memMb": sum(procs) // (1024 * 1024)}
+
+
+def start_lmstudio(server_only: bool = False) -> dict[str, Any]:
+    """Start LM Studio's API. *server_only*: just try `lms server start` again
+    (the wizard does this while the user goes through LM Studio's welcome),
+    never open the window."""
     info = find_lmstudio()
     if not info:
         return {"ok": False, "error": "No LM Studio installation was found on this computer"}
+    if server_only:
+        if not info.get("cli"):
+            return {"ok": False}
+        try:
+            res = subprocess.run([info["cli"], "server", "start"], capture_output=True, timeout=30,  # noqa: S603
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            return {"ok": res.returncode == 0}
+        except Exception:  # noqa: BLE001 — the wizard tries again
+            return {"ok": False}
     # `lms server start` brings the API up without opening the window.
     if info.get("cli"):
         try:

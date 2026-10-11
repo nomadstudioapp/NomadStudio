@@ -2725,13 +2725,20 @@
             };
           });
 
+        // The fetched page arrives in English (its markup's own text): the
+        // shell had translated the document before it was added. Before its
+        // scripts run, so the text they write afterwards stays.
+        if (window.NomadI18n && typeof window.NomadI18n.applyTo === 'function') {
+          await window.NomadI18n.applyTo(embedEl);
+          if (token !== embedToken) return;
+        }
+
         await loadEmbedScripts(scriptSources);
         if (token !== embedToken) return;
 
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
-
         collapseImportRowActions(embedEl);
         ensureRowMenuObserver();
 

@@ -59,8 +59,9 @@
     return (dict && dict.flow && dict.flow.flowLabels) || null;
   }
 
-  function applyStrings(dict) {
-    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+  function applyStrings(dict, root) {
+    root = root || document;
+    root.querySelectorAll('[data-i18n]').forEach(function (el) {
       var value = resolveKey(dict, el.getAttribute('data-i18n'));
       if (value == null) return;
       // data-i18n-n="20" fills a {n} placeholder ("{n} looks").
@@ -72,12 +73,12 @@
     // attribute holds the English original; it is looked up in the same
     // flat flowLabels table tField() uses, and falls back to English.
     var table = literalTable(dict);
-    document.querySelectorAll('[data-i18n-literal]').forEach(function (el) {
+    root.querySelectorAll('[data-i18n-literal]').forEach(function (el) {
       var src = el.getAttribute('data-i18n-literal');
       var value = table && Object.prototype.hasOwnProperty.call(table, src) ? table[src] : null;
       el.textContent = value != null ? value : src;
     });
-    document.querySelectorAll('[data-i18n-attr]').forEach(function (el) {
+    root.querySelectorAll('[data-i18n-attr]').forEach(function (el) {
       el.getAttribute('data-i18n-attr').split(',').forEach(function (pair) {
         var parts = pair.split(':');
         var attr = parts[0] && parts[0].trim();
@@ -257,8 +258,19 @@
     return value != null ? value : text;
   }
 
+  // Translate markup added after the page loaded (the Settings flyout in
+  // Nomad Studio drops a whole technical page in): same pass as on load,
+  // limited to that element. Call it before the added page's own scripts
+  // run, or it would put back the placeholders they have replaced.
+  function applyTo(root) {
+    var lang = LANGUAGES.filter(function (l) { return l.id === getLanguage(); })[0];
+    var id = (lang && lang.ready) ? lang.id : 'en';
+    return loadDict(id).then(function (dict) { return mergePackageTexts(dict, id); })
+      .then(function (dict) { applyStrings(dict, root); });
+  }
+
   window.NomadI18n = { getLanguage: getLanguage, setLanguage: setLanguage, LANGUAGES: LANGUAGES, t: t, tField: tField,
-                       ready: ready };
+                       ready: ready, applyTo: applyTo };
 
   // Short helpers for text a page script writes (English original as the
   // key, like tField): tF for textContent/attributes, tH for text going into

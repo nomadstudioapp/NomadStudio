@@ -628,7 +628,9 @@
   function comfyInstallForm(apps, compact) {
     var linux = apps.platform === 'linux';
     var noGpu = linux ? apps.comfyBackend === 'cpu' : (apps.gpuVendor !== 'nvidia' && apps.gpuVendor !== 'amd');
-    var noGpuText = linux
+    var noGpuText = linux && !apps.gpuVendor
+      ? t('setup.apps.cpuOnlyNoGpu', 'No graphics card PyTorch can use was found here, so ComfyUI will run on the processor: it works, but each image takes minutes.')
+      : linux
       ? t('setup.apps.cpuOnlyLinux', 'PyTorch has no build for this graphics card on Linux, so ComfyUI will run on the processor: it works, but each image takes minutes.')
       : t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.');
     var note = linux
@@ -683,7 +685,10 @@
       var gpu = isComfy ? (check.gpus || [])[0] : null;
       html += statusBox('ok', '<strong>' + esc(t('setup.network.connectedTo', 'Connected to {name}', { name: name })) + '</strong> · ' + esc(url) +
         (isComfy && check.version ? '<br>' + esc(t('setup.comfy.version', 'version {v}', { v: check.version })) : '') +
-        (gpu ? '<br>' + esc(t('setup.comfy.gpu', 'GPU: {name} · {vram} of video memory', { name: gpu.name, vram: bytes(gpu.vramTotal) })) : '') +
+        // ComfyUI started with --cpu reports a device called "cpu" and the RAM as its memory.
+        (gpu ? '<br>' + esc(String(gpu.name).toLowerCase() === 'cpu'
+          ? t('setup.comfy.cpu', 'Runs on the processor · {vram} of memory', { vram: bytes(gpu.vramTotal) })
+          : t('setup.comfy.gpu', 'GPU: {name} · {vram} of video memory', { name: gpu.name, vram: bytes(gpu.vramTotal) })) : '') +
         (!isComfy && check.models != null ? ' · ' + esc(t('setup.lms.models', '{n} models available', { n: check.models })) : '') +
         (check.isLocal === false ? '<br>' + esc(t('setup.network.otherComputerNote', 'It runs on another computer on your network.')) : ''));
     } else if (check && !list.length) {
@@ -863,7 +868,7 @@
             (o.key === e.recommendedOption && !e.installedOption ? ' <span class="su-rec">' + esc(t('setup.engines.recommended', 'Recommended')) + '</span>' : '') +
             '</button>';
         }).join('') + '</div>' +
-          (!e.installedOption && S.comfy.gpus && S.comfy.gpus[0] ? '<p class="su-hint">' + esc(t('setup.engines.recHint', 'Recommended for your {gpu} ({vram}). Lighter variants use less video memory; heavier ones keep more quality.', { gpu: S.comfy.gpus[0].name, vram: bytes(S.comfy.gpus[0].vramTotal) })) + '</p>' : '') : '';
+          (!e.installedOption && S.comfy.gpus && S.comfy.gpus[0] ? '<p class="su-hint">' + esc(t('setup.engines.recHint', 'Recommended for your {gpu} ({vram}). Lighter variants use less video memory; heavier ones keep more quality.', { gpu: String(S.comfy.gpus[0].name).toLowerCase() === 'cpu' ? t('setup.apps.backendCpu', 'the processor') : S.comfy.gpus[0].name, vram: bytes(S.comfy.gpus[0].vramTotal) })) + '</p>' : '') : '';
         var total = missing.reduce(function (acc, f) { return acc + (f.url && S.sizes[f.url] ? S.sizes[f.url] : 0); }, 0);
         var manual = missing.filter(function (f) { return !f.url; });
         var canInstall = missing.some(function (f) { return f.url; });

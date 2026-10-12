@@ -1914,7 +1914,8 @@
       "version": "版本 {v}",
       "noneHelp": "启动 ComfyUI 后再搜索一次，或直接输入地址。你也可以先继续：引擎照样会安装，之后可以在设置中连接。",
       "saveSpace": "节省空间：不在 ComfyUI 文件夹中保留副本",
-      "saveSpaceHint": "Nomad Studio 已经把每张图片保存在你自己的用户文件夹中，因此 ComfyUI 无需在其输出文件夹中再保留一份。"
+      "saveSpaceHint": "Nomad Studio 已经把每张图片保存在你自己的用户文件夹中，因此 ComfyUI 无需在其输出文件夹中再保留一份。",
+      "cpu": "使用处理器运行 · {vram} 内存"
     },
     "common": {
       "browse": "浏览",
@@ -2134,7 +2135,8 @@
       "downloadingMb": "正在下载 {name}… {mb} MB",
       "backendCpu": "处理器",
       "cpuOnlyLinux": "PyTorch 在 Linux 上没有适用于这块显卡的版本，因此 ComfyUI 将使用处理器运行：可以用，但每张图像需要几分钟。",
-      "installNoteLinux": "来自官方发布的 ComfyUI，附带独立的 Python 和适用于 {backend} 的 PyTorch：根据显卡不同，1 到 5 GB。无需管理员密码。"
+      "installNoteLinux": "来自官方发布的 ComfyUI，附带独立的 Python 和适用于 {backend} 的 PyTorch：根据显卡不同，1 到 5 GB。无需管理员密码。",
+      "cpuOnlyNoGpu": "这里没有找到 PyTorch 可以使用的显卡，因此 ComfyUI 将使用处理器运行：可以用，但每张图像需要几分钟。"
     }
   },
   "build": {

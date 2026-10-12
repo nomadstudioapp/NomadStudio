@@ -1914,7 +1914,8 @@
       "version": "versión {v}",
       "noneHelp": "Arranca ComfyUI y busca otra vez, o escribe su dirección. Puedes seguir sin él: los motores se instalan igual y puedes conectarlo después en Ajustes.",
       "saveSpace": "Ahorrar espacio: no guardar una copia en la carpeta de ComfyUI",
-      "saveSpaceHint": "Nomad Studio ya guarda cada imagen en tu propia carpeta de usuario, así que ComfyUI no necesita otra copia en su carpeta de salida."
+      "saveSpaceHint": "Nomad Studio ya guarda cada imagen en tu propia carpeta de usuario, así que ComfyUI no necesita otra copia en su carpeta de salida.",
+      "cpu": "Funciona con el procesador · {vram} de memoria"
     },
     "common": {
       "browse": "Examinar",
@@ -2134,7 +2135,8 @@
       "downloadingMb": "Descargando {name}… {mb} MB",
       "backendCpu": "el procesador",
       "cpuOnlyLinux": "PyTorch no tiene versión para esta tarjeta gráfica en Linux, así que ComfyUI usará el procesador: funciona, pero cada imagen tarda minutos.",
-      "installNoteLinux": "ComfyUI de su versión oficial, con un Python propio y PyTorch para {backend}: de 1 a 5 GB según la tarjeta. No hace falta contraseña de administrador."
+      "installNoteLinux": "ComfyUI de su versión oficial, con un Python propio y PyTorch para {backend}: de 1 a 5 GB según la tarjeta. No hace falta contraseña de administrador.",
+      "cpuOnlyNoGpu": "No se ha encontrado una tarjeta gráfica que PyTorch pueda usar, así que ComfyUI usará el procesador: funciona, pero cada imagen tarda minutos."
     }
   },
   "build": {

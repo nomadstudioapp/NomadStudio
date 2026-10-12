@@ -1531,7 +1531,8 @@
       "version": "version {v}",
       "noneHelp": "Start ComfyUI and search again, or type its address. You can continue without it: the engines are installed anyway, and you can connect later in Settings.",
       "saveSpace": "Save space: do not keep a copy in the ComfyUI folder",
-      "saveSpaceHint": "Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder."
+      "saveSpaceHint": "Nomad Studio already saves every image in your own user folder, so ComfyUI does not need to keep a second copy in its output folder.",
+      "cpu": "Runs on the processor · {vram} of memory"
     },
     "common": {
       "browse": "Browse",
@@ -1751,7 +1752,8 @@
       "downloadingMb": "Downloading {name}… {mb} MB",
       "backendCpu": "the processor",
       "cpuOnlyLinux": "PyTorch has no build for this graphics card on Linux, so ComfyUI will run on the processor: it works, but each image takes minutes.",
-      "installNoteLinux": "ComfyUI from its official release, with a Python of its own and PyTorch for {backend}: 1 to 5 GB depending on the card. No administrator password needed."
+      "installNoteLinux": "ComfyUI from its official release, with a Python of its own and PyTorch for {backend}: 1 to 5 GB depending on the card. No administrator password needed.",
+      "cpuOnlyNoGpu": "No graphics card PyTorch can use was found here, so ComfyUI will run on the processor: it works, but each image takes minutes."
     }
   },
   "build": {

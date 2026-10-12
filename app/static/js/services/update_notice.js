@@ -9,7 +9,11 @@
 // device (only this computer can restart the app) and after "Later" until the
 // app is opened again in a new tab.
 (function () {
-  var POLL_MS = 10 * 60 * 1000;
+  // A local GET: cheap. Faster while an update is downloading, so the notice
+  // appears as soon as it is ready.
+  var POLL_MS = 60 * 1000;
+  var POLL_BUSY_MS = 10 * 1000;
+  var timer = null;
   var ICON =
     '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>';
@@ -105,10 +109,15 @@
 
   function refresh() {
     if (restarting) return;
+    clearTimeout(timer);
     fetch('/api/updates', { cache: 'no-store' })
       .then(function (res) { return res.ok ? res.json() : null; })
-      .then(render)
-      .catch(function () { /* the server may be restarting */ });
+      .then(function (state) {
+        render(state);
+        var busy = state && state.job && state.job.state === 'running';
+        timer = setTimeout(refresh, busy ? POLL_BUSY_MS : POLL_MS);
+      })
+      .catch(function () { timer = setTimeout(refresh, POLL_MS); /* the server may be restarting */ });
   }
 
   function post(url) {
@@ -172,8 +181,7 @@
   }
 
   function start() {
-    setTimeout(refresh, 1500);
-    setInterval(refresh, POLL_MS);
+    timer = setTimeout(refresh, 1500);
     document.addEventListener('nomad-i18n-applied', refresh);
     // shell_router.js swaps pages without a reload: re-check (Settings hides it).
     window.addEventListener('oj:shell:navigate-end', function () { setTimeout(refresh, 300); });

@@ -75,6 +75,20 @@ def _state_path() -> Path:
     return paths.UPDATES_DIR / "state.json"
 
 
+def _still_newer(latest: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The saved latest release, unless it is no longer newer than this copy
+    (after updating, state.json still names the version now installed)."""
+    if not latest:
+        return None
+    installed = str(update_service.current().get("version") or "dev")
+    try:
+        if installed != "dev" and compare_versions(latest["version"], installed) <= 0:
+            return None
+    except (KeyError, ValueError):
+        return None
+    return latest
+
+
 def load_state() -> dict[str, Any]:
     with _state_lock:
         try:
@@ -84,6 +98,7 @@ def load_state() -> dict[str, Any]:
     state = dict(DEFAULT_STATE)
     if isinstance(data, dict):
         state.update({k: v for k, v in data.items() if k in DEFAULT_STATE})
+    state["latest"] = _still_newer(state.get("latest"))
     return state
 
 
@@ -282,9 +297,7 @@ def check(force: bool = False) -> dict[str, Any]:
             etag = state["etag"] if state.get("etag_url") == url else ""
             status, body, new_etag = _http_get(url, etag)
             if status == 304:
-                latest = state.get("latest")
-                if latest and version not in ("", "dev") and compare_versions(latest["version"], version) <= 0:
-                    latest = None  # it is the version now installed
+                latest = state.get("latest")  # load_state already dropped it if installed
             else:
                 data = json.loads(body.decode("utf-8"))
                 releases = data if isinstance(data, list) else [data]

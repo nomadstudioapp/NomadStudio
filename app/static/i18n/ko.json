@@ -2125,7 +2125,9 @@
       "downloadingApp": "{name} 내려받는 중… {pct}%",
       "installerOpen": "방금 열린 창에서 설치를 마치세요. 창이 보이지 않으면 작업 표시줄에서 해당 아이콘을 클릭하세요.",
       "downloadTo": "LM Studio 내려받을 위치",
-      "lmsNote": "설치 프로그램이 자동으로 열립니다. 여기서 기다릴게요."
+      "lmsNote": "설치 프로그램이 자동으로 열립니다. 여기서 기다릴게요.",
+      "lmsDownload": "LM Studio 다운로드",
+      "lmsManual": "웹사이트에서 설치하고 한 번 연 다음 여기로 돌아오세요. Nomad Studio가 알아서 찾습니다."
     }
   },
   "build": {

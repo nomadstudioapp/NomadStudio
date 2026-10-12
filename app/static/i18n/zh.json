@@ -2125,7 +2125,9 @@
       "downloadingApp": "正在下载 {name}…{pct}%",
       "installerOpen": "请在刚打开的窗口中完成安装。如果看不到该窗口，请点击任务栏中它的图标。",
       "downloadTo": "将 LM Studio 下载到",
-      "lmsNote": "安装程序会自动打开，我们在这里等你。"
+      "lmsNote": "安装程序会自动打开，我们在这里等你。",
+      "lmsDownload": "下载 LM Studio",
+      "lmsManual": "从官网安装它，打开一次后回到这里：Nomad Studio 会自动找到它。"
     }
   },
   "build": {

@@ -227,6 +227,9 @@ def state() -> dict[str, Any]:
         "gpus": gpu_names(),
         "gpuVendor": vendor,
         "canInstallComfy": sys.platform.startswith("win") and _extractor() is not None,
+        # LM Studio's own installer is only fetched on Windows; elsewhere the
+        # wizard links to its download page (start_install_lmstudio refuses).
+        "canInstallLms": sys.platform.startswith("win"),
         "vcRuntime": vc_runtime_installed(),
         "comfy": comfy,
         "comfyModelsDir": comfy_models_dir(comfy),

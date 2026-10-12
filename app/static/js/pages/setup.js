@@ -594,6 +594,11 @@
       }
       return noAnswer + startRow;
     }
+    if (!isComfy && !apps.canInstallLms) {
+      return '<div class="su-row"><a class="su-btn su-btn-install" href="' + esc(apps.lmstudioUrl || 'https://lmstudio.ai/download') + '" target="_blank" rel="noopener">' +
+        esc(t('setup.apps.lmsDownload', 'Download LM Studio')) + '</a></div>' +
+        '<p class="su-hint">' + esc(t('setup.apps.lmsManual', 'Install it from its website, open it once and come back here: Nomad Studio finds it by itself.')) + '</p>';
+    }
     if (!isComfy) {
       return '<label class="su-label" for="su-lms-dir">' + esc(t('setup.apps.downloadTo', 'Download LM Studio to')) + '</label>' +
         '<div class="su-row"><input class="su-input" id="su-lms-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +

@@ -2125,7 +2125,9 @@
       "downloadingApp": "Descargando {name}… {pct}%",
       "installerOpen": "Termina la instalación en la ventana que se acaba de abrir. Si no la ves, pulsa su icono en la barra de tareas.",
       "downloadTo": "Descargar LM Studio en",
-      "lmsNote": "Su instalador se abre solo; te esperamos aquí."
+      "lmsNote": "Su instalador se abre solo; te esperamos aquí.",
+      "lmsDownload": "Descargar LM Studio",
+      "lmsManual": "Instálalo desde su web, ábrelo una vez y vuelve aquí: Nomad Studio lo encuentra solo."
     }
   },
   "build": {

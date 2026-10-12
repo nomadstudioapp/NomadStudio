@@ -654,7 +654,14 @@ def _probe(app: str, settings: dict[str, Any]) -> tuple[str, str]:
 
 def autostart_state() -> dict[str, str]:
     with _autostart_lock:
-        return dict(_autostart)
+        state = dict(_autostart)
+    # "idle": autostart never ran (e.g. the server started before the setup
+    # wizard was done). Say whether there is anything to start at all, so the
+    # settings panel does not offer "Start LM Studio" where it is not installed.
+    for app, find in (("comfy", find_comfyui), ("lmstudio", find_lmstudio)):
+        if state.get(app) == "idle" and find() is None:
+            state[app] = "notInstalled"
+    return state
 
 
 def _set_state(app: str, value: str) -> None:

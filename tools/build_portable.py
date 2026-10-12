@@ -352,7 +352,7 @@ def main() -> None:
     ap.add_argument("--version", required=True, help="SemVer, e.g. 0.1.0-internal.1")
     ap.add_argument("--platform", choices=("windows-x64", "linux-x64", "macos-arm64"), default="windows-x64")
     ap.add_argument("--python-home", type=Path, help="CPython install to bundle (Windows builds)")
-    ap.add_argument("--update-repo", default="juanpaexpedite/NomadStudio")
+    ap.add_argument("--update-repo", default="nomadstudioapp/NomadStudio")
     ap.add_argument("--packages-dir", type=Path, default=REPO / "dist" / "packages",
                     help="package ZIPs to ship in bundled-packages/ (tools/packages/build_packages.py writes them)")
     # Included packs built in NomadStudioPacks (a sibling checkout): the free

@@ -553,6 +553,18 @@
     }
     if (job && job.state === 'running') {
       var pct = job.total ? Math.round(job.done * 100 / job.total) : 0;
+      // Linux install (local_apps._start_install_comfyui_linux): its own
+      // Python, then PyTorch — the long part, so say what is downloading.
+      var linuxPhase = { python: t('setup.apps.phasePython', 'Getting a Python of its own for ComfyUI…'),
+        torch: t('setup.apps.phaseTorch', 'Installing PyTorch for {backend}… this is the long part.',
+          { backend: backendLabel(job.backend) }),
+        requirements: t('setup.apps.phaseReqs', 'Installing the rest of what ComfyUI needs…') }[job.phase];
+      if (linuxPhase) {
+        return statusBox('busy', esc(linuxPhase) + (job.detail ? '<br><span class="su-hint">' + esc(job.detail) + '</span>' : ''));
+      }
+      if (job.phase === 'download' && !job.total && job.done) {
+        return statusBox('busy', esc(t('setup.apps.downloadingMb', 'Downloading {name}… {mb} MB', { name: name, mb: Math.round(job.done / 1048576) })));
+      }
       return statusBox('busy', esc(job.phase === 'extract'
         ? t('setup.apps.extracting', 'Unpacking ComfyUI…')
         : job.phase === 'installer' ? (isVc
@@ -609,13 +621,24 @@
     return comfyInstallForm(apps, false);
   }
 
+  function backendLabel(b) {
+    return b === 'cuda' ? 'NVIDIA (CUDA)' : b === 'rocm' ? 'AMD (ROCm)' : t('setup.apps.backendCpu', 'the processor');
+  }
+
   function comfyInstallForm(apps, compact) {
-    var noGpu = apps.gpuVendor !== 'nvidia' && apps.gpuVendor !== 'amd';
-    return (noGpu && !compact ? '<p class="su-hint">' + esc(t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.')) + '</p>' : '') +
+    var linux = apps.platform === 'linux';
+    var noGpu = linux ? apps.comfyBackend === 'cpu' : (apps.gpuVendor !== 'nvidia' && apps.gpuVendor !== 'amd');
+    var noGpuText = linux
+      ? t('setup.apps.cpuOnlyLinux', 'PyTorch has no build for this graphics card on Linux, so ComfyUI will run on the processor: it works, but each image takes minutes.')
+      : t('setup.apps.noGpu', 'No NVIDIA or AMD card found here: generating on this computer would be slow.');
+    var note = linux
+      ? t('setup.apps.installNoteLinux', 'ComfyUI from its official release, with a Python of its own and PyTorch for {backend}: 1 to 5 GB depending on the card. No administrator password needed.', { backend: backendLabel(apps.comfyBackend) })
+      : t('setup.apps.installNote', 'About 2 GB from the official ComfyUI release.');
+    return (noGpu && !compact ? '<p class="su-hint">' + esc(noGpuText) + '</p>' : '') +
       '<label class="su-label" for="su-comfy-dir">' + esc(t('setup.apps.installIn', 'Install ComfyUI in')) + '</label>' +
       '<div class="su-row"><input class="su-input" id="su-comfy-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +
       '<button type="button" class="su-btn su-btn-install" id="su-install-comfy">' + esc(t('setup.apps.installComfy', 'Install ComfyUI')) + '</button></div>' +
-      '<p class="su-hint">' + esc(t('setup.apps.installNote', 'About 2 GB from the official ComfyUI release.')) + '</p>';
+      '<p class="su-hint">' + esc(note) + '</p>';
   }
 
   function serverHelp(kind) {

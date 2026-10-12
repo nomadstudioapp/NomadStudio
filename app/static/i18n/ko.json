@@ -2127,7 +2127,14 @@
       "downloadTo": "LM Studio 내려받을 위치",
       "lmsNote": "설치 프로그램이 자동으로 열립니다. 여기서 기다릴게요.",
       "lmsDownload": "LM Studio 다운로드",
-      "lmsManual": "웹사이트에서 설치하고 한 번 연 다음 여기로 돌아오세요. Nomad Studio가 알아서 찾습니다."
+      "lmsManual": "웹사이트에서 설치하고 한 번 연 다음 여기로 돌아오세요. Nomad Studio가 알아서 찾습니다.",
+      "phasePython": "ComfyUI 전용 Python을 준비하는 중…",
+      "phaseTorch": "{backend}용 PyTorch 설치 중… 가장 오래 걸리는 단계입니다.",
+      "phaseReqs": "ComfyUI에 필요한 나머지 구성 요소 설치 중…",
+      "downloadingMb": "{name} 다운로드 중… {mb} MB",
+      "backendCpu": "프로세서",
+      "cpuOnlyLinux": "Linux에는 이 그래픽 카드용 PyTorch가 없어 ComfyUI가 프로세서로 실행됩니다. 작동은 하지만 이미지 한 장에 몇 분이 걸립니다.",
+      "installNoteLinux": "공식 릴리스의 ComfyUI와 전용 Python, {backend}용 PyTorch: 그래픽 카드에 따라 1~5 GB. 관리자 비밀번호는 필요 없습니다."
     }
   },
   "build": {

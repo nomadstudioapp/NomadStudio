@@ -2127,7 +2127,14 @@
       "downloadTo": "将 LM Studio 下载到",
       "lmsNote": "安装程序会自动打开，我们在这里等你。",
       "lmsDownload": "下载 LM Studio",
-      "lmsManual": "从官网安装它，打开一次后回到这里：Nomad Studio 会自动找到它。"
+      "lmsManual": "从官网安装它，打开一次后回到这里：Nomad Studio 会自动找到它。",
+      "phasePython": "正在为 ComfyUI 准备独立的 Python…",
+      "phaseTorch": "正在为 {backend} 安装 PyTorch… 这一步最耗时。",
+      "phaseReqs": "正在安装 ComfyUI 需要的其他组件…",
+      "downloadingMb": "正在下载 {name}… {mb} MB",
+      "backendCpu": "处理器",
+      "cpuOnlyLinux": "PyTorch 在 Linux 上没有适用于这块显卡的版本，因此 ComfyUI 将使用处理器运行：可以用，但每张图像需要几分钟。",
+      "installNoteLinux": "来自官方发布的 ComfyUI，附带独立的 Python 和适用于 {backend} 的 PyTorch：根据显卡不同，1 到 5 GB。无需管理员密码。"
     }
   },
   "build": {

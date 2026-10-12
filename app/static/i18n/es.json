@@ -2127,7 +2127,14 @@
       "downloadTo": "Descargar LM Studio en",
       "lmsNote": "Su instalador se abre solo; te esperamos aquí.",
       "lmsDownload": "Descargar LM Studio",
-      "lmsManual": "Instálalo desde su web, ábrelo una vez y vuelve aquí: Nomad Studio lo encuentra solo."
+      "lmsManual": "Instálalo desde su web, ábrelo una vez y vuelve aquí: Nomad Studio lo encuentra solo.",
+      "phasePython": "Preparando un Python propio para ComfyUI…",
+      "phaseTorch": "Instalando PyTorch para {backend}… esta es la parte larga.",
+      "phaseReqs": "Instalando el resto de lo que necesita ComfyUI…",
+      "downloadingMb": "Descargando {name}… {mb} MB",
+      "backendCpu": "el procesador",
+      "cpuOnlyLinux": "PyTorch no tiene versión para esta tarjeta gráfica en Linux, así que ComfyUI usará el procesador: funciona, pero cada imagen tarda minutos.",
+      "installNoteLinux": "ComfyUI de su versión oficial, con un Python propio y PyTorch para {backend}: de 1 a 5 GB según la tarjeta. No hace falta contraseña de administrador."
     }
   },
   "build": {

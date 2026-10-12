@@ -8,7 +8,8 @@ This module covers the three cases:
 - **installed but not running** — find it on disk and start it;
 - **not installed** — download the official ComfyUI portable build and unpack
   it (LM Studio is an installer with its own window: we send the user to its
-  download page);
+  download page). On Linux, where ComfyUI publishes no portable build, we
+  assemble the same layout ourselves (see "Installing ComfyUI on Linux");
 - **no suitable GPU** — say so before they download 2 GB for nothing.
 
 Nothing here runs from another computer's browser: the routes that start or
@@ -17,11 +18,16 @@ install anything are marked local_only.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import platform
+import re
+import shlex
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import threading
 import time
@@ -54,6 +60,24 @@ VCREDIST_URL = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 _VC_RUNTIME_DLLS = ("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")
 VCREDIST_WAIT_SECONDS = 600
 LMSTUDIO_INSTALLER_WAIT_SECONDS = 1800
+
+# Linux: ComfyUI publishes no portable build there, so the wizard assembles one
+# with the Windows layout — ComfyUI/ (the release source), python_embeded/ (a
+# python-build-standalone CPython, the same family Nomad Studio ships) and a
+# launcher, run_nomad.sh. No git, no python3-venv and no sudo needed, which a
+# fresh Ubuntu does not have (found on an Ubuntu 26.04 tower, 2026-10-12).
+COMFY_LINUX_DIR = "ComfyUI_linux_portable"
+LINUX_LAUNCHER = "run_nomad.sh"
+LINUX_PYTHON_URL = ("https://github.com/astral-sh/python-build-standalone/releases/download/20250409/"
+                    "cpython-3.13.3%2B20250409-x86_64-unknown-linux-gnu-install_only.tar.gz")
+LINUX_PYTHON_SHA256 = "1314ad7809df183542d5110fda25847ae69ea46c53e3b290fa9c400c91e3a722"
+TORCH_INDEX = {
+    "cuda": "https://download.pytorch.org/whl/cu128",
+    "rocm": "https://download.pytorch.org/whl/rocm6.4",
+    "cpu": "https://download.pytorch.org/whl/cpu",
+}
+# Room needed for ComfyUI + its Python + PyTorch, per PyTorch build.
+LINUX_FREE_BYTES = {"cuda": 14 * 2**30, "rocm": 24 * 2**30, "cpu": 6 * 2**30}
 
 
 # ── This machine ────────────────────────────────────────────────────────────
@@ -89,10 +113,39 @@ def gpu_names() -> list[str]:
             names = [line.strip() for line in (out.stdout or "").splitlines() if line.strip()]
         except Exception:  # noqa: BLE001 — never block the wizard
             logger.debug("could not read the GPU list", exc_info=True)
+    elif sys.platform.startswith("linux"):
+        names = _linux_gpu_names()
     # Kept only when it worked, so a slow or failed first try is not
     # remembered as "no graphics card" for the whole session.
     if names:
         _gpus = names
+    return names
+
+
+_PCI_VENDORS = {"0x10de": "NVIDIA", "0x1002": "AMD Radeon", "0x8086": "Intel"}
+
+
+def _linux_gpu_names() -> list[str]:
+    """Display controllers from lspci (names), or from sysfs (vendor only)
+    where pciutils is missing."""
+    names: list[str] = []
+    try:
+        out = subprocess.run(["lspci", "-mm"], capture_output=True, text=True, timeout=10).stdout  # noqa: S603,S607
+        for line in out.splitlines():
+            if re.search(r'"(VGA compatible controller|3D controller|Display controller)"', line):
+                parts = shlex.split(line)
+                if len(parts) >= 4:
+                    names.append(f"{parts[2]} {parts[3]}")
+    except Exception:  # noqa: BLE001 — sysfs below
+        pass
+    if not names:
+        try:
+            for dev in Path("/sys/bus/pci/devices").iterdir():
+                if (dev / "class").read_text().startswith("0x03"):
+                    vendor = (dev / "vendor").read_text().strip()
+                    names.append(_PCI_VENDORS.get(vendor, vendor) + " graphics")
+        except OSError:
+            pass
     return names
 
 
@@ -107,6 +160,32 @@ def gpu_vendor() -> str:
     return ""
 
 
+def _amd_gfx_versions() -> list[int]:
+    """ROCm's gfx target of each AMD GPU (e.g. 110000 = gfx1100), from the
+    amdgpu kernel driver. Empty when the driver exposes none."""
+    found = []
+    try:
+        for props in Path("/sys/class/kfd/kfd/topology/nodes").glob("*/properties"):
+            m = re.search(r"^gfx_target_version (\d+)", props.read_text(), re.M)
+            if m and int(m.group(1)):
+                found.append(int(m.group(1)))
+    except OSError:
+        pass
+    return found
+
+
+def linux_torch_backend() -> str:
+    """Which PyTorch to install with ComfyUI on Linux: "cuda" (NVIDIA with its
+    driver), "rocm" (AMD from RDNA 2 on, gfx1030+, what current ROCm runs) or
+    "cpu" — slow, but it works, and the wizard says so first."""
+    vendor = gpu_vendor()
+    if vendor == "nvidia" and (Path("/proc/driver/nvidia/version").exists() or shutil.which("nvidia-smi")):
+        return "cuda"
+    if vendor == "amd" and any(v >= 100300 for v in _amd_gfx_versions()):
+        return "rocm"
+    return "cpu"
+
+
 def vc_runtime_installed() -> bool:
     """Whether the Visual C++ runtime PyTorch needs is on this machine: the
     DLLs themselves, which is what ComfyUI fails to load without it."""
@@ -119,18 +198,43 @@ def vc_runtime_installed() -> bool:
 # ── Finding what is already installed ───────────────────────────────────────
 
 
+def _installed_path_file() -> Path:
+    from app import paths
+    return paths.DATA_DIR / "local-apps.json"
+
+
+def _remember_install(path: str) -> None:
+    """Where the wizard installed ComfyUI, so it is found again even in a
+    folder the search below does not look in (the user may choose any)."""
+    try:
+        f = _installed_path_file()
+        data = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {}
+        data["comfy"] = path
+        f.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    except (OSError, ValueError):
+        logger.debug("could not remember the ComfyUI install path", exc_info=True)
+
+
+def _remembered_installs() -> list[Path]:
+    try:
+        data = json.loads(_installed_path_file().read_text(encoding="utf-8"))
+        return [Path(data["comfy"])] if data.get("comfy") else []
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+
+
 def _comfy_candidates() -> list[Path]:
     home = Path.home()
     roots = [home, home / "Documents", home / "Desktop", home / "Downloads"]
     roots += [Path(f"{letter}:\\") for letter in "CDEFG" if Path(f"{letter}:\\").exists()]
-    names = ("ComfyUI_windows_portable", "ComfyUI", "comfyui")
-    return [root / name for root in roots for name in names]
+    names = ("ComfyUI_windows_portable", COMFY_LINUX_DIR, "ComfyUI", "comfyui")
+    return _remembered_installs() + [root / name for root in roots for name in names]
 
 
 def _comfy_in(root: Path) -> dict[str, Any] | None:
     """A portable ComfyUI directly inside *root* (where we just unpacked it)."""
     for path in [root, *(p for p in root.iterdir() if p.is_dir())] if root.is_dir() else []:
-        for bat in ("run_nvidia_gpu.bat", "run_cpu.bat", "run_amd_gpu.bat", "run_intel_gpu.bat"):
+        for bat in _COMFY_LAUNCHERS:
             if (path / bat).is_file():
                 return {"kind": "portable", "path": str(path), "launcher": str(path / bat)}
     return None
@@ -142,7 +246,7 @@ def _comfy_in(root: Path) -> dict[str, Any] | None:
 # --listen for a server on the network. The desktop app manages its own
 # install and is harder to steer, and a git clone we can find but not start.
 _COMFY_PREFERENCE = ("portable", "desktop", "source")
-_COMFY_LAUNCHERS = ("run_nvidia_gpu.bat", "run_cpu.bat", "run_amd_gpu.bat", "run_intel_gpu.bat")
+_COMFY_LAUNCHERS = ("run_nvidia_gpu.bat", "run_cpu.bat", "run_amd_gpu.bat", "run_intel_gpu.bat", LINUX_LAUNCHER)
 
 
 def find_comfyui_all() -> list[dict[str, Any]]:
@@ -226,7 +330,10 @@ def state() -> dict[str, Any]:
     return {
         "gpus": gpu_names(),
         "gpuVendor": vendor,
-        "canInstallComfy": sys.platform.startswith("win") and _extractor() is not None,
+        "canInstallComfy": (sys.platform.startswith("win") and _extractor() is not None) or _can_install_linux(),
+        "platform": "windows" if sys.platform.startswith("win") else ("macos" if sys.platform == "darwin" else "linux"),
+        # Linux only: the PyTorch the install would bring (cuda | rocm | cpu).
+        "comfyBackend": linux_torch_backend() if sys.platform.startswith("linux") else "",
         # LM Studio's own installer is only fetched on Windows; elsewhere the
         # wizard links to its download page (start_install_lmstudio refuses).
         "canInstallLms": sys.platform.startswith("win"),
@@ -259,7 +366,8 @@ def can_listen(info: dict[str, Any] | None = None) -> bool:
     if not info or info.get("kind") != "portable":
         return False
     root = Path(info["path"])
-    return (root / "python_embeded" / "python.exe").is_file() and (root / "ComfyUI" / "main.py").is_file()
+    py = root / "python_embeded" / ("python.exe" if sys.platform.startswith("win") else "bin/python3")
+    return py.is_file() and (root / "ComfyUI" / "main.py").is_file()
 
 
 def start_comfyui(listen: bool = False) -> dict[str, Any]:
@@ -274,6 +382,16 @@ def start_comfyui(listen: bool = False) -> dict[str, Any]:
     if info.get("kind") == "portable" and not vc_runtime_installed():
         return {"ok": False, "needsVcRuntime": True,
                 "error": "ComfyUI needs the Microsoft Visual C++ runtime, which this computer does not have yet"}
+    if Path(info["launcher"]).name == LINUX_LAUNCHER:
+        # Our own launcher (it adds --cpu itself when that is the build).
+        # Detached from Nomad Studio, output to a log next to it so an error
+        # stays readable — there is no console window on Linux.
+        args = ["/bin/sh", info["launcher"]] + (["--listen", "0.0.0.0"] if listen else [])
+        log = open(Path(info["path"]) / "comfyui.log", "ab")  # noqa: SIM115 — handed to the child
+        subprocess.Popen(args, cwd=info["path"], stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,  # noqa: S603
+                         start_new_session=True, close_fds=True)
+        log.close()
+        return {"ok": True, "started": info["path"], "listening": listen}
     nvidia_bat = Path(info["launcher"]).name.lower() == "run_nvidia_gpu.bat"
     if can_listen(info) and (listen or nvidia_bat):
         # Its own Python directly rather than run_nvidia_gpu.bat (which runs
@@ -303,6 +421,8 @@ def _python_processes_under(folder: Path) -> list[int] | None:
     """Memory in use (bytes) of each python.exe running from inside *folder*,
     or None where we cannot tell (not Windows, or the lookup failed). Plain
     Win32 calls through ctypes: the portable build has no psutil."""
+    if sys.platform.startswith("linux"):
+        return _linux_processes_under(folder)
     if not sys.platform.startswith("win"):
         return None
     try:
@@ -364,6 +484,26 @@ def _python_processes_under(folder: Path) -> list[int] | None:
         return found
     except Exception:  # noqa: BLE001 — only a progress hint
         logger.debug("process lookup failed", exc_info=True)
+        return None
+
+
+def _linux_processes_under(folder: Path) -> list[int] | None:
+    """Resident memory (bytes) of each process whose program lives inside
+    *folder*, read from /proc."""
+    try:
+        prefix = str(folder.resolve()).rstrip("/") + "/"
+        page = os.sysconf("SC_PAGE_SIZE")
+        found = []
+        for proc in Path("/proc").iterdir():
+            if not proc.name.isdigit():
+                continue
+            try:
+                if os.readlink(proc / "exe").startswith(prefix):
+                    found.append(int((proc / "statm").read_text().split()[1]) * page)
+            except OSError:
+                continue
+        return found
+    except Exception:  # noqa: BLE001 — only a progress hint
         return None
 
 
@@ -718,8 +858,10 @@ def start_install_comfyui(target_dir: Path) -> dict[str, Any]:
     """Download the official portable build and unpack it into *target_dir*.
     Runs in the background; follow it with get_job()."""
     global _job
+    if sys.platform.startswith("linux"):
+        return _start_install_comfyui_linux(target_dir)
     if not sys.platform.startswith("win"):
-        raise ValueError("Installing ComfyUI from here is only available on Windows for now")
+        raise ValueError("Installing ComfyUI from here is only available on Windows and Linux for now")
     extractor = _extractor()
     if extractor is None:
         raise ValueError("No program to unpack the download was found")
@@ -770,10 +912,157 @@ def start_install_comfyui(target_dir: Path) -> dict[str, Any]:
             installed = _comfy_in(target_dir) or find_comfyui() or {}
             if not installed.get("launcher"):
                 raise ValueError("Unpacked, but no ComfyUI launcher was found in " + str(target_dir))
+            _remember_install(installed["path"])
             _set(state="done", phase="ready", result=installed)
             logger.info("ComfyUI portable installed at %s", installed.get("path"))
         except Exception as exc:  # noqa: BLE001 — shown in the wizard
             logger.exception("installing ComfyUI failed")
+            _set(state="error", error=str(exc))
+
+    threading.Thread(target=work, daemon=True, name="install-comfyui").start()
+    return get_job() or {}
+
+
+# ── Installing ComfyUI on Linux ─────────────────────────────────────────────
+
+
+def _can_install_linux() -> bool:
+    return sys.platform.startswith("linux") and platform.machine() in ("x86_64", "AMD64")
+
+
+def _fetch(url: str, dest: Path, headers: dict[str, str] | None = None) -> None:
+    """Download *url* to *dest*, reporting bytes to the current job."""
+    request = urllib.request.Request(download_url(url), headers={"User-Agent": "NomadStudio", **(headers or {})})
+    partial = dest.with_name(dest.name + ".part")
+    with urllib.request.urlopen(request, timeout=60) as response, partial.open("wb") as out:  # noqa: S310
+        _set(done=0, total=int(response.headers.get("Content-Length") or 0))
+        done = 0
+        while True:
+            chunk = response.read(1 << 20)
+            if not chunk:
+                break
+            out.write(chunk)
+            done += len(chunk)
+            _set(done=done)
+    os.replace(partial, dest)
+
+
+def _pip(python: Path, args: list[str], cwd: Path) -> None:
+    """Run pip with the new Python; its "Downloading …" lines become the job's
+    detail so the wizard shows what the long wait is about."""
+    env = {**os.environ, "PIP_DISABLE_PIP_VERSION_CHECK": "1", "PYTHONNOUSERSITE": "1", "PIP_NO_INPUT": "1"}
+    proc = subprocess.Popen([str(python), "-m", "pip", "install", "--progress-bar", "off", *args],  # noqa: S603
+                            cwd=str(cwd), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, errors="replace")
+    tail: list[str] = []
+    for line in proc.stdout or []:
+        line = line.strip()
+        if not line:
+            continue
+        tail = (tail + [line])[-12:]
+        m = re.match(r"Downloading (\S+?)(?:-\d[^ ]*)? \(([^)]+)\)", line)
+        if m:
+            _set(detail=f"{m.group(1).rsplit('/', 1)[-1]} ({m.group(2)})")
+    if proc.wait() != 0:
+        raise ValueError("pip could not install ComfyUI's packages: " + " | ".join(tail[-3:])[:400])
+
+
+def _start_install_comfyui_linux(target_dir: Path) -> dict[str, Any]:
+    """Assemble ComfyUI_linux_portable in *target_dir*: the latest ComfyUI
+    release, a python-build-standalone CPython (checked by sha256) and
+    PyTorch for this machine's card, then run_nomad.sh to start it."""
+    global _job
+    if not _can_install_linux():
+        raise ValueError("Installing ComfyUI from here needs Linux on an x86-64 computer")
+    root = target_dir / COMFY_LINUX_DIR
+    if root.exists() and any(root.iterdir()):
+        raise ValueError(f"{root} already exists: choose another folder or remove it")
+    backend = linux_torch_backend()
+    with _job_lock:
+        if _job and _job.get("state") == "running":
+            raise ValueError("Something else is already being installed")
+        _job = {"id": uuid.uuid4().hex[:12], "app": "comfy", "state": "running", "phase": "asset", "done": 0,
+                "total": 0, "error": "", "result": None, "backend": backend, "detail": ""}
+
+    def work() -> None:
+        created = False
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            need = LINUX_FREE_BYTES[backend]
+            free = shutil.disk_usage(target_dir).free
+            if free < need:
+                raise ValueError(f"Not enough free space: {free // 2**30} GB available, about {need // 2**30} GB needed")
+            request = urllib.request.Request(COMFY_RELEASES_API, headers={"Accept": "application/vnd.github+json",
+                                                                          "User-Agent": "NomadStudio"})
+            with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310
+                release = json.loads(response.read().decode("utf-8"))
+            tag = release.get("tag_name") or ""
+            source_url = release.get("tarball_url")
+            if not source_url:
+                raise ValueError("That ComfyUI release has no source archive")
+            root.mkdir(parents=True, exist_ok=True)
+            created = True
+            work_dir = root / ".download"
+            work_dir.mkdir(exist_ok=True)
+
+            # 1. ComfyUI itself
+            _set(phase="download", version=tag, asset=f"ComfyUI {tag}")
+            archive = work_dir / "comfyui.tar.gz"
+            _fetch(source_url, archive, {"Accept": "application/vnd.github+json"})
+            _set(phase="extract", done=0, total=0)
+            unpack = work_dir / "comfyui"
+            with tarfile.open(archive) as tar:
+                tar.extractall(unpack, filter="data")
+            top = next(p for p in unpack.iterdir() if p.is_dir())
+            shutil.move(str(top), str(root / "ComfyUI"))
+
+            # 2. Its own Python
+            _set(phase="python", done=0, total=0, detail="")
+            py_archive = work_dir / "python.tar.gz"
+            _fetch(LINUX_PYTHON_URL, py_archive)
+            digest = hashlib.sha256()
+            with py_archive.open("rb") as fh:
+                for chunk in iter(lambda: fh.read(1 << 20), b""):
+                    digest.update(chunk)
+            if digest.hexdigest() != LINUX_PYTHON_SHA256:
+                raise ValueError("The Python download does not match its checksum")
+            py_unpack = work_dir / "python"
+            with tarfile.open(py_archive) as tar:
+                tar.extractall(py_unpack, filter="data")
+            shutil.move(str(py_unpack / "python"), str(root / "python_embeded"))
+            python = root / "python_embeded" / "bin" / "python3"
+
+            # 3. PyTorch for this card, then the rest of ComfyUI's requirements
+            _set(phase="torch", done=0, total=0, detail="")
+            _pip(python, ["torch", "torchvision", "torchaudio", "--index-url", TORCH_INDEX[backend]], root)
+            _set(phase="requirements", detail="")
+            _pip(python, ["-r", str(root / "ComfyUI" / "requirements.txt")], root)
+
+            # 4. The launcher (also handy by hand: ./run_nomad.sh)
+            flags = " --cpu" if backend == "cpu" else ""
+            launcher = root / LINUX_LAUNCHER
+            launcher.write_text(
+                "#!/bin/sh\n"
+                "# Starts this ComfyUI (installed by Nomad Studio's setup wizard). Extra arguments are passed on.\n"
+                'cd "$(dirname "$0")" || exit 1\n'
+                f'exec ./python_embeded/bin/python3 -s ComfyUI/main.py --disable-auto-launch{flags} "$@"\n',
+                encoding="utf-8")
+            launcher.chmod(0o755)
+            (root / "nomad-install.json").write_text(json.dumps(
+                {"comfyui": tag, "torch": backend, "installed_at": time.strftime("%Y-%m-%dT%H:%M:%S")}, indent=2),
+                encoding="utf-8")
+            shutil.rmtree(work_dir, ignore_errors=True)
+
+            installed = _comfy_in(target_dir) or find_comfyui() or {}
+            if not installed.get("launcher"):
+                raise ValueError("Installed, but no ComfyUI launcher was found in " + str(root))
+            _remember_install(installed["path"])
+            _set(state="done", phase="ready", result=installed)
+            logger.info("ComfyUI %s (%s) installed at %s", tag, backend, root)
+        except Exception as exc:  # noqa: BLE001 — shown in the wizard
+            logger.exception("installing ComfyUI on Linux failed")
+            if created:
+                shutil.rmtree(root, ignore_errors=True)
             _set(state="error", error=str(exc))
 
     threading.Thread(target=work, daemon=True, name="install-comfyui").start()

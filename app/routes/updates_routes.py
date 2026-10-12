@@ -8,6 +8,11 @@
     POST /api/updates/discard          forget the prepared update
     POST /api/updates/apply            restart into the prepared update
     POST /api/updates/dismiss-result   hide the last result notice
+    POST /api/updates/check            look for a new release now (update_check.py)
+    POST /api/updates/download         download + check + prepare the release found
+    POST /api/updates/skip             {"version"} — no notice or download for it
+    POST /api/updates/unskip           {"version"}
+    POST /api/updates/settings         {"autoCheck", "autoDownload"}
 
 Everything that changes the install is only allowed from the computer Nomad
 Studio runs on (local_access).
@@ -20,7 +25,7 @@ import os
 from flask import Blueprint, jsonify, request
 
 from .. import paths
-from ..services import backup_service, update_service
+from ..services import backup_service, update_check, update_service
 from ..services.local_access import local_only, request_is_local
 from ..services.update_service import UpdateError
 from .models_api_shared import _ensure_registry
@@ -41,6 +46,7 @@ def updates_overview():
         "pending": update_service.pending(),
         "lastResult": update_service.last_result(),
         "job": update_service.get_job(),
+        "auto": update_check.overview(),
         "dataDir": str(paths.DATA_DIR),
         "local": request_is_local(),
     })
@@ -111,6 +117,57 @@ def apply_update():
 def dismiss_result():
     update_service.dismiss_result()
     return jsonify({"ok": True})
+
+
+@updates_bp.post("/api/updates/check")
+@local_only
+def check_now():
+    if update_check.disabled_reason():
+        return jsonify({"ok": False, "error": "This copy of Nomad Studio does not look for updates"}), 400
+    update_check.check(force=True)
+    return jsonify({"ok": True, "auto": update_check.overview()})
+
+
+@updates_bp.post("/api/updates/download")
+@local_only
+def download_update():
+    try:
+        job = update_check.start_download(_backup_dir())
+    except UpdateError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    return jsonify({"ok": True, "job": job})
+
+
+@updates_bp.post("/api/updates/skip")
+@local_only
+def skip_version():
+    version = str((request.get_json(silent=True) or {}).get("version", "")).strip()
+    if not version:
+        return jsonify({"ok": False, "error": "version is required"}), 400
+    update_check.skip(version)
+    pending = update_service.pending()
+    job = update_service.get_job()
+    if pending and pending.get("to") == version and not (job and job.get("state") == "running"):
+        update_service.discard_prepared()
+    return jsonify({"ok": True, "auto": update_check.overview()})
+
+
+@updates_bp.post("/api/updates/unskip")
+@local_only
+def unskip_version():
+    update_check.unskip(str((request.get_json(silent=True) or {}).get("version", "")).strip())
+    return jsonify({"ok": True, "auto": update_check.overview()})
+
+
+@updates_bp.post("/api/updates/settings")
+@local_only
+def update_settings():
+    body = request.get_json(silent=True) or {}
+    update_check.set_settings(
+        auto_check=body["autoCheck"] if isinstance(body.get("autoCheck"), bool) else None,
+        auto_download=body["autoDownload"] if isinstance(body.get("autoDownload"), bool) else None,
+    )
+    return jsonify({"ok": True, "auto": update_check.overview()})
 
 
 @updates_bp.post("/api/app/quit")

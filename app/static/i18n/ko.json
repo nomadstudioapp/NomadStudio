@@ -1815,7 +1815,7 @@
     },
     "updates": {
       "title": "업데이트",
-      "desc": "릴리스 파일(Windows는 .zip, macOS와 Linux는 .tar.gz)로 더 새로운 버전의 Nomad Studio를 설치합니다. 데이터는 프로그램 폴더 밖에 보관되며 업데이트 전에 백업됩니다.",
+      "desc": "Nomad Studio가 새 버전을 찾아 준비해 둡니다. 다시 시작할 때는 직접 고르세요. 데이터는 프로그램 폴더 밖에 저장되며, 업데이트 전에 백업됩니다.",
       "installed": "설치된 버전",
       "dataDir": "내 데이터: {path}",
       "devCopy": "개발용 사본 (git으로 업데이트)",
@@ -1848,7 +1848,25 @@
       "quitHint": "이 컴퓨터에서 Nomad Studio를 종료합니다. NomadStudio.bat, NomadStudio.command 또는 NomadStudio.sh로 다시 시작하세요.",
       "quitBtn": "Nomad Studio 닫기",
       "quitConfirm": "지금 Nomad Studio를 닫을까요? 생성 중인 작업은 중단됩니다.",
-      "quitDone": "Nomad Studio가 닫혔습니다. 이 탭을 닫아도 됩니다."
+      "quitDone": "Nomad Studio가 닫혔습니다. 이 탭을 닫아도 됩니다.",
+      "autoLabel": "새 버전",
+      "checkNow": "지금 확인",
+      "checkingNow": "새 버전을 찾는 중…",
+      "autoCheck": "매일 새 버전 찾기",
+      "autoDownload": "자동으로 다운로드하고 준비하기",
+      "autoHint": "Nomad Studio는 GitHub에 최신 버전이 무엇인지만 물어보며, 여러분에 대한 정보는 보내지 않습니다. 클릭하지 않으면 절대 설치하거나 다시 시작하지 않습니다.",
+      "fileHint": "또는 직접 받은 버전 파일(Windows는 .zip, macOS와 Linux는 .tar.gz)을 설치하세요:",
+      "phaseDownload": "Nomad Studio {to} 다운로드 중… {done} / {total}",
+      "phaseVerify": "다운로드한 파일 확인 중…",
+      "checkFailed": "새 버전을 찾지 못했습니다({when}). Nomad Studio가 나중에 다시 시도합니다.",
+      "neverChecked": "아직 확인하지 않았습니다.",
+      "upToDate": "최신 버전을 쓰고 있습니다. 확인: {when}.",
+      "lastCheck": "확인: {when}.",
+      "available": "Nomad Studio {to} 출시 · 현재 {from}",
+      "download": "다운로드하고 준비",
+      "skip": "이 버전 건너뛰기",
+      "skippedList": "건너뛴 버전:",
+      "unskip": "되돌리기"
     }
   },
   "album": {
@@ -2513,5 +2531,10 @@
     "needsVc": "{name}에는 Visual C++ 런타임이 필요합니다. 설정 마법사를 여세요.",
     "settingLabel": "Nomad Studio와 함께 ComfyUI와 LM Studio 시작",
     "settingHint": "Nomad Studio가 열릴 때 이 컴퓨터에 설치된 ComfyUI와 LM Studio가 아직 실행 중이 아니면 시작합니다. 직접 시작하려면 끄세요."
+  },
+  "updateNotice": {
+    "hint": "Nomad Studio가 약 1분 안에 새 버전으로 다시 시작합니다. 데이터는 그대로이며 이미 백업되었습니다.",
+    "later": "나중에",
+    "failed": "{to}(으)로 업데이트하지 못했습니다. Nomad Studio는 {from}(으)로 돌아갔으며 데이터는 바뀌지 않았습니다. 이유는 설정 › 업데이트에서 확인하세요."
   }
 }

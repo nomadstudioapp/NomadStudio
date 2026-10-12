@@ -275,6 +275,16 @@ Implementado para Windows, solo con origen **ZIP** (U9):
 | El lanzador cierra su ventana si la app sale con código 3 (actualización) | `tools/launcher/NomadStudio.bat` |
 
 Diferencias con lo descrito abajo: no hay firma todavía (§6.3 pasos 1–2), la marca de arranque es la propia `/api/health` con la versión nueva (no un fichero `started-ok`), la copia de datos va a la carpeta de copias del usuario, el lanzador lo copia el script antes de arrancar la versión nueva (no la app, porque el `.bat` está en ejecución y cmd lo lee línea a línea), y Linux/macOS aún no.
+
+**2026-10-12: origen GitHub** (§5–6), en `app/services/update_check.py`:
+- Comprobación diaria en segundo plano (30 s después de arrancar, luego cada hora mira si toca), `ETag`, sin credenciales; "Buscar ahora" en Ajustes. Error silencioso: queda en `lastError` para Ajustes.
+- Descarga automática (desactivable) a `data/updates/downloads/*.part` con reanudación por `Range`, comprobación de espacio (×3) y **sha256**: el `digest` que GitHub publica de cada asset y, si la Release lo trae, la línea de `SHA256SUMS.txt`. Sin firma Ed25519 todavía.
+- Luego la misma tubería que el ZIP (`update_service.run_job` → `prepare_from`). Un intento automático fallido espera al día siguiente.
+- Aviso global `static/js/services/update_notice.js` (no modal, abajo a la derecha, oculto en Ajustes y para otros dispositivos): "Nomad Studio X está listo" con las notas de `release-notes.json`, **[Más tarde] [Reiniciar y actualizar]**; tras actualizar, "Actualizado a X" una vez.
+- Ajustes: estado, "Buscar ahora", interruptores (buscar cada día / descargar sola), versión disponible con **[Omitir esta versión] [Descargar y preparar]**, lista de omitidas con Deshacer. Estado en `data/updates/state.json`.
+- Origen de pruebas `NOMAD_UPDATE_SOURCE` (§11), probado con `file:///…/` (`latest.json` / `releases.json`, assets por nombre).
+- Pendiente: pausar la descarga mientras se genera (§6.1), opción "Al cerrar la app" (§6.2), firma (§6.3).
+
 ### 7.1 Preparar (con la app en marcha)
 
 1. Extraer el ZIP a `<raíz>/app.new/`, conservando permisos de ejecución.

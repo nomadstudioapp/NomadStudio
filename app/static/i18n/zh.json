@@ -1815,7 +1815,7 @@
     },
     "updates": {
       "title": "更新",
-      "desc": "从发布文件安装更新版本的 Nomad Studio（Windows 为 .zip，macOS 和 Linux 为 .tar.gz）。你的数据保存在程序文件夹之外，更新前会先备份。",
+      "desc": "Nomad Studio 会查找新版本并为你准备好；何时重启由你决定。你的数据保存在程序文件夹之外，更新前会先备份。",
       "installed": "已安装版本",
       "dataDir": "你的数据：{path}",
       "devCopy": "开发副本（使用 git 更新）",
@@ -1848,7 +1848,25 @@
       "quitHint": "在这台电脑上停止 Nomad Studio。可通过 NomadStudio.bat、NomadStudio.command 或 NomadStudio.sh 重新启动。",
       "quitBtn": "关闭 Nomad Studio",
       "quitConfirm": "现在关闭 Nomad Studio 吗？正在生成的内容会停止。",
-      "quitDone": "Nomad Studio 已关闭。你可以关闭此标签页。"
+      "quitDone": "Nomad Studio 已关闭。你可以关闭此标签页。",
+      "autoLabel": "新版本",
+      "checkNow": "立即检查",
+      "checkingNow": "正在查找新版本…",
+      "autoCheck": "每天查找新版本",
+      "autoDownload": "自动下载并准备",
+      "autoHint": "Nomad Studio 只会向 GitHub 询问最新版本，不会发送任何关于你的信息。没有你的点击，它绝不会安装或重启。",
+      "fileHint": "或者安装你自己下载的版本文件（Windows 为 .zip，macOS 和 Linux 为 .tar.gz）：",
+      "phaseDownload": "正在下载 Nomad Studio {to}… {done} / {total}",
+      "phaseVerify": "正在检查下载的文件…",
+      "checkFailed": "无法查找新版本（{when}）。Nomad Studio 稍后会再试。",
+      "neverChecked": "尚未检查。",
+      "upToDate": "你使用的是最新版本。检查时间：{when}。",
+      "lastCheck": "检查时间：{when}。",
+      "available": "Nomad Studio {to} 已发布 · 你当前是 {from}",
+      "download": "下载并准备",
+      "skip": "跳过此版本",
+      "skippedList": "已跳过的版本：",
+      "unskip": "撤销"
     }
   },
   "album": {
@@ -2513,5 +2531,10 @@
     "needsVc": "{name} 需要 Visual C++ 运行库：请打开设置向导。",
     "settingLabel": "随 Nomad Studio 启动 ComfyUI 和 LM Studio",
     "settingHint": "Nomad Studio 打开时，如果这台电脑上已安装 ComfyUI 和 LM Studio 且尚未运行，会自动启动它们。如果你想自己启动，请关闭此选项。"
+  },
+  "updateNotice": {
+    "hint": "Nomad Studio 将在大约一分钟内以新版本重启。你的数据会保留，并且已经备份。",
+    "later": "稍后",
+    "failed": "无法更新到 {to}。Nomad Studio 已恢复到 {from}，你的数据没有改动。原因见“设置 › 更新”。"
   }
 }

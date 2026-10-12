@@ -1,0 +1,74 @@
+/* ─── "Nomad Studio X is ready" notice (js/services/update_notice.js) ─────
+   Bottom-right, above the caption tab; not modal, so it never blocks work. */
+
+.ns-update-notice {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 4.25rem;
+  z-index: 8900;
+  width: min(360px, calc(100vw - 1.5rem));
+  padding: 0.9rem 1rem 0.85rem;
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+  font-size: var(--fs-base);
+}
+
+.ns-update-notice[hidden] {
+  display: none;
+}
+
+.ns-update-notice-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ns-update-notice-title svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.ns-update-notice-text {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.ns-update-notice-notes {
+  margin: 0.45rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.ns-update-notice-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ns-update-notice-actions .btn {
+  min-width: 0;
+}
+
+.settings-update-notes {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.settings-update-body {
+  white-space: pre-wrap;
+}

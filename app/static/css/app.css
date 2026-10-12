@@ -33,3 +33,6 @@
 
 /* Hover tooltips (see js/services/tooltips.js) */
 @import url('./parts/tooltips.css');
+
+/* "Nomad Studio X is ready" notice (js/services/update_notice.js) */
+@import url('./parts/update_notice.css');

@@ -62,4 +62,12 @@ if __name__ == "__main__":
 
             if setup_completed():
                 local_apps.autostart_in_background(dict(_ensure_registry().get("settings", {})))
+
+            # Look for a new version once a day and download it in the
+            # background (app/services/update_check.py). Portable builds only.
+            from app import paths as app_paths
+            from app.services import backup_service, update_check
+
+            update_check.start_background(lambda: backup_service.resolve_backup_dir(
+                app_paths.DATA_DIR, _ensure_registry().get("settings", {})))
     app.run(debug=debug, host="0.0.0.0", port=port, threaded=True)

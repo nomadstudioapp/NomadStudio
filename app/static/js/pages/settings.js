@@ -1960,6 +1960,13 @@ secretKeySection({
   const progressBar = document.getElementById('updates-progress-bar');
   const statusEl = document.getElementById('updates-status');
   const reviewEl = document.getElementById('updates-review');
+  const autoBlock = document.getElementById('updates-auto-block');
+  const autoStatusEl = document.getElementById('updates-auto-status');
+  const autoLatestEl = document.getElementById('updates-auto-latest');
+  const checkBtn = document.getElementById('updates-check-btn');
+  const autoCheckToggle = document.getElementById('updates-auto-check-toggle');
+  const autoDownloadToggle = document.getElementById('updates-auto-download-toggle');
+  const skippedEl = document.getElementById('updates-skipped');
 
   let state = null;
   let candidate = null;   // { token, update } after /inspect
@@ -2015,6 +2022,7 @@ secretKeySection({
       reviewEl.hidden = false;
       reviewEl.innerHTML = '<div class="settings-backup-item"><div class="settings-backup-info">' +
         '<span class="settings-backup-date">' + esc(t('settings.updates.ready', 'Nomad Studio {to} is ready to install', { to: pending.to })) + '</span>' +
+        (pending.notes ? notesHtml({ notes: pending.notes }) : '') +
         '<span class="settings-backup-meta">' + esc(t('settings.updates.readyHint', 'Nomad Studio closes and opens again with the new version. It takes about a minute; this page reloads by itself.')) + '</span>' +
         (pending.backup ? '<span class="settings-backup-meta">' + esc(t('settings.updates.backupDone', 'Data backup: {path}', { path: pending.backup })) + '</span>' : '') +
         '</div></div>' +
@@ -2061,6 +2069,65 @@ secretKeySection({
     }
     renderResult();
     renderReview();
+    renderAuto();
+  }
+
+  // Release notes in the app's language (release-notes.json, §3.1), else
+  // the Release text from GitHub (English).
+  function notesHtml(latest) {
+    const notes = latest.notes || {};
+    const lang = (window.NomadI18n && window.NomadI18n.getLanguage && window.NomadI18n.getLanguage()) || 'en';
+    const pick = (o) => (o && (o[lang] || o[notes.default_lang] || o.en)) || [];
+    const lines = pick(notes.highlights).concat(pick(notes.breaking));
+    if (lines.length) return '<ul class="settings-update-notes">' + lines.slice(0, 8).map((l) => '<li>' + esc(l) + '</li>').join('') + '</ul>';
+    const body = String(latest.body || '').trim();
+    return body ? '<span class="settings-backup-meta settings-update-body">' + esc(body.slice(0, 600)) + '</span>' : '';
+  }
+
+  function when(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  function renderAuto() {
+    const auto = state && state.auto;
+    if (!autoBlock || !auto || auto.disabled) { if (autoBlock) autoBlock.hidden = true; return; }
+    autoBlock.hidden = false;
+    autoCheckToggle.checked = !!auto.autoCheck;
+    autoDownloadToggle.checked = !!auto.autoDownload;
+    autoDownloadToggle.disabled = !state.local || !auto.autoCheck;
+    checkBtn.disabled = busy || !state.local || !!restarting;
+    const latest = auto.latest;
+    const job = state.job;
+    let status;
+    if (auto.lastError) status = t('settings.updates.checkFailed', 'Could not look for new versions ({when}). Nomad Studio tries again later.', { when: when(auto.lastCheck) });
+    else if (!auto.lastCheck) status = t('settings.updates.neverChecked', 'Not checked yet.');
+    else if (!latest) status = t('settings.updates.upToDate', 'You have the latest version. Checked {when}.', { when: when(auto.lastCheck) });
+    else status = t('settings.updates.lastCheck', 'Checked {when}.', { when: when(auto.lastCheck) });
+    autoStatusEl.textContent = status;
+    const showLatest = latest && !latest.skipped && !state.pending && !(job && job.state === 'running') && !restarting && !candidate;
+    if (showLatest) {
+      autoLatestEl.hidden = false;
+      autoLatestEl.innerHTML = '<div class="settings-backup-item"><div class="settings-backup-info">' +
+        '<span class="settings-backup-date">' + esc(t('settings.updates.available', 'Nomad Studio {to} is available · you have {from}', { to: latest.version, from: (state.installed || {}).version })) + '</span>' +
+        '<span class="settings-backup-meta">' + esc([latest.publishedAt ? String(latest.publishedAt).slice(0, 10) : '', latest.size ? mb(latest.size) : ''].filter(Boolean).join(' · ')) + '</span>' +
+        notesHtml(latest) +
+        '</div></div>' +
+        '<div class="settings-backup-actions settings-package-actions">' +
+          '<button type="button" class="btn settings-btn-ghost" data-update-skip="' + esc(latest.version) + '"' + (busy || !state.local ? ' disabled' : '') + '>' + esc(t('settings.updates.skip', 'Skip this version')) + '</button>' +
+          '<button type="button" class="btn settings-btn-secondary" data-update-download' + (busy || !state.local ? ' disabled' : '') + '>' + esc(t('settings.updates.download', 'Download and prepare')) + '</button>' +
+        '</div>';
+    } else {
+      autoLatestEl.hidden = true;
+      autoLatestEl.innerHTML = '';
+    }
+    const skipped = auto.skipped || [];
+    skippedEl.hidden = !skipped.length;
+    skippedEl.innerHTML = skipped.length
+      ? esc(t('settings.updates.skippedList', 'Skipped versions:')) + ' ' + skipped.map((v) =>
+        esc(v) + ' <button type="button" class="btn settings-btn-ghost" data-update-unskip="' + esc(v) + '">' + esc(t('settings.updates.unskip', 'Undo')) + '</button>').join(' ')
+      : '';
   }
 
   async function load() {
@@ -2076,10 +2143,15 @@ secretKeySection({
   function showProgress(job) {
     progressEl.hidden = false;
     const pct = job.total ? Math.min(100, Math.round(job.done * 100 / job.total)) : 0;
+    const full = job.phase === 'backup' || job.phase === 'verifying';
     progressText.textContent = job.phase === 'backup'
       ? t('settings.updates.phaseBackup', 'Backing up your data…')
-      : t('settings.updates.phaseExtract', 'Extracting the new version… {pct}%', { pct });
-    progressBar.style.width = (job.phase === 'backup' ? 100 : pct) + '%';
+      : job.phase === 'verifying'
+        ? t('settings.updates.phaseVerify', 'Checking the download…')
+        : job.phase === 'downloading'
+          ? t('settings.updates.phaseDownload', 'Downloading Nomad Studio {to}… {done} of {total}', { to: job.version, done: mb(job.done), total: mb(job.total) })
+          : t('settings.updates.phaseExtract', 'Extracting the new version… {pct}%', { pct });
+    progressBar.style.width = (full ? 100 : pct) + '%';
   }
 
   async function followPrepare() {
@@ -2210,6 +2282,60 @@ secretKeySection({
         quitBtn.disabled = false;
         if (quitStatus) quitStatus.textContent = error.message;
       }
+    });
+  }
+
+  if (checkBtn) {
+    checkBtn.addEventListener('click', async () => {
+      checkBtn.disabled = true;
+      setStatus(t('settings.updates.checkingNow', 'Looking for a new version…'));
+      try {
+        await api('POST', '/api/updates/check');
+        setStatus('');
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+      load();
+    });
+  }
+
+  async function saveAuto(body) {
+    try {
+      const res = await api('POST', '/api/updates/settings', body);
+      if (state) state.auto = res.auto;
+      render();
+    } catch (error) {
+      setStatus(error.message, true);
+      load();
+    }
+  }
+  if (autoCheckToggle) autoCheckToggle.addEventListener('change', () => saveAuto({ autoCheck: autoCheckToggle.checked }));
+  if (autoDownloadToggle) autoDownloadToggle.addEventListener('change', () => saveAuto({ autoDownload: autoDownloadToggle.checked }));
+
+  if (autoLatestEl) {
+    autoLatestEl.addEventListener('click', async (e) => {
+      const skipBtn = e.target.closest('[data-update-skip]');
+      if (skipBtn) {
+        try { await api('POST', '/api/updates/skip', { version: skipBtn.getAttribute('data-update-skip') }); } catch (error) { setStatus(error.message, true); }
+        return load();
+      }
+      if (e.target.closest('[data-update-download]')) {
+        setStatus('');
+        try {
+          await api('POST', '/api/updates/download');
+          followPrepare();
+        } catch (error) {
+          setStatus(error.message, true);
+        }
+      }
+    });
+  }
+  if (skippedEl) {
+    skippedEl.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-update-unskip]');
+      if (!btn) return;
+      try { await api('POST', '/api/updates/unskip', { version: btn.getAttribute('data-update-unskip') }); } catch (error) { setStatus(error.message, true); }
+      load();
     });
   }
 

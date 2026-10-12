@@ -371,7 +371,37 @@
 
       <div class="settings-field-block" id="updates-result" hidden></div>
 
+      <!-- New versions from GitHub Releases (app/services/update_check.py) -->
+      <div class="settings-field-block" id="updates-auto-block" hidden>
+        <p class="settings-field-label" data-i18n="settings.updates.autoLabel">New versions</p>
+        <p class="settings-field-hint" id="updates-auto-status"></p>
+        <div class="settings-package-review" id="updates-auto-latest" hidden></div>
+        <div>
+          <button type="button" class="btn settings-btn-ghost" id="updates-check-btn"{% if not is_local_request() %} disabled{% endif %}>
+            <i data-lucide="search" aria-hidden="true"></i>
+            <span data-i18n="settings.updates.checkNow">Check now</span>
+          </button>
+        </div>
+        <label class="settings-chip-toggle" for="updates-auto-check-toggle">
+          <input type="checkbox" id="updates-auto-check-toggle"{% if not is_local_request() %} disabled{% endif %} />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="settings.updates.autoCheck">Look for new versions every day</span>
+        </label>
+        <label class="settings-chip-toggle" for="updates-auto-download-toggle">
+          <input type="checkbox" id="updates-auto-download-toggle"{% if not is_local_request() %} disabled{% endif %} />
+          <span class="settings-chip-toggle-track">
+            <span class="settings-chip-toggle-thumb"></span>
+          </span>
+          <span class="settings-chip-toggle-label" data-i18n="settings.updates.autoDownload">Download and prepare them by themselves</span>
+        </label>
+        <p class="settings-field-hint" data-i18n="settings.updates.autoHint">Nomad Studio only asks GitHub which version is the latest, without sending anything about you. It never installs or restarts without your click.</p>
+        <p class="settings-field-hint" id="updates-skipped" hidden></p>
+      </div>
+
       <div class="settings-field-block">
+        <p class="settings-field-hint" id="updates-file-hint" data-i18n="settings.updates.fileHint">Or install a release file (.zip) you downloaded yourself:</p>
         <input type="file" id="updates-file" accept=".zip,.gz,.tgz,application/zip,application/gzip" hidden />
         <div>
           <button type="button" class="btn settings-btn-secondary" id="updates-choose-btn"{% if not is_local_request() %} disabled{% endif %}>

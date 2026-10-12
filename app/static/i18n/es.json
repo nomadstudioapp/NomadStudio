@@ -1815,7 +1815,7 @@
     },
     "updates": {
       "title": "Actualizaciones",
-      "desc": "Instala una versión más nueva de Nomad Studio desde su archivo de publicación (.zip en Windows, .tar.gz en macOS y Linux). Tus datos se guardan fuera de la carpeta del programa y se hace una copia de seguridad antes de actualizar.",
+      "desc": "Nomad Studio busca versiones nuevas y te las deja preparadas; tú eliges cuándo reiniciar. Tus datos se guardan fuera de la carpeta del programa y se hace una copia de seguridad antes de actualizar.",
       "installed": "Versión instalada",
       "dataDir": "Tus datos: {path}",
       "devCopy": "Copia de desarrollo (se actualiza con git)",
@@ -1848,7 +1848,25 @@
       "quitHint": "Detiene Nomad Studio en este equipo. Vuelve a abrirlo con NomadStudio.bat, NomadStudio.command o NomadStudio.sh.",
       "quitBtn": "Cerrar Nomad Studio",
       "quitConfirm": "¿Cerrar Nomad Studio ahora? Lo que se esté generando se detendrá.",
-      "quitDone": "Nomad Studio está cerrado. Ya puedes cerrar esta pestaña."
+      "quitDone": "Nomad Studio está cerrado. Ya puedes cerrar esta pestaña.",
+      "autoLabel": "Versiones nuevas",
+      "checkNow": "Buscar ahora",
+      "checkingNow": "Buscando una versión nueva…",
+      "autoCheck": "Buscar versiones nuevas cada día",
+      "autoDownload": "Descargarlas y prepararlas solas",
+      "autoHint": "Nomad Studio solo pregunta a GitHub cuál es la última versión, sin enviar nada sobre ti. Nunca instala ni reinicia sin que tú lo pulses.",
+      "fileHint": "O instala un archivo de versión (.zip en Windows, .tar.gz en macOS y Linux) que hayas descargado tú:",
+      "phaseDownload": "Descargando Nomad Studio {to}… {done} de {total}",
+      "phaseVerify": "Comprobando la descarga…",
+      "checkFailed": "No se pudo buscar versiones nuevas ({when}). Nomad Studio lo volverá a intentar más tarde.",
+      "neverChecked": "Aún no se ha comprobado.",
+      "upToDate": "Tienes la última versión. Comprobado: {when}.",
+      "lastCheck": "Comprobado: {when}.",
+      "available": "Nomad Studio {to} ya está disponible · tienes la {from}",
+      "download": "Descargar y preparar",
+      "skip": "Omitir esta versión",
+      "skippedList": "Versiones omitidas:",
+      "unskip": "Deshacer"
     }
   },
   "album": {
@@ -2513,5 +2531,10 @@
     "needsVc": "{name} necesita Visual C++ Runtime: abre el asistente de configuración.",
     "settingLabel": "Arrancar ComfyUI y LM Studio con Nomad Studio",
     "settingHint": "Al abrirse, Nomad Studio arranca ComfyUI y LM Studio si están instalados en este ordenador y aún no están en marcha. Desactívalo si prefieres arrancarlos tú."
+  },
+  "updateNotice": {
+    "hint": "Nomad Studio se reinicia con la versión nueva en un minuto más o menos. Tus datos se quedan; ya se hizo una copia.",
+    "later": "Más tarde",
+    "failed": "No se pudo actualizar a la {to}. Nomad Studio ha vuelto a la {from}; tus datos no se han tocado. En Ajustes › Actualizaciones verás por qué."
   }
 }

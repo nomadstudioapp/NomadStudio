@@ -1,8 +1,8 @@
 """Update the portable app from a release ZIP (docs/APP_UPDATES.md §6.3, §7).
 
-The same pipeline will serve updates downloaded from GitHub Releases; today
-the ZIP comes from the user (Settings › Updates › Update from ZIP), which also
-lets internal builds be tested while the repo is private.
+The ZIP comes from the user (Settings › Updates › Update from file), which
+also lets internal builds be tested while the repo is private, or from GitHub
+Releases, found and downloaded by update_check.py. Both end in run_job().
 
 Folder layout of a portable install (the folder the user unzipped)::
 
@@ -380,8 +380,62 @@ def _extract_app(zip_path: Path, dest: Path) -> None:
     os.replace(tmp, dest)
 
 
-def start_prepare(token: str, backup_dir: Path) -> dict[str, Any]:
+def set_job_progress(**fields: Any) -> None:
+    _set_job(**fields)
+
+
+def run_job(version: str, phase: str, work, auto: bool = False) -> dict[str, Any]:
+    """Run ``work()`` (returns the pending-update info) as THE update job in
+    the background. One at a time: preparing a chosen file and downloading a
+    release (update_check.py) share it, so Settings follows both the same way."""
     global _job
+    reason = unsupported_reason()
+    if reason:
+        raise UpdateError("This copy of Nomad Studio cannot update itself (" + reason + ")")
+    if pending():
+        raise UpdateError("An update is already prepared: install it or discard it first")
+    with _job_lock:
+        if _job and _job.get("state") == "running":
+            raise UpdateError("An update is already being prepared")
+        _job = {"id": uuid.uuid4().hex[:12], "state": "running", "phase": phase, "done": 0, "total": 0,
+                "version": version, "auto": auto, "error": "", "result": None}
+
+    def runner() -> None:
+        try:
+            info = work()
+            _set_job(state="done", phase="ready", result=info)
+        except Exception as exc:  # noqa: BLE001 — shown in Settings
+            logger.exception("preparing update %s failed", version)
+            shutil.rmtree(root_dir() / "app.new", ignore_errors=True)
+            _set_job(state="error", error=str(exc))
+
+    threading.Thread(target=runner, daemon=True, name="update-prepare").start()
+    return get_job() or {}
+
+
+def prepare_from(zip_path: Path, summary: dict[str, Any], backup_dir: Path) -> dict[str, Any]:
+    """Extract a checked release next to the install, back up the data and
+    write update-pending.json. Runs inside run_job."""
+    root = root_dir()
+    _set_job(phase="extracting", done=0, total=0)
+    _extract_app(zip_path, root / "app.new")
+    script_dir = root / ".nomad-update"
+    script_dir.mkdir(exist_ok=True)
+    script = _platform_files(current().get("platform"))[1]
+    shutil.copy2(root / "app.new" / "launcher" / script, script_dir / script)
+    _set_job(phase="backup", done=0, total=0)
+    if backup_service.is_busy():
+        raise UpdateError("A backup or restore is running; try again when it finishes")
+    backup = backup_service.create_backup(paths.DATA_DIR, backup_dir, False, "before-update", summary["from"])
+    info = {"from": summary["from"], "to": summary["version"], "commit": summary.get("commit"),
+            "prepared_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "backup": str(backup_dir / backup["name"])}
+    (root / "update-pending.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
+    zip_path.unlink(missing_ok=True)
+    return info
+
+
+def start_prepare(token: str, backup_dir: Path) -> dict[str, Any]:
     reason = unsupported_reason()
     if reason:
         raise UpdateError("This copy of Nomad Studio cannot update itself (" + reason + ")")
@@ -389,37 +443,7 @@ def start_prepare(token: str, backup_dir: Path) -> dict[str, Any]:
     if zip_path is None:
         raise UpdateError("The upload expired. Choose the release ZIP again.")
     summary = inspect_zip(zip_path)
-    with _job_lock:
-        if _job and _job.get("state") == "running":
-            raise UpdateError("An update is already being prepared")
-        _job = {"id": uuid.uuid4().hex[:12], "state": "running", "phase": "extracting", "done": 0, "total": 0,
-                "version": summary["version"], "error": "", "result": None}
-
-    def work() -> None:
-        root = root_dir()
-        try:
-            _extract_app(zip_path, root / "app.new")
-            script_dir = root / ".nomad-update"
-            script_dir.mkdir(exist_ok=True)
-            script = _platform_files(current().get("platform"))[1]
-            shutil.copy2(root / "app.new" / "launcher" / script, script_dir / script)
-            _set_job(phase="backup", done=0, total=0)
-            if backup_service.is_busy():
-                raise UpdateError("A backup or restore is running; try again when it finishes")
-            backup = backup_service.create_backup(paths.DATA_DIR, backup_dir, False, "before-update", summary["from"])
-            info = {"from": summary["from"], "to": summary["version"], "commit": summary.get("commit"),
-                    "prepared_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "backup": str(backup_dir / backup["name"])}
-            (root / "update-pending.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
-            zip_path.unlink(missing_ok=True)
-            _set_job(state="done", phase="ready", result=info)
-        except Exception as exc:  # noqa: BLE001 — shown in Settings
-            logger.exception("preparing update %s failed", summary["version"])
-            shutil.rmtree(root / "app.new", ignore_errors=True)
-            _set_job(state="error", error=str(exc))
-
-    threading.Thread(target=work, daemon=True, name="update-prepare").start()
-    return get_job() or {}
+    return run_job(summary["version"], "extracting", lambda: prepare_from(zip_path, summary, backup_dir))
 
 
 def discard_prepared() -> None:

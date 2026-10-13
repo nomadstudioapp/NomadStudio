@@ -2127,6 +2127,7 @@
       "installerOpen": "Termina la instalación en la ventana que se acaba de abrir. Si no la ves, pulsa su icono en la barra de tareas.",
       "downloadTo": "Descargar LM Studio en",
       "lmsNote": "Su instalador se abre solo; te esperamos aquí.",
+      "lmsNoteLinux": "LM Studio de su web oficial, cerca de 1 GB. Se abre solo cuando está listo y se añade a tus aplicaciones. Sin contraseña de administrador.",
       "lmsDownload": "Descargar LM Studio",
       "lmsManual": "Instálalo desde su web, ábrelo una vez y vuelve aquí: Nomad Studio lo encuentra solo.",
       "phasePython": "Preparando un Python propio para ComfyUI…",

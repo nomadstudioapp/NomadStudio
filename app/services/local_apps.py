@@ -218,22 +218,23 @@ def _installed_path_file() -> Path:
     return paths.DATA_DIR / "local-apps.json"
 
 
-def _remember_install(path: str) -> None:
-    """Where the wizard installed ComfyUI, so it is found again even in a
-    folder the search below does not look in (the user may choose any)."""
+def _remember_install(path: str, app: str = "comfy") -> None:
+    """Where the wizard installed ComfyUI (or LM Studio on Linux), so it is
+    found again even in a folder the search below does not look in (the user
+    may choose any)."""
     try:
         f = _installed_path_file()
         data = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {}
-        data["comfy"] = path
+        data[app] = path
         f.write_text(json.dumps(data, indent=2), encoding="utf-8")
     except (OSError, ValueError):
-        logger.debug("could not remember the ComfyUI install path", exc_info=True)
+        logger.debug("could not remember the %s install path", app, exc_info=True)
 
 
-def _remembered_installs() -> list[Path]:
+def _remembered_installs(app: str = "comfy") -> list[Path]:
     try:
         data = json.loads(_installed_path_file().read_text(encoding="utf-8"))
-        return [Path(data["comfy"])] if data.get("comfy") else []
+        return [Path(data[app])] if data.get(app) else []
     except (OSError, ValueError, KeyError, TypeError):
         return []
 
@@ -315,6 +316,8 @@ def comfy_models_dir(info: dict[str, Any] | None) -> str:
 def find_lmstudio() -> dict[str, Any] | None:
     """LM Studio on this machine, plus its `lms` command line tool when it is
     there (it can start the server without the window)."""
+    if sys.platform.startswith("linux"):
+        return _find_lmstudio_linux()
     local = Path(os.environ.get("LOCALAPPDATA", str(Path.home())))
     exe = None
     for candidate in (local / "Programs" / "lm-studio" / "LM Studio.exe",
@@ -338,6 +341,98 @@ def find_lmstudio() -> dict[str, Any] | None:
     return {"kind": "app", "path": str(exe or cli), "launcher": str(exe or ""), "cli": str(cli) if cli.is_file() else ""}
 
 
+# LM Studio for Linux is one AppImage file: the wizard downloads it to
+# ~/Applications (the usual place for them), makes it executable and adds it
+# to the applications menu. Its .deb installs to /opt and puts lm-studio on
+# the PATH.
+LMSTUDIO_LINUX_URL = "https://lmstudio.ai/download/latest/linux/{arch}"
+LMSTUDIO_DESKTOP_FILE = "nomad-lm-studio.desktop"
+
+
+def _lmstudio_appimages() -> list[Path]:
+    home = Path.home()
+    found = [p for p in _remembered_installs("lmstudio") if p.is_file()]
+    for folder in (home / "Applications", home / "Downloads", home / "Desktop", home):
+        try:
+            found += sorted(folder.glob("LM[-_ ]Studio*.AppImage"), key=lambda p: p.stat().st_mtime, reverse=True)
+        except OSError:
+            pass
+    return found
+
+
+def _find_lmstudio_linux() -> dict[str, Any] | None:
+    cli = Path.home() / ".lmstudio" / "bin" / "lms"
+    launcher = next((p for p in _lmstudio_appimages() if os.access(p, os.X_OK)), None)
+    if launcher is None:
+        for candidate in (Path("/opt/LM Studio/lm-studio"), Path("/opt/lm-studio/lm-studio")):
+            if candidate.is_file():
+                launcher = candidate
+                break
+    if launcher is None and shutil.which("lm-studio"):
+        launcher = Path(shutil.which("lm-studio"))
+    if launcher is None and not cli.is_file():
+        return None
+    return {"kind": "app", "path": str(launcher or cli), "launcher": str(launcher or ""),
+            "cli": str(cli) if cli.is_file() else ""}
+
+
+def _lmstudio_linux_arch() -> str | None:
+    if not sys.platform.startswith("linux"):
+        return None
+    return {"x86_64": "x64", "amd64": "x64", "aarch64": "arm64", "arm64": "arm64"}.get(platform.machine().lower())
+
+
+def _appimage_command(appimage: Path) -> list[str]:
+    """How to start an AppImage here. Without libfuse2 (not installed by
+    default on recent Ubuntu) it can still unpack itself and run; where
+    AppArmor blocks the user namespaces Electron's sandbox needs (Ubuntu 24.04
+    and later), it runs without that sandbox, as LM Studio's own docs say."""
+    cmd = [str(appimage)]
+    try:
+        restricted = Path("/proc/sys/kernel/apparmor_restrict_unprivileged_userns").read_text().strip() == "1"
+    except OSError:
+        restricted = False
+    if restricted:
+        cmd.append("--no-sandbox")
+    return cmd
+
+
+def _appimage_env() -> dict[str, str] | None:
+    has_fuse2 = any(Path(d, "libfuse.so.2").exists() for d in
+                    ("/usr/lib/x86_64-linux-gnu", "/usr/lib/aarch64-linux-gnu", "/usr/lib64", "/usr/lib", "/lib/x86_64-linux-gnu"))
+    return None if has_fuse2 else {**os.environ, "APPIMAGE_EXTRACT_AND_RUN": "1"}
+
+
+def _add_to_applications_menu(appimage: Path) -> None:
+    """A menu entry, so LM Studio can be opened again like any other app."""
+    try:
+        apps = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share"))) / "applications"
+        apps.mkdir(parents=True, exist_ok=True)
+        cmd = " ".join(shlex.quote(part) for part in _appimage_command(appimage))
+        if _appimage_env() is not None:
+            cmd = "env APPIMAGE_EXTRACT_AND_RUN=1 " + cmd
+        # Its icon, taken out of the AppImage (any AppImage can unpack single
+        # files of itself, with or without FUSE). The lm-studio.png at its
+        # root is only a link to this one.
+        icon = "lm-studio"
+        icons = apps.parent / "icons"
+        inside = "usr/share/icons/hicolor/512x512/apps/lm-studio.png"
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run([str(appimage), "--appimage-extract", inside], cwd=tmp,  # noqa: S603
+                           capture_output=True, timeout=60)
+            png = Path(tmp) / "squashfs-root" / inside
+            if png.is_file():
+                icons.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(png, icons / "lm-studio.png")
+                icon = str(icons / "lm-studio.png")
+        (apps / LMSTUDIO_DESKTOP_FILE).write_text(
+            "[Desktop Entry]\nType=Application\nName=LM Studio\n"
+            f"Exec={cmd} %U\nIcon={icon}\nTerminal=false\nCategories=Development;Utility;\n"
+            "StartupWMClass=ai.elementlabs.lmstudio\n", encoding="utf-8")
+    except (OSError, subprocess.SubprocessError):
+        logger.debug("could not add LM Studio to the applications menu", exc_info=True)
+
+
 def state() -> dict[str, Any]:
     """What the wizard needs to decide what to offer."""
     vendor = gpu_vendor()
@@ -349,9 +444,10 @@ def state() -> dict[str, Any]:
         "platform": "windows" if sys.platform.startswith("win") else ("macos" if sys.platform == "darwin" else "linux"),
         # Linux only: the PyTorch the install would bring (cuda | rocm | cpu).
         "comfyBackend": linux_torch_backend() if sys.platform.startswith("linux") else "",
-        # LM Studio's own installer is only fetched on Windows; elsewhere the
-        # wizard links to its download page (start_install_lmstudio refuses).
-        "canInstallLms": sys.platform.startswith("win"),
+        # LM Studio: its installer on Windows, its AppImage on Linux; on a Mac
+        # the wizard links to its download page (start_install_lmstudio refuses).
+        "canInstallLms": sys.platform.startswith("win") or _lmstudio_linux_arch() is not None,
+        "suggestedLmsDir": str(Path.home() / "Applications") if sys.platform.startswith("linux") else str(Path.home()),
         "vcRuntime": vc_runtime_installed(),
         "comfy": comfy,
         "comfyModelsDir": comfy_models_dir(comfy),
@@ -366,9 +462,10 @@ def state() -> dict[str, Any]:
 # ── Starting them ───────────────────────────────────────────────────────────
 
 
-def _spawn(args: list[str], cwd: str | None = None) -> subprocess.Popen:
+def _spawn(args: list[str], cwd: str | None = None, env: dict[str, str] | None = None) -> subprocess.Popen:
     return subprocess.Popen(  # noqa: S603 — paths we found ourselves, local app
-        args, cwd=cwd, close_fds=True,
+        args, cwd=cwd, close_fds=True, env=env,
+        start_new_session=not sys.platform.startswith("win"),
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if args[0].endswith(".exe") else 0,
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -565,7 +662,10 @@ def start_lmstudio(server_only: bool = False) -> dict[str, Any]:
         except Exception:  # noqa: BLE001 — fall back to opening the app
             logger.debug("lms server start failed", exc_info=True)
     if info.get("launcher"):
-        _spawn([info["launcher"]])
+        if info["launcher"].endswith(".AppImage"):
+            _spawn(_appimage_command(Path(info["launcher"])), env=_appimage_env())
+        else:
+            _spawn([info["launcher"]])
         return {"ok": True, "started": info["launcher"], "needsServerToggle": True}
     return {"ok": False, "error": "LM Studio is installed but could not be started"}
 
@@ -851,8 +951,10 @@ def start_install_lmstudio(target_dir: Path) -> dict[str, Any]:
     """Download LM Studio's own installer and open it. It installs itself with
     its own window, so this gets the file and hands over — unlike ComfyUI,
     which is a portable folder we can unpack."""
+    if _lmstudio_linux_arch():
+        return _start_install_lmstudio_linux(target_dir)
     if not sys.platform.startswith("win"):
-        raise ValueError("Installing LM Studio from here is only available on Windows for now")
+        raise ValueError("Installing LM Studio from here is only available on Windows and Linux for now")
     _new_job("lmstudio")
 
     def work() -> None:
@@ -868,6 +970,47 @@ def start_install_lmstudio(target_dir: Path) -> dict[str, Any]:
                 logger.info("LM Studio installer still open after %ss; carrying on", LMSTUDIO_INSTALLER_WAIT_SECONDS)
             _set(state="done", phase="ready", result={"installer": str(installer), "needsUserToFinish": True})
             logger.info("LM Studio installer downloaded to %s and started", installer)
+        except Exception as exc:  # noqa: BLE001 — shown in the wizard
+            logger.exception("downloading LM Studio failed")
+            _set(state="error", error=str(exc))
+
+    threading.Thread(target=work, daemon=True, name="install-lmstudio").start()
+    return get_job() or {}
+
+
+def _start_install_lmstudio_linux(target_dir: Path) -> dict[str, Any]:
+    """Download LM Studio's AppImage into *target_dir*, make it executable and
+    add it to the applications menu. No installer and no password: the
+    wizard then opens it like an installed LM Studio (start_lmstudio)."""
+    _new_job("lmstudio")
+
+    def work() -> None:
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            url = LMSTUDIO_LINUX_URL.format(arch=_lmstudio_linux_arch())
+            request = urllib.request.Request(download_url(url), headers={"User-Agent": "NomadStudio"})
+            with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
+                name = os.path.basename(response.url.split("?", 1)[0])
+                if not name.endswith(".AppImage"):
+                    raise ValueError("That download is not LM Studio's AppImage")
+                _set(total=int(response.headers.get("Content-Length") or 0), asset=name)
+                appimage = target_dir / name
+                partial = appimage.with_name(name + ".part")
+                with partial.open("wb") as out:
+                    done = 0
+                    while True:
+                        chunk = response.read(1 << 20)
+                        if not chunk:
+                            break
+                        out.write(chunk)
+                        done += len(chunk)
+                        _set(done=done)
+            partial.chmod(0o755)
+            os.replace(partial, appimage)
+            _remember_install(str(appimage), "lmstudio")
+            _add_to_applications_menu(appimage)
+            _set(state="done", phase="ready", result={"path": str(appimage)})
+            logger.info("LM Studio AppImage downloaded to %s", appimage)
         except Exception as exc:  # noqa: BLE001 — shown in the wizard
             logger.exception("downloading LM Studio failed")
             _set(state="error", error=str(exc))

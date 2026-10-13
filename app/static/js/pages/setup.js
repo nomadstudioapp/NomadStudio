@@ -613,9 +613,12 @@
     }
     if (!isComfy) {
       return '<label class="su-label" for="su-lms-dir">' + esc(t('setup.apps.downloadTo', 'Download LM Studio to')) + '</label>' +
-        '<div class="su-row"><input class="su-input" id="su-lms-dir" value="' + esc(apps.suggestedDir || '') + '" spellcheck="false">' +
+        '<div class="su-row"><input class="su-input" id="su-lms-dir" value="' + esc(apps.suggestedLmsDir || apps.suggestedDir || '') + '" spellcheck="false">' +
         '<button type="button" class="su-btn su-btn-install" id="su-install-lms">' + esc(t('setup.apps.installLms', 'Install LM Studio')) + '</button></div>' +
-        '<p class="su-hint">' + esc(t('setup.apps.lmsNote', 'Its installer opens by itself; we wait for you here.')) + '</p>';
+        '<p class="su-hint">' + esc(apps.platform === 'linux'
+          // Linux (local_apps._start_install_lmstudio_linux): one AppImage file.
+          ? t('setup.apps.lmsNoteLinux', 'LM Studio from its official website, about 1 GB. It opens by itself when it is ready, and it is added to your applications. No administrator password.')
+          : t('setup.apps.lmsNote', 'Its installer opens by itself; we wait for you here.')) + '</p>';
     }
     if (!apps.canInstallComfy) return '';
     return comfyInstallForm(apps, false);

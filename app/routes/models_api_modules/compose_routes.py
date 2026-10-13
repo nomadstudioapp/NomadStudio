@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 from flask import jsonify, request
 
+from app.services.comfy_paths import for_comfy
 from app.config import DEFAULT_COMFY_URL
 from app.services.http_client import http_json, http_bytes, http_multipart_upload_image
 from app.services import gpu_coordinator
@@ -358,7 +359,7 @@ def generate_composed_image():
             prompt_response = http_json(
                 f"{comfy_api_url}/prompt",
                 method="POST",
-                payload={"prompt": comfy_prompt, "client_id": client_id},
+                payload={"prompt": for_comfy(comfy_prompt, comfy_api_url), "client_id": client_id},
                 timeout=30,
             )
             prompt_id = str(prompt_response.get("prompt_id", "")).strip()

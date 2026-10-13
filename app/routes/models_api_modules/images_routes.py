@@ -690,7 +690,9 @@ def comfy_prompt_proxy():
         return jsonify({"error": str(exc)}), 400
     import json as _json
 
-    body = {"prompt": payload.get("prompt"), "client_id": payload.get("client_id")}
+    from app.services.comfy_paths import for_comfy
+
+    body = {"prompt": for_comfy(payload.get("prompt"), comfy_url), "client_id": payload.get("client_id")}
     return _comfy_passthrough(comfy_url, "/prompt", "POST", _json.dumps(body).encode("utf-8"))
 
 

@@ -13,6 +13,7 @@ from urllib.parse import urlencode, quote
 from flask import jsonify, request
 from PIL import Image
 
+from app.services.comfy_paths import for_comfy
 from app.config import DEFAULT_COMFY_URL
 from app.paths import PACKAGES_DIR
 from app.services.http_client import http_json, http_bytes, http_multipart_upload_image
@@ -853,7 +854,7 @@ def _run_and_save(data, comfy_api_url, prepared_workflow, workflow_file, merged_
             prompt_response = http_json(
                 f"{comfy_api_url}/prompt",
                 method="POST",
-                payload={"prompt": prepared_workflow, "client_id": uuid.uuid4().hex},
+                payload={"prompt": for_comfy(prepared_workflow, comfy_api_url), "client_id": uuid.uuid4().hex},
                 timeout=30,
             )
             prompt_id = str(prompt_response.get("prompt_id", "")).strip()

@@ -17,6 +17,7 @@ from urllib.parse import urlencode
 
 from flask import jsonify, request
 
+from app.services.comfy_paths import for_comfy
 from app.config import (
     DEFAULT_LMSTUDIO_TEMPERATURE,
     DEFAULT_LMSTUDIO_URL,
@@ -458,7 +459,7 @@ def mobile_edit_image():
             prompt_response = http_json(
                 f"{comfy_api_url}/prompt",
                 method="POST",
-                payload={"prompt": prepared_workflow, "client_id": client_id},
+                payload={"prompt": for_comfy(prepared_workflow, comfy_api_url), "client_id": client_id},
                 timeout=30,
             )
             prompt_id = str(prompt_response.get("prompt_id", "")).strip()

@@ -12,6 +12,7 @@ from urllib.parse import quote, urlencode
 
 from flask import jsonify, request
 
+from app.services.comfy_paths import for_comfy
 from app.config import (
     LMSTUDIO_MAX_OUTPUT_TOKENS,
 )
@@ -132,7 +133,7 @@ def generate_from_import(import_id: str):
             prompt_response = http_json(
                 f"{comfy_api_url}/prompt",
                 method="POST",
-                payload={"prompt": prepared_workflow, "client_id": client_id},
+                payload={"prompt": for_comfy(prepared_workflow, comfy_api_url), "client_id": client_id},
                 timeout=300,
             )
             prompt_id = str(prompt_response.get("prompt_id", "")).strip()
@@ -319,7 +320,7 @@ def submit_import_generate(import_id: str):
         prompt_response = http_json(
             f"{comfy_api_url}/prompt",
             method="POST",
-            payload={"prompt": prepared_workflow, "client_id": client_id},
+            payload={"prompt": for_comfy(prepared_workflow, comfy_api_url), "client_id": client_id},
             timeout=30,
         )
         prompt_id = str(prompt_response.get("prompt_id", "")).strip()
@@ -598,7 +599,7 @@ def submit_queue_generate():
             prompt_response = http_json(
                 f"{comfy_api_url}/prompt",
                 method="POST",
-                payload={"prompt": prepared_workflow, "client_id": client_id},
+                payload={"prompt": for_comfy(prepared_workflow, comfy_api_url), "client_id": client_id},
                 timeout=30,
             )
             prompt_id = str(prompt_response.get("prompt_id", "")).strip()

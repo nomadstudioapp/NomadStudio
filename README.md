@@ -1,11 +1,20 @@
 # Nomad Studio
 
-**Local AI image studio.** Create, refine and organize images on your own computer with [ComfyUI](https://github.com/comfyanonymous/ComfyUI) as the image engine and [LM Studio](https://lmstudio.ai/) for writing prompts and describing images. Your images stay in your own folder. No credits, no cloud.
+![Nomad Studio: your image studio on your own computer](docs/images/nomad-studio-banner.jpg)
+
+**[Download](https://nomadstudio.app/download)** · **[Video tutorials](https://nomadstudio.app/tutorials)** · **[Website](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)**
+
+**A creative image studio on your own computer.** Create, refine and organize images with [ComfyUI](https://github.com/comfyanonymous/ComfyUI) as the image engine and [LM Studio](https://lmstudio.ai/) for writing prompts and describing images. Your images stay in your own folder. No credits, no cloud.
 
 English · [Español](README_ES.md) — the app itself is available in English, Spanish, Chinese and Korean.
 
+## Download
+
+Portable builds for **Windows** and **Linux** are on the [download page](https://nomadstudio.app/download) and in [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest); macOS is coming soon. Unzip and run: Python and every library come inside. The setup wizard installs ComfyUI for you, and LM Studio, which we recommend. Short video guides walk you through the first install, the next start and updates.
+
 ## What it is
 
+- **Create, Refine, Mix, Session and Build.** Start from a few words, a photo or a template; edit in your own words; bring several pictures together; chain flows on a project; keep your characters, places and styles at hand.
 - **An empty core that installs flows as packages.** Engines, flows, template packs and add-ons come as ZIP packages ([docs/PACKAGE_FORMAT.md](docs/PACKAGE_FORMAT.md)).
 - **Profiles and Sessions.** Each profile has its own images, history and Sessions; a Vanish Session saves nothing.
 - **Setup wizard.** First run checks ComfyUI and LM Studio, detects which engine files you already have, installs what is missing and recommends language models ([docs/SETUP_WIZARD.md](docs/SETUP_WIZARD.md)).
@@ -15,11 +24,11 @@ English · [Español](README_ES.md) — the app itself is available in English, 
 
 ## Requirements
 
-- Windows, macOS or Linux
-- Python 3.13
-- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) running (locally or on another computer on your network)
-- [LM Studio](https://lmstudio.ai/) — optional, for prompt help and image description
-- A GPU with 8 GB of video memory or more is recommended
+- Windows or Linux (macOS coming soon)
+- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) running (locally or on another computer on your network) — the setup wizard can install it
+- [LM Studio](https://lmstudio.ai/) — recommended, for prompt help, chat and image description
+- A GPU with 8 GB of video memory or more is recommended; the examples were made on an RTX 4060 Ti with 16 GB
+- Python 3.13 only if you run from source
 
 ## Run from source
 
@@ -37,3 +46,5 @@ Portable builds and in-app updates are described in [docs/APP_UPDATES.md](docs/A
 ## License
 
 Nomad Studio is free software under the [GNU General Public License v3.0 or later](LICENSE). The images you generate are yours; packs and AI models have their own licenses. Details in [LICENSING.md](LICENSING.md).
+
+If Nomad Studio is useful to you, a ⭐ on GitHub helps other people find it.

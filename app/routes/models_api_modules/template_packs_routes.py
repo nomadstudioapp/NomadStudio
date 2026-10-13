@@ -60,6 +60,10 @@ def _load_field_values() -> dict[str, dict[str, dict[str, list[str]]]]:
         with open(_FIELD_VALUES_PATH, encoding="utf-8") as fh:
             data = json.load(fh)
         _field_values_cache = data if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        # A new install has none yet: written with the first value saved.
+        # Not an error (its traceback showed in the terminal at first start).
+        _field_values_cache = {}
     except Exception:
         logger.exception("Failed to load template pack field values")
         _field_values_cache = {}

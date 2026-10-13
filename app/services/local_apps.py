@@ -125,10 +125,24 @@ def gpu_names() -> list[str]:
 _PCI_VENDORS = {"0x10de": "NVIDIA", "0x1002": "AMD Radeon", "0x8086": "Intel"}
 
 
+WSL_NVIDIA_SMI = Path("/usr/lib/wsl/lib/nvidia-smi")
+
+
 def _linux_gpu_names() -> list[str]:
     """Display controllers from lspci (names), or from sysfs (vendor only)
-    where pciutils is missing."""
+    where pciutils is missing. Under WSL2 the NVIDIA card is not a PCI device
+    of the Linux side at all: Windows' driver exposes it through
+    /usr/lib/wsl/lib (libcuda, nvidia-smi), so ask nvidia-smi there."""
     names: list[str] = []
+    if WSL_NVIDIA_SMI.exists():
+        try:
+            out = subprocess.run([str(WSL_NVIDIA_SMI), "--query-gpu=name", "--format=csv,noheader"],  # noqa: S603
+                                 capture_output=True, text=True, timeout=15).stdout
+            names = [line.strip() for line in out.splitlines() if line.strip()]
+        except Exception:  # noqa: BLE001 — lspci below
+            names = []
+        if names:
+            return names
     try:
         out = subprocess.run(["lspci", "-mm"], capture_output=True, text=True, timeout=10).stdout  # noqa: S603,S607
         for line in out.splitlines():
@@ -179,7 +193,8 @@ def linux_torch_backend() -> str:
     driver), "rocm" (AMD from RDNA 2 on, gfx1030+, what current ROCm runs) or
     "cpu" — slow, but it works, and the wizard says so first."""
     vendor = gpu_vendor()
-    if vendor == "nvidia" and (Path("/proc/driver/nvidia/version").exists() or shutil.which("nvidia-smi")):
+    if vendor == "nvidia" and (Path("/proc/driver/nvidia/version").exists() or shutil.which("nvidia-smi")
+                               or WSL_NVIDIA_SMI.exists()):
         return "cuda"
     if vendor == "amd" and any(v >= 100300 for v in _amd_gfx_versions()):
         return "rocm"

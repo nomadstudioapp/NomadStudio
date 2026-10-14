@@ -2,7 +2,7 @@
 
 ![Nomad Studio：你自己电脑上的图像工作室](docs/images/nomad-studio-banner-zh.jpg)
 
-**[下载](https://nomadstudio.app/download)** · **[视频教程](https://nomadstudio.app/tutorials)** · **[官网](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)**
+**[下载](https://nomadstudio.app/download)** · **[视频教程](https://nomadstudio.app/tutorials)** · **[官网](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
 
 **在你自己的电脑上运行的创意图像工作室。** 以 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 作为图像引擎，用 [LM Studio](https://lmstudio.ai/) 撰写提示词和描述图像，来创建、修饰和整理图像。你的图像保存在你自己的文件夹里。没有点数，不依赖云端。
 
@@ -43,6 +43,12 @@ python -m venv .venv
 打开 http://localhost:5123 — 首次运行时会启动设置向导。要换一个端口，先设置 `PORT`：Linux 和 macOS 用 `PORT=5124 python app.py`，Windows PowerShell 用 `$env:PORT=5124; python app.py`。
 
 便携版和应用内更新的说明见 [docs/APP_UPDATES.md](docs/APP_UPDATES.md)。
+
+## 社区
+
+欢迎在 Discord 上提问、报告问题和分享想法：遇到困难去 #help，对下一步的建议去 #feedback，新版本消息在 #announcements。
+
+[Discord](https://discord.gg/FZGHRf6NXn) · [X](https://x.com/NomadStudio_app) · [YouTube](https://www.youtube.com/@nomadstudioapp) · [Reddit](https://www.reddit.com/r/NomadStudio/) · [Ko-fi](https://ko-fi.com/nomadstudio)
 
 ## 许可证
 

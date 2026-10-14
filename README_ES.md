@@ -2,7 +2,7 @@
 
 ![Nomad Studio: tu estudio de imagen en tu propio ordenador](docs/images/nomad-studio-banner-es.jpg)
 
-**[Descargar](https://nomadstudio.app/download)** · **[Videotutoriales](https://nomadstudio.app/tutorials)** · **[Web](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)**
+**[Descargar](https://nomadstudio.app/download)** · **[Videotutoriales](https://nomadstudio.app/tutorials)** · **[Web](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
 
 **Un estudio creativo de imagen en tu propio ordenador.** Crea, retoca y organiza imágenes con [ComfyUI](https://github.com/comfyanonymous/ComfyUI) como motor de imagen y [LM Studio](https://lmstudio.ai/) para escribir prompts y describir imágenes. Tus imágenes se quedan en tu carpeta. Sin créditos ni nube.
 
@@ -43,6 +43,12 @@ python -m venv .venv
 Abre http://localhost:5123 — el asistente de configuración arranca la primera vez. Para usar otro puerto, define antes `PORT`: `PORT=5124 python app.py` en Linux y macOS, `$env:PORT=5124; python app.py` en PowerShell de Windows.
 
 Las versiones portables y las actualizaciones desde la app se describen en [docs/APP_UPDATES.md](docs/APP_UPDATES.md).
+
+## Comunidad
+
+Dudas, fallos e ideas, en Discord: #help si te atascas, #feedback para lo que debería venir después y #announcements para las nuevas versiones.
+
+[Discord](https://discord.gg/FZGHRf6NXn) · [X](https://x.com/NomadStudio_app) · [YouTube](https://www.youtube.com/@nomadstudioapp) · [Reddit](https://www.reddit.com/r/NomadStudio/) · [Ko-fi](https://ko-fi.com/nomadstudio)
 
 ## Licencia
 

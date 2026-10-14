@@ -2,7 +2,7 @@
 
 ![Nomad Studio: 내 컴퓨터 속 이미지 스튜디오](docs/images/nomad-studio-banner-ko.jpg)
 
-**[다운로드](https://nomadstudio.app/download)** · **[영상 튜토리얼](https://nomadstudio.app/tutorials)** · **[웹사이트](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)**
+**[다운로드](https://nomadstudio.app/download)** · **[영상 튜토리얼](https://nomadstudio.app/tutorials)** · **[웹사이트](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
 
 **내 컴퓨터에서 돌아가는 크리에이티브 이미지 스튜디오.** [ComfyUI](https://github.com/comfyanonymous/ComfyUI)를 이미지 엔진으로, [LM Studio](https://lmstudio.ai/)를 프롬프트 작성과 이미지 설명에 사용해 이미지를 만들고, 다듬고, 정리하세요. 이미지는 내 폴더에 그대로 남습니다. 크레딧도, 클라우드도 없습니다.
 
@@ -43,6 +43,12 @@ python -m venv .venv
 http://localhost:5123 을 여세요 — 처음 실행하면 설정 마법사가 시작됩니다. 다른 포트를 쓰려면 먼저 `PORT`를 지정하세요. Linux와 macOS는 `PORT=5124 python app.py`, Windows PowerShell은 `$env:PORT=5124; python app.py`.
 
 포터블 버전과 앱 내 업데이트는 [docs/APP_UPDATES.md](docs/APP_UPDATES.md)에 설명되어 있습니다.
+
+## 커뮤니티
+
+질문, 버그, 아이디어는 Discord에서 환영합니다. 막히면 #help, 다음에 나왔으면 하는 것은 #feedback, 새 버전 소식은 #announcements에서 확인하세요.
+
+[Discord](https://discord.gg/FZGHRf6NXn) · [X](https://x.com/NomadStudio_app) · [YouTube](https://www.youtube.com/@nomadstudioapp) · [Reddit](https://www.reddit.com/r/NomadStudio/) · [Ko-fi](https://ko-fi.com/nomadstudio)
 
 ## 라이선스
 

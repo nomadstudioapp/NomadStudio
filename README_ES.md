@@ -6,7 +6,7 @@
 
 **Un estudio creativo de imagen en tu propio ordenador.** Crea, retoca y organiza imágenes con [ComfyUI](https://github.com/comfyanonymous/ComfyUI) como motor de imagen y [LM Studio](https://lmstudio.ai/) para escribir prompts y describir imágenes. Tus imágenes se quedan en tu carpeta. Sin créditos ni nube.
 
-[English](README.md) · Español — la aplicación está disponible en inglés, español, chino y coreano.
+[English](README.md) · Español · [中文](README_ZH.md) · [한국어](README_KO.md) — la aplicación está disponible en inglés, español, chino y coreano.
 
 ## Descarga
 

@@ -6,7 +6,7 @@
 
 **A creative image studio on your own computer.** Create, refine and organize images with [ComfyUI](https://github.com/comfyanonymous/ComfyUI) as the image engine and [LM Studio](https://lmstudio.ai/) for writing prompts and describing images. Your images stay in your own folder. No credits, no cloud.
 
-English · [Español](README_ES.md) — the app itself is available in English, Spanish, Chinese and Korean.
+English · [Español](README_ES.md) · [中文](README_ZH.md) · [한국어](README_KO.md) — the app itself is available in English, Spanish, Chinese and Korean.
 
 ## Download
 

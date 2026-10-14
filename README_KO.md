@@ -1,6 +1,6 @@
 # Nomad Studio
 
-![Nomad Studio: 내 컴퓨터 속 이미지 스튜디오](docs/images/nomad-studio-banner.jpg)
+![Nomad Studio: 내 컴퓨터 속 이미지 스튜디오](docs/images/nomad-studio-banner-ko.jpg)
 
 **[다운로드](https://nomadstudio.app/download)** · **[영상 튜토리얼](https://nomadstudio.app/tutorials)** · **[웹사이트](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)**
 
@@ -35,11 +35,12 @@
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.lock   # Windows
+.venv/Scripts/python app.py
 # .venv/bin/pip install -r requirements.lock     # macOS / Linux
-python app.py
+# .venv/bin/python app.py
 ```
 
-http://localhost:5123 을 여세요 — 처음 실행하면 설정 마법사가 시작됩니다. 다른 포트를 쓰려면 `PORT=5124 python app.py`.
+http://localhost:5123 을 여세요 — 처음 실행하면 설정 마법사가 시작됩니다. 다른 포트를 쓰려면 먼저 `PORT`를 지정하세요. Linux와 macOS는 `PORT=5124 python app.py`, Windows PowerShell은 `$env:PORT=5124; python app.py`.
 
 포터블 버전과 앱 내 업데이트는 [docs/APP_UPDATES.md](docs/APP_UPDATES.md)에 설명되어 있습니다.
 

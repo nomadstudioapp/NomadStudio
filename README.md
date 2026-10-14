@@ -35,11 +35,12 @@ Portable builds for **Windows** and **Linux** are on the [download page](https:/
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.lock   # Windows
+.venv/Scripts/python app.py
 # .venv/bin/pip install -r requirements.lock     # macOS / Linux
-python app.py
+# .venv/bin/python app.py
 ```
 
-Open http://localhost:5123 — the setup wizard starts on the first run. Use `PORT=5124 python app.py` to pick another port.
+Open http://localhost:5123 — the setup wizard starts on the first run. To pick another port, set `PORT` first: `PORT=5124 python app.py` on Linux and macOS, `$env:PORT=5124; python app.py` in Windows PowerShell.
 
 Portable builds and in-app updates are described in [docs/APP_UPDATES.md](docs/APP_UPDATES.md).
 

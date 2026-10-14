@@ -1,6 +1,6 @@
 # Nomad Studio
 
-![Nomad Studio：你自己电脑上的图像工作室](docs/images/nomad-studio-banner.jpg)
+![Nomad Studio：你自己电脑上的图像工作室](docs/images/nomad-studio-banner-zh.jpg)
 
 **[下载](https://nomadstudio.app/download)** · **[视频教程](https://nomadstudio.app/tutorials)** · **[官网](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)**
 
@@ -35,11 +35,12 @@
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.lock   # Windows
+.venv/Scripts/python app.py
 # .venv/bin/pip install -r requirements.lock     # macOS / Linux
-python app.py
+# .venv/bin/python app.py
 ```
 
-打开 http://localhost:5123 — 首次运行时会启动设置向导。用 `PORT=5124 python app.py` 可以换一个端口。
+打开 http://localhost:5123 — 首次运行时会启动设置向导。要换一个端口，先设置 `PORT`：Linux 和 macOS 用 `PORT=5124 python app.py`，Windows PowerShell 用 `$env:PORT=5124; python app.py`。
 
 便携版和应用内更新的说明见 [docs/APP_UPDATES.md](docs/APP_UPDATES.md)。
 

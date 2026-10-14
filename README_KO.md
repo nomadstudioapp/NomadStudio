@@ -10,7 +10,7 @@
 
 ## 다운로드
 
-**Windows**와 **Linux**용 포터블 버전은 [다운로드 페이지](https://nomadstudio.app/download)와 [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest)에 있습니다. macOS는 곧 지원됩니다. 압축을 풀고 실행하면 끝입니다. Python과 모든 라이브러리가 들어 있습니다. 설정 마법사가 ComfyUI와, 저희가 추천하는 LM Studio를 설치해 줍니다. 짧은 영상 가이드가 첫 설치, 다음 실행, 업데이트 과정을 안내합니다.
+**Windows**와 **Linux**용 포터블 버전은 [다운로드 페이지](https://nomadstudio.app/download)와 [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest)에 있습니다. **macOS**(Apple Silicon)용 실험 버전도 있습니다(서명되지 않음). 압축을 풀고 실행하면 끝입니다. Python과 모든 라이브러리가 들어 있습니다. 설정 마법사가 ComfyUI와, 저희가 추천하는 LM Studio를 설치해 줍니다. 짧은 영상 가이드가 첫 설치, 다음 실행, 업데이트 과정을 안내합니다.
 
 ## 소개
 
@@ -24,7 +24,7 @@
 
 ## 요구 사항
 
-- Windows 또는 Linux (macOS는 곧 지원)
+- Windows 또는 Linux, macOS(Apple Silicon)는 실험 단계
 - 실행 중인 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) (내 컴퓨터 또는 네트워크의 다른 컴퓨터) — 설정 마법사가 설치해 줄 수 있습니다
 - [LM Studio](https://lmstudio.ai/) — 추천, 프롬프트 도움·채팅·이미지 설명용
 - 비디오 메모리 8 GB 이상의 GPU를 권장합니다. 예시 이미지는 16 GB RTX 4060 Ti로 만들었습니다

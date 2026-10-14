@@ -10,7 +10,7 @@ English · [Español](README_ES.md) · [中文](README_ZH.md) · [한국어](REA
 
 ## Download
 
-Portable builds for **Windows** and **Linux** are on the [download page](https://nomadstudio.app/download) and in [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest); macOS is coming soon. Unzip and run: Python and every library come inside. The setup wizard installs ComfyUI for you, and LM Studio, which we recommend. Short video guides walk you through the first install, the next start and updates.
+Portable builds for **Windows** and **Linux** are on the [download page](https://nomadstudio.app/download) and in [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest), plus an experimental, unsigned one for **macOS** (Apple Silicon). Unzip and run: Python and every library come inside. The setup wizard installs ComfyUI for you, and LM Studio, which we recommend. Short video guides walk you through the first install, the next start and updates.
 
 ## What it is
 
@@ -24,7 +24,7 @@ Portable builds for **Windows** and **Linux** are on the [download page](https:/
 
 ## Requirements
 
-- Windows or Linux (macOS coming soon)
+- Windows or Linux; macOS (Apple Silicon) is experimental
 - [ComfyUI](https://github.com/comfyanonymous/ComfyUI) running (locally or on another computer on your network) — the setup wizard can install it
 - [LM Studio](https://lmstudio.ai/) — recommended, for prompt help, chat and image description
 - A GPU with 8 GB of video memory or more is recommended; the examples were made on an RTX 4060 Ti with 16 GB

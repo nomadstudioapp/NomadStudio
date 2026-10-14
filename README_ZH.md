@@ -10,7 +10,7 @@
 
 ## 下载
 
-**Windows** 和 **Linux** 的便携版在[下载页面](https://nomadstudio.app/download)和 [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest) 中提供；macOS 即将推出。解压即可运行：Python 和所有依赖库都已内置。设置向导会为你安装 ComfyUI，以及我们推荐的 LM Studio。简短的视频指南会带你完成首次安装、下次启动和更新。
+**Windows** 和 **Linux** 的便携版在[下载页面](https://nomadstudio.app/download)和 [Releases](https://github.com/nomadstudioapp/NomadStudio/releases/latest) 中提供；另有面向 **macOS**（Apple Silicon）的实验性版本，未签名。解压即可运行：Python 和所有依赖库都已内置。设置向导会为你安装 ComfyUI，以及我们推荐的 LM Studio。简短的视频指南会带你完成首次安装、下次启动和更新。
 
 ## 它是什么
 
@@ -24,7 +24,7 @@
 
 ## 系统要求
 
-- Windows 或 Linux（macOS 即将推出）
+- Windows 或 Linux；macOS（Apple Silicon）为实验性支持
 - 正在运行的 [ComfyUI](https://github.com/comfyanonymous/ComfyUI)（本机或你网络中的另一台电脑）— 设置向导可以帮你安装
 - [LM Studio](https://lmstudio.ai/) — 推荐，用于提示词辅助、聊天和图像描述
 - 建议使用 8 GB 或以上显存的 GPU；示例图像是在 16 GB 的 RTX 4060 Ti 上制作的

@@ -23,6 +23,7 @@ import io
 import json as _json
 import logging
 import re
+import time
 import zipfile
 from html import escape as _esc
 from pathlib import Path
@@ -500,7 +501,15 @@ def export_session_docs():
                             except Exception:
                                 logger.exception("export: bad workflow json %s", wf_rel)
                     wf_cache[flow_id] = models
-                for m in wf_cache[flow_id]:
+                # The engine and quantization a step ran with live in its
+                # params (unet/clip picked per engine), not in the base graph
+                # — reading only the graph left "No model files detected".
+                step_models = list(wf_cache[flow_id])
+                for key in ("advancedValues", "quantizationValues"):
+                    vals = params.get(key) if isinstance(params.get(key), dict) else {}
+                    step_models += [str(v).strip() for v in vals.values()
+                                    if isinstance(v, str) and v.strip().lower().endswith(_MODEL_EXT)]
+                for m in step_models:
                     models_map.setdefault(m, set()).add(label)
 
             # Images → zip
@@ -608,7 +617,79 @@ def import_session_zip():
     if not isinstance(data, dict):
         return jsonify({"error": "session.json inside the .zip isn't a valid session object."}), 422
 
+    try:
+        _restore_zip_images(raw, data)
+    except Exception:
+        logger.exception("import-zip: failed restoring images")
+        return jsonify({"error": "Could not restore the images inside the .zip."}), 500
+
     return jsonify(data)
+
+
+_ZIP_IMAGE_RE = re.compile(r"^images/step(\d+)_(\d+)\.(png|jpg|jpeg|webp)$", re.IGNORECASE)
+
+
+def _restore_zip_images(raw: bytes, data: dict[str, Any]) -> None:
+    """Copy the zip's images/ into a fresh <output>/session/<folder>/ and point
+    the steps at them.
+
+    session.json keeps the URLs of the PC that made the session
+    (/api/images/session/<its folder>/...). On that PC they resolve, so an
+    import there looked fine; anywhere else every image was a 404, because
+    the images the export packs into the zip were never read back. The export
+    names them images/stepNN_I.ext — NN the step's position, I the image's
+    position in that step's `images` (or its `imageUrl`) — so the mapping
+    back is positional. A new folder per import keeps two imports of the same
+    zip from sharing (and overwriting) files.
+    """
+    steps = [s for s in (data.get("steps") or []) if isinstance(s, dict)]
+    output_dir = Path(_resolve_output_dir(_ensure_registry()))
+    folder = "%s-%d" % (_slugify(str(data.get("name") or "session")), time.time_ns() // 1_000_000)
+    target = output_dir / "session" / folder
+
+    remap: dict[str, str] = {}
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        for name in zf.namelist():
+            m = _ZIP_IMAGE_RE.match(name)
+            if not m:
+                continue
+            idx, i = int(m.group(1)), int(m.group(2))
+            if not 1 <= idx <= len(steps):
+                continue
+            step = steps[idx - 1]
+            imgs = step.get("images") if isinstance(step.get("images"), list) else []
+            if not imgs and step.get("imageUrl"):
+                imgs = [step.get("imageUrl")]
+            if not 1 <= i <= len(imgs):
+                continue
+            target.mkdir(parents=True, exist_ok=True)
+            fname = name.split("/", 1)[1]
+            (target / fname).write_bytes(zf.read(name))
+            remap[str(imgs[i - 1])] = "/api/images/session/%s/%s" % (folder, fname)
+
+    if not remap:
+        return
+    data["folder"] = folder
+    by_id = {s.get("id"): s for s in steps}
+    for step in steps:
+        if isinstance(step.get("images"), list):
+            step["images"] = [remap.get(str(u), u) for u in step["images"]]
+        if step.get("imageUrl"):
+            step["imageUrl"] = remap.get(str(step["imageUrl"]), step["imageUrl"])
+    # inputs: the image a flow ran on. Mapped when it is a step image in the
+    # zip; the main picker ("image") was a temporary input copy of the parent
+    # step's image, which isn't packed, so it becomes the parent's new URL.
+    for step in steps:
+        inputs = step.get("inputs")
+        if not isinstance(inputs, dict):
+            continue
+        for key, url in list(inputs.items()):
+            if str(url) in remap:
+                inputs[key] = remap[str(url)]
+            elif key == "image":
+                parent = by_id.get(step.get("parentId"))
+                if parent and parent.get("imageUrl"):
+                    inputs[key] = parent["imageUrl"]
 
 
 def _fmt_models_lines(models_map: dict[str, set[str]]) -> list[tuple[str, str]]:

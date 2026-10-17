@@ -2,7 +2,7 @@
 
 ![Nomad Studio：你自己电脑上的图像工作室](docs/images/nomad-studio-banner-zh.jpg)
 
-**[下载](https://nomadstudio.app/download)** · **[视频教程](https://nomadstudio.app/tutorials)** · **[官网](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
+**[下载](https://nomadstudio.app/download)** · **[更新内容](UPDATES_ZH.md)** · **[视频教程](https://nomadstudio.app/tutorials)** · **[官网](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
 
 **在你自己的电脑上运行的创意图像工作室。** 以 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 作为图像引擎，用 [LM Studio](https://lmstudio.ai/) 撰写提示词和描述图像，来创建、修饰和整理图像。你的图像保存在你自己的文件夹里。没有点数，不依赖云端。
 

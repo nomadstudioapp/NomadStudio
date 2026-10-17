@@ -2,7 +2,7 @@
 
 ![Nomad Studio: 내 컴퓨터 속 이미지 스튜디오](docs/images/nomad-studio-banner-ko.jpg)
 
-**[다운로드](https://nomadstudio.app/download)** · **[영상 튜토리얼](https://nomadstudio.app/tutorials)** · **[웹사이트](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
+**[다운로드](https://nomadstudio.app/download)** · **[새 소식](UPDATES_KO.md)** · **[영상 튜토리얼](https://nomadstudio.app/tutorials)** · **[웹사이트](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
 
 **내 컴퓨터에서 돌아가는 크리에이티브 이미지 스튜디오.** [ComfyUI](https://github.com/comfyanonymous/ComfyUI)를 이미지 엔진으로, [LM Studio](https://lmstudio.ai/)를 프롬프트 작성과 이미지 설명에 사용해 이미지를 만들고, 다듬고, 정리하세요. 이미지는 내 폴더에 그대로 남습니다. 크레딧도, 클라우드도 없습니다.
 

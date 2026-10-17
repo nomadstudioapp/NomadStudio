@@ -2,7 +2,7 @@
 
 ![Nomad Studio: your image studio on your own computer](docs/images/nomad-studio-banner.jpg)
 
-**[Download](https://nomadstudio.app/download)** · **[Video tutorials](https://nomadstudio.app/tutorials)** · **[Website](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
+**[Download](https://nomadstudio.app/download)** · **[What's new](UPDATES.md)** · **[Video tutorials](https://nomadstudio.app/tutorials)** · **[Website](https://nomadstudio.app)** · **[Packs](https://ko-fi.com/nomadstudio/shop)** · **[Discord](https://discord.gg/FZGHRf6NXn)**
 
 **A creative image studio on your own computer.** Create, refine and organize images with [ComfyUI](https://github.com/comfyanonymous/ComfyUI) as the image engine and [LM Studio](https://lmstudio.ai/) for writing prompts and describing images. Your images stay in your own folder. No credits, no cloud.
 

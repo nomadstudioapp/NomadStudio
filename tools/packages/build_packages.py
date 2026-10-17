@@ -2512,6 +2512,16 @@ REFINE_PILOT_DESC_OVERRIDES = {
 REFINE_PILOT_STEPS_FIELD_OVERRIDES = {
     "refine.edit_qwen_2511_basic": {"default": 25, "max": 25, "quick_options": [8, 16, 25]},
 }
+# Output aspect ratio (Resolution panel, flow-render-all.js): "original" keeps
+# the GetImageSize(source) -> latent link; a ratio makes the server write
+# 25.width/25.height with the source's pixel count in the new shape
+# (refine_routes._apply_output_aspect) — e.g. a 9:16 portrait recomposed 16:9.
+REFINE_PILOT_EXTRA_FIELDS = {
+    "refine.edit_qwen_2511_basic": [
+        {"id": "output_aspect", "type": "output_aspect", "default": "original",
+         "adv_keys": {"width": "25.width", "height": "25.height"}},
+    ],
+}
 REFINE_PILOT_LABEL_OVERRIDES = {
     "refine.edit_qwen_2511_basic": {"en": "Edit Qwen 2.1", "es": "Editar Qwen 2.1", "zh": "编辑 Qwen 2.1", "ko": "편집 Qwen 2.1"},
     "refine.edit_fluxklein_9b_basic": {"en": "Edit Flux Klein 9B", "es": "Editar Flux Klein 9B", "zh": "编辑 Flux Klein 9B", "ko": "편집 Flux Klein 9B"},
@@ -4393,6 +4403,9 @@ def build_refine_pilot(source: Path, version: str) -> Path:
             flow["group"] = REFINE_PILOT_GROUP_OVERRIDES[flow_id]
         if flow_id in REFINE_PILOT_STEPS_FIELD_OVERRIDES:
             _override_flow_field(flow, "steps", REFINE_PILOT_STEPS_FIELD_OVERRIDES[flow_id])
+        for extra_field in REFINE_PILOT_EXTRA_FIELDS.get(flow_id, []):
+            params_step = next(s for s in flow["steps"] if s.get("type") == "workflow_params")
+            params_step["fields"].append(copy.deepcopy(extra_field))
         for option_id, opt_overrides in QWEN_ENGINE_SELECT_OVERRIDES.items():
             _update_engine_select_option(flow, option_id, opt_overrides)
         _upgrade_seed_fields_to_similarity(flow)

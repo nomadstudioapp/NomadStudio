@@ -23,8 +23,10 @@ cambio de docstring/schema de tool.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
+
+from app.mcp import variations
 
 if TYPE_CHECKING:
     from app.mcp.nomad_client import NomadClient
@@ -52,6 +54,16 @@ class RefineAction:
     # rectangle"). "rect" si el paso es shape_mode=rectangle, si no "ellipse"
     # (en la app es trazo libre, un lazo alrededor — el prompt dice "circle").
     region_shape: str | None = None
+    # Flows con campo output_aspect (Edit Qwen 2.1): tamano/forma de salida
+    # distintos de la entrada. Sin tocarlos, la salida tiene el de la entrada.
+    output_width_key: str | None = None
+    output_height_key: str | None = None
+    # Variaciones del workflow ('normal', 'turbo'...), de su analysis.
+    variations: tuple[str, ...] = ()
+
+    @property
+    def accepts_output_size(self) -> bool:
+        return bool(self.output_width_key and self.output_height_key)
 
     @property
     def needs_region(self) -> bool:
@@ -67,6 +79,10 @@ class RefineAction:
 # ese motor por defecto — confirmado leyendo los flows reales), y canvas_preview es
 # puramente visual (no tiene adv_key).
 _SKIP_TYPES = {"engine_select", "canvas_preview"}
+
+# Forma/tamano de salida opcional (Edit Qwen 2.1): "original" por defecto, se
+# expone como aspect_ratio/width/height de la tool.
+_OUTPUT_ASPECT_TYPE = "output_aspect"
 
 # Tipos con un valor por defecto directamente usable tal cual.
 _SAFE_DEFAULT_TYPES = {"number", "seed", "slider", "scale_slider", "checkbox", "select"}
@@ -117,12 +133,18 @@ def _classify_flow(flow_entry: dict[str, Any]) -> RefineAction | None:
     fields = params_step.get("fields") or []
     extra: dict[str, Any] = {}
     width_key = height_key = position_key = scale_key = None
+    output_width_key = output_height_key = None
     prompt_fields = [f for f in fields if f.get("type") in _PROMPT_TYPES]
     other_fields = [f for f in fields if f.get("type") not in _PROMPT_TYPES]
 
     for f in other_fields:
         ftype = f.get("type")
         if ftype in _SKIP_TYPES:
+            continue
+        if ftype == _OUTPUT_ASPECT_TYPE:
+            adv_keys = f.get("adv_keys") or {}
+            output_width_key = adv_keys.get("width")
+            output_height_key = adv_keys.get("height")
             continue
         if ftype == _ASPECT_TYPE:
             adv_keys = f.get("adv_keys") or {}
@@ -204,6 +226,8 @@ def _classify_flow(flow_entry: dict[str, Any]) -> RefineAction | None:
         position_adv_key=position_key,
         scale_adv_key=scale_key,
         region_shape=region_shape,
+        output_width_key=output_width_key,
+        output_height_key=output_height_key,
     )
 
 
@@ -224,6 +248,16 @@ async def get_catalog(client: "NomadClient") -> dict[str, RefineAction]:
             action = None
         if action is not None:
             catalog[action.flow_id] = action
+    # Variaciones: una consulta por workflow distinto (varios flows comparten grafo).
+    by_file: dict[str, tuple[str, ...]] = {}
+    for flow_id, action in list(catalog.items()):
+        if action.workflow_file not in by_file:
+            try:
+                by_file[action.workflow_file] = await variations.available(client, action.workflow_file)
+            except Exception:
+                by_file[action.workflow_file] = ()
+        if by_file[action.workflow_file]:
+            catalog[flow_id] = replace(action, variations=by_file[action.workflow_file])
     _catalog_cache = catalog
     return catalog
 
@@ -246,4 +280,8 @@ def describe_actions(catalog: dict[str, RefineAction]) -> str:
                 needs = (f" [NEEDS 'regions': marks the area(s) with colored {shape}s; the instruction "
                          f"must name them by color, e.g. 'the red {shape}']")
             lines.append(f"- {action.flow_id}: {action.description}{needs}")
+            if action.variations:
+                lines.append(f"    accepts variation: {', '.join(action.variations)}")
+            if action.accepts_output_size:
+                lines.append("    accepts aspect_ratio / width+height (output shape; default = same as input)")
     return "\n".join(lines)

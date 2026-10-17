@@ -1147,6 +1147,8 @@
       "No upscale workflows — import one first": "업스케일 워크플로가 없습니다 — 먼저 가져오세요",
       "Failed to load upscale workflows": "업스케일 워크플로를 불러오지 못했습니다",
       "Quantization": "양자화",
+      "Output aspect ratio": "출력 비율",
+      "Original": "원본",
       "Variation": "변형",
       "Normal": "일반",
       "Turbo": "Turbo",

@@ -45,6 +45,7 @@ from app.mcp import mix_actions
 from app.mcp import refine_actions
 from app.mcp import session_state
 from app.mcp import sessions as mcp_sessions
+from app.mcp import variations
 from app.mcp.regions import MarkedRegion, annotate_data_url
 from app.services.prompt_params import MAX_REPEAT as MAX_IMAGES_PER_CALL
 from app.services.prompt_params import parse as parse_prompt_params, size_for_aspect
@@ -616,11 +617,15 @@ async def nomad_studio_mix_images(
         "flow."))] = None,
     seed: Annotated[int | None, Field(description=(
         "Semilla exacta, SOLO para repetir un resultado anterior. Vacio = aleatoria."))] = None,
+    variation: Annotated[str | None, Field(description=(
+        "SOLO en los flows marcados 'accepts variation' en nomad_studio_list_mix_actions. "
+        "'turbo' = checkpoint destilado, unas 2 veces mas rapido (8 pasos) con calidad parecida; "
+        "'normal' o vacio = el modelo base. Usa 'turbo' si el usuario pide rapidez o lo nombra."))] = None,
 ) -> list[TextContent | ImageContent]:
     agent_name = agent_slug = "unknown"
     debug: dict[str, Any] = {"input": {
         "action": action, "images": [i.model_dump() for i in images], "instruction": instruction,
-        "aspect_ratio": aspect_ratio, "seed": seed}}
+        "aspect_ratio": aspect_ratio, "seed": seed, "variation": variation}}
     try:
         agent = await ensure_agent_session(_client, ctx)
         agent_name, agent_slug = agent.get("name", "unknown"), agent.get("slug", "unknown")
@@ -667,6 +672,10 @@ async def nomad_studio_mix_images(
         if mix.width_key and size is None:
             size = size_for_aspect(mix.default_aspect)
         advanced = mix_actions.advanced_values(mix, instruction, size, seed)
+        try:
+            advanced.update(await variations.advanced_values(_client, mix.workflow_file, variation))
+        except variations.VariationError as exc:
+            return [TextContent(type="text", text=f"NO SE HA HECHO NADA TODAVIA: {exc}.")]
 
         output_dir = await _client.get_output_dir()
         payload_images = [
@@ -957,6 +966,20 @@ async def _nomad_studio_refine_image_impl(
         "por zona (red, green, blue, yellow, purple, orange). La 'instruction' las nombra por su "
         "color: 'Replace the text inside the red rectangle with \"SALE\"'. Si no sabes donde "
         "esta algo, preguntaselo al usuario."))] = None,
+    variation: Annotated[str | None, Field(description=(
+        "SOLO en las acciones marcadas 'accepts variation' en nomad_studio_list_refine_actions. "
+        "'turbo' = checkpoint destilado, unas 2 veces mas rapido (8 pasos) con calidad parecida; "
+        "'normal' o vacio = el modelo base. Usa 'turbo' si el usuario pide rapidez o lo nombra."))] = None,
+    aspect_ratio: Annotated[str | None, Field(description=(
+        "SOLO en las acciones marcadas 'accepts aspect_ratio': forma de la imagen de SALIDA, "
+        "distinta de la de entrada (ej. una vertical 9:16 recompuesta en 16:9). '16:9', '3:2', "
+        "'square', 'wide', 'tall', 'original'... Mantiene los pixeles de la entrada. Vacio = la "
+        "misma forma que la entrada. Ignorado si se pasan 'width'/'height'."))] = None,
+    width: Annotated[int | None, Field(description=(
+        "SOLO en las acciones marcadas 'accepts aspect_ratio': ancho exacto de la salida en "
+        "pixeles, solo si el usuario da un tamano concreto (ej. '1280x720'). Va junto con 'height' "
+        "(los dos o ninguno). Se redondea al multiplo de 16."))] = None,
+    height: Annotated[int | None, Field(description="Alto exacto de la salida — ver 'width'.")] = None,
 ) -> list[TextContent | ImageContent]:
     agent_name = "unknown"
     agent_slug = "unknown"
@@ -969,6 +992,10 @@ async def _nomad_studio_refine_image_impl(
             "scale": scale,
             "expand_percent": expand_percent,
             "regions": [r.model_dump() for r in regions] if regions else None,
+            "variation": variation,
+            "aspect_ratio": aspect_ratio,
+            "width": width,
+            "height": height,
         }
     }
 
@@ -1078,6 +1105,32 @@ async def _nomad_studio_refine_image_impl(
                 "scale": scale_pct,
                 "expand_percent": expand_pct,
             }
+
+        try:
+            advanced_values.update(
+                await variations.advanced_values(_client, refine_action.workflow_file, variation))
+        except variations.VariationError as exc:
+            return [TextContent(type="text", text=f"NO SE HA HECHO NADA TODAVIA: {exc}.")]
+
+        if aspect_ratio or width or height:
+            if not refine_action.accepts_output_size:
+                debug["output_size_ignored"] = "esta accion no cambia la forma de salida"
+            elif width or height:
+                if not (width and height) or width <= 0 or height <= 0:
+                    return [TextContent(type="text", text=(
+                        "NO SE HA HECHO NADA TODAVIA: 'width' y 'height' van juntos (los dos o ninguno)."))]
+                advanced_values[refine_action.output_width_key] = max(64, round(width / 16) * 16)
+                advanced_values[refine_action.output_height_key] = max(64, round(height / 16) * 16)
+            elif aspect_ratio.strip().lower() not in ("original", "same", "input"):
+                try:
+                    ratio_w, ratio_h = _resolve_aspect(aspect_ratio)
+                except ValueError as exc:
+                    return [TextContent(type="text", text=f"NO SE HA HECHO NADA TODAVIA: {exc}.")]
+                # The app keeps the source's pixel count in the new shape
+                # (refine_routes._apply_output_aspect) — the ratio is all it needs.
+                advanced_values["_output.aspect"] = f"{ratio_w}:{ratio_h}"
+                advanced_values["_output.width_key"] = refine_action.output_width_key
+                advanced_values["_output.height_key"] = refine_action.output_height_key
 
         debug["advancedValues"] = advanced_values
 

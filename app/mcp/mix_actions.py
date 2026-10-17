@@ -18,8 +18,10 @@ variante "Quick" sin eso para la composicion multi-referencia."""
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
+
+from app.mcp import variations
 
 if TYPE_CHECKING:
     from app.mcp.nomad_client import NomadClient
@@ -55,6 +57,8 @@ class MixAction:
     width_key: str | None = None
     height_key: str | None = None
     default_aspect: tuple[int, int] = (1, 1)
+    # Variaciones del workflow ('normal', 'turbo'...), de su analysis.
+    variations: tuple[str, ...] = ()
 
     @property
     def required_slots(self) -> list[MixSlot]:
@@ -181,6 +185,15 @@ async def get_catalog(client: "NomadClient") -> dict[str, MixAction]:
             action = None
         if action is not None:
             catalog[action.flow_id] = action
+    by_file: dict[str, tuple[str, ...]] = {}
+    for flow_id, action in list(catalog.items()):
+        if action.workflow_file not in by_file:
+            try:
+                by_file[action.workflow_file] = await variations.available(client, action.workflow_file)
+            except Exception:
+                by_file[action.workflow_file] = ()
+        if by_file[action.workflow_file]:
+            catalog[flow_id] = replace(action, variations=by_file[action.workflow_file])
     _catalog_cache = catalog
     return catalog
 
@@ -218,4 +231,6 @@ def describe_actions(catalog: dict[str, MixAction]) -> str:
                 lines.append("    instruction: optional")
             if action.width_key:
                 lines.append("    accepts aspect_ratio")
+            if action.variations:
+                lines.append(f"    accepts variation: {', '.join(action.variations)}")
     return "\n".join(lines)

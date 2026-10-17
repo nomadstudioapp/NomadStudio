@@ -285,6 +285,21 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         var storedOffY = getVal(stepDef.id, 'field_' + f.id + '_offy');
         advVals['_preprocess.offset_x'] = (storedOffX !== undefined && storedOffX !== null && storedOffX !== '') ? Number(storedOffX) : 0;
         advVals['_preprocess.offset_y'] = (storedOffY !== undefined && storedOffY !== null && storedOffY !== '') ? Number(storedOffY) : 0;
+      } else if (f.type === 'output_aspect') {
+        // Picked in the action step's Resolution panel (flow-render-all.js);
+        // the server turns the ratio into the latent's width/height from the
+        // uploaded image's own pixel count (refine_routes._apply_output_aspect).
+        var outAspect = getVal(stepDef.id, 'field_' + f.id) || f.default || 'original';
+        var outCustom = getVal(stepDef.id, 'field_' + f.id + '_custom');
+        if (outCustom && outCustom.w > 0 && outCustom.h > 0 && f.adv_keys && f.adv_keys.width && f.adv_keys.height) {
+          // Custom width × height typed in the panel: straight to the latent.
+          advVals[f.adv_keys.width] = Number(outCustom.w);
+          advVals[f.adv_keys.height] = Number(outCustom.h);
+        } else if (outAspect !== 'original' && f.adv_keys && f.adv_keys.width && f.adv_keys.height) {
+          advVals['_output.aspect'] = outAspect;
+          advVals['_output.width_key'] = f.adv_keys.width;
+          advVals['_output.height_key'] = f.adv_keys.height;
+        }
       } else if (f.type === 'canvas_preview') {
         // no adv value
       } else if (f.type === 'seed') {
@@ -355,6 +370,9 @@ function renderWorkflowParams(stepDef, el, stepNum) {
     if (postQuantBodyRW) postQuantBodyRW.innerHTML = '';
     promptBlockRW.innerHTML = '';
     fields.forEach(function (f) {
+
+      // output_aspect renders in the Resolution panel, not here.
+      if (f.type === 'output_aspect') return;
 
       // ── engine_select (base-engine picker — Qwen 2511 Edit / Klein 9B /
       // Klein 4B, ...) — pills above the prompt. Different engines are
@@ -1891,6 +1909,9 @@ function renderWorkflowParams(stepDef, el, stepNum) {
     buildAdv();
     triggerPreviewUpdate();
   }
+
+  // The Resolution panel (output_aspect) lives outside this step's closure.
+  stepDef._rebuildAdv = buildAdv;
 
   renderFields();
 

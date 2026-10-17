@@ -817,6 +817,8 @@
       "No upscale workflows — import one first": "No upscale workflows — import one first",
       "Failed to load upscale workflows": "Failed to load upscale workflows",
       "Quantization": "Quantization",
+      "Output aspect ratio": "Output aspect ratio",
+      "Original": "Original",
       "Variation": "Variation",
       "Normal": "Normal",
       "Turbo": "Turbo",

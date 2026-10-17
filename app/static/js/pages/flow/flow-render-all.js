@@ -89,6 +89,44 @@ function _hasOwnAspectField() {
     paramsStep.fields.some(function (f) { return f.type === 'aspect_ratio'; }));
 }
 
+// Refine flows whose params step declares an `output_aspect` field (Edit Qwen
+// 2.1) let the output take another shape than the source: "original" or a
+// ratio. The server keeps the source's pixel count; the same math here only
+// feeds the readouts.
+var OUTPUT_ASPECT_RATIOS = ['9:16', '2:3', '3:4', '1:1', '4:3', '3:2', '16:9', '21:9'];
+
+function _outputAspectTarget() {
+  var paramsStep = Array.isArray(allSteps) && allSteps.find(function (s) {
+    return s.type === 'workflow_params' && Array.isArray(s.fields) &&
+      s.fields.some(function (f) { return f.type === 'output_aspect'; });
+  });
+  if (!paramsStep) return null;
+  var field = paramsStep.fields.filter(function (f) { return f.type === 'output_aspect'; })[0];
+  return { step: paramsStep, field: field };
+}
+
+function _outputAspectValue(target) {
+  return (target && (getVal(target.step.id, 'field_' + target.field.id) || target.field.default)) || 'original';
+}
+
+// Custom width × height typed in the same panel ({w, h} or null) — wins over
+// the ratio pills and goes to the graph as-is (flow-step-workflow-params.js).
+function _outputAspectCustom(target) {
+  var c = target && getVal(target.step.id, 'field_' + target.field.id + '_custom');
+  return (c && c.w > 0 && c.h > 0) ? c : null;
+}
+
+function _outputAspectDims(srcDims, aspect) {
+  if (!srcDims || !aspect || aspect === 'original') return srcDims;
+  var parts = String(aspect).split(':');
+  var ratio = (parseFloat(parts[0]) || 1) / (parseFloat(parts[1]) || 1);
+  var pixels = srcDims.w * srcDims.h;
+  return {
+    w: Math.max(16, Math.round(Math.sqrt(pixels * ratio) / 16) * 16),
+    h: Math.max(16, Math.round(Math.sqrt(pixels / ratio) / 16) * 16),
+  };
+}
+
 // Refine/Mix: single button opening a single panel — a read-only resolution
 // readout on top (nothing to pick, the image already exists), the same
 // Upscale Output grid right below it.
@@ -111,12 +149,22 @@ function _renderFixedResUpscaleControl(el) {
   var labelEl = wrap.querySelector('#ncf-fixed-res-label');
   var pickerBtn = wrap.querySelector('#ncf-fixed-res-picker-btn');
 
+  var outAspect = _outputAspectTarget();
+
   function refreshLabel() {
     if (!labelEl) return;
     var url = _resolveFixedSourceImageUrl();
     if (!url) { labelEl.textContent = '—'; return; }
     _measureImageDims(url, function (dims) {
-      labelEl.textContent = dims ? (dims.w + '×' + dims.h) : '—';
+      if (!dims) { labelEl.textContent = '—'; return; }
+      var aspect = _outputAspectValue(outAspect);
+      var custom = _outputAspectCustom(outAspect);
+      var out = _outputAspectDims(dims, aspect);
+      labelEl.textContent = custom
+        ? dims.w + '×' + dims.h + ' → ' + custom.w + '×' + custom.h
+        : aspect === 'original'
+          ? dims.w + '×' + dims.h
+          : dims.w + '×' + dims.h + ' → ' + aspect + ' · ' + out.w + '×' + out.h;
     });
   }
   window._ncfFixedResRefresh = refreshLabel;
@@ -139,6 +187,8 @@ function _renderFixedResUpscaleControl(el) {
         }
       }
 
+      if (outAspect) _buildOutputAspectBlock(body, outAspect, refreshLabel);
+
       var upBlock = document.createElement('div');
       upBlock.className = 'nsc-param-block';
       upBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Upscale output')) + '</p>';
@@ -146,6 +196,96 @@ function _renderFixedResUpscaleControl(el) {
       _buildUpscaleOutputGrid(upBlock);
     });
   });
+}
+
+// "Output aspect ratio" pills inside the Resolution panel (Original + ratios)
+// and, right below, the same Custom resolution width × height boxes as
+// Create's panel. One live cycle like Create: a pill fills the boxes with the
+// size it will produce; typing your own numbers overrides the pills.
+function _buildOutputAspectBlock(body, target, onChange) {
+  var stepId = target.step.id, fieldId = target.field.id;
+  var block = document.createElement('div');
+  block.className = 'nsc-param-block';
+  block.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Output aspect ratio')) + '</p>';
+  body.appendChild(block);
+
+  var list = document.createElement('div');
+  list.className = 'nsc-quality-list ncf-resolution-grid';
+  list.setAttribute('role', 'radiogroup');
+  block.appendChild(list);
+
+  var customBlock = document.createElement('div');
+  customBlock.className = 'nsc-param-block';
+  customBlock.style.marginTop = '1rem';
+  customBlock.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Custom resolution')) + '</p>';
+  var customRow = document.createElement('div');
+  customRow.className = 'nsc-field-row';
+  customRow.innerHTML =
+    '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="' + escHtml(tF('Width')) + '">' +
+    '<span style="color:var(--muted);flex-shrink:0;">×</span>' +
+    '<input class="nsc-input nsc-input--adv" type="number" min="64" step="8" placeholder="' + escHtml(tF('Height')) + '">';
+  customBlock.appendChild(customRow);
+  body.appendChild(customBlock);
+  var inputs = customRow.querySelectorAll('input');
+  var wInput = inputs[0], hInput = inputs[1];
+
+  function markPills() {
+    var active = _outputAspectCustom(target) ? null : _outputAspectValue(target);
+    list.querySelectorAll('.nsc-quality-btn').forEach(function (b) {
+      var a = b.getAttribute('data-aspect') === active;
+      b.classList.toggle('is-active', a); b.setAttribute('aria-checked', a ? 'true' : 'false');
+    });
+  }
+
+  // Boxes show the truth: the typed size, else what the picked ratio makes.
+  function fillBoxes() {
+    var custom = _outputAspectCustom(target);
+    if (custom) { wInput.value = custom.w; hInput.value = custom.h; return; }
+    var url = _resolveFixedSourceImageUrl();
+    if (!url) { wInput.value = ''; hInput.value = ''; return; }
+    _measureImageDims(url, function (dims) {
+      var out = _outputAspectDims(dims, _outputAspectValue(target));
+      wInput.value = out ? out.w : '';
+      hInput.value = out ? out.h : '';
+    });
+  }
+
+  function changed() {
+    if (typeof target.step._rebuildAdv === 'function') target.step._rebuildAdv();
+    if (onChange) onChange();
+  }
+
+  ['original'].concat(OUTPUT_ASPECT_RATIOS).forEach(function (value) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nsc-quality-btn';
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('data-aspect', value);
+    btn.innerHTML =
+      '<span class="nsc-quality-dot"></span>' +
+      '<span class="nsc-quality-copy"><strong>' + escHtml(value === 'original' ? tF('Original') : value) + '</strong></span>';
+    btn.addEventListener('click', function () {
+      setVal(stepId, 'field_' + fieldId, value);
+      setVal(stepId, 'field_' + fieldId + '_custom', null);
+      markPills();
+      fillBoxes();
+      changed();
+    });
+    list.appendChild(btn);
+  });
+
+  function emitCustom() {
+    var w = parseInt(wInput.value, 10);
+    var h = parseInt(hInput.value, 10);
+    setVal(stepId, 'field_' + fieldId + '_custom', (w > 0 && h > 0) ? { w: w, h: h } : null);
+    markPills();
+    changed();
+  }
+  wInput.addEventListener('input', emitCustom);
+  hInput.addEventListener('input', emitCustom);
+
+  markPills();
+  fillBoxes();
 }
 
 function renderUpscaleOutputToggle(el) {

@@ -75,6 +75,21 @@ class NomadClient:
         exists = data.get("exists")
         return exists if isinstance(exists, dict) else {}
 
+    async def workflow_analysis(self, workflow_file: str) -> dict[str, Any]:
+        """analysis de un workflow de flow (quantization, variations...), el
+        mismo que lee el panel Advanced de la app."""
+        data = await self._get("/api/models/workflow-file/analysis", {"file": workflow_file})
+        analysis = data.get("analysis")
+        return analysis if isinstance(analysis, dict) else {}
+
+    async def quantization_presence(self, options: list[dict[str, Any]]) -> dict[str, bool]:
+        """id de opcion -> ComfyUI tiene todos sus ficheros."""
+        if not options:
+            return {}
+        data = await self._post("/api/models/quantization/presence", {"options": options})
+        present = data.get("present")
+        return present if isinstance(present, dict) else {}
+
     async def generate(
         self,
         import_id: str,

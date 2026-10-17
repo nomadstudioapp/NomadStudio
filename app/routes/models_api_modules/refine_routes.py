@@ -320,12 +320,38 @@ def _pad_canvas(
     return buf.getvalue()
 
 
+def _apply_output_aspect(raw_bytes: bytes, merged_advanced: dict) -> None:
+    """Output aspect ratio picked in Refine's Resolution panel ("_output.aspect",
+    e.g. "16:9" or "2.39:1"; absent or "original" = keep the source's shape).
+    Same pixel count as the image actually sent (after any downscale), in the
+    new shape, snapped to /16 — written into the latent's width/height keys
+    the flow names in "_output.width_key"/"_output.height_key"."""
+    aspect = str(merged_advanced.get("_output.aspect") or "").strip().lower()
+    width_key = str(merged_advanced.get("_output.width_key") or "").strip()
+    height_key = str(merged_advanced.get("_output.height_key") or "").strip()
+    if not aspect or aspect == "original" or not width_key or not height_key:
+        return
+    try:
+        num, den = (float(p) for p in aspect.split(":", 1))
+        ratio = num / den
+        with Image.open(io.BytesIO(raw_bytes)) as img:
+            src_w, src_h = img.size
+    except Exception:
+        return
+    if ratio <= 0 or src_w <= 0 or src_h <= 0:
+        return
+    pixels = src_w * src_h
+    merged_advanced[width_key] = max(16, round((pixels * ratio) ** 0.5 / 16) * 16)
+    merged_advanced[height_key] = max(16, round((pixels / ratio) ** 0.5 / 16) * 16)
+
+
 def _apply_preprocess(
     raw_bytes: bytes,
     mime: str,
     raw_workflow: dict,
     merged_advanced: dict,
 ) -> tuple[bytes, str]:
+    _apply_output_aspect(raw_bytes, merged_advanced)
     preprocess = _get_flow_preprocess(raw_workflow)
     if not preprocess:
         return raw_bytes, mime

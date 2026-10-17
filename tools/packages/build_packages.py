@@ -2536,7 +2536,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.5"  # 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
+REFINE_PILOT_VERSION = "0.1.6"  # 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/

@@ -133,6 +133,10 @@ def write_cover(product: dict, dest: Path) -> None:
 def main() -> None:
     listings = json.loads(LISTINGS.read_text(encoding="utf-8"))
     (OUT / "covers").mkdir(parents=True, exist_ok=True)
+    previous: dict[str, list[str]] = {}
+    if (OUT / "catalog.json").is_file():
+        for old in json.loads((OUT / "catalog.json").read_text(encoding="utf-8")).get("products", []):
+            previous[old["id"]] = old.get("sha256") or []
     products = []
     for p in listings["products"]:
         if not p.get("kofi_url"):
@@ -165,6 +169,9 @@ def main() -> None:
                 entry["includes"] = p.get("includes") or []
                 inner = [n for n in names if n.lower().endswith(".zip")]
                 entry["sha256"] += [sha256(zf.read(n)) for n in inner]
+        # Earlier uploads stay official: buyers keep the zip they downloaded,
+        # and a rebuilt pack must not turn theirs into an "unofficial" one.
+        entry["sha256"] += [h for h in previous.get(p["id"], []) if h not in entry["sha256"]]
         write_cover(p, OUT / entry["cover"])
         products.append(entry)
         print(f"{p['id']:38} {', '.join(entry['tabs']):18} {len(entry['sha256'])} hash")

@@ -34,6 +34,9 @@ function renderWorkflowParams(stepDef, el, stepNum) {
   var advFieldsRW = fields.filter(function (f) { return f.advanced === true && f.advanced_group !== 'after_quant'; });
   var postQuantFieldsRW = fields.filter(function (f) { return f.advanced === true && f.advanced_group === 'after_quant'; });
   var paramsBodyRW = null; // container advanced-flagged fields render into (see renderFields)
+  var variationListElRW = null; // Advanced › Variation pills (Normal / Turbo …)
+  var _quantInfoRW = null;      // analysis.quantization of the current graph
+  var _variationRW = null;      // selected entry of _quantInfoRW.variations, or null
   var postQuantBodyRW = null; // container for advanced_group: 'after_quant' fields
   var advRowRW = null, advBtnRW = null;
 
@@ -84,6 +87,18 @@ function renderWorkflowParams(stepDef, el, stepNum) {
 
     var quantBlockRW = null, quantListElRW = null;
     if (_quantEligibleRW) {
+      // Variation (Normal / Turbo …) — hidden unless the graph's config
+      // declares variations; it decides what Quantization below lists.
+      var variationBlockRW = document.createElement('div');
+      variationBlockRW.className = 'nsc-param-block';
+      variationBlockRW.style.display = 'none';
+      variationBlockRW.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Variation')) + '</p>';
+      variationListElRW = document.createElement('div');
+      variationListElRW.className = 'nsc-quality-list';
+      variationListElRW.setAttribute('role', 'radiogroup');
+      variationBlockRW.appendChild(variationListElRW);
+      panelBlocksRW.push(variationBlockRW);
+
       quantBlockRW = document.createElement('div');
       quantBlockRW.className = 'nsc-param-block';
       quantBlockRW.innerHTML = '<p class="nsc-param-title">' + escHtml(tF('Quantization')) + '</p>';
@@ -119,12 +134,9 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
           if (seq !== _quantLoadSeqRW) return;
-          var analysis = res && res.analysis;
-          var record = analysis ? { analysis: analysis } : null;
-          buildQuantizationList(record, quantListElRW, buildAdv);
+          _setQuantAnalysisRW(res && res.analysis);
           var hasQuant = !!selectedQuantizationValues;
           if (hasQuant) advRowRW.style.display = '';
-          buildAdv();
         })
         .catch(function () {});
     };
@@ -173,6 +185,41 @@ function renderWorkflowParams(stepDef, el, stepNum) {
       lpAside.hidden = false;
       _buildLivePreviewPanel(stepDef, lpAside, function (fn) { _scheduleLivePreview = fn; });
     }
+  }
+
+  // A new graph analysis arrived (initial load or engine switch): rebuild
+  // Variation, then Quantization from the selected variation's precisions.
+  function _setQuantAnalysisRW(analysis) {
+    _quantInfoRW = (analysis && analysis.quantization) || null;
+    _variationRW = buildVariationList(_quantInfoRW, variationListElRW,
+      getVal(stepDef.id, 'variation_id'), function (v) { _applyVariationRW(v, true); });
+    _applyVariationRW(_variationRW, false);
+  }
+
+  // Quantization lists only the variation's precisions (INT8 stays INT8 when
+  // both have it). A user's pick also moves the Steps field to the
+  // variation's own count — visible, and still editable afterwards.
+  function _applyVariationRW(variation, isUserChange) {
+    _variationRW = variation || null;
+    var quant = _quantInfoRW;
+    if (quant && _variationRW) quant = Object.assign({}, quant, { options: _variationRW.options });
+    buildQuantizationList(quant ? { analysis: { quantization: quant } } : null, quantListElRW, buildAdv);
+    if (isUserChange && _variationRW) {
+      setVal(stepDef.id, 'variation_id', _variationRW.id);
+      var stepsField = _variationStepsFieldRW();
+      if (stepsField && _variationRW.steps) {
+        setVal(stepDef.id, 'field_' + stepsField.id, _variationRW.steps);
+        renderFields(); // repaints the Steps input; ends in buildAdv()
+        return;
+      }
+    }
+    buildAdv();
+  }
+
+  function _variationStepsFieldRW() {
+    var key = _quantInfoRW && _quantInfoRW.stepsTargetKey;
+    if (!key) return null;
+    return fields.filter(function (f) { return f.adv_key === key; })[0] || null;
   }
 
   var previewUpdateFn = null;
@@ -292,6 +339,12 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         advVals[k] = selectedQuantizationValues[k];
       });
     }
+    // A variation with its own step count and no Steps field to show it in
+    // still has to reach the sampler.
+    if (_variationRW && _variationRW.steps && !_variationStepsFieldRW() &&
+        _quantInfoRW && _quantInfoRW.stepsTargetKey) {
+      advVals[_quantInfoRW.stepsTargetKey] = Number(_variationRW.steps);
+    }
     setVal(stepDef.id, 'adv_values', advVals);
     if (_scheduleLivePreview) _scheduleLivePreview();
   }
@@ -407,10 +460,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             fetch('/api/models/workflow-file/analysis?file=' + encodeURIComponent(eng.workflow_file))
               .then(function (r) { return r.ok ? r.json() : null; })
               .then(function (res) {
-                var analysis = res && res.analysis;
-                var record = analysis ? { analysis: analysis } : null;
-                buildQuantizationList(record, quantListElRW, buildAdv);
-                buildAdv();
+                _setQuantAnalysisRW(res && res.analysis);
                 triggerPreviewUpdate();
               })
               .catch(function () { buildAdv(); triggerPreviewUpdate(); });

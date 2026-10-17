@@ -49,6 +49,27 @@ def _quantization_entry_to_option(level_key: str, label: str, raw: Any) -> dict[
     return {"id": level_key, "label": label, "unet_name": filename}
 
 
+def _quantization_map_to_options(quant_raw: Any) -> list[dict[str, str]]:
+    """Every level of one ``quantization`` map as options, standard levels
+    (INT4/INT8/FP8) first."""
+    if not isinstance(quant_raw, dict):
+        return []
+    options: list[dict[str, str]] = []
+    for level in _QUANTIZATION_ORDER:
+        option = _quantization_entry_to_option(level, _QUANTIZATION_LABELS[level], quant_raw.get(level))
+        if option:
+            options.append(option)
+    # Preserve any additional, non-standard levels the config might define.
+    for level, raw in quant_raw.items():
+        level_key = str(level).strip().lower()
+        if level_key in _QUANTIZATION_ORDER:
+            continue
+        option = _quantization_entry_to_option(level_key, level_key.upper(), raw)
+        if option:
+            options.append(option)
+    return options
+
+
 def _extract_quantization_options(
     workflow: dict[str, Any],
     config_data: dict[str, Any] | None,
@@ -65,6 +86,13 @@ def _extract_quantization_options(
     dual-branch CFG) — in that case the returned dict also carries
     ``clipTargetKey`` / ``unconditionalTargetKey`` so the frontend swaps all
     the relevant loaders together.
+
+    An optional ``variations: {id: {label, steps, quantization}}`` block adds
+    alternative checkpoints of the same graph (e.g. Qwen Image 2.1 Turbo):
+    the result then carries ``variations`` — an implicit "normal" one with the
+    top-level options and the sampler's own steps, then each declared one with
+    its own options and steps — plus ``stepsTargetKey``. The frontend shows
+    them as a Variation picker that decides what Quantization lists.
 
     Returns ``None`` when the workflow has no quantization config or no
     UNETLoader node — existing workflows are unaffected."""
@@ -92,31 +120,87 @@ def _extract_quantization_options(
     )
     target_key = next((k for k in unet_keys if k != unconditional_key), unet_keys[0])
 
-    options: list[dict[str, str]] = []
-    for level in _QUANTIZATION_ORDER:
-        option = _quantization_entry_to_option(level, _QUANTIZATION_LABELS[level], quant_raw.get(level))
-        if option:
-            options.append(option)
-    # Preserve any additional, non-standard levels the config might define.
-    for level, raw in quant_raw.items():
-        level_key = str(level).strip().lower()
-        if level_key in _QUANTIZATION_ORDER:
-            continue
-        option = _quantization_entry_to_option(level_key, level_key.upper(), raw)
-        if option:
-            options.append(option)
-
+    options = _quantization_map_to_options(quant_raw)
     if not options:
         return None
 
     result: dict[str, Any] = {"targetKey": target_key, "options": options}
-    if any("clip_name" in opt for opt in options):
+    variations = _extract_variations(workflow, config_data, options)
+    every_option = options + [opt for v in variations for opt in v["options"]]
+    if any("clip_name" in opt for opt in every_option):
         clip_keys = _extract_clip_loader_keys(workflow)
         if clip_keys:
             result["clipTargetKey"] = clip_keys[0]
-    if unconditional_key and any("unet_unconditional_name" in opt for opt in options):
+    if unconditional_key and any("unet_unconditional_name" in opt for opt in every_option):
         result["unconditionalTargetKey"] = unconditional_key
+    if variations:
+        result["variations"] = variations
+        steps_key = _sampler_steps_key(workflow)
+        if steps_key:
+            result["stepsTargetKey"] = steps_key
     return result
+
+
+def _extract_variations(
+    workflow: dict[str, Any],
+    config_data: dict[str, Any],
+    normal_options: list[dict[str, str]],
+) -> list[dict[str, Any]]:
+    """``config.variations`` as a list, the implicit "normal" first. Empty
+    when the config declares no usable variation."""
+    raw_variations = config_data.get("variations")
+    if not isinstance(raw_variations, dict):
+        return []
+    declared: list[dict[str, Any]] = []
+    for var_id, raw in raw_variations.items():
+        if not isinstance(raw, dict):
+            continue
+        var_options = _quantization_map_to_options(raw.get("quantization"))
+        if not var_options:
+            continue
+        variation: dict[str, Any] = {
+            "id": str(var_id).strip().lower(),
+            "label": str(raw.get("label") or var_id).strip(),
+            "options": var_options,
+        }
+        steps = _positive_int(raw.get("steps"))
+        if steps:
+            variation["steps"] = steps
+        declared.append(variation)
+    if not declared:
+        return []
+    normal: dict[str, Any] = {"id": "normal", "label": "Normal", "options": normal_options}
+    steps_key = _sampler_steps_key(workflow)
+    if steps_key:
+        node = workflow.get(steps_key.split(".", 1)[0]) or {}
+        steps = _positive_int((node.get("inputs") or {}).get("steps"))
+        if steps:
+            normal["steps"] = steps
+    return [normal] + declared
+
+
+def _positive_int(value: Any) -> int:
+    try:
+        number = int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
+
+
+def _sampler_steps_key(workflow: dict[str, Any]) -> str | None:
+    """``"<node id>.steps"`` of the graph's sampler (KSampler, or the
+    BasicScheduler of a SamplerCustomAdvanced chain) — where a variation's
+    own step count goes."""
+    if not isinstance(workflow, dict):
+        return None
+    for class_types in (("KSampler", "KSamplerAdvanced"), ("BasicScheduler",)):
+        for node_id, node in workflow.items():
+            if not isinstance(node, dict) or node.get("class_type") not in class_types:
+                continue
+            inputs = node.get("inputs")
+            if isinstance(inputs, dict) and "steps" in inputs:
+                return f"{node_id}.steps"
+    return None
 
 
 def _normalize_quality_token(value: Any) -> str:

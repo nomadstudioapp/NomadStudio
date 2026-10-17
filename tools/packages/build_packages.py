@@ -673,6 +673,20 @@ QWEN_IMAGE_21_TURBO_QUANTIZATION = {
 }
 
 
+# Edit graphs (Edit Qwen 2.1 and every flow sharing it, Multi-reference
+# Compose) also offer the Turbo checkpoint as a "variation": Advanced shows
+# Variation (Normal / Turbo) above Quantization, the variation picks which
+# set of precisions Quantization lists and moves the Steps field to its own
+# count (workflow_quality.py's variations + stepsTargetKey). Same graph and
+# text encoder, only the diffusion model changes. Measured 2026-10-17 at
+# 1344x768 on a 4060 Ti: edit 41 s -> 20 s, multi-reference 77 s -> 40 s,
+# same identity. "Normal" is implicit (the top-level quantization) and stays
+# the default.
+QWEN_IMAGE_21_EDIT_VARIATIONS = {
+    "turbo": {"label": "Turbo", "steps": 8, "quantization": QWEN_IMAGE_21_TURBO_QUANTIZATION},
+}
+
+
 def _qwen_image_21_config_node(quantization: dict = QWEN_IMAGE_21_QUANTIZATION, **extra) -> dict:
     return {
         "inputs": {"value": json.dumps({**extra, "quantization": quantization})},
@@ -1203,7 +1217,7 @@ def _text_editor_klein9b_flow() -> dict:
 
 def _qwen_image_21_edit_workflow() -> dict:
     return {
-        "config": _qwen_image_21_config_node(),
+        "config": _qwen_image_21_config_node(variations=QWEN_IMAGE_21_EDIT_VARIATIONS),
         "2": {
             "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"},
             "class_type": "VAELoader",

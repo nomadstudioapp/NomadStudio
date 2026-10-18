@@ -1058,6 +1058,8 @@ async def _nomad_studio_refine_image_impl(
             debug["regions_ignored"] = "esta accion no usa zonas marcadas"
 
         advanced_values: dict[str, Any] = dict(refine_action.extra_advanced_values)
+        for seed_key in refine_action.seed_keys:
+            advanced_values[seed_key] = secrets.randbelow(2**48)
         if refine_action.prompt_adv_key:
             advanced_values[refine_action.prompt_adv_key] = instruction or refine_action.default_prompt
             if refine_action.needs_region and regions:

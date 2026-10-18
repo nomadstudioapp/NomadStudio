@@ -60,6 +60,10 @@ class RefineAction:
     output_height_key: str | None = None
     # Variaciones del workflow ('normal', 'turbo'...), de su analysis.
     variations: tuple[str, ...] = ()
+    # Campos seed del flow: reciben una semilla nueva en cada llamada (como
+    # hace la UI). Sin esto se usaba la fija guardada en el workflow y todas
+    # las ediciones repetian semilla (y los mismos fallos).
+    seed_keys: tuple[str, ...] = ()
 
     @property
     def accepts_output_size(self) -> bool:
@@ -137,9 +141,15 @@ def _classify_flow(flow_entry: dict[str, Any]) -> RefineAction | None:
     prompt_fields = [f for f in fields if f.get("type") in _PROMPT_TYPES]
     other_fields = [f for f in fields if f.get("type") not in _PROMPT_TYPES]
 
+    seed_keys: list[str] = []
     for f in other_fields:
         ftype = f.get("type")
         if ftype in _SKIP_TYPES:
+            continue
+        if ftype == "seed":
+            if not f.get("adv_key"):
+                return None
+            seed_keys.append(f["adv_key"])
             continue
         if ftype == _OUTPUT_ASPECT_TYPE:
             adv_keys = f.get("adv_keys") or {}
@@ -228,6 +238,7 @@ def _classify_flow(flow_entry: dict[str, Any]) -> RefineAction | None:
         region_shape=region_shape,
         output_width_key=output_width_key,
         output_height_key=output_height_key,
+        seed_keys=tuple(seed_keys),
     )
 
 

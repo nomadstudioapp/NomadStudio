@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 import secrets
 import sys
 from typing import Annotated, Any
@@ -924,6 +925,8 @@ async def nomad_studio_add_to_session(
     return [TextContent(type="text", text=text)]
 
 
+_REFINE_SEED_RE = re.compile(r"\s*--(?:same)?seed[\s=]+(\d+)\b", re.IGNORECASE)
+
 _OUTPAINT_POSITIONS = {
     "center", "top", "bottom", "left", "right",
     "top-left", "top-right", "bottom-left", "bottom-right",
@@ -980,11 +983,16 @@ async def _nomad_studio_refine_image_impl(
         "pixeles, solo si el usuario da un tamano concreto (ej. '1280x720'). Va junto con 'height' "
         "(los dos o ninguno). Se redondea al multiplo de 16."))] = None,
     height: Annotated[int | None, Field(description="Alto exacto de la salida — ver 'width'.")] = None,
+    seed: Annotated[int | None, Field(description=(
+        "Semilla exacta, SOLO para repetir o variar un retoque anterior (cada respuesta dice la "
+        "semilla usada). Misma imagen + accion + instruccion + semilla = el mismo resultado. "
+        "Tambien vale '--seed 1234' al final de 'instruction'. Vacio = aleatoria (lo normal)."))] = None,
 ) -> list[TextContent | ImageContent]:
     agent_name = "unknown"
     agent_slug = "unknown"
     debug: dict[str, Any] = {
         "input": {
+            "seed": seed,
             "action": action,
             "filename": filename,
             "instruction": instruction,
@@ -1057,9 +1065,20 @@ async def _nomad_studio_refine_image_impl(
         elif regions:
             debug["regions_ignored"] = "esta accion no usa zonas marcadas"
 
+        # "--seed 1234" at the end of the instruction, as in create_image; it
+        # wins over the 'seed' argument.
+        seed_match = _REFINE_SEED_RE.search(instruction or "")
+        if seed_match:
+            seed = int(seed_match.group(1))
+            instruction = (instruction[:seed_match.start()] + instruction[seed_match.end():]).strip() or None
+        applied_seed = None
+        if refine_action.seed_keys:
+            applied_seed = max(0, int(seed)) if seed is not None else secrets.randbelow(2**48)
+        elif seed is not None:
+            debug["seed_ignored"] = "esta accion no usa semilla (no genera con difusion)"
         advanced_values: dict[str, Any] = dict(refine_action.extra_advanced_values)
         for seed_key in refine_action.seed_keys:
-            advanced_values[seed_key] = secrets.randbelow(2**48)
+            advanced_values[seed_key] = applied_seed
         if refine_action.prompt_adv_key:
             advanced_values[refine_action.prompt_adv_key] = instruction or refine_action.default_prompt
             if refine_action.needs_region and regions:
@@ -1160,6 +1179,7 @@ async def _nomad_studio_refine_image_impl(
         session_state.set_last_image(saved_filename)
         session_state.set_last_generation({
             "kind": "refine",
+            "seed": applied_seed,
             "action": refine_action.flow_id,
             "source_image": resolved_filename,
             "flow_label": refine_action.label,
@@ -1183,6 +1203,8 @@ async def _nomad_studio_refine_image_impl(
                 type="text",
                 text=(
                     f"Refinado con Nomad Studio — accion: {action} ({refine_action.flow_id}).{session_note}\n"
+                    + (f"Semilla usada: {applied_seed} (pasala en 'seed' para repetir este retoque "
+                       f"exacto).\n" if applied_seed is not None else "") +
                     f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"
                     f"Si tienes un navegador o visor integrado en este entorno, abrelo ahi para "
                     f"ensenarsela al usuario directamente en el chat, sin que tenga que pedirlo.\n\n"

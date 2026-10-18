@@ -9,7 +9,7 @@ Newest first. Downloads and checksums for each version are in [Releases](https:/
 - **Smart Object Removal returns the cleaned image.** It could save the preview of its selection mask (a white shape on black) instead of the result. Any workflow with a preview node now gives back the saved image, in the app and through the MCP.
 - **Smart Object Removal keeps the size of the original.** The result came back slightly resized, with transparent bands at the edges. Now it has exactly the original's size, and everything outside the selection keeps its original pixels.
 - **Previously used inputs shows each image once.** The same reference picked several times appeared once per use. Picking it again now reuses the stored copy instead of saving another one.
-- **MCP: every refine uses a new seed,** as the app does. Before, all edits made through the MCP repeated the workflow's fixed seed, and with it the same mistakes.
+- **MCP: every refine uses a new seed,** as the app does. Before, all edits made through the MCP repeated the workflow's fixed seed, and with it the same mistakes. To repeat an exact edit, pass `seed` (or end the instruction with `--seed 1234`); each answer says the seed it used.
 - **Packs:** Extract comes with the Smart Object Removal fix.
 
 ## 2026-10-17 · 1.1.1

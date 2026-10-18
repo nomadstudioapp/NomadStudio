@@ -267,9 +267,12 @@ async function pollComfy(promptId, comfyUrl) {
           if (Array.isArray(n.images)) n.images.forEach(function (img) {
             if (img.filename) images.push({ url: comfyUrl + '/view?filename=' +
               encodeURIComponent(img.filename) + '&subfolder=' + encodeURIComponent(img.subfolder || '') +
-              '&type=' + encodeURIComponent(img.type || 'output') });
+              '&type=' + encodeURIComponent(img.type || 'output'), temp: img.type === 'temp' });
           });
         });
+        // PreviewImage nodes (type "temp": mask previews…) can come before the
+        // SaveImage node; the saved outputs go first.
+        images.sort(function (a, b) { return (a.temp ? 1 : 0) - (b.temp ? 1 : 0); });
         if (!images.length) throw new Error(tF('ComfyUI finished but no images.'));
         return images;
       }

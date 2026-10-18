@@ -2270,12 +2270,21 @@ def _select_output_images(
         if images:
             return node_id, images
 
-    for node_id, node_output in outputs.items():
-        if not isinstance(node_output, dict):
-            continue
-        images = node_output.get("images", [])
-        if images:
-            return str(node_id), images
+    # A workflow can also have PreviewImage nodes (type "temp": mask previews,
+    # debug views…) that ComfyUI may list before the SaveImage node. The result
+    # is the saved output, so take those first and fall back to anything.
+    for wanted_type in ("output", None):
+        for node_id, node_output in outputs.items():
+            if not isinstance(node_output, dict):
+                continue
+            images = node_output.get("images", [])
+            if wanted_type:
+                images = [
+                    img for img in images
+                    if isinstance(img, dict) and img.get("type", "output") == wanted_type
+                ]
+            if images:
+                return str(node_id), images
 
     return None, []
 

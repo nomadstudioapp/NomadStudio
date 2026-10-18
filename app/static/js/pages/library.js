@@ -2800,15 +2800,20 @@
       var entry = data && data[promptId];
       if (entry && entry.status && entry.status.completed) {
         var filename = null, subfolder = '', type = 'output';
-        Object.keys(entry.outputs || {}).some(function (nId) {
-          var n = entry.outputs[nId];
-          if (Array.isArray(n.images) && n.images.length && n.images[0].filename) {
-            filename = n.images[0].filename;
-            subfolder = n.images[0].subfolder || '';
-            type = n.images[0].type || 'output';
+        // Saved outputs first: PreviewImage nodes (type "temp": mask previews…)
+        // can be listed before the SaveImage node.
+        [false, true].some(function (allowTemp) {
+          return Object.keys(entry.outputs || {}).some(function (nId) {
+            var n = entry.outputs[nId];
+            var img = Array.isArray(n.images) && n.images.find(function (im) {
+              return im.filename && (allowTemp || im.type !== 'temp');
+            });
+            if (!img) return false;
+            filename = img.filename;
+            subfolder = img.subfolder || '';
+            type = img.type || 'output';
             return true;
-          }
-          return false;
+          });
         });
         if (!filename) throw new Error(tF('ComfyUI finished but returned no image.'));
         return comfyUrl + '/view?filename=' + encodeURIComponent(filename) +

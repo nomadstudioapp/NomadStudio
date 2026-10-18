@@ -119,6 +119,13 @@ class NomadClient:
             payload["advancedValues"] = advanced_values
         return await self._post("/api/models/refine/generate", payload)
 
+    async def submit_multimask(self, image_data_url: str, text: str) -> dict[str, Any]:
+        """Smart Selection con una lista separada por comas: una mascara y un
+        recorte por termino mas una imagen compuesta (POST
+        /api/models/refine/multimask, NomadStudio#40)."""
+        return await self._post("/api/models/refine/multimask",
+                                {"imageDataUrl": image_data_url, "text": text})
+
     async def submit_mix(
         self,
         workflow_file: str,

@@ -925,6 +925,21 @@ async def nomad_studio_add_to_session(
     return [TextContent(type="text", text=text)]
 
 
+def _multimask_summary(result: dict[str, Any], viewer: str) -> str:
+    """Una linea por termino de un Smart Selection por comas: mascara y recorte
+    (ficheros del album, usables como 'filename' en otras llamadas)."""
+    lines = ["Imagen compuesta (cada termino en su color). Por termino:"]
+    for m in result.get("masks") or []:
+        if not m.get("found"):
+            lines.append(f"- {m.get('term')}: no encontrado")
+            continue
+        lines.append(f"- {m.get('term')}: mascara {m.get('mask')} "
+                     f"({_client.image_url(m.get('mask'), viewer_id=viewer)}), "
+                     f"recorte {m.get('cutout')} ({_client.image_url(m.get('cutout'), viewer_id=viewer)}), "
+                     f"caja {m.get('bbox')}")
+    return "\n".join(lines) + "\n"
+
+
 _REFINE_SEED_RE = re.compile(r"\s*--(?:same)?seed[\s=]+(\d+)\b", re.IGNORECASE)
 
 _OUTPAINT_POSITIONS = {
@@ -950,7 +965,8 @@ async def _nomad_studio_refine_image_impl(
         "Detalle en ingles sobre COMO aplicar la accion (ej. relight: 'backlit rim light'; quitar "
         "un objeto: 'the red car'). Sin detalle del usuario, dejalo vacio: se usa un valor por "
         "defecto razonable. En las acciones con 'regions' es obligatorio y nombra cada zona por su "
-        "color ('the red rectangle')."))] = None,
+        "color ('the red rectangle'). En refine.smart_selection, varios objetos separados por comas "
+        "('crow, pig, girl') dan una mascara y un recorte por objeto mas una imagen compuesta."))] = None,
     position: Annotated[str | None, Field(description=(
         "SOLO para action='refine.outpaint'. Donde queda la imagen ORIGINAL en el lienzo nuevo: "
         "center, top, bottom, left, right, top-left, top-right, bottom-left o bottom-right. "
@@ -1160,15 +1176,23 @@ async def _nomad_studio_refine_image_impl(
             image_data_url = annotate_data_url(image_data_url, regions, refine_action.region_shape)
             debug["regions_drawn"] = f"{len(regions)} x {refine_action.region_shape}"
 
+        multimask_terms = [t.strip() for t in (instruction or "").split(",") if t.strip()]
+        is_multimask = (refine_action.workflow_file.endswith("refine_smart_selection.json")
+                        and len(multimask_terms) > 1)
         request_payload = {"workflowFile": refine_action.workflow_file, "advancedValues": advanced_values}
+        if is_multimask:
+            request_payload = {"multimask": instruction}
         debug["request"] = request_payload
         _log(f"REQUEST: {json.dumps(request_payload, ensure_ascii=False)}")
 
-        result = await _client.submit_refine(
-            workflow_file=refine_action.workflow_file,
-            image_data_url=image_data_url,
-            advanced_values=advanced_values,
-        )
+        if is_multimask:
+            result = await _client.submit_multimask(image_data_url, instruction)
+        else:
+            result = await _client.submit_refine(
+                workflow_file=refine_action.workflow_file,
+                image_data_url=image_data_url,
+                advanced_values=advanced_values,
+            )
         debug["response"] = result
         _log(f"RESPONSE: {json.dumps(result, ensure_ascii=False)}")
 
@@ -1203,6 +1227,7 @@ async def _nomad_studio_refine_image_impl(
                 type="text",
                 text=(
                     f"Refinado con Nomad Studio — accion: {action} ({refine_action.flow_id}).{session_note}\n"
+                    + (_multimask_summary(result, agent_slug) if is_multimask else "")
                     + (f"Semilla usada: {applied_seed} (pasala en 'seed' para repetir este retoque "
                        f"exacto).\n" if applied_seed is not None else "") +
                     f"Enlace directo a la imagen (sin login, no requiere sesion): {public_url}\n"

@@ -872,6 +872,182 @@ def generate_refine_image():
     return _run_and_save(data, comfy_api_url, prepared_workflow, workflow_file, merged_advanced, "refine")
 
 
+# ── Multimask (NomadStudio#40) ───────────────────────────────────────────────
+# Smart Selection with a comma list ("crow, pig, girl"): SAM3 merges every
+# term into one selection, so each term gets its own run here, and the results
+# come back as one mask + one cutout per term plus a composite to review them.
+_SMART_SELECTION_WF = "nomad.refine-extract/workflows/refine/refine_smart_selection.json"
+_MULTIMASK_COLORS = [(255, 0, 200), (0, 210, 255), (90, 255, 60), (255, 170, 0),
+                     (160, 90, 255), (255, 60, 60), (0, 255, 170), (255, 255, 0)]
+_MULTIMASK_MAX_TERMS = 8
+
+
+def _split_mask_terms(text: str) -> list[str]:
+    """'crow, pig , girl' -> ['crow', 'pig', 'girl'] (empties and repeats dropped).
+    A SAM3 count cap like 'eye:2' stays with its term."""
+    seen: list[str] = []
+    for part in str(text or "").split(","):
+        term = part.strip()
+        if term and term.lower() not in (s.lower() for s in seen):
+            seen.append(term)
+    return seen
+
+
+def _queue_and_fetch(comfy_api_url: str, prepared_workflow: dict) -> bytes:
+    """Run a prepared workflow on ComfyUI and return its saved output image."""
+    with gpu_coordinator.held("comfy"):
+        prompt_response = http_json(
+            f"{comfy_api_url}/prompt", method="POST",
+            payload={"prompt": for_comfy(prepared_workflow, comfy_api_url), "client_id": uuid.uuid4().hex},
+            timeout=30,
+        )
+        prompt_id = str(prompt_response.get("prompt_id", "")).strip()
+        if not prompt_id:
+            raise RuntimeError(f"ComfyUI rejected prompt: {prompt_response}")
+        history_payload: dict = {}
+        for _ in range(720):
+            time.sleep(0.5)
+            history_payload = http_json(f"{comfy_api_url}/history/{prompt_id}", timeout=120)
+            if isinstance(history_payload, dict) and history_payload.get(prompt_id, {}).get("outputs"):
+                break
+    _node, entries = _select_output_images(history_payload, prompt_id, [])
+    if not entries:
+        raise RuntimeError("No output image found in ComfyUI history")
+    first = entries[0]
+    query = urlencode({"filename": first.get("filename", ""), "subfolder": first.get("subfolder", ""),
+                       "type": first.get("type", "output")})
+    return http_bytes(f"{comfy_api_url}/view?{query}", timeout=180)
+
+
+def _png_bytes(img: Image.Image) -> bytes:
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return buf.getvalue()
+
+
+def _multimask_composite(source: Image.Image, results: list[dict]) -> Image.Image:
+    """The source with each found term tinted in its colour, outlined, and a
+    legend (colour swatch + term) in the top-left corner."""
+    from PIL import ImageDraw, ImageFilter, ImageFont
+
+    out = source.convert("RGBA")
+    for r in results:
+        mask = r.get("_mask")
+        if mask is None:
+            continue
+        color = tuple(r["color"])
+        tint = Image.new("RGBA", out.size, color + (0,))
+        tint.putalpha(mask.point(lambda v: int(v * 0.5)))
+        out.alpha_composite(tint)
+        edge = mask.point(lambda v: 255 if v > 127 else 0).filter(ImageFilter.FIND_EDGES).filter(ImageFilter.MaxFilter(5))
+        line = Image.new("RGBA", out.size, color + (0,))
+        line.putalpha(edge)
+        out.alpha_composite(line)
+
+    size = max(16, out.width // 70)
+    try:
+        font = ImageFont.load_default(size=size)
+    except TypeError:
+        font = ImageFont.load_default()
+    rows = [(r["term"] + ("" if r["found"] else "  (not found)"), tuple(r["color"])) for r in results]
+    pad, sw = size // 2, size
+    widths = [ImageDraw.Draw(out).textlength(t, font=font) for t, _ in rows]
+    box_w = int(pad * 3 + sw + max(widths or [0]))
+    box_h = int(pad + len(rows) * (size + pad))
+    legend = Image.new("RGBA", out.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(legend)
+    d.rounded_rectangle((pad, pad, pad + box_w, pad + box_h), radius=pad, fill=(0, 0, 0, 170))
+    y = pad * 2
+    for (text, color), _w in zip(rows, widths):
+        d.rectangle((pad * 2, y, pad * 2 + sw, y + sw), fill=color + (255,))
+        d.text((pad * 3 + sw, y - size // 8), text, font=font, fill=(255, 255, 255, 255))
+        y += size + pad
+    out.alpha_composite(legend)
+    return out.convert("RGB")
+
+
+@models_api_bp.post("/models/refine/multimask")
+def generate_refine_multimask():
+    """Body: {imageDataUrl, text: "crow, pig, girl", threshold?, refineIterations?}.
+    Returns {ok, savedFilename (composite), masks: [{term, found, mask, cutout,
+    bbox, color}]} — mask/cutout are saved filenames like any generation."""
+    payload = request.get_json(silent=True) or {}
+    image_data_url = str(payload.get("imageDataUrl", "")).strip()
+    terms = _split_mask_terms(payload.get("text", ""))
+    if not image_data_url:
+        return jsonify({"error": "imageDataUrl is required"}), 400
+    if not terms:
+        return jsonify({"error": "text is required (one or more terms, separated by commas)"}), 400
+    if len(terms) > _MULTIMASK_MAX_TERMS:
+        return jsonify({"error": f"At most {_MULTIMASK_MAX_TERMS} terms per run"}), 400
+
+    try:
+        raw_workflow = _load_workflow_file(_SMART_SELECTION_WF)
+    except (ValueError, FileNotFoundError) as exc:
+        return jsonify({"error": f"Workflow file error: {exc}"}), 400
+    data = _ensure_registry()
+    try:
+        comfy_api_url = _safe_comfy_url(
+            str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip() or DEFAULT_COMFY_URL)
+        mime, raw_bytes = _parse_image_data_url(image_data_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    source = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
+    image_ext = "png" if mime == "image/png" else ("jpg" if mime == "image/jpeg" else "webp")
+    try:
+        upload = http_multipart_upload_image(f"{comfy_api_url}/upload/image",
+                                             f"oj-multimask-{uuid.uuid4().hex}.{image_ext}", raw_bytes, mime)
+        comfy_filename = str(upload.get("name", "")).strip()
+    except Exception as exc:
+        return jsonify({"error": f"ComfyUI image upload failed: {exc}"}), 502
+
+    base_values = {
+        "4.threshold": payload.get("threshold", 0.5),
+        "4.refine_iterations": payload.get("refineIterations", 2),
+        "4.individual_masks": False,
+    }
+    results: list[dict] = []
+    try:
+        for i, term in enumerate(terms):
+            workflow = deepcopy(raw_workflow)
+            _apply_advanced_values(workflow, {**base_values, "3.text": term})
+            if not _inject_uploaded_image_into_workflow(workflow, comfy_filename):
+                return jsonify({"error": "Workflow has no LoadImage node for input image"}), 400
+            _apply_comfy_output_policy(data, workflow)
+            holed = Image.open(io.BytesIO(_queue_and_fetch(comfy_api_url, workflow))).convert("RGBA")
+            mask = holed.getchannel("A").point(lambda v: 255 - v)
+            if mask.size != source.size:
+                mask = mask.resize(source.size, Image.LANCZOS)
+            bbox = mask.point(lambda v: 255 if v > 127 else 0).getbbox()
+            coverage = sum(mask.point(lambda v: 1 if v > 127 else 0).getdata()) / (source.width * source.height)
+            found = bool(bbox) and coverage > 0.0005
+            results.append({"term": term, "found": found, "color": _MULTIMASK_COLORS[i % len(_MULTIMASK_COLORS)],
+                            "bbox": list(bbox) if found else None, "_mask": mask if found else None})
+    except Exception as exc:
+        return jsonify({"error": f"Smart Selection failed: {exc}"}), 502
+
+    meta_base = {"source": "refine-multimask", "workflow_file": _SMART_SELECTION_WF,
+                 "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    composite = _multimask_composite(source, results)
+    saved = _try_save_image_to_output_dir(
+        data, _png_bytes(composite), {**meta_base, "terms": ", ".join(terms)}, "multimask", 0)
+    masks_out = []
+    for r in results:
+        entry = {"term": r["term"], "found": r["found"], "bbox": r["bbox"], "color": r["color"],
+                 "mask": None, "cutout": None}
+        if r["found"]:
+            mask = r["_mask"]
+            meta = {**meta_base, "term": r["term"]}
+            entry["mask"] = _try_save_image_to_output_dir(data, _png_bytes(mask), meta, "mask", 0)
+            cut = source.convert("RGBA")
+            cut.putalpha(mask)
+            entry["cutout"] = _try_save_image_to_output_dir(
+                data, _png_bytes(cut.crop(tuple(r["bbox"]))), meta, "cutout", 0)
+        masks_out.append(entry)
+    return jsonify({"ok": True, "workflowFile": _SMART_SELECTION_WF, "savedFilename": saved, "masks": masks_out})
+
+
 def _run_and_save(data, comfy_api_url, prepared_workflow, workflow_file, merged_advanced, source):
     """Queue a prepared workflow on ComfyUI, wait for it and save its first
     image to the active viewer's output folder (refine/generate, mix/generate)."""

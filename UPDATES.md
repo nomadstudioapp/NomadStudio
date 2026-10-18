@@ -4,6 +4,10 @@ English · [Español](UPDATES_ES.md) · [中文](UPDATES_ZH.md) · [한국어](U
 
 Newest first. Downloads and checksums for each version are in [Releases](https://github.com/nomadstudioapp/NomadStudio/releases). The app offers each new version by itself ("Restart and update").
 
+## Next version (not released yet)
+
+- **Smart Selection: several objects at once.** Write them separated by commas (`crow, pig, girl`) and you get one mask and one cutout per object, plus a composite image with each object in its own colour and a legend to check them at a glance. Also through the MCP.
+
 ## 2026-10-18 · 1.1.2
 
 - **Smart Object Removal returns the cleaned image.** It could save the preview of its selection mask (a white shape on black) instead of the result. Any workflow with a preview node now gives back the saved image, in the app and through the MCP.

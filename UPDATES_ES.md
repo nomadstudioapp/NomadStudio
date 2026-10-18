@@ -4,6 +4,10 @@
 
 Lo más reciente, arriba. Las descargas y sumas de comprobación de cada versión están en [Releases](https://github.com/nomadstudioapp/NomadStudio/releases). La app te ofrece cada versión nueva por sí sola ("Reiniciar y actualizar").
 
+## Próxima versión (aún sin publicar)
+
+- **Selección inteligente: varios objetos a la vez.** Escríbelos separados por comas (`crow, pig, girl`) y obtienes una máscara y un recorte por objeto, más una imagen compuesta con cada objeto en su color y una leyenda para revisarlos de un vistazo. También por el MCP.
+
 ## 2026-10-18 · 1.1.2
 
 - **Borrado inteligente de objetos devuelve la imagen limpia.** Podía guardar la vista previa de la máscara de selección (una silueta blanca sobre negro) en lugar del resultado. Cualquier workflow con un nodo de vista previa devuelve ahora la imagen guardada, en la app y por el MCP.

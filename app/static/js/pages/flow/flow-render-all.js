@@ -1910,6 +1910,62 @@ async function _runRemoveChecker_REMOVED(stepDef) {
   saveSessionSnapshot();
 }
 
+// Smart Selection with a comma list ("crow, pig, girl"): one SAM3 run per term
+// on the backend (/models/refine/multimask), which saves a composite (every
+// term tinted in its colour, with a legend) plus one mask and one cutout per
+// term. The composite lands as the step's result; each mask and cutout gets its
+// own card in the feed. NomadStudio#40.
+var _MULTIMASK_WF = 'refine_smart_selection.json';
+
+function _isMultiMask(workflowFile, advancedValues) {
+  var text = String((advancedValues || {})['3.text'] || '');
+  return String(workflowFile || '').slice(-_MULTIMASK_WF.length) === _MULTIMASK_WF &&
+    text.split(',').filter(function (t) { return t.trim(); }).length > 1;
+}
+
+async function _runMultiMask(stepDef, ctx, snap) {
+  var av = snap.advancedValues || {};
+  var text = String(av['3.text'] || '');
+  _setBusyStatus(generateStatus, tF('Selecting…'));
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, text);
+  var res = await fetch('/api/models/refine/multimask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageDataUrl: snap.imageDataUrl,
+      text: text,
+      threshold: av['4.threshold'],
+      refineIterations: av['4.refine_iterations'],
+    }),
+  });
+  var data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'Smart Selection failed');
+  if (!data.savedFilename) throw new Error(tF('No output image returned from refine'));
+
+  var compositeUrl = '/api/images/' + data.savedFilename;
+  var params = buildParamsSnapshot({ kind: 'refine', prompt: text, advancedValues: av, workflowFile: snap.workflowFile });
+  setVal(stepDef.id, 'image_url', compositeUrl);
+  generatedCount++;
+  addToFeed(compositeUrl, generatedCount, pendingCard, params, snap.imageDataUrl);
+  (data.masks || []).forEach(function (m) {
+    [m.mask, m.cutout].forEach(function (file) {
+      if (!file) return;
+      var card = addGeneratingCard(generatedCount + 1, m.term);
+      generatedCount++;
+      addToFeed('/api/images/' + file, generatedCount, card, { prompt: m.term });
+    });
+  });
+
+  var missing = (data.masks || []).filter(function (m) { return !m.found; }).map(function (m) { return m.term; });
+  showResultActions(stepDef);
+  if (generateStatus) {
+    generateStatus.textContent = missing.length
+      ? '✓ ' + tF('Selected') + ' · ' + tF('Not found') + ': ' + missing.join(', ')
+      : '✓ ' + tF('Selected');
+  }
+  saveSessionSnapshot();
+}
+
 async function _runRefine(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotRefine(stepDef);
   if (snap.__invalid) throw new Error(tF('No source image selected'));
@@ -1919,6 +1975,7 @@ async function _runRefine(stepDef, ctx) {
   var imageNodeId    = snap.imageNodeId;
   var promptText     = snap.promptText;
   if (snap.promptHistoryId && promptText) pushPromptHistory(snap.promptHistoryId, promptText);
+  if (_isMultiMask(workflowFile, advancedValues)) return _runMultiMask(stepDef, ctx, snap);
 
   _setBusyStatus(generateStatus, tF('Preparing…'));
 

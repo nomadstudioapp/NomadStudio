@@ -7,6 +7,7 @@ Newest first. Downloads and checksums for each version are in [Releases](https:/
 ## Next version (not released yet)
 
 - **Smart Selection: several objects at once.** Write them separated by commas (`crow, pig, girl`) and you get one mask and one cutout per object, plus a composite image with each object in its own colour and a legend to check them at a glance. Also through the MCP.
+- **Smart Object Removal: several objects at once.** `crow, chef pig, girl` removes all of them, one after another, each with its own mask, and fills the gaps with the scene behind them. Add what they hold if it should go too (`girl, pumpkin lantern`).
 
 ## 2026-10-18 · 1.1.2
 

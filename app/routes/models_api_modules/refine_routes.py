@@ -966,6 +966,138 @@ def _multimask_composite(source: Image.Image, results: list[dict]) -> Image.Imag
     return out.convert("RGB")
 
 
+def _sam_masks(data, comfy_api_url, raw_workflow, comfy_filename, source, terms, payload) -> list[dict]:
+    """One Smart Selection (SAM3) run per term on an already-uploaded image.
+    Each result: {term, found, color, bbox, _mask (L, source size) or None}."""
+    base_values = {
+        "4.threshold": payload.get("threshold", 0.5),
+        "4.refine_iterations": payload.get("refineIterations", 2),
+        "4.individual_masks": False,
+    }
+    results: list[dict] = []
+    for i, term in enumerate(terms):
+        workflow = deepcopy(raw_workflow)
+        _apply_advanced_values(workflow, {**base_values, "3.text": term})
+        if not _inject_uploaded_image_into_workflow(workflow, comfy_filename):
+            raise RuntimeError("Workflow has no LoadImage node for input image")
+        _apply_comfy_output_policy(data, workflow)
+        holed = Image.open(io.BytesIO(_queue_and_fetch(comfy_api_url, workflow))).convert("RGBA")
+        mask = holed.getchannel("A").point(lambda v: 255 - v)
+        if mask.size != source.size:
+            mask = mask.resize(source.size, Image.LANCZOS)
+        bbox = mask.point(lambda v: 255 if v > 127 else 0).getbbox()
+        coverage = sum(mask.point(lambda v: 1 if v > 127 else 0).getdata()) / (source.width * source.height)
+        found = bool(bbox) and coverage > 0.0005
+        results.append({"term": term, "found": found, "color": _MULTIMASK_COLORS[i % len(_MULTIMASK_COLORS)],
+                        "bbox": list(bbox) if found else None, "_mask": mask if found else None})
+    return results
+
+
+def _natural_list(terms: list[str]) -> str:
+    """['crow', 'chef pig', 'girl'] -> 'the crow, the chef pig and the girl'."""
+    items = [t if t.lower().startswith(("the ", "a ", "an ")) else f"the {t}" for t in terms]
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+_SMART_FILL_WF = "nomad.refine-extract/workflows/refine/selection/refine_smart_selection_fill.json"
+
+
+@models_api_bp.post("/models/refine/multiremove")
+def generate_refine_multiremove():
+    """Smart Object Removal for several objects ("crow, chef pig, girl"): one
+    SAM3 run per term, the masks joined, and ONE Qwen fill inside that joined
+    mask (the fill workflow's own SAM3 node is bypassed by a LoadImageMask).
+    Body: {imageDataUrl, text, fillPrompt?, padding?, threshold?}. Returns
+    {ok, savedFilename, removed: [...], notFound: [...]}. NomadStudio#40."""
+    payload = request.get_json(silent=True) or {}
+    image_data_url = str(payload.get("imageDataUrl", "")).strip()
+    terms = _split_mask_terms(payload.get("text", ""))
+    if not image_data_url or not terms:
+        return jsonify({"error": "imageDataUrl and text are required"}), 400
+    if len(terms) > _MULTIMASK_MAX_TERMS:
+        return jsonify({"error": f"At most {_MULTIMASK_MAX_TERMS} terms per run"}), 400
+    try:
+        sam_workflow = _load_workflow_file(_SMART_SELECTION_WF)
+        fill_workflow = _load_workflow_file(_SMART_FILL_WF)
+    except (ValueError, FileNotFoundError) as exc:
+        return jsonify({"error": f"Workflow file error: {exc}"}), 400
+    data = _ensure_registry()
+    try:
+        comfy_api_url = _safe_comfy_url(
+            str(data.get("settings", {}).get("comfyApiUrl", DEFAULT_COMFY_URL)).strip() or DEFAULT_COMFY_URL)
+        mime, raw_bytes = _parse_image_data_url(image_data_url)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    source = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
+    ext = "png" if mime == "image/png" else ("jpg" if mime == "image/jpeg" else "webp")
+    try:
+        up = http_multipart_upload_image(f"{comfy_api_url}/upload/image",
+                                         f"oj-multiremove-{uuid.uuid4().hex}.{ext}", raw_bytes, mime)
+        comfy_filename = str(up.get("name", "")).strip()
+        results = _sam_masks(data, comfy_api_url, sam_workflow, comfy_filename, source, terms, payload)
+    except Exception as exc:
+        return jsonify({"error": f"Smart Selection failed: {exc}"}), 502
+
+    found = [r for r in results if r["found"]]
+    not_found = [r["term"] for r in results if not r["found"]]
+    if not found:
+        return jsonify({"error": "None of the objects was found: " + ", ".join(not_found)}), 422
+    # One fill per object, chained: each run removes ONE object (its own mask,
+    # "Remove the girl") from the previous result. A single fill of the joined
+    # mask makes Qwen redraw what it can still see in its reference image, and
+    # Qwen 2511 keeps white holes white, so the chained single removals (which
+    # work every time) are the reliable way. Masks come from the original.
+    current = raw_bytes
+    current_mime = mime
+    # The flow's default "what was behind it" lets Qwen put a new character or
+    # prop in the hole; removing several objects needs a stricter one.
+    fill_prompt = str(payload.get("fillPrompt") or "").strip()
+    if not fill_prompt or fill_prompt.lower().startswith("fill that area with what was behind it"):
+        fill_prompt = ("Fill that area only with the empty background that was behind it: the ground, walls, "
+                       "buildings and sky, continuing the surrounding scene with the same lighting, perspective "
+                       "and style. Do not add any new character, animal, person or object.")
+    import random
+    try:
+        for r in found:
+            ext_now = "png" if current_mime == "image/png" else ("jpg" if current_mime == "image/jpeg" else "webp")
+            img_up = http_multipart_upload_image(f"{comfy_api_url}/upload/image",
+                                                 f"oj-multiremove-{uuid.uuid4().hex}.{ext_now}", current, current_mime)
+            mask_up = http_multipart_upload_image(f"{comfy_api_url}/upload/image",
+                                                  f"oj-multiremove-mask-{uuid.uuid4().hex}.png",
+                                                  _png_bytes(r["_mask"].convert("RGB")), "image/png")
+            workflow = deepcopy(fill_workflow)
+            # A fresh seed per fill (the workflow's saved one repeats every result).
+            values = {"240.value": r["term"], "241.value": fill_prompt, "15.seed": random.randint(1, 2**48)}
+            if payload.get("padding") is not None:
+                values["114.expand"] = payload["padding"]
+            _apply_advanced_values(workflow, values)
+            # This object's mask replaces the workflow's own SAM3 selection.
+            workflow["900"] = {"class_type": "LoadImageMask",
+                               "inputs": {"image": str(mask_up.get("name", "")).strip(), "channel": "red"},
+                               "_meta": {"title": "Object mask"}}
+            for node in workflow.values():
+                inputs = node.get("inputs", {}) if isinstance(node, dict) else {}
+                for key, val in list(inputs.items()):
+                    if isinstance(val, list) and val and str(val[0]) == "99:75":
+                        inputs[key] = ["900", 0]
+            if not _inject_uploaded_image_into_workflow(workflow, str(img_up.get("name", "")).strip()):
+                return jsonify({"error": "Workflow has no LoadImage node for input image"}), 400
+            _apply_comfy_output_policy(data, workflow)
+            out = Image.open(io.BytesIO(_queue_and_fetch(comfy_api_url, workflow))).convert("RGB")
+            if out.size != source.size:
+                out = out.resize(source.size, Image.LANCZOS)
+            current, current_mime = _png_bytes(out), "image/png"
+    except Exception as exc:
+        return jsonify({"error": f"Smart Object Removal failed: {exc}"}), 502
+
+    meta = {"source": "refine", "workflow_file": _SMART_FILL_WF,
+            "advanced_values": json.dumps({"terms": ", ".join(terms)}, ensure_ascii=False),
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    saved = _try_save_image_to_output_dir(data, current, meta, "refine", 0)
+    return jsonify({"ok": True, "workflowFile": _SMART_FILL_WF, "savedFilename": saved,
+                    "removed": [r["term"] for r in found], "notFound": not_found})
+
 @models_api_bp.post("/models/refine/multimask")
 def generate_refine_multimask():
     """Body: {imageDataUrl, text: "crow, pig, girl", threshold?, refineIterations?}.
@@ -1002,28 +1134,8 @@ def generate_refine_multimask():
     except Exception as exc:
         return jsonify({"error": f"ComfyUI image upload failed: {exc}"}), 502
 
-    base_values = {
-        "4.threshold": payload.get("threshold", 0.5),
-        "4.refine_iterations": payload.get("refineIterations", 2),
-        "4.individual_masks": False,
-    }
-    results: list[dict] = []
     try:
-        for i, term in enumerate(terms):
-            workflow = deepcopy(raw_workflow)
-            _apply_advanced_values(workflow, {**base_values, "3.text": term})
-            if not _inject_uploaded_image_into_workflow(workflow, comfy_filename):
-                return jsonify({"error": "Workflow has no LoadImage node for input image"}), 400
-            _apply_comfy_output_policy(data, workflow)
-            holed = Image.open(io.BytesIO(_queue_and_fetch(comfy_api_url, workflow))).convert("RGBA")
-            mask = holed.getchannel("A").point(lambda v: 255 - v)
-            if mask.size != source.size:
-                mask = mask.resize(source.size, Image.LANCZOS)
-            bbox = mask.point(lambda v: 255 if v > 127 else 0).getbbox()
-            coverage = sum(mask.point(lambda v: 1 if v > 127 else 0).getdata()) / (source.width * source.height)
-            found = bool(bbox) and coverage > 0.0005
-            results.append({"term": term, "found": found, "color": _MULTIMASK_COLORS[i % len(_MULTIMASK_COLORS)],
-                            "bbox": list(bbox) if found else None, "_mask": mask if found else None})
+        results = _sam_masks(data, comfy_api_url, raw_workflow, comfy_filename, source, terms, payload)
     except Exception as exc:
         return jsonify({"error": f"Smart Selection failed: {exc}"}), 502
 

@@ -126,6 +126,12 @@ class NomadClient:
         return await self._post("/api/models/refine/multimask",
                                 {"imageDataUrl": image_data_url, "text": text})
 
+    async def submit_multiremove(self, image_data_url: str, text: str) -> dict[str, Any]:
+        """Smart Object Removal de varios objetos separados por comas: uno a
+        uno, encadenados (POST /api/models/refine/multiremove)."""
+        return await self._post("/api/models/refine/multiremove",
+                                {"imageDataUrl": image_data_url, "text": text})
+
     async def submit_mix(
         self,
         workflow_file: str,

@@ -966,7 +966,9 @@ async def _nomad_studio_refine_image_impl(
         "un objeto: 'the red car'). Sin detalle del usuario, dejalo vacio: se usa un valor por "
         "defecto razonable. En las acciones con 'regions' es obligatorio y nombra cada zona por su "
         "color ('the red rectangle'). En refine.smart_selection, varios objetos separados por comas "
-        "('crow, pig, girl') dan una mascara y un recorte por objeto mas una imagen compuesta."))] = None,
+        "('crow, pig, girl') dan una mascara y un recorte por objeto mas una imagen compuesta; en "
+        "refine.smart_selection_fill quitan todos esos objetos (incluye lo que llevan en la mano si "
+        "tambien debe desaparecer, ej. 'girl, pumpkin lantern')."))] = None,
     position: Annotated[str | None, Field(description=(
         "SOLO para action='refine.outpaint'. Donde queda la imagen ORIGINAL en el lienzo nuevo: "
         "center, top, bottom, left, right, top-left, top-right, bottom-left o bottom-right. "
@@ -1180,13 +1182,19 @@ async def _nomad_studio_refine_image_impl(
         is_multimask = (refine_action.workflow_file.endswith("refine_smart_selection.json")
                         and len(multimask_terms) > 1)
         request_payload = {"workflowFile": refine_action.workflow_file, "advancedValues": advanced_values}
+        is_multiremove = (refine_action.workflow_file.endswith("refine_smart_selection_fill.json")
+                          and len(multimask_terms) > 1)
         if is_multimask:
             request_payload = {"multimask": instruction}
+        elif is_multiremove:
+            request_payload = {"multiremove": instruction}
         debug["request"] = request_payload
         _log(f"REQUEST: {json.dumps(request_payload, ensure_ascii=False)}")
 
         if is_multimask:
             result = await _client.submit_multimask(image_data_url, instruction)
+        elif is_multiremove:
+            result = await _client.submit_multiremove(image_data_url, instruction)
         else:
             result = await _client.submit_refine(
                 workflow_file=refine_action.workflow_file,

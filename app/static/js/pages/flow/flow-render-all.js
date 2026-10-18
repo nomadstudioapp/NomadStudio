@@ -1966,6 +1966,53 @@ async function _runMultiMask(stepDef, ctx, snap) {
   saveSessionSnapshot();
 }
 
+// Smart Object Removal with a comma list: the backend finds every object with
+// its own SAM3 run and removes them one after another (/models/refine/multiremove).
+var _MULTIREMOVE_WF = 'refine_smart_selection_fill.json';
+
+function _isMultiRemove(workflowFile, advancedValues) {
+  var text = String((advancedValues || {})['240.value'] || '');
+  return String(workflowFile || '').slice(-_MULTIREMOVE_WF.length) === _MULTIREMOVE_WF &&
+    text.split(',').filter(function (t) { return t.trim(); }).length > 1;
+}
+
+async function _runMultiRemove(stepDef, ctx, snap) {
+  var av = snap.advancedValues || {};
+  var text = String(av['240.value'] || '');
+  _setBusyStatus(generateStatus, tF('Refining…'));
+  var pendingCard = (ctx && ctx.card) ? ctx.card : addGeneratingCard(generatedCount + 1, text);
+  var res = await fetch('/api/models/refine/multiremove', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageDataUrl: snap.imageDataUrl,
+      text: text,
+      fillPrompt: av['241.value'],
+      padding: av['114.expand'],
+      threshold: av['99:75.threshold'],
+      refineIterations: av['99:75.refine_iterations'],
+    }),
+  });
+  var data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'Smart Object Removal failed');
+  if (!data.savedFilename) throw new Error(tF('No output image returned from refine'));
+
+  var imgUrl = '/api/images/' + data.savedFilename;
+  var params = buildParamsSnapshot({ kind: 'refine', prompt: text, advancedValues: av, workflowFile: snap.workflowFile });
+  imgUrl = await _maybeUpscaleOutput(imgUrl, pendingCard);
+  setVal(stepDef.id, 'image_url', imgUrl);
+  generatedCount++;
+  addToFeed(imgUrl, generatedCount, pendingCard, params, snap.imageDataUrl);
+  showResultActions(stepDef);
+  var missing = data.notFound || [];
+  if (generateStatus) {
+    generateStatus.textContent = missing.length
+      ? tF('✓ Refined') + ' · ' + tF('Not found') + ': ' + missing.join(', ')
+      : tF('✓ Refined');
+  }
+  saveSessionSnapshot();
+}
+
 async function _runRefine(stepDef, ctx) {
   var snap = (ctx && ctx.snapshot) || _snapshotRefine(stepDef);
   if (snap.__invalid) throw new Error(tF('No source image selected'));
@@ -1976,6 +2023,7 @@ async function _runRefine(stepDef, ctx) {
   var promptText     = snap.promptText;
   if (snap.promptHistoryId && promptText) pushPromptHistory(snap.promptHistoryId, promptText);
   if (_isMultiMask(workflowFile, advancedValues)) return _runMultiMask(stepDef, ctx, snap);
+  if (_isMultiRemove(workflowFile, advancedValues)) return _runMultiRemove(stepDef, ctx, snap);
 
   _setBusyStatus(generateStatus, tF('Preparing…'));
 

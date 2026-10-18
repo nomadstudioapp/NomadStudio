@@ -382,7 +382,9 @@ def list_input_images():
     except (TypeError, ValueError):
         limit = 20
 
-    entries = image_service.list_images(str(Path(output_dir) / "input"), limit=limit)
+    # Each picture once: the same reference picked again used to show up as
+    # many times as it had been used.
+    entries = image_service.list_unique_images(str(Path(output_dir) / "input"), limit=limit)
     images = [
         {
             "filename": e["filename"],
@@ -1260,6 +1262,15 @@ def save_uploaded_image():
             return jsonify({"ok": False, "error": "Output directory not configured"}), 500
         subdir = _safe_session_subdir(_raw_sub) or SESSION_SUBDIR
         target_dir = os.path.join(output_dir, *subdir.split("/"))
+
+    if subdir == "input":
+        # Picking the same reference again reuses the stored copy (bumped to
+        # newest) instead of writing one more file with the same pixels.
+        existing = image_service.find_same_pixels(target_dir, image_bytes)
+        if existing is not None:
+            os.utime(existing, None)
+            rel = subdir + "/" + existing.name
+            return jsonify({"ok": True, "savedFilename": rel, "url": "/api/images/" + rel, "reused": True})
 
     ts = int(datetime.now(timezone.utc).timestamp() * 1000)
     filename = f"{filename_prefix}-{ts}.png"

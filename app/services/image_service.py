@@ -383,6 +383,95 @@ def list_images(output_dir: str, limit: int = 200) -> list[dict[str, Any]]:
     return result
 
 
+_PIXEL_INDEX = ".pixel-hashes.json"
+
+
+def pixel_hash(image_bytes: bytes) -> str:
+    """Hash of the decoded pixels (+ size), not of the file: the same picture
+    re-encoded or with other PNG metadata gets the same hash."""
+    import hashlib
+    from PIL import Image
+
+    with Image.open(io.BytesIO(image_bytes)) as im:
+        rgba = im.convert("RGBA")
+        return hashlib.sha256(f"{rgba.size}".encode() + rgba.tobytes()).hexdigest()
+
+
+def _load_pixel_index(folder: Path) -> dict[str, Any]:
+    try:
+        data = json.loads((folder / _PIXEL_INDEX).read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_pixel_index(folder: Path, index: dict[str, Any]) -> None:
+    try:
+        (folder / _PIXEL_INDEX).write_text(json.dumps(index), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _cached_pixel_hash(path: Path, index: dict[str, Any]) -> str | None:
+    """pixel_hash of *path*, reusing *index* while the file's size and mtime
+    are unchanged (decoding every image on each listing would be slow)."""
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    key = f"{st.st_size}:{st.st_mtime_ns}"
+    cached = index.get(path.name)
+    if isinstance(cached, dict) and cached.get("key") == key:
+        return cached.get("hash")
+    try:
+        digest = pixel_hash(path.read_bytes())
+    except Exception:
+        return None
+    index[path.name] = {"key": key, "hash": digest}
+    return digest
+
+
+def find_same_pixels(folder: str, image_bytes: bytes) -> Path | None:
+    """An image already in *folder* with the same pixels as *image_bytes*."""
+    out = Path(folder)
+    if not out.is_dir():
+        return None
+    try:
+        wanted = pixel_hash(image_bytes)
+    except Exception:
+        return None
+    index = _load_pixel_index(out)
+    found = None
+    for p in list_image_files_sorted(folder):
+        if _cached_pixel_hash(p, index) == wanted:
+            found = p
+            break
+    _save_pixel_index(out, index)
+    return found
+
+
+def list_unique_images(output_dir: str, limit: int = 200) -> list[dict[str, Any]]:
+    """Like list_images, but each picture once (newest copy): copies with
+    the same pixels are skipped."""
+    out = Path(output_dir)
+    index = _load_pixel_index(out)
+    seen: set[str] = set()
+    result: list[dict[str, Any]] = []
+    for p in list_image_files_sorted(output_dir):
+        digest = _cached_pixel_hash(p, index)
+        if digest is not None:
+            if digest in seen:
+                continue
+            seen.add(digest)
+        entry = read_image_entry(p)
+        if entry is not None:
+            result.append(entry)
+        if len(result) >= limit:
+            break
+    _save_pixel_index(out, index)
+    return result
+
+
 def serve_image(output_dir: str, filename: str) -> bytes | None:
     """Return raw bytes of *filename* inside *output_dir*, or ``None``.
 

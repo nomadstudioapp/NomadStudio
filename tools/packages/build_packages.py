@@ -4250,9 +4250,14 @@ def _fix_smart_fill_workflow(graph: dict) -> None:
     graph["15"]["inputs"]["latent_image"] = ["248", 0]
     graph.pop("11", None)
     graph.pop("20", None)
+    # Paste the fill back onto the ORIGINAL image with the full-size mask:
+    # node 22 rescales to a Kontext resolution with another aspect ratio, so
+    # compositing at that size returned a slightly different-sized picture
+    # (1609x922 in, transparent bands out). resize_source brings the edit back
+    # to the source size, and pixels outside the mask stay untouched.
     graph["249"] = {"class_type": "ImageCompositeMasked",
-                    "inputs": {"destination": ["22", 0], "source": ["17", 0], "x": 0, "y": 0,
-                               "resize_source": True, "mask": ["246", 0]}}
+                    "inputs": {"destination": ["79", 0], "source": ["17", 0], "x": 0, "y": 0,
+                               "resize_source": True, "mask": ["115", 0]}}
     graph["9"]["inputs"]["images"] = ["249", 0]
 
 

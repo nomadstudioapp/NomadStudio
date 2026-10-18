@@ -8,6 +8,8 @@ Newest first. Downloads and checksums for each version are in [Releases](https:/
 
 - **Smart Selection: several objects at once.** Write them separated by commas (`crow, pig, girl`) and you get one mask and one cutout per object, plus a composite image with each object in its own colour and a legend to check them at a glance. Also through the MCP.
 - **Smart Object Removal: several objects at once.** `crow, chef pig, girl` removes all of them, one after another, each with its own mask, and fills the gaps with the scene behind them. Add what they hold if it should go too (`girl, pumpkin lantern`).
+- **Smart Object Removal now runs on Qwen Image 2.1** (it still loaded the older Qwen Edit 2511, a second 19 GB model), with the same Variation as Edit Qwen 2.1: Normal, or Turbo at about half the time.
+- **Packs:** Extract 0.1.14 comes with the app, with Smart Object Removal on Qwen Image 2.1.
 
 ## 2026-10-18 · 1.1.2
 

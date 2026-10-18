@@ -8,6 +8,8 @@ Lo más reciente, arriba. Las descargas y sumas de comprobación de cada versió
 
 - **Selección inteligente: varios objetos a la vez.** Escríbelos separados por comas (`crow, pig, girl`) y obtienes una máscara y un recorte por objeto, más una imagen compuesta con cada objeto en su color y una leyenda para revisarlos de un vistazo. También por el MCP.
 - **Borrado inteligente de objetos: varios a la vez.** `crow, chef pig, girl` los quita todos, uno tras otro y cada uno con su máscara, y rellena los huecos con la escena que había detrás. Añade lo que llevan en la mano si también debe desaparecer (`girl, pumpkin lantern`).
+- **El Borrado inteligente de objetos usa ahora Qwen Image 2.1** (todavía cargaba el antiguo Qwen Edit 2511, un segundo modelo de 19 GB), con la misma Variación que Edit Qwen 2.1: Normal, o Turbo en más o menos la mitad de tiempo.
+- **Packs:** Extract 0.1.14 viene con la app, con el Borrado inteligente de objetos sobre Qwen Image 2.1.
 
 ## 2026-10-18 · 1.1.2
 

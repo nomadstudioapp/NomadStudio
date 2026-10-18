@@ -1991,6 +1991,7 @@ async function _runMultiRemove(stepDef, ctx, snap) {
       padding: av['114.expand'],
       threshold: av['99:75.threshold'],
       refineIterations: av['99:75.refine_iterations'],
+      advancedValues: av,  // Variation / Quantization / steps chosen in Advanced
     }),
   });
   var data = await res.json();

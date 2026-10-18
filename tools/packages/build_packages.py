@@ -4221,16 +4221,23 @@ SMART_FILL_OBJECT_NODE = "240"
 SMART_FILL_TEXT_NODE = "241"
 SMART_FILL_DEFAULT = ("Fill that area with what was behind it, matching the same lighting, perspective and style "
                       "as the rest of the photo.")
-SMART_FILL_DESCRIPTION = ("Describe an object in plain text, SAM3 finds it, and Qwen Image Edit 2511 repaints only "
+SMART_FILL_DESCRIPTION = ("Describe an object in plain text, SAM3 finds it, and Qwen Image 2.1 repaints only "
                           "that area with what was behind it — a one-step magic eraser.")
 
 
 def _fix_smart_fill_workflow(graph: dict) -> None:
-    graph["4"]["inputs"]["lora_name"] = "qwen_2511\\Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
-    graph["4"]["inputs"]["model"] = ["6", 0]
-    for node in ("5", "106", "144", "150", "151"):  # White-to-Scene LoRA + the white composite
-        graph.pop(node, None)
-    graph["22"]["inputs"]["image"] = ["79", 0]
+    """Keep the source graph's SAM3 selection (79 image, 99:* SAM3, 114 grow,
+    115 feather, 95 preview, 9 save) and do the fill with the same Qwen
+    Image 2.1 edit graph as Edit Qwen 2.1 (loaders, encoder, sampler, Turbo
+    variation) instead of Qwen Edit 2511 + Lightning: one edit model for the
+    whole app, not a second 19 GB checkpoint (2026-10-18, 2511 measured
+    nothing better; 2.1 Turbo removes a character in ~20 s, Normal ~40 s)."""
+    keep = {k: graph[k] for k in ("79", "95", "99:75", "99:77", "99:78", "114", "115", "9")}
+    edit = _qwen_image_21_edit_workflow()
+    graph.clear()
+    graph.update(keep)
+    for k in ("config", "2", "3", "6", "13", "15", "17"):
+        graph[k] = edit[k]
     graph[SMART_FILL_OBJECT_NODE] = {"class_type": "PrimitiveString", "inputs": {"value": ""},
                                      "_meta": {"title": "Object to remove"}}
     graph[SMART_FILL_TEXT_NODE] = {"class_type": "PrimitiveStringMultiline", "inputs": {"value": SMART_FILL_DEFAULT},
@@ -4241,20 +4248,14 @@ def _fix_smart_fill_workflow(graph: dict) -> None:
     graph["243"] = {"class_type": "StringConcatenate",
                     "inputs": {"string_a": ["242", 0], "string_b": [SMART_FILL_TEXT_NODE, 0], "delimiter": ". "}}
     graph["13"]["inputs"]["prompt"] = ["243", 0]
-    # the feathered SAM3 mask at the edit resolution
-    graph["244"] = {"class_type": "MaskToImage", "inputs": {"mask": ["115", 0]}}
-    graph["245"] = {"class_type": "FluxKontextImageScale", "inputs": {"image": ["244", 0]}}
-    graph["246"] = {"class_type": "ImageToMask", "inputs": {"image": ["245", 0], "channel": "red"}}
-    graph["247"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["22", 0], "vae": ["2", 0]}}
-    graph["248"] = {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["247", 0], "mask": ["246", 0]}}
+    graph["13"]["inputs"]["images.image_1"] = ["79", 0]
+    # Qwen gets the ORIGINAL photo and "Remove <object>. <fill>"; the SAM3
+    # mask is a latent noise mask at source size, so only that area changes.
+    graph["247"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["79", 0], "vae": ["2", 0]}}
+    graph["248"] = {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["247", 0], "mask": ["115", 0]}}
     graph["15"]["inputs"]["latent_image"] = ["248", 0]
-    graph.pop("11", None)
-    graph.pop("20", None)
-    # Paste the fill back onto the ORIGINAL image with the full-size mask:
-    # node 22 rescales to a Kontext resolution with another aspect ratio, so
-    # compositing at that size returned a slightly different-sized picture
-    # (1609x922 in, transparent bands out). resize_source brings the edit back
-    # to the source size, and pixels outside the mask stay untouched.
+    # ...and the fill is pasted back onto the original with the same mask:
+    # same size out as in, pixels outside the mask untouched.
     graph["249"] = {"class_type": "ImageCompositeMasked",
                     "inputs": {"destination": ["79", 0], "source": ["17", 0], "x": 0, "y": 0,
                                "resize_source": True, "mask": ["115", 0]}}
@@ -4270,6 +4271,8 @@ def _fix_smart_fill_flow(flow: dict) -> None:
             elif field["id"] == "fill_prompt":
                 field["adv_key"] = f"{SMART_FILL_TEXT_NODE}.value"
                 field["default"] = SMART_FILL_DEFAULT
+            elif field["id"] == "steps":
+                field["default"] = 25  # Qwen 2.1 (Turbo: 8, set by its Variation)
 
 
 # Chroma Key (contributes.addon, same PACKAGE_FORMAT.md §9 minimal slice as

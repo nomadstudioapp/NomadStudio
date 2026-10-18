@@ -1069,8 +1069,17 @@ def generate_refine_multiremove():
             workflow = deepcopy(fill_workflow)
             # A fresh seed per fill (the workflow's saved one repeats every result).
             values = {"240.value": r["term"], "241.value": fill_prompt, "15.seed": random.randint(1, 2**48)}
-            if payload.get("padding") is not None:
-                values["114.expand"] = payload["padding"]
+            # The flow's model choices (Variation Normal/Turbo, Quantization, steps).
+            for key, val in (payload.get("advancedValues") or {}).items():
+                if str(key).startswith(("6.", "3.", "15.steps", "15.cfg")) and isinstance(val, (str, int, float)):
+                    values[str(key)] = val
+            # At least 30 px: these illustrations have a light paper halo around
+            # each character; 15 px left it as outlines Qwen then continued.
+            try:
+                padding = int(payload.get("padding") or 0)
+            except (TypeError, ValueError):
+                padding = 0
+            values["114.expand"] = max(padding, 30)
             _apply_advanced_values(workflow, values)
             # This object's mask replaces the workflow's own SAM3 selection.
             workflow["900"] = {"class_type": "LoadImageMask",

@@ -4,13 +4,13 @@
 
 Lo más reciente, arriba. Las descargas y sumas de comprobación de cada versión están en [Releases](https://github.com/nomadstudioapp/NomadStudio/releases). La app te ofrece cada versión nueva por sí sola ("Reiniciar y actualizar").
 
-## Próxima versión (aún sin publicar)
+## 2026-10-18 · 1.1.2
 
 - **Borrado inteligente de objetos devuelve la imagen limpia.** Podía guardar la vista previa de la máscara de selección (una silueta blanca sobre negro) en lugar del resultado. Cualquier workflow con un nodo de vista previa devuelve ahora la imagen guardada, en la app y por el MCP.
 - **Borrado inteligente de objetos conserva el tamaño del original.** El resultado salía ligeramente reescalado, con bandas transparentes en los bordes. Ahora mide exactamente lo mismo que el original, y todo lo que queda fuera de la selección conserva sus píxeles originales.
 - **Entradas usadas antes muestra cada imagen una vez.** La misma referencia elegida varias veces aparecía una vez por uso. Al volver a elegirla se reutiliza la copia guardada en vez de guardar otra.
 - **MCP: cada retoque usa una semilla nueva,** como hace la app. Antes, todas las ediciones hechas por el MCP repetían la semilla fija del workflow, y con ella los mismos fallos. Para repetir un retoque exacto, pasa `seed` (o acaba la instrucción con `--seed 1234`); cada respuesta dice la semilla usada.
-- **Packs:** Extract incluye el arreglo del Borrado inteligente de objetos.
+- **Packs:** Extract 0.1.13 viene con la app e incluye el arreglo del Borrado inteligente de objetos.
 
 ## 2026-10-17 · 1.1.1
 

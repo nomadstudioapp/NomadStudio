@@ -4,6 +4,14 @@
 
 Lo más reciente, arriba. Las descargas y sumas de comprobación de cada versión están en [Releases](https://github.com/nomadstudioapp/NomadStudio/releases). La app te ofrece cada versión nueva por sí sola ("Reiniciar y actualizar").
 
+## Próxima versión (aún sin publicar)
+
+- **Borrado inteligente de objetos devuelve la imagen limpia.** Podía guardar la vista previa de la máscara de selección (una silueta blanca sobre negro) en lugar del resultado. Cualquier workflow con un nodo de vista previa devuelve ahora la imagen guardada, en la app y por el MCP.
+- **Borrado inteligente de objetos conserva el tamaño del original.** El resultado salía ligeramente reescalado, con bandas transparentes en los bordes. Ahora mide exactamente lo mismo que el original, y todo lo que queda fuera de la selección conserva sus píxeles originales.
+- **Entradas usadas antes muestra cada imagen una vez.** La misma referencia elegida varias veces aparecía una vez por uso. Al volver a elegirla se reutiliza la copia guardada en vez de guardar otra.
+- **MCP: cada retoque usa una semilla nueva,** como hace la app. Antes, todas las ediciones hechas por el MCP repetían la semilla fija del workflow, y con ella los mismos fallos.
+- **Packs:** Extract incluye el arreglo del Borrado inteligente de objetos.
+
 ## 2026-10-17 · 1.1.1
 
 - **Los packs actualizados en Ko-fi vuelven a salir como oficiales.** La 1.1.0 marcaba como "paquete no oficial" los packs reconstruidos para la variación Turbo de Qwen 2.1. El catálogo de la app ya conoce sus huellas nuevas y conserva las anteriores, así que los packs que descargaste antes siguen siendo oficiales.

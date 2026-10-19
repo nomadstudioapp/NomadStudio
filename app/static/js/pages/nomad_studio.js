@@ -1484,6 +1484,11 @@
           image1: srcImg,
           inputs: inputs,
           images: outputs,
+          // Seconds each output took (step.imageSeconds), for the time label on its card.
+          imageGenSeconds: outputs.map(function (u) {
+            var secs = (step.imageSeconds || {})[u];
+            return typeof secs === 'number' ? secs : null;
+          }),
           prompt: promptText,
           params: params
         }

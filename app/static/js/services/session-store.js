@@ -337,6 +337,25 @@
   // first, then anywhere — an image can be deleted after switching steps.
   // A step whose last image goes is removed entirely, same rule the flow's
   // own history snapshot uses ("the feed ended up empty" ⇒ no entry).
+  // How long each image of a step took to generate ({url: seconds}), so a step
+  // reopened later still shows its time on the card. The flow only knows it
+  // when the image lands (addToFeed), which can be before or after
+  // captureImages() adds the url, so it goes on the pending step either way.
+  function recordImageSeconds(url, seconds) {
+    var p = getPending();
+    if (!p || !p.sessionId || !p.stepId || !url || typeof seconds !== 'number') return false;
+    var sessions = load();
+    var bi = sessions.findIndex(function (b) { return b.id === p.sessionId; });
+    if (bi === -1) return false;
+    var step = (sessions[bi].steps || []).find(function (s) { return s.id === p.stepId; });
+    if (!step) return false;
+    step.imageSeconds = step.imageSeconds || {};
+    step.imageSeconds[url] = Math.round(seconds * 10) / 10;
+    save(sessions);
+    pushUpdate(sessions[bi]);
+    return true;
+  }
+
   function removeImages(urls) {
     var clean = (urls || []).filter(Boolean);
     if (!clean.length) return false;
@@ -588,7 +607,7 @@
     getPending: getPending, setPending: setPending, clearPending: clearPending,
     getActive: getActive, setActive: setActive,
     wantsReturn: wantsReturn, setReturn: setReturn,
-    captureImages: captureImages, removeImages: removeImages,
+    captureImages: captureImages, removeImages: removeImages, recordImageSeconds: recordImageSeconds,
     beginStep: beginStep, settleStep: settleStep,
     slugify: slugify, folderOf: folderOf, subdirOf: subdirOf,
     SCOPE_ALL: SCOPE_ALL, SCOPE_USER: SCOPE_USER,

@@ -296,6 +296,10 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
   var _genSecondsRaw = (_hadRealCard && card._genStartTime)
     ? Math.max(0, (Date.now() - card._genStartTime) / 1000)
     : (params && typeof params.genSeconds === 'number' ? params.genSeconds : null);
+  // Inside a Session: remember it on the step, so reopening the step shows it too.
+  if (_hadRealCard && card._genStartTime && window.NomadSession && NomadSession.recordImageSeconds) {
+    try { NomadSession.recordImageSeconds(imgUrl, _genSecondsRaw); } catch (_) {}
+  }
 
   // Track image for lightbox (include composition bboxes if this came from ideogram_composer)
   // — also remember the prompt that produced it, so the chat "Scene" picker

@@ -156,6 +156,35 @@ CLIP_LAST_LAYER_ALLOWED_VALUES = {0, -2, -3}
 CLIP_LAST_LAYER_INPUT_KEYS = {"stop_at_clip_layer", "layer"}
 
 
+def _heal_shared_encoder_negatives(imports: list) -> None:
+    """Engines whose single text encoder holds both prompts (Qwen Image 2.1's
+    TextEncodeQwenImage21: `prompt` + `negative_prompt`) were analysed with
+    the POSITIVE example text as their default negative ("a small red fox
+    sitting in snow, studio photo"), so every image was made with "no red
+    fox". That value sits in installed registries and in engine packages, and
+    package updates keep it as if the user had chosen it. It is never a user
+    choice when it equals the encoder's own positive text: swap in the
+    encoder's real negative_prompt (2026-10-19)."""
+    for record in imports:
+        if not isinstance(record, dict) or not isinstance(record.get("workflow"), dict):
+            continue
+        analysis = record.get("analysis") if isinstance(record.get("analysis"), dict) else {}
+        # basicValues (what generation uses) and analysis.basicValues (what
+        # "reset values" restores) both carry it.
+        for basic in (record.get("basicValues"), analysis.get("basicValues")):
+            if not isinstance(basic, dict):
+                continue
+            negative = str(basic.get("negative") or "").strip()
+            if not negative:
+                continue
+            for node in record["workflow"].values():
+                inputs = node.get("inputs") if isinstance(node, dict) else None
+                if (isinstance(inputs, dict) and isinstance(inputs.get("negative_prompt"), str)
+                        and str(inputs.get("prompt") or "").strip() == negative):
+                    basic["negative"] = inputs["negative_prompt"]
+                    break
+
+
 def _ensure_registry() -> dict[str, Any]:
     default_data = registry_service.build_default_registry(
         default_comfy_url=DEFAULT_COMFY_URL,
@@ -193,6 +222,8 @@ def _ensure_registry() -> dict[str, Any]:
     data["activeImportIds"] = [i for i in data["activeImportIds"] if i in _real_import_ids]
     if data.get("activeImportId") not in _real_import_ids:
         data["activeImportId"] = data["activeImportIds"][0] if data["activeImportIds"] else None
+
+    _heal_shared_encoder_negatives(data["imports"])
 
     if "settings" not in data or not isinstance(data["settings"], dict):
         data["settings"] = {

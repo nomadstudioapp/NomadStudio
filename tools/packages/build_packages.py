@@ -4247,15 +4247,25 @@ def _fix_smart_fill_workflow(graph: dict) -> None:
                     "inputs": {"string_a": "Remove ", "string_b": [SMART_FILL_OBJECT_NODE, 0], "delimiter": ""}}
     graph["243"] = {"class_type": "StringConcatenate",
                     "inputs": {"string_a": ["242", 0], "string_b": [SMART_FILL_TEXT_NODE, 0], "delimiter": ". "}}
+    # The fill is computed at ~1 megapixel: a 2x storybook page (2688x1536)
+    # straight into Qwen failed (2026-10-19). Image and mask are scaled the
+    # same way, so they stay aligned.
+    graph["22"] = {"class_type": "ImageScaleToTotalPixels",
+                   "inputs": {"image": ["79", 0], "upscale_method": "lanczos", "megapixels": 1.0, "resolution_steps": 16}}
+    graph["244"] = {"class_type": "MaskToImage", "inputs": {"mask": ["115", 0]}}
+    graph["245"] = {"class_type": "ImageScaleToTotalPixels",
+                    "inputs": {"image": ["244", 0], "upscale_method": "lanczos", "megapixels": 1.0, "resolution_steps": 16}}
+    graph["246"] = {"class_type": "ImageToMask", "inputs": {"image": ["245", 0], "channel": "red"}}
     graph["13"]["inputs"]["prompt"] = ["243", 0]
-    graph["13"]["inputs"]["images.image_1"] = ["79", 0]
+    graph["13"]["inputs"]["images.image_1"] = ["22", 0]
     # Qwen gets the ORIGINAL photo and "Remove <object>. <fill>"; the SAM3
-    # mask is a latent noise mask at source size, so only that area changes.
-    graph["247"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["79", 0], "vae": ["2", 0]}}
-    graph["248"] = {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["247", 0], "mask": ["115", 0]}}
+    # mask is a latent noise mask, so only that area changes.
+    graph["247"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["22", 0], "vae": ["2", 0]}}
+    graph["248"] = {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["247", 0], "mask": ["246", 0]}}
     graph["15"]["inputs"]["latent_image"] = ["248", 0]
-    # ...and the fill is pasted back onto the original with the same mask:
-    # same size out as in, pixels outside the mask untouched.
+    # ...and the fill is pasted back onto the full-size original with the
+    # full-size mask (resize_source brings it back up): same size out as in,
+    # pixels outside the mask untouched.
     graph["249"] = {"class_type": "ImageCompositeMasked",
                     "inputs": {"destination": ["79", 0], "source": ["17", 0], "x": 0, "y": 0,
                                "resize_source": True, "mask": ["115", 0]}}

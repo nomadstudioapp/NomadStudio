@@ -413,6 +413,18 @@ def _analyze_workflow(workflow: dict[str, Any]) -> dict[str, Any]:
             value = inputs.get(input_key)
             if _is_link(value):
                 candidate_negative_node_id = str(value[0])
+                # One encoder for both prompts (TextEncodeQwenImage21: positive
+                # = output 0, negative = output 1 of the same node): its first
+                # text input is the POSITIVE one, so read its negative_prompt
+                # field instead. Resolving the node as plain text stored the
+                # positive placeholder ("a small red fox sitting in snow") as
+                # the engine's default negative, so every Qwen 2.1 image was
+                # generated with "no red fox" (2026-10-19).
+                if candidate_negative_node_id == detected.get("positiveNodeId"):
+                    if _capture_negative_from_node(candidate_negative_node_id):
+                        break
+                    detected["negativeNodeId"] = candidate_negative_node_id
+                    break
                 candidate_negative_text = _resolve_text_from_node(
                     workflow, candidate_negative_node_id
                 )

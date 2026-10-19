@@ -10,6 +10,8 @@ Newest first. Downloads and checksums for each version are in [Releases](https:/
 - **Smart Object Removal: several objects at once.** `crow, chef pig, girl` removes all of them, one after another, each with its own mask, and fills the gaps with the scene behind them. Add what they hold if it should go too (`girl, pumpkin lantern`).
 - **Smart Object Removal now runs on Qwen Image 2.1** (it still loaded the older Qwen Edit 2511, a second 19 GB model), with the same Variation as Edit Qwen 2.1: Normal, or Turbo at about half the time.
 - **Packs:** Extract 0.1.14 comes with the app, with Smart Object Removal on Qwen Image 2.1.
+- **Qwen Image 2.1 no longer avoids red foxes.** Its default negative prompt was, by mistake, the engine's example prompt ("a small red fox sitting in snow"), so foxes turned into something else. Installed engines are corrected on start.
+- **Smart Object Removal on large images** (for example a 2x upscale) works: the fill is computed at about one megapixel and pasted back at full size.
 
 ## 2026-10-18 · 1.1.2
 

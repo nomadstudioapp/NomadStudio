@@ -12,6 +12,7 @@ Lo más reciente, arriba. Las descargas y sumas de comprobación de cada versió
 - **Packs:** Extract 0.1.14 viene con la app, con el Borrado inteligente de objetos sobre Qwen Image 2.1.
 - **Qwen Image 2.1 ya no evita los zorros rojos.** Su prompt negativo por defecto era, por error, el prompt de ejemplo del motor ("a small red fox sitting in snow"), así que los zorros salían convertidos en otra cosa. Los motores instalados se corrigen al arrancar.
 - **El Borrado inteligente de objetos funciona en imágenes grandes** (por ejemplo, un upscale x2): el relleno se calcula a un megapíxel aproximadamente y se pega a tamaño completo.
+- **Las Sessions guardan todos los pasos.** Una Selección inteligente o un Borrado inteligente de objetos con varios objetos (separados por comas) aparece ahora en la Session como su propio paso, con la imagen compuesta, las máscaras y los recortes; antes el paso desaparecía.
 
 ## 2026-10-18 · 1.1.2
 

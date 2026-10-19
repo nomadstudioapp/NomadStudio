@@ -12,6 +12,7 @@ Newest first. Downloads and checksums for each version are in [Releases](https:/
 - **Packs:** Extract 0.1.14 comes with the app, with Smart Object Removal on Qwen Image 2.1.
 - **Qwen Image 2.1 no longer avoids red foxes.** Its default negative prompt was, by mistake, the engine's example prompt ("a small red fox sitting in snow"), so foxes turned into something else. Installed engines are corrected on start.
 - **Smart Object Removal on large images** (for example a 2x upscale) works: the fill is computed at about one megapixel and pasted back at full size.
+- **Sessions keep every step.** A Smart Selection or Smart Object Removal with several objects (separated by commas) now appears in the Session as its own step, with the composite, the masks and the cutouts; before, the step disappeared.
 
 ## 2026-10-18 · 1.1.2
 

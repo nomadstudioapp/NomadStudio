@@ -1947,12 +1947,15 @@ async function _runMultiMask(stepDef, ctx, snap) {
   setVal(stepDef.id, 'image_url', compositeUrl);
   generatedCount++;
   addToFeed(compositeUrl, generatedCount, pendingCard, params, snap.imageDataUrl);
+  _captureIntoPendingSession(compositeUrl, params);
   (data.masks || []).forEach(function (m) {
     [m.mask, m.cutout].forEach(function (file) {
       if (!file) return;
       var card = addGeneratingCard(generatedCount + 1, m.term);
       generatedCount++;
       addToFeed('/api/images/' + file, generatedCount, card, { prompt: m.term });
+      // Saved by the backend, not saveComfyImages: the Session would never see them.
+      _captureIntoPendingSession('/api/images/' + file, params);
     });
   });
 
@@ -2004,6 +2007,7 @@ async function _runMultiRemove(stepDef, ctx, snap) {
   setVal(stepDef.id, 'image_url', imgUrl);
   generatedCount++;
   addToFeed(imgUrl, generatedCount, pendingCard, params, snap.imageDataUrl);
+  _captureIntoPendingSession(imgUrl, params);
   showResultActions(stepDef);
   var missing = data.notFound || [];
   if (generateStatus) {

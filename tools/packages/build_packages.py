@@ -4587,6 +4587,118 @@ def build_style_packs(version: str, images_dir: Path | None = None) -> list[Path
     return out
 
 
+
+# ── Camera angle (Qwen 2.1) — hand-authored. The shared Edit Qwen 2.1 graph with
+# the QMA camera-angles LoRA (gribbliest/qwen-image-2.1-qma-camera-angles, Apache-2.0)
+# between the unet and the sampler, and the prompt composed inside the graph from
+# three string nodes ("<qma> {azimuth} {elevation} {distance} {extra}") so the flow
+# offers three pickers instead of 96 presets. The LoRA was trained on the base
+# model (30 steps, CFG 3), so the graph has no Turbo variation.
+QWEN_2511_CAMERA_WORKFLOW_REL = "workflows/refine/refine_qwen_2511_camera.json"
+CAMERA_LORA = "qwen-image-2.1-qma-camera-angles.safetensors"
+CAMERA_AZIMUTHS = ["front view", "front-right quarter view", "right side view", "back-right quarter view",
+                   "back view", "back-left quarter view", "left side view", "front-left quarter view"]
+CAMERA_ELEVATIONS = ["low-angle shot", "eye-level shot", "elevated shot", "high-angle shot"]
+CAMERA_DISTANCES = ["close-up", "medium shot", "wide shot"]
+
+
+def _camera_angle_workflow() -> dict:
+    g = _qwen_image_21_edit_workflow()
+    g["config"] = _qwen_image_21_config_node()   # base model only: no Turbo variation
+    g["15"]["inputs"].update({"steps": 30, "cfg": 3})
+    g["15"]["inputs"]["model"] = ["30", 0]
+    g["30"] = {"inputs": {"model": ["6", 0], "lora_name": CAMERA_LORA, "strength_model": 1.0},
+               "class_type": "LoraLoaderModelOnly", "_meta": {"title": "Camera angles LoRA"}}
+    for nid, title, value in (("31", "azimuth", "front view"), ("32", "elevation", "eye-level shot"),
+                              ("33", "distance", "medium shot"), ("34", "extra", "")):
+        g[nid] = {"inputs": {"value": value}, "class_type": "PrimitiveStringMultiline", "_meta": {"title": title}}
+    g["35"] = {"inputs": {"string_a": "<qma>", "string_b": ["31", 0], "delimiter": " "}, "class_type": "StringConcatenate", "_meta": {"title": "qma + azimuth"}}
+    g["36"] = {"inputs": {"string_a": ["35", 0], "string_b": ["32", 0], "delimiter": " "}, "class_type": "StringConcatenate", "_meta": {"title": "+ elevation"}}
+    g["37"] = {"inputs": {"string_a": ["36", 0], "string_b": ["33", 0], "delimiter": " "}, "class_type": "StringConcatenate", "_meta": {"title": "+ distance"}}
+    g["38"] = {"inputs": {"string_a": ["37", 0], "string_b": ["34", 0], "delimiter": " "}, "class_type": "StringConcatenate", "_meta": {"title": "+ extra"}}
+    g["13"]["inputs"]["prompt"] = ["38", 0]
+    g["21"]["inputs"]["filename_prefix"] = "qwen-image-2.1-camera"
+    return g
+
+
+def _camera_angle_flow() -> dict:
+    def opts(values: list[str]) -> list[dict]:
+        return [{"value": v, "label": v} for v in values]
+    return {
+        "id": "refine.camera_angle_qwen2",
+        "label": "Camera angle (Qwen 2.1)",
+        "category": "refine",
+        "group": "camera",
+        "description": "Re-render an image from another camera position — orbit around the subject, raise or lower the camera, move closer or farther — keeping subject, scene and style. Qwen Image 2.1 with the QMA camera-angles LoRA.",
+        "card_desc": "New camera angles of the same image: orbit, height and distance, same subject and style.",
+        "card_tags": ["Qwen", "2.1", "Camera", "LoRA"],
+        "card_css_modifier": "edit-qwen-2511",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": QWEN_2511_CAMERA_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {"id": "azimuth", "adv_key": "31.value", "label": "Direction", "type": "select", "default": "front-right quarter view",
+                     "note": "Where the camera moves to, relative to the original camera (not to the subject).", "options": opts(CAMERA_AZIMUTHS)},
+                    {"id": "elevation", "adv_key": "32.value", "label": "Height", "type": "select", "default": "eye-level shot", "options": opts(CAMERA_ELEVATIONS)},
+                    {"id": "distance", "adv_key": "33.value", "label": "Distance", "type": "select", "default": "medium shot", "options": opts(CAMERA_DISTANCES)},
+                    {"id": "extra", "adv_key": "34.value", "label": "Extra instruction (optional)", "type": "textarea", "rows": 2, "block": True, "default": "",
+                     "tooltip": "Camera-only prompts give the cleanest results; an edit instruction can follow."},
+                    {"id": "strength", "adv_key": "30.strength_model", "label": "LoRA strength", "type": "number", "default": 1.0, "min": 0.3, "max": 1.3, "step": 0.1, "advanced": True},
+                    {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 30, "min": 8, "max": 40, "step": 1, "quick_options": [20, 30], "advanced": True},
+                    {"id": "cfg", "adv_key": "15.cfg", "label": "CFG", "type": "number", "default": 3, "min": 1, "max": 6, "step": 0.5, "advanced": True},
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate", "type": "action", "label": "Generate", "calls": "generation.submit_refine",
+                "input_map": {"workflowFile": "steps.params.output.workflow_file", "imageDataUrl": "steps.image.output.image_data_url",
+                              "advancedValues": "steps.params.output.adv_values"},
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Qwen Image 2.1 Edit",
+    }
+
+
+def build_camera_pack(source: Path, version: str) -> Path:
+    table = load_translations(source)
+    flow = add_card_texts(_camera_angle_flow(), table)
+    _upgrade_seed_fields_to_similarity(flow)
+    files: dict[str, object] = {"flows/camera_angle_qwen2.json": flow, QWEN_2511_CAMERA_WORKFLOW_REL: _camera_angle_workflow()}
+    i18n, counts = flow_i18n([flow], table)
+    manifest = {
+        "schema_version": 1,
+        "id": "nomad.refine-camera",
+        "version": version,
+        "default_lang": "en",
+        "name": {"en": "Camera", "es": "Cámara", "zh": "相机", "ko": "카메라"},
+        "summary": {
+            "en": "New camera angles of the same image — orbit around the subject, raise or lower the camera, move closer or farther — with Qwen Image 2.1 and the QMA camera-angles LoRA (Apache-2.0). Reverse angles of a set, side and back views of a character.",
+            "es": "Nuevos ángulos de cámara de la misma imagen — orbitar alrededor del sujeto, subir o bajar la cámara, acercarse o alejarse — con Qwen Image 2.1 y la LoRA QMA de ángulos de cámara (Apache-2.0). Contraplanos de un decorado, perfiles y espaldas de un personaje.",
+            "zh": "同一图像的新相机角度——环绕主体、升高或降低相机、拉近或拉远——使用 Qwen Image 2.1 与 QMA 相机角度 LoRA（Apache-2.0）。场景的反打镜头、角色的侧面与背面。",
+            "ko": "같은 이미지의 새 카메라 앵글 — 피사체 주위 회전, 카메라 높낮이, 거리 조절 — Qwen Image 2.1과 QMA 카메라 앵글 LoRA(Apache-2.0). 세트의 리버스 앵글, 캐릭터의 측면과 뒷모습.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "group": {"id": "camera", "label": {"en": "Camera", "es": "Cámara", "zh": "相机", "ko": "카메라"}},
+        "requires": {"engines": [{"category": "image"}]},
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {"flows": ["flows/camera_angle_qwen2.json"], "workflows": [QWEN_2511_CAMERA_WORKFLOW_REL]},
+    }
+    print(f"  camera-pack texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip("nomad.refine-camera", {"manifest.json": manifest, **files, "LICENSE": LICENSE_TEXT,
+                                              **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}},
+                     dest=DIST_OPTIONAL)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path(r"D:\OPENHIKER"))
@@ -4597,6 +4709,7 @@ def main() -> None:
     ap.add_argument("--optional", action="store_true")
     ap.add_argument("--refine-pilot", action="store_true")
     ap.add_argument("--refine-groups", action="store_true")
+    ap.add_argument("--camera", action="store_true")   # the Camera angle pack only (QMA LoRA)
     # Style packs only (they don't depend on the rest): skips engines/flows.
     ap.add_argument("--style-packs", action="store_true")
     # Just the Styling (Refine) + Mix Studio (Mix) packages.
@@ -4611,6 +4724,11 @@ def main() -> None:
             summary = validate(path)
             print(f"{path.name:40} {path.stat().st_size / 1024:5.0f} KB · {summary['id']} {summary['version']}"
                   f" · flows={[f['id'] for f in summary['flows']]}")
+        return
+    if args.camera:
+        path = build_camera_pack(args.source, args.version)
+        summary = validate(path)
+        print(f"{path.name}: {len(summary.get('flows', []))} flows · {summary.get('models', 0) if isinstance(summary.get('models'), int) else len(summary.get('models') or [])} models")
         return
     if args.style_packs:
         for path in build_style_packs(args.version, args.style_images):

@@ -1,1160 +1,1178 @@
 {
- "schema_version": 1,
- "updated": "2026-10-11",
- "models": [
-  {
-   "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
-   "size": 67061725,
-   "names": [
-    "RealESRGAN_x2plus.pth"
-   ],
-   "folder": "upscale_models",
-   "sources": [
-    {
-     "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
-     "host": "github"
-    }
-   ],
-   "license": {
-    "name": "BSD 3-Clause",
-    "url": "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"
-   }
-  },
-  {
-   "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
-   "size": 67040989,
-   "names": [
-    "RealESRGAN_x4plus.pth"
-   ],
-   "folder": "upscale_models",
-   "sources": [
-    {
-     "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
-     "host": "github"
-    }
-   ],
-   "license": {
-    "name": "BSD 3-Clause",
-    "url": "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"
-   }
-  },
-  {
-   "sha256": "94d368b633614958f84f335b129fd85abd30200e8fbc575b859ba6762116222b",
-   "size": 20099337,
-   "names": [
-    "1x-ITF-SkinDiffDetail-Lite-v1.pth"
-   ],
-   "folder": "upscale_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/timothy692/1x-ITF-SkinDiffDetail-Lite-v1/resolve/main/1x-ITF-SkinDiffDetail-Lite-v1.pth",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "68ed0aec6ff4ebc3add1180e191797adb5aa6b69dd8b0fc8aa9e680145f65aac",
-   "size": 148902616,
-   "names": [
-    "anima-turbo-lora-v0.1.safetensors"
-   ],
-   "folder": "loras",
-   "sources": [
-    {
-     "url": "https://civitai.com/api/download/models/2877687?fileId=2758550",
-     "host": "civitai"
-    }
-   ]
-  },
-  {
-   "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
-   "size": 4182218328,
-   "names": [
-    "anima_baseV10.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "CircleStone Labs Non-Commercial License",
-    "url": "https://huggingface.co/circlestone-labs/Anima/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
-   "size": 444473596,
-   "names": [
-    "birefnet.safetensors"
-   ],
-   "folder": "background_removal",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "6374c9d1f4faa17d0204df6d20f777ed348bc1ac22f778e46ac79d554c67e3b1",
-   "size": 20585228840,
-   "names": [
-    "boogu_image_edit_bf16.safetensors"
-   ],
-   "folder": "diffusion_models/boogu_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_bf16.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "1b9da944fdde5fdee4bbae874da68682bf9787e59fc90a473664547e342f8575",
-   "size": 10313835784,
-   "names": [
-    "boogu_image_edit_fp8_scaled.safetensors"
-   ],
-   "folder": "diffusion_models/boogu_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_fp8_scaled.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "39e15fc64cf3254171b9d2d839c71360baa994cdd72cd2eea1affe5e679431b5",
-   "size": 11370550632,
-   "names": [
-    "boogu_image_edit_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/boogu_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "07cde011fb48cf940bc3b962ab45d6fb10368dcb57d79e0167d720c9733ff64c",
-   "size": 20585228872,
-   "names": [
-    "boogu_image_edit_turbo_hotfix_1k_20260708_bf16.safetensors"
-   ],
-   "folder": "diffusion_models/boogu_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_turbo_hotfix_1k_20260708_bf16.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "b0bdd36eb559d62e8169e16a1e8b4438f8be17fc092ca9d43a2d8460c1d79e6a",
-   "size": 10326755028,
-   "names": [
-    "boogu_image_edit_turbo_hotfix_1k_20260708_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/boogu_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_turbo_hotfix_1k_20260708_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "c242eca52f1388102e1fd8644945875a09ea3e85f5e944c42114c6a72328e440",
-   "size": 11368601252,
-   "names": [
-    "boogu_image_edit_turbo_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/boogu_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_turbo_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
-   "size": 4070624520,
-   "names": [
-    "flux-2-klein-4b-fp8.safetensors"
-   ],
-   "folder": "diffusion_models/flux2_klein",
-   "sources": [
-    {
-     "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8/resolve/main/flux-2-klein-4b-fp8.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "ac629fa69e0700ae689bce6b694ac0fc90ba5c24de15bd6c47195ad0c16fe90e",
-   "size": 4074445184,
-   "names": [
-    "flux-2-klein-4b-int8-convrot.safetensors"
-   ],
-   "folder": "diffusion_models/flux2_klein",
-   "sources": [
-    {
-     "url": "https://huggingface.co/wraps/FLUX.2-klein-4B-INT8-ConvRot-ComfyUI/resolve/main/flux-2-klein-4b-int8-convrot.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "865ba09f5b4c3cbd3468a4bd3acb9fcb2f8740c54317482f0bcd4ed1d3655cee",
-   "size": 9433061528,
-   "names": [
-    "flux-2-klein-9b-fp8.safetensors"
-   ],
-   "folder": "diffusion_models/flux2_klein",
-   "sources": [
-    {
-     "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8/resolve/main/flux-2-klein-9b-fp8.safetensors",
-     "host": "huggingface",
-     "gated": true,
-     "license_url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8"
-    }
-   ],
-   "license": {
-    "name": "FLUX Non-Commercial License",
-    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "8daaac4f1e869cea35a051fcc619c515b7ba003d319667c1db6ae798fa1e6db2",
-   "size": 9433065664,
-   "names": [
-    "flux-2-klein-9b-int8-convrot.safetensors"
-   ],
-   "folder": "diffusion_models/flux2_klein",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Winnougan/Klein9b-Distilled-Base-INT8-Convrot/resolve/main/flux-2-klein-9b-int8-convrot.safetensors",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "FLUX Non-Commercial License",
-    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "8e91b68084b53a7fc44ed2a3756d821e355ac1a7b6fe29be760c1db532f3d88a",
-   "size": 17246524772,
-   "names": [
-    "flux1-dev-fp8.safetensors"
-   ],
-   "folder": "checkpoints",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "FLUX.1 [dev] Non-Commercial License",
-    "url": "https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "ddb9566f8ff12df0b72794901b252e28c938bb9abf8ade716d804a21c33aff2e",
-   "size": 2464248722,
-   "names": [
-    "Flux2-Klein-4B-w4a8.safetensors"
-   ],
-   "folder": "diffusion_models/flux2_klein",
-   "sources": [
-    {
-     "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/FLUX/Flux2-Klein-4B-w4a8.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "de83a64b5617325a9ca39a112cb72dd131127dc2174dfe2c5bbdc9e7200d1839",
-   "size": 5623109192,
-   "names": [
-    "Flux2-Klein-9B-w4a8.safetensors"
-   ],
-   "folder": "diffusion_models/flux2_klein",
-   "sources": [
-    {
-     "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/FLUX/Flux2-Klein-9B-w4a8.safetensors",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "FLUX Non-Commercial License",
-    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "ea4273f02d1fafbf8e1d1c2cf6018ed8748652eb0bf34f2dd91171f16f15ab62",
-   "size": 249519092,
-   "names": [
-    "flux2-tiny-vae.safetensors",
-    "full_encoder_small_decoder.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/black-forest-labs/FLUX.2-small-decoder/resolve/main/full_encoder_small_decoder.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
-   "size": 336213556,
-   "names": [
-    "flux2-vae.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "fe60e264437d93cac026025738157d763d1f311b90a22afd56d1fe7497c36f9f",
-   "size": 13491950984,
-   "names": [
-    "gonzalomoKrea2_v40.safetensors"
-   ],
-   "folder": "diffusion_models/krea2",
-   "sources": [
-    {
-     "url": "https://civitai.com/api/download/models/3245099?fileId=3128557",
-     "host": "civitai"
-    }
-   ]
-  },
-  {
-   "sha256": "49a946f1b0f8bcf5eab7d3b1ecc7b453c104e034cb1b592032745692724bd306",
-   "size": 9280741285,
-   "names": [
-    "ideogram4_fp8_scaled.safetensors"
-   ],
-   "folder": "diffusion_models/ideogram",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "Ideogram Non-Commercial Model Agreement",
-    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "a9164002943463b4c7b2abd88c82a488c088acc35762651e4d8604d6ce4a163d",
-   "size": 9583465712,
-   "names": [
-    "ideogram4_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/ideogram",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "Ideogram Non-Commercial Model Agreement",
-    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "9b359007dae162cca7591d00868feea733eb7c56e56e3a214a4d5a9a2a07cd60",
-   "size": 9280741293,
-   "names": [
-    "ideogram4_unconditional_fp8_scaled.safetensors"
-   ],
-   "folder": "diffusion_models/ideogram",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "Ideogram Non-Commercial Model Agreement",
-    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "cd03ed94f244c9cb705e7d30ca0f40b5f5b004bb20674117adff88d16416c23d",
-   "size": 9583465712,
-   "names": [
-    "ideogram4_unconditional_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/ideogram",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ],
-   "license": {
-    "name": "Ideogram Non-Commercial Model Agreement",
-    "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "c1978d273eea90aa529234e2a53e3bc6d9696cce5396db5f42031aa2f70ddc40",
-   "size": 331379592,
-   "names": [
-    "Klein-Migration.safetensors"
-   ],
-   "folder": "loras/flux_klein_9b",
-   "sources": [
-    {
-     "url": "https://huggingface.co/dx8152/Flux2-Klein-9B-Migration/resolve/main/Klein-Migration.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "468bf97902559bfab6566b71fe10601a6098b221b27a9cd1aaaef49c14cef056",
-   "size": 7226824858,
-   "names": [
-    "Krea-2-Turbo-w4a8.safetensors"
-   ],
-   "folder": "diffusion_models/krea2",
-   "sources": [
-    {
-     "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/KREA/Krea-2-Turbo-w4a8.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "4c74e8fc00d121aeb4f75cdf066b70d33f6a59e36f143b0bfd53d6467ffc13bd",
-   "size": 6899724208,
-   "names": [
-    "krea2_turbo-int4_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/krea2",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Winnougan/INT4-Convrot-Comfy-Models/resolve/main/krea2_turbo-int4_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1",
-   "size": 13141730784,
-   "names": [
-    "krea2_turbo_fp8_scaled.safetensors"
-   ],
-   "folder": "diffusion_models/krea2",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_fp8_scaled.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "8e4eeda70dd5037ab1ba2bef6b417f9f901e26093117cf397f741fc1fdaaf3f1",
-   "size": 13492686496,
-   "names": [
-    "krea2_turbo_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/krea2",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "ad4a9f0b4d61ba77c5783b51fe3a2b637f8245144c1ce5e6a3fcd8225fd7df8a",
-   "size": 228587776,
-   "names": [
-    "KREA_MIDJ_1.safetensors"
-   ],
-   "folder": "loras/krea2",
-   "sources": [
-    {
-     "url": "https://civitai.com/api/download/models/3095398?fileId=2974963",
-     "host": "civitai"
-    }
-   ]
-  },
-  {
-   "sha256": "849f53831d235bd4de58e43ae05c78f9f338867f5803747726d47b638f9ea41c",
-   "size": 228588920,
-   "names": [
-    "midjourney_8_2_k2_epoch_20.safetensors"
-   ],
-   "folder": "loras/krea2",
-   "sources": [
-    {
-     "url": "https://civitai.com/api/download/models/3252404?fileId=3135445",
-     "host": "civitai"
-    }
-   ],
-   "license": {
-    "name": "CivitAI: credit required; commercial use only through CivitAI's rental program",
-    "url": "https://civitai.com/models/601666",
-    "non_commercial": true
-   }
-  },
-  {
-   "sha256": "96a10c01869ce8ce82f820f8217881d4a998487b1058eb3057a33c74419645f8",
-   "size": 236117032,
-   "names": [
-    "Qwen-Image-Edit-2509-White_to_Scene.safetensors"
-   ],
-   "folder": "loras/qwen_2509",
-   "sources": [
-    {
-     "url": "https://huggingface.co/dx8152/Qwen-Image-Edit-2509-White_to_Scene/resolve/main/%E7%99%BD%E5%BA%95%E5%9B%BE%E8%BD%AC%E5%9C%BA%E6%99%AF.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
-   "size": 849608296,
-   "names": [
-    "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
-   ],
-   "folder": "loras/qwen_2511",
-   "sources": [
-    {
-     "url": "https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "a9e81a58a78f260f67b337a6f615e8fa4cd3bc79847c77b7d61a581b789b1ba8",
-   "size": 849608296,
-   "names": [
-    "Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors"
-   ],
-   "folder": "loras/qwen_2511",
-   "sources": [
-    {
-     "url": "https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "42426ded4e25fd22879d9e198b857556445ef4ca56e8da3246d0345155bb6765",
-   "size": 295140688,
-   "names": [
-    "qwen-image-edit-2511-multiple-angles-lora.safetensors"
-   ],
-   "folder": "loras/qwen_2511",
-   "sources": [
-    {
-     "url": "https://huggingface.co/fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA/resolve/main/qwen-image-edit-2511-multiple-angles-lora.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "3e43b9796143ef178dba96707a7c4ec6f882b8ca8afa37577186100d11ad67c5",
-   "size": 849608296,
-   "names": [
-    "Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors"
-   ],
-   "folder": "loras/qwen_2511",
-   "sources": [
-    {
-     "url": "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "54bd5144df0bbc25dd6ccadfcb826b521445a1b06ae5a42570bdd2974ca87094",
-   "size": 5242467968,
-   "names": [
-    "qwen3vl_4b_fp8_scaled.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "4ba424cf62e51392e4d1a39933e803706f4e823c1065f36aaf149c6453f66bcd",
-   "size": 10588637512,
-   "names": [
-    "qwen3vl_8b_fp8_scaled.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/text_encoders/qwen3vl_8b_fp8_scaled.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "68bdc82bc1b66851162ae656225e7e2068166b603db19bd5d5a3b90eb12669a9",
-   "size": 17534334616,
-   "names": [
-    "qwen3vl_8b_bf16.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "8bfd0f6e12abf2d2d697ecc888e5e90b0d6741d6708f05799f53afa560452e8f",
-   "size": 9350798360,
-   "names": [
-    "qwen3vl_8b_int8_convrot.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_int8_convrot.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
-   "size": 9384670680,
-   "names": [
-    "qwen_2.5_vl_7b_fp8_scaled.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "869f7c67fa074142c2e674c62b7ac4564af82877bc0a791b815f446baa86b35c",
-   "size": 9682035200,
-   "names": [
-    "qwen_2.5_vl_7b_instruct_int8_convrot.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/ansteinhuynh/Qwen2.5-VL-7B-Instruct-int8-convrot-comfyui/resolve/main/qwen_2.5_vl_7b_instruct_int8_convrot.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "c7bb24d331f5df991bab2ce76a15195b12652e86a69a79823183c6a047407463",
-   "size": 6114433446,
-   "names": [
-    "qwen_2.5_vl_7b_nvfp4.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_nvfp4.safetensors",
-     "host": "huggingface"
-    }
-   ],
-   "previous_sha256": [
-    "dfe8dcdd9caf58f0b07771dec90875e407b18b46e8b4bbaea61f43bde1de1566"
-   ]
-  },
-  {
-   "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba",
-   "size": 1192135096,
-   "names": [
-    "qwen_3_06b_base.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
-   "size": 8044982048,
-   "names": [
-    "qwen_3_4b.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "72450b19758172c5a7273cf7de729d1c17e7f434a104a00167624cba94f68f15",
-   "size": 5631994051,
-   "names": [
-    "qwen_3_4b_fp8_mixed.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b_fp8_mixed.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "abad16806e0cbabc54e0325d6565847443fe396d5f0be38bb3cd3fe75a1201d6",
-   "size": 8664848742,
-   "names": [
-    "qwen_3_8b_fp8mixed.safetensors"
-   ],
-   "folder": "text_encoders",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "89f4158d066cc33906a199fca85634f766892dd78f49b6698dabf187ac86c4bc",
-   "size": 14230280616,
-   "names": [
-    "qwen_image_2.1_bf16.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "cb74113cb03faecd79611b01fd7fd642f0aa60d6f0b95086abee214d75eaa57d",
-   "size": 7256783064,
-   "names": [
-    "qwen_image_2.1_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "8144a0182964aa8403ad6dbc011db837304167d235161b9aabaa8532e967314c",
-   "size": 7256787829,
-   "names": [
-    "qwen_image_2.1_turbo_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_turbo_int8_convrot.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "8b74237a7f505773e2c66726fa696444b4c704585c93a347cff9044937f7914a",
-   "size": 14230280616,
-   "names": [
-    "qwen_image_2.1_turbo_bf16.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_turbo_bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9",
-   "size": 675509688,
-   "names": [
-    "qwen_image_2.1_vae_bf16.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
-   "size": 20533762817,
-   "names": [
-    "qwen_image_edit_2511_fp8mixed.safetensors"
-   ],
-   "folder": "diffusion_models/qwen_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_fp8mixed.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "11b5af5ac601821d73930c84846c9a158e67177356daf927ce1c8d10f3963829",
-   "size": 20499083824,
-   "names": [
-    "qwen_image_edit_2511_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/qwen_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_int8_convrot.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "0014098c9c1e322195e233672d6c09e8c6859f34dd953485f5ea3b8c53109b55",
-   "size": 19769139208,
-   "names": [
-    "qwen_image_edit_2511_nvfp4.safetensors"
-   ],
-   "folder": "diffusion_models/qwen_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Bedovyy/Qwen-Image-Edit-2511-NVFP4/resolve/main/qwen_image_edit_2511_nvfp4.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "2be84dd96690311cebfa86bf5c5a3a656bd6ca4da6181dcbeea794a227bd2a74",
-   "size": 590057176,
-   "names": [
-    "qwen_image_edit_2511_upscale.safetensors"
-   ],
-   "folder": "loras/qwen_2511",
-   "sources": [
-    {
-     "url": "https://huggingface.co/joyfox/Qwen-Image-Edit-2511-Upscale2K/resolve/main/qwen_image_edit_2511_upscale.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
-   "size": 253806246,
-   "names": [
-    "qwen_image_vae.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "9ba99c92703c2e8b4f47de2d34a539bb8e18923049e238b780d70dbe6368eb03",
-   "size": 1745546848,
-   "names": [
-    "sam3.1_multiplex_fp16.safetensors"
-   ],
-   "folder": "checkpoints",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/sam3.1/resolve/main/checkpoints/sam3.1_multiplex_fp16.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "c3dec8bcc5916843a8a858572970597462e1f2dc598d6dfd818f6cd40f53a157",
-   "size": 3458259704,
-   "names": [
-    "seedvr2_3b_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/diffusion_models/seedvr2_3b_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "5aa0d25fc9d35e449b659d0c9a5dcb22e2a4fa04032101b95a39da42b32c1be6",
-   "size": 8334897976,
-   "names": [
-    "seedvr2_7b_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/diffusion_models/seedvr2_7b_int8_convrot.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "20678548f420d98d26f11442d3528f8b8c94e57ee046ef93dbb7633da8612ca1",
-   "size": 501324814,
-   "names": [
-    "seedvr2_ema_vae_fp16.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/vae/ema_vae_fp16.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "1fee501deabac72f0ed17610307d7131e3e9d1e838d0363aa3c2b97a6e03fb33",
-   "size": 856505640,
-   "names": [
-    "sigclip_vision_patch14_384.safetensors"
-   ],
-   "folder": "clip_vision",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/sigclip_vision_384/resolve/main/sigclip_vision_patch14_384.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "233a8b1df4b3387f9f2bedaa2099d0e14cc946d1105f732de2a8600310b86f07",
-   "size": 228588904,
-   "names": [
-    "ultra_real_krea2_v2.safetensors"
-   ],
-   "folder": "loras/krea2",
-   "sources": [
-    {
-     "url": "https://civitai.com/api/download/models/3182356?fileId=3062944",
-     "host": "civitai"
-    }
-   ]
-  },
-  {
-   "sha256": "a03fa8430997f1c371c2471b133bdc03433a50564e0a29c096217077b0309e41",
-   "size": 478187816,
-   "names": [
-    "uso-flux1-dit-lora-v1.safetensors"
-   ],
-   "folder": "loras",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/USO_1.0_Repackaged/resolve/main/split_files/loras/uso-flux1-dit-lora-v1.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "9a0dfcd6644e3acaf6995625562ab0af1f9cf048bf739c7e5822ee106fb44311",
-   "size": 21548200,
-   "names": [
-    "uso-flux1-projector-v1.safetensors"
-   ],
-   "folder": "model_patches",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/USO_1.0_Repackaged/resolve/main/split_files/model_patches/uso-flux1-projector-v1.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
-   "size": 253815318,
-   "names": [
-    "wan_2.1_vae.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "2bb34d67a2a1167bb5e0eba17ccf352d1d5c6d69018bda7d71f886e323a6b0bf",
-   "size": 6154968720,
-   "names": [
-    "z-anime-distill-4step-fp8.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/SeeSee21/Z-Anime/resolve/main/diffusion_models/z-anime-distill-4step-fp8.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "0825d3cd7588ef1ccc5bd60c427005e407a1e2316beb00f9d58dcae1e9492462",
-   "size": 6154974440,
-   "names": [
-    "z-image-turbo-fp8-e4m3fn.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/T5B/Z-Image-Turbo-FP8/resolve/main/z-image-turbo-fp8-e4m3fn.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "2e35a61d1ebe2e4f8f6c059c6f5bb45b20cc0701208a1c3d51a394d8d17605d9",
-   "size": 3667086492,
-   "names": [
-    "Z-Image-Turbo-w4a8.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/Z-Image/Z-Image-Turbo-w4a8.safetensors",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "2407613050b809ffdff18a4ac99af83ea6b95443ecebdf80e064a79c825574a6",
-   "size": 12309866400,
-   "names": [
-    "z_image_turbo_bf16.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "be517ebd47c912a5626a588e1aeea43e6be4a43c0cdcd2b48a2a780d9f358635",
-   "size": 6201001296,
-   "names": [
-    "z_image_turbo_int8_convrot.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_int8_convrot.safetensors",
-     "host": "huggingface"
-    }
-   ],
-   "previous_sha256": [
-    "eb2b470694fbd9778f15efd309000ea0091312c018c10a352c120b1da9bf4279"
-   ]
-  },
-  {
-   "sha256": "565fbf9627dea02b7d08e0e3b46ff77c8a5b1b3019ad0dbe8109e96446c729bf",
-   "size": 6174039520,
-   "names": [
-    "z_image_turbo_int8_convrot_bf16emixed.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/martin-rizzo/Z-Image-Turbo-INT8-ConvRot-ComfyUI/resolve/main/z_image_turbo_int8_convrot_bf16emixed.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "a553c889dbcb910de4c98293237573219a37007c1074a3f04576646a088bd5c8",
-   "size": 4509509600,
-   "names": [
-    "z_image_turbo_nvfp4.safetensors"
-   ],
-   "folder": "diffusion_models/z_image",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_nvfp4.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
-   "size": 335304388,
-   "names": [
-    "z_vae.safetensors",
-    "ae.safetensors"
-   ],
-   "folder": "vae",
-   "sources": [
-    {
-     "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors",
-     "host": "huggingface"
+  "schema_version": 1,
+  "updated": "2026-10-25",
+  "models": [
+    {
+      "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+      "size": 67061725,
+      "names": [
+        "RealESRGAN_x2plus.pth"
+      ],
+      "folder": "upscale_models",
+      "sources": [
+        {
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
+          "host": "github"
+        }
+      ],
+      "license": {
+        "name": "BSD 3-Clause",
+        "url": "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"
+      }
     },
     {
-     "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors?download=true",
-     "host": "huggingface"
-    }
-   ]
-  },
-  {
-   "sha256": "c5051594b7177e2b12d5a254a4a7cd6f22b3a43cefa07a6aaa910e30f4ab8232",
-   "size": 29641748,
-   "names": [
-    "4xBHI_realplksr_dysample_multiblur.safetensors"
-   ],
-   "folder": "upscale_models",
-   "sources": [
+      "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
+      "size": 67040989,
+      "names": [
+        "RealESRGAN_x4plus.pth"
+      ],
+      "folder": "upscale_models",
+      "sources": [
+        {
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+          "host": "github"
+        }
+      ],
+      "license": {
+        "name": "BSD 3-Clause",
+        "url": "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"
+      }
+    },
     {
-     "url": "https://github.com/Phhofm/models/releases/download/4xbhi_realplksr/4xBHI_realplksr_dysample_multiblur.safetensors",
-     "host": "github"
+      "sha256": "94d368b633614958f84f335b129fd85abd30200e8fbc575b859ba6762116222b",
+      "size": 20099337,
+      "names": [
+        "1x-ITF-SkinDiffDetail-Lite-v1.pth"
+      ],
+      "folder": "upscale_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/timothy692/1x-ITF-SkinDiffDetail-Lite-v1/resolve/main/1x-ITF-SkinDiffDetail-Lite-v1.pth",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "68ed0aec6ff4ebc3add1180e191797adb5aa6b69dd8b0fc8aa9e680145f65aac",
+      "size": 148902616,
+      "names": [
+        "anima-turbo-lora-v0.1.safetensors"
+      ],
+      "folder": "loras",
+      "sources": [
+        {
+          "url": "https://civitai.com/api/download/models/2877687?fileId=2758550",
+          "host": "civitai"
+        }
+      ]
+    },
+    {
+      "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
+      "size": 4182218328,
+      "names": [
+        "anima_baseV10.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "CircleStone Labs Non-Commercial License",
+        "url": "https://huggingface.co/circlestone-labs/Anima/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
+      "size": 444473596,
+      "names": [
+        "birefnet.safetensors"
+      ],
+      "folder": "background_removal",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "6374c9d1f4faa17d0204df6d20f777ed348bc1ac22f778e46ac79d554c67e3b1",
+      "size": 20585228840,
+      "names": [
+        "boogu_image_edit_bf16.safetensors"
+      ],
+      "folder": "diffusion_models/boogu_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_bf16.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "1b9da944fdde5fdee4bbae874da68682bf9787e59fc90a473664547e342f8575",
+      "size": 10313835784,
+      "names": [
+        "boogu_image_edit_fp8_scaled.safetensors"
+      ],
+      "folder": "diffusion_models/boogu_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_fp8_scaled.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "39e15fc64cf3254171b9d2d839c71360baa994cdd72cd2eea1affe5e679431b5",
+      "size": 11370550632,
+      "names": [
+        "boogu_image_edit_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/boogu_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "07cde011fb48cf940bc3b962ab45d6fb10368dcb57d79e0167d720c9733ff64c",
+      "size": 20585228872,
+      "names": [
+        "boogu_image_edit_turbo_hotfix_1k_20260708_bf16.safetensors"
+      ],
+      "folder": "diffusion_models/boogu_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_turbo_hotfix_1k_20260708_bf16.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "b0bdd36eb559d62e8169e16a1e8b4438f8be17fc092ca9d43a2d8460c1d79e6a",
+      "size": 10326755028,
+      "names": [
+        "boogu_image_edit_turbo_hotfix_1k_20260708_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/boogu_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_turbo_hotfix_1k_20260708_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "c242eca52f1388102e1fd8644945875a09ea3e85f5e944c42114c6a72328e440",
+      "size": 11368601252,
+      "names": [
+        "boogu_image_edit_turbo_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/boogu_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Boogu-Image/resolve/main/diffusion_models/boogu_image_edit_turbo_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
+      "size": 4070624520,
+      "names": [
+        "flux-2-klein-4b-fp8.safetensors"
+      ],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8/resolve/main/flux-2-klein-4b-fp8.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "ac629fa69e0700ae689bce6b694ac0fc90ba5c24de15bd6c47195ad0c16fe90e",
+      "size": 4074445184,
+      "names": [
+        "flux-2-klein-4b-int8-convrot.safetensors"
+      ],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        {
+          "url": "https://huggingface.co/wraps/FLUX.2-klein-4B-INT8-ConvRot-ComfyUI/resolve/main/flux-2-klein-4b-int8-convrot.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "865ba09f5b4c3cbd3468a4bd3acb9fcb2f8740c54317482f0bcd4ed1d3655cee",
+      "size": 9433061528,
+      "names": [
+        "flux-2-klein-9b-fp8.safetensors"
+      ],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8/resolve/main/flux-2-klein-9b-fp8.safetensors",
+          "host": "huggingface",
+          "gated": true,
+          "license_url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8"
+        }
+      ],
+      "license": {
+        "name": "FLUX Non-Commercial License",
+        "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "8daaac4f1e869cea35a051fcc619c515b7ba003d319667c1db6ae798fa1e6db2",
+      "size": 9433065664,
+      "names": [
+        "flux-2-klein-9b-int8-convrot.safetensors"
+      ],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Winnougan/Klein9b-Distilled-Base-INT8-Convrot/resolve/main/flux-2-klein-9b-int8-convrot.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "FLUX Non-Commercial License",
+        "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "8e91b68084b53a7fc44ed2a3756d821e355ac1a7b6fe29be760c1db532f3d88a",
+      "size": 17246524772,
+      "names": [
+        "flux1-dev-fp8.safetensors"
+      ],
+      "folder": "checkpoints",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "FLUX.1 [dev] Non-Commercial License",
+        "url": "https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "ddb9566f8ff12df0b72794901b252e28c938bb9abf8ade716d804a21c33aff2e",
+      "size": 2464248722,
+      "names": [
+        "Flux2-Klein-4B-w4a8.safetensors"
+      ],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        {
+          "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/FLUX/Flux2-Klein-4B-w4a8.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "de83a64b5617325a9ca39a112cb72dd131127dc2174dfe2c5bbdc9e7200d1839",
+      "size": 5623109192,
+      "names": [
+        "Flux2-Klein-9B-w4a8.safetensors"
+      ],
+      "folder": "diffusion_models/flux2_klein",
+      "sources": [
+        {
+          "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/FLUX/Flux2-Klein-9B-w4a8.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "FLUX Non-Commercial License",
+        "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "ea4273f02d1fafbf8e1d1c2cf6018ed8748652eb0bf34f2dd91171f16f15ab62",
+      "size": 249519092,
+      "names": [
+        "flux2-tiny-vae.safetensors",
+        "full_encoder_small_decoder.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/FLUX.2-small-decoder/resolve/main/full_encoder_small_decoder.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+      "size": 336213556,
+      "names": [
+        "flux2-vae.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "fe60e264437d93cac026025738157d763d1f311b90a22afd56d1fe7497c36f9f",
+      "size": 13491950984,
+      "names": [
+        "gonzalomoKrea2_v40.safetensors"
+      ],
+      "folder": "diffusion_models/krea2",
+      "sources": [
+        {
+          "url": "https://civitai.com/api/download/models/3245099?fileId=3128557",
+          "host": "civitai"
+        }
+      ]
+    },
+    {
+      "sha256": "49a946f1b0f8bcf5eab7d3b1ecc7b453c104e034cb1b592032745692724bd306",
+      "size": 9280741285,
+      "names": [
+        "ideogram4_fp8_scaled.safetensors"
+      ],
+      "folder": "diffusion_models/ideogram",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "Ideogram Non-Commercial Model Agreement",
+        "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "a9164002943463b4c7b2abd88c82a488c088acc35762651e4d8604d6ce4a163d",
+      "size": 9583465712,
+      "names": [
+        "ideogram4_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/ideogram",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "Ideogram Non-Commercial Model Agreement",
+        "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "9b359007dae162cca7591d00868feea733eb7c56e56e3a214a4d5a9a2a07cd60",
+      "size": 9280741293,
+      "names": [
+        "ideogram4_unconditional_fp8_scaled.safetensors"
+      ],
+      "folder": "diffusion_models/ideogram",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "Ideogram Non-Commercial Model Agreement",
+        "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "cd03ed94f244c9cb705e7d30ca0f40b5f5b004bb20674117adff88d16416c23d",
+      "size": 9583465712,
+      "names": [
+        "ideogram4_unconditional_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/ideogram",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "Ideogram Non-Commercial Model Agreement",
+        "url": "https://huggingface.co/ideogram-ai/ideogram-4-fp8/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "c1978d273eea90aa529234e2a53e3bc6d9696cce5396db5f42031aa2f70ddc40",
+      "size": 331379592,
+      "names": [
+        "Klein-Migration.safetensors"
+      ],
+      "folder": "loras/flux_klein_9b",
+      "sources": [
+        {
+          "url": "https://huggingface.co/dx8152/Flux2-Klein-9B-Migration/resolve/main/Klein-Migration.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "468bf97902559bfab6566b71fe10601a6098b221b27a9cd1aaaef49c14cef056",
+      "size": 7226824858,
+      "names": [
+        "Krea-2-Turbo-w4a8.safetensors"
+      ],
+      "folder": "diffusion_models/krea2",
+      "sources": [
+        {
+          "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/KREA/Krea-2-Turbo-w4a8.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "4c74e8fc00d121aeb4f75cdf066b70d33f6a59e36f143b0bfd53d6467ffc13bd",
+      "size": 6899724208,
+      "names": [
+        "krea2_turbo-int4_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/krea2",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Winnougan/INT4-Convrot-Comfy-Models/resolve/main/krea2_turbo-int4_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1",
+      "size": 13141730784,
+      "names": [
+        "krea2_turbo_fp8_scaled.safetensors"
+      ],
+      "folder": "diffusion_models/krea2",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_fp8_scaled.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "8e4eeda70dd5037ab1ba2bef6b417f9f901e26093117cf397f741fc1fdaaf3f1",
+      "size": 13492686496,
+      "names": [
+        "krea2_turbo_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/krea2",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "ad4a9f0b4d61ba77c5783b51fe3a2b637f8245144c1ce5e6a3fcd8225fd7df8a",
+      "size": 228587776,
+      "names": [
+        "KREA_MIDJ_1.safetensors"
+      ],
+      "folder": "loras/krea2",
+      "sources": [
+        {
+          "url": "https://civitai.com/api/download/models/3095398?fileId=2974963",
+          "host": "civitai"
+        }
+      ]
+    },
+    {
+      "sha256": "849f53831d235bd4de58e43ae05c78f9f338867f5803747726d47b638f9ea41c",
+      "size": 228588920,
+      "names": [
+        "midjourney_8_2_k2_epoch_20.safetensors"
+      ],
+      "folder": "loras/krea2",
+      "sources": [
+        {
+          "url": "https://civitai.com/api/download/models/3252404?fileId=3135445",
+          "host": "civitai"
+        }
+      ],
+      "license": {
+        "name": "CivitAI: credit required; commercial use only through CivitAI's rental program",
+        "url": "https://civitai.com/models/601666",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "96a10c01869ce8ce82f820f8217881d4a998487b1058eb3057a33c74419645f8",
+      "size": 236117032,
+      "names": [
+        "Qwen-Image-Edit-2509-White_to_Scene.safetensors"
+      ],
+      "folder": "loras/qwen_2509",
+      "sources": [
+        {
+          "url": "https://huggingface.co/dx8152/Qwen-Image-Edit-2509-White_to_Scene/resolve/main/%E7%99%BD%E5%BA%95%E5%9B%BE%E8%BD%AC%E5%9C%BA%E6%99%AF.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+      "size": 849608296,
+      "names": [
+        "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
+      ],
+      "folder": "loras/qwen_2511",
+      "sources": [
+        {
+          "url": "https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "a9e81a58a78f260f67b337a6f615e8fa4cd3bc79847c77b7d61a581b789b1ba8",
+      "size": 849608296,
+      "names": [
+        "Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors"
+      ],
+      "folder": "loras/qwen_2511",
+      "sources": [
+        {
+          "url": "https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "42426ded4e25fd22879d9e198b857556445ef4ca56e8da3246d0345155bb6765",
+      "size": 295140688,
+      "names": [
+        "qwen-image-edit-2511-multiple-angles-lora.safetensors"
+      ],
+      "folder": "loras/qwen_2511",
+      "sources": [
+        {
+          "url": "https://huggingface.co/fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA/resolve/main/qwen-image-edit-2511-multiple-angles-lora.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "3e43b9796143ef178dba96707a7c4ec6f882b8ca8afa37577186100d11ad67c5",
+      "size": 849608296,
+      "names": [
+        "Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors"
+      ],
+      "folder": "loras/qwen_2511",
+      "sources": [
+        {
+          "url": "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-4steps-V2.0-bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "54bd5144df0bbc25dd6ccadfcb826b521445a1b06ae5a42570bdd2974ca87094",
+      "size": 5242467968,
+      "names": [
+        "qwen3vl_4b_fp8_scaled.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "4ba424cf62e51392e4d1a39933e803706f4e823c1065f36aaf149c6453f66bcd",
+      "size": 10588637512,
+      "names": [
+        "qwen3vl_8b_fp8_scaled.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/text_encoders/qwen3vl_8b_fp8_scaled.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "68bdc82bc1b66851162ae656225e7e2068166b603db19bd5d5a3b90eb12669a9",
+      "size": 17534334616,
+      "names": [
+        "qwen3vl_8b_bf16.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "8bfd0f6e12abf2d2d697ecc888e5e90b0d6741d6708f05799f53afa560452e8f",
+      "size": 9350798360,
+      "names": [
+        "qwen3vl_8b_int8_convrot.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_int8_convrot.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+      "size": 9384670680,
+      "names": [
+        "qwen_2.5_vl_7b_fp8_scaled.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "869f7c67fa074142c2e674c62b7ac4564af82877bc0a791b815f446baa86b35c",
+      "size": 9682035200,
+      "names": [
+        "qwen_2.5_vl_7b_instruct_int8_convrot.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/ansteinhuynh/Qwen2.5-VL-7B-Instruct-int8-convrot-comfyui/resolve/main/qwen_2.5_vl_7b_instruct_int8_convrot.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "c7bb24d331f5df991bab2ce76a15195b12652e86a69a79823183c6a047407463",
+      "size": 6114433446,
+      "names": [
+        "qwen_2.5_vl_7b_nvfp4.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_nvfp4.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "previous_sha256": [
+        "dfe8dcdd9caf58f0b07771dec90875e407b18b46e8b4bbaea61f43bde1de1566"
+      ]
+    },
+    {
+      "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba",
+      "size": 1192135096,
+      "names": [
+        "qwen_3_06b_base.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+      "size": 8044982048,
+      "names": [
+        "qwen_3_4b.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "72450b19758172c5a7273cf7de729d1c17e7f434a104a00167624cba94f68f15",
+      "size": 5631994051,
+      "names": [
+        "qwen_3_4b_fp8_mixed.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b_fp8_mixed.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "abad16806e0cbabc54e0325d6565847443fe396d5f0be38bb3cd3fe75a1201d6",
+      "size": 8664848742,
+      "names": [
+        "qwen_3_8b_fp8mixed.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "89f4158d066cc33906a199fca85634f766892dd78f49b6698dabf187ac86c4bc",
+      "size": 14230280616,
+      "names": [
+        "qwen_image_2.1_bf16.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "cb74113cb03faecd79611b01fd7fd642f0aa60d6f0b95086abee214d75eaa57d",
+      "size": 7256783064,
+      "names": [
+        "qwen_image_2.1_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "8144a0182964aa8403ad6dbc011db837304167d235161b9aabaa8532e967314c",
+      "size": 7256787829,
+      "names": [
+        "qwen_image_2.1_turbo_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_turbo_int8_convrot.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "8b74237a7f505773e2c66726fa696444b4c704585c93a347cff9044937f7914a",
+      "size": 14230280616,
+      "names": [
+        "qwen_image_2.1_turbo_bf16.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_turbo_bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9",
+      "size": 675509688,
+      "names": [
+        "qwen_image_2.1_vae_bf16.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+      "size": 20533762817,
+      "names": [
+        "qwen_image_edit_2511_fp8mixed.safetensors"
+      ],
+      "folder": "diffusion_models/qwen_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_fp8mixed.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "11b5af5ac601821d73930c84846c9a158e67177356daf927ce1c8d10f3963829",
+      "size": 20499083824,
+      "names": [
+        "qwen_image_edit_2511_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/qwen_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_int8_convrot.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "0014098c9c1e322195e233672d6c09e8c6859f34dd953485f5ea3b8c53109b55",
+      "size": 19769139208,
+      "names": [
+        "qwen_image_edit_2511_nvfp4.safetensors"
+      ],
+      "folder": "diffusion_models/qwen_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Bedovyy/Qwen-Image-Edit-2511-NVFP4/resolve/main/qwen_image_edit_2511_nvfp4.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "2be84dd96690311cebfa86bf5c5a3a656bd6ca4da6181dcbeea794a227bd2a74",
+      "size": 590057176,
+      "names": [
+        "qwen_image_edit_2511_upscale.safetensors"
+      ],
+      "folder": "loras/qwen_2511",
+      "sources": [
+        {
+          "url": "https://huggingface.co/joyfox/Qwen-Image-Edit-2511-Upscale2K/resolve/main/qwen_image_edit_2511_upscale.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+      "size": 253806246,
+      "names": [
+        "qwen_image_vae.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "9ba99c92703c2e8b4f47de2d34a539bb8e18923049e238b780d70dbe6368eb03",
+      "size": 1745546848,
+      "names": [
+        "sam3.1_multiplex_fp16.safetensors"
+      ],
+      "folder": "checkpoints",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/sam3.1/resolve/main/checkpoints/sam3.1_multiplex_fp16.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "c3dec8bcc5916843a8a858572970597462e1f2dc598d6dfd818f6cd40f53a157",
+      "size": 3458259704,
+      "names": [
+        "seedvr2_3b_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/diffusion_models/seedvr2_3b_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "5aa0d25fc9d35e449b659d0c9a5dcb22e2a4fa04032101b95a39da42b32c1be6",
+      "size": 8334897976,
+      "names": [
+        "seedvr2_7b_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/diffusion_models/seedvr2_7b_int8_convrot.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "20678548f420d98d26f11442d3528f8b8c94e57ee046ef93dbb7633da8612ca1",
+      "size": 501324814,
+      "names": [
+        "seedvr2_ema_vae_fp16.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/vae/ema_vae_fp16.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "1fee501deabac72f0ed17610307d7131e3e9d1e838d0363aa3c2b97a6e03fb33",
+      "size": 856505640,
+      "names": [
+        "sigclip_vision_patch14_384.safetensors"
+      ],
+      "folder": "clip_vision",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/sigclip_vision_384/resolve/main/sigclip_vision_patch14_384.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "233a8b1df4b3387f9f2bedaa2099d0e14cc946d1105f732de2a8600310b86f07",
+      "size": 228588904,
+      "names": [
+        "ultra_real_krea2_v2.safetensors"
+      ],
+      "folder": "loras/krea2",
+      "sources": [
+        {
+          "url": "https://civitai.com/api/download/models/3182356?fileId=3062944",
+          "host": "civitai"
+        }
+      ]
+    },
+    {
+      "sha256": "a03fa8430997f1c371c2471b133bdc03433a50564e0a29c096217077b0309e41",
+      "size": 478187816,
+      "names": [
+        "uso-flux1-dit-lora-v1.safetensors"
+      ],
+      "folder": "loras",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/USO_1.0_Repackaged/resolve/main/split_files/loras/uso-flux1-dit-lora-v1.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "9a0dfcd6644e3acaf6995625562ab0af1f9cf048bf739c7e5822ee106fb44311",
+      "size": 21548200,
+      "names": [
+        "uso-flux1-projector-v1.safetensors"
+      ],
+      "folder": "model_patches",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/USO_1.0_Repackaged/resolve/main/split_files/model_patches/uso-flux1-projector-v1.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
+      "size": 253815318,
+      "names": [
+        "wan_2.1_vae.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "2bb34d67a2a1167bb5e0eba17ccf352d1d5c6d69018bda7d71f886e323a6b0bf",
+      "size": 6154968720,
+      "names": [
+        "z-anime-distill-4step-fp8.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/SeeSee21/Z-Anime/resolve/main/diffusion_models/z-anime-distill-4step-fp8.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "0825d3cd7588ef1ccc5bd60c427005e407a1e2316beb00f9d58dcae1e9492462",
+      "size": 6154974440,
+      "names": [
+        "z-image-turbo-fp8-e4m3fn.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/T5B/Z-Image-Turbo-FP8/resolve/main/z-image-turbo-fp8-e4m3fn.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "2e35a61d1ebe2e4f8f6c059c6f5bb45b20cc0701208a1c3d51a394d8d17605d9",
+      "size": 3667086492,
+      "names": [
+        "Z-Image-Turbo-w4a8.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/realrebelai/Rebels_w4a8s/resolve/main/Z-Image/Z-Image-Turbo-w4a8.safetensors",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "2407613050b809ffdff18a4ac99af83ea6b95443ecebdf80e064a79c825574a6",
+      "size": 12309866400,
+      "names": [
+        "z_image_turbo_bf16.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "be517ebd47c912a5626a588e1aeea43e6be4a43c0cdcd2b48a2a780d9f358635",
+      "size": 6201001296,
+      "names": [
+        "z_image_turbo_int8_convrot.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_int8_convrot.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "previous_sha256": [
+        "eb2b470694fbd9778f15efd309000ea0091312c018c10a352c120b1da9bf4279"
+      ]
+    },
+    {
+      "sha256": "565fbf9627dea02b7d08e0e3b46ff77c8a5b1b3019ad0dbe8109e96446c729bf",
+      "size": 6174039520,
+      "names": [
+        "z_image_turbo_int8_convrot_bf16emixed.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/martin-rizzo/Z-Image-Turbo-INT8-ConvRot-ComfyUI/resolve/main/z_image_turbo_int8_convrot_bf16emixed.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "a553c889dbcb910de4c98293237573219a37007c1074a3f04576646a088bd5c8",
+      "size": 4509509600,
+      "names": [
+        "z_image_turbo_nvfp4.safetensors"
+      ],
+      "folder": "diffusion_models/z_image",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_nvfp4.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+      "size": 335304388,
+      "names": [
+        "z_vae.safetensors",
+        "ae.safetensors"
+      ],
+      "folder": "vae",
+      "sources": [
+        {
+          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors",
+          "host": "huggingface"
+        },
+        {
+          "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors?download=true",
+          "host": "huggingface"
+        }
+      ]
+    },
+    {
+      "sha256": "c5051594b7177e2b12d5a254a4a7cd6f22b3a43cefa07a6aaa910e30f4ab8232",
+      "size": 29641748,
+      "names": [
+        "4xBHI_realplksr_dysample_multiblur.safetensors"
+      ],
+      "folder": "upscale_models",
+      "sources": [
+        {
+          "url": "https://github.com/Phhofm/models/releases/download/4xbhi_realplksr/4xBHI_realplksr_dysample_multiblur.safetensors",
+          "host": "github"
+        }
+      ],
+      "license": {
+        "name": "CC BY 4.0 — Philip Hofmann",
+        "url": "https://github.com/Phhofm/models/releases/tag/4xbhi_realplksr"
+      }
+    },
+    {
+      "sha256": "ad2c20e0e103b6ad3ffffc56ab4e89c0822263c488aa4dd70e7e03091ff37b8d",
+      "size": 318820224,
+      "names": [
+        "qwen-image-2.1-qma-camera-angles.safetensors"
+      ],
+      "folder": "loras",
+      "sources": [
+        {
+          "url": "https://huggingface.co/gribbliest/qwen-image-2.1-qma-camera-angles/resolve/main/qwen-image-2.1-qma-camera-angles.safetensors",
+          "host": "huggingface"
+        }
+      ],
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://huggingface.co/gribbliest/qwen-image-2.1-qma-camera-angles"
+      }
     }
-   ],
-   "license": {
-    "name": "CC BY 4.0 — Philip Hofmann",
-    "url": "https://github.com/Phhofm/models/releases/tag/4xbhi_realplksr"
-   }
-  }
- ]
+  ]
 }

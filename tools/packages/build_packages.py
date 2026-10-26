@@ -395,14 +395,16 @@ def flow_from_source(source: Path, flow_id: str) -> dict:
     entry = next((e for e in index["flows"] if e["id"] == flow_id), None)
     if entry is None:
         raise SystemExit(f"flow {flow_id!r} not in {source} index.json")
-    return json.loads((source / "app" / "instructions" / entry["file"]).read_text(encoding="utf-8"))
+    return _rename_source_workflow_refs(
+        json.loads((source / "app" / "instructions" / entry["file"]).read_text(encoding="utf-8")))
 
 
 def flow_from_path(source: Path, rel_file: str) -> dict:
     """Same as flow_from_source, but for a flow whose file exists and is
     complete but isn't (yet) registered in index.json — e.g.
     refine.pe_remove_glare, confirmed working, just missing its index entry."""
-    return json.loads((source / "app" / "instructions" / rel_file).read_text(encoding="utf-8"))
+    return _rename_source_workflow_refs(
+        json.loads((source / "app" / "instructions" / rel_file).read_text(encoding="utf-8")))
 
 
 # ── requires.models / requires.comfy_nodes (PACKAGE_FORMAT.md §8, D15) ──────
@@ -766,11 +768,29 @@ def _qwen_image_21_workflow() -> dict:
 # image conditioning inside the encode node itself. Output latent now comes
 # from GetImageSize(source image) -> EmptyLatentImage, so the result keeps
 # the input's own resolution the same way the old ReferenceLatent path did.
-QWEN_2511_EDIT_WORKFLOW_REL = "workflows/refine/refine_qwen_2511_edit.json"
+# Packaged without a version in its name (refine_qwen_edit.json); the source
+# flows still point at the old 2511 file, renamed on load (flow_from_source).
+QWEN_EDIT_WORKFLOW_REL = "workflows/refine/refine_qwen_edit.json"
+_SOURCE_WORKFLOW_RENAMES = {"workflows/refine/refine_qwen_2511_edit.json": QWEN_EDIT_WORKFLOW_REL}
+
+
+def _rename_source_workflow_refs(node):
+    """In place: every `workflow_file` in a source flow (steps and
+    engine_select options alike) moved to its packaged name."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "workflow_file" and value in _SOURCE_WORKFLOW_RENAMES:
+                node[key] = _SOURCE_WORKFLOW_RENAMES[value]
+            else:
+                _rename_source_workflow_refs(value)
+    elif isinstance(node, list):
+        for item in node:
+            _rename_source_workflow_refs(item)
+    return node
 
 
 # ── Extract (Qwen 2.1) — new flow, no OPENHIKER source. Reuses the shared
-# Edit Qwen 2.1 graph verbatim (QWEN_2511_EDIT_WORKFLOW_REL, already migrated
+# Edit Qwen 2.1 graph verbatim (QWEN_EDIT_WORKFLOW_REL, already migrated
 # — same node ids as every other Edit-engine flow: 13=TextEncodeQwenImage21,
 # 15=KSampler), just with a different default/preset prompts aimed at
 # isolating a subject/product/character as a transparent RGBA cutout instead
@@ -821,7 +841,7 @@ def _extract_qwen2_flow() -> dict:
                 "id": "params",
                 "type": "workflow_params",
                 "label": "Parameters",
-                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "workflow_file": QWEN_EDIT_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
                     {
@@ -912,7 +932,7 @@ def _edit_rgba_qwen2_flow() -> dict:
                 "id": "params",
                 "type": "workflow_params",
                 "label": "Parameters",
-                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "workflow_file": QWEN_EDIT_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
                     {
@@ -995,7 +1015,7 @@ def _local_edit_qwen2_flow() -> dict:
                 "id": "params",
                 "type": "workflow_params",
                 "label": "Parameters",
-                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "workflow_file": QWEN_EDIT_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
                     {
@@ -1094,7 +1114,7 @@ def _text_editor_qwen2_flow() -> dict:
                 "id": "params",
                 "type": "workflow_params",
                 "label": "Parameters",
-                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "workflow_file": QWEN_EDIT_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
                     {
@@ -2460,9 +2480,8 @@ REFINE_PILOT_STATIC_FLOWS = [
     "refine.edit_boogu_turbo_basic", "refine.edit_fluxklein_9b_restore", "refine.outpaint",
     "refine.upscale_model",
 ]
-# Both still run the 2511 engine internally (refine_qwen_2511_edit.json and
-# the Qwen upscale LoRA haven't been migrated to Qwen Image 2.1 yet — that's
-# its own follow-up) — renamed anyway, on request, ahead of that migration.
+# Old "2511" ids from the source; the edit graph is Qwen Image 2.1
+# (refine_qwen_edit.json, see QWEN_EDIT_WORKFLOW_REL).
 REFINE_PILOT_ID_OVERRIDES = {
     "refine.edit_qwen_2511_basic": "refine.edit_qwen2_basic",
     "refine.upscale_qwen_2511": "refine.upscale_qwen2",
@@ -2541,7 +2560,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.7"  # 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
+REFINE_PILOT_VERSION = "0.1.8"  # 0.1.8: graph renamed refine_qwen_edit.json; 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/
@@ -2664,7 +2683,7 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
     """Loads a `workflow_file`-referenced ComfyUI graph — from a hand-authored
     Qwen 2.1 replacement for the refs that have one (see their own comments
     for why), otherwise straight from OPENHIKER, same as always."""
-    if ref == QWEN_2511_EDIT_WORKFLOW_REL:
+    if ref == QWEN_EDIT_WORKFLOW_REL:
         return _qwen_image_21_edit_workflow()
     if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
         return _qwen_image_21_outpaint_workflow()
@@ -2711,7 +2730,7 @@ def _repair_model_paths(graph: dict) -> dict:
 
 
 def _strip_foreign_flow_data(graph: dict) -> None:
-    """A shared base workflow (e.g. refine_qwen_2511_edit.json, reused by
+    """A shared base workflow (e.g. refine_qwen_edit.json, reused by
     several flows via `workflow_file`) can itself carry a `flow_data` node
     that's the authoritative source of a DIFFERENT flow — Edit Qwen 2.1, in
     the pilot package. Bundling that file unmodified into another package
@@ -3088,7 +3107,7 @@ def _bg_swap_qwen2_flow() -> dict:
                 "id": "params",
                 "type": "workflow_params",
                 "label": "Parameters",
-                "workflow_file": QWEN_2511_EDIT_WORKFLOW_REL,
+                "workflow_file": QWEN_EDIT_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
                     {
@@ -3265,7 +3284,7 @@ def _pixel_art_qwen2_flow(source: Path) -> dict:
     for step in flow.get("steps", []):
         if step.get("type") != "workflow_params":
             continue
-        step["workflow_file"] = QWEN_2511_EDIT_WORKFLOW_REL
+        step["workflow_file"] = QWEN_EDIT_WORKFLOW_REL
         step["image_node"] = "7"
         for f in step.get("fields", []):
             if f.get("id") in ("style", "style_preview"):
@@ -3544,7 +3563,7 @@ def _style_transfer_text_flows() -> list[dict]:
         _style_transfer_text_flow("refine.style_transfer_klein_4b", "Klein 4B",
                                   "workflows/refine/refine_flux2_klein_4b.json", "76", "139.text",
                                   klein_fields, "edit-fluxklein", "Flux 2 Klein", names("Klein 4B")),
-        _style_transfer_text_flow("refine.style_transfer_qwen2", "Qwen 2.1", QWEN_2511_EDIT_WORKFLOW_REL,
+        _style_transfer_text_flow("refine.style_transfer_qwen2", "Qwen 2.1", QWEN_EDIT_WORKFLOW_REL,
                                   "7", "13.prompt", qwen_fields, "edit-qwen-2511", "Qwen Image 2.1 Edit",
                                   names("Qwen 2.1")),
     ]
@@ -4122,7 +4141,7 @@ def build_styling(source: Path, version: str) -> Path:
 # marketing-site session, recovered from transcript 2026-09-21): 2 kept
 # free/standalone, the other 42 split 21/21 into two paid packs by mood
 # (light/airy vs. dark/analog). Every preset shares the same Qwen 2.1 Edit
-# engine (workflow_file already migrated, see QWEN_2511_EDIT_WORKFLOW_REL)
+# engine (workflow_file already migrated, see QWEN_EDIT_WORKFLOW_REL)
 # — no per-preset engine work needed, only packaging.
 PRESETS_CORE_FLOWS = ["refine.presets_riviera", "refine.presets_spectra"]
 PRESETS_OPEN_AIR_FLOWS = [

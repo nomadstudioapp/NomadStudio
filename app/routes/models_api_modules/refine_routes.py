@@ -47,7 +47,25 @@ def _drop_unloadable_model_files(options: list[str]) -> list[str]:
     return [o for o in options if not str(o).lower().endswith(_UNLOADABLE_MODEL_EXTENSIONS)]
 
 
+# Graphs a package renamed (old basename -> new): sessions and older installs
+# still store the old path, so a miss retries with the new name.
+_RENAMED_WORKFLOW_FILES = {
+    "refine_qwen_2511_edit.json": "refine_qwen_edit.json",
+}
+
+
 def _load_workflow_file(relative_path: str) -> dict:
+    try:
+        return _load_workflow_file_exact(relative_path)
+    except ValueError:
+        path = Path(relative_path)
+        renamed = _RENAMED_WORKFLOW_FILES.get(path.name)
+        if not renamed:
+            raise
+        return _load_workflow_file_exact((path.parent / renamed).as_posix())
+
+
+def _load_workflow_file_exact(relative_path: str) -> dict:
     """Resolves a refine flow's `workflow_file` against the two places it can
     live: `app/workflows/` for anything still shipped in the app's own code
     tree (legacy/addons), and `<data>/packages/` for a flow that came from an

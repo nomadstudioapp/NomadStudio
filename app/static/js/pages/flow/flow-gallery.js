@@ -507,6 +507,17 @@ function addToFeed(imgUrl, idx, card, params, beforeUrl) {
     quantLabel.textContent = _quantId.toUpperCase();
     imgWrap.appendChild(quantLabel);
   }
+  // Engine that made it — the snapshot's workflowId resolved to the import's
+  // name (a Custom-mode batch sent to three engines gives three cards that
+  // otherwise look the same; and the picker may already point elsewhere).
+  var _engineName = resultEngineName(params);
+  if (_engineName) {
+    var engineLabel = document.createElement('span');
+    engineLabel.className = 'nit-img-engine';
+    engineLabel.textContent = _engineName;
+    engineLabel.title = _engineName;
+    imgWrap.appendChild(engineLabel);
+  }
   var sendTrayBtn = document.createElement('button');
   sendTrayBtn.type = 'button';
   sendTrayBtn.id = 'nit-send-tray-btn-' + idx;

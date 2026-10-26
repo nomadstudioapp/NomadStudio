@@ -12526,6 +12526,33 @@ body.nsc-session-workspace-page .nss-scenes-area {
   opacity: 1;
 }
 
+/* Engine that made the image — stacked above the quantization label, so a
+   batch sent to several engines says which card came from which */
+.nit-img-engine {
+  position: absolute;
+  bottom: 76px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--accent, #6b7cff) 70%, #000);
+  padding: 3px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.nss-card-img-wrap:hover .nit-img-engine,
+.nsc-image-tile:hover .nit-img-engine {
+  opacity: 1;
+}
+
 /* ── Tray strip inside image picker (Refine flows) ───────────────────────── */
 
 .nsc-tray-strip {

@@ -266,9 +266,38 @@ function _reRenderWorkflowParamsStep(s) {
 }
 
 // Apply a previously-captured params snapshot back into the live form.
-function applyParamsSnapshot(params) {
+// The import (engine) a result card was generated with, by name, from its
+// params snapshot — '' when the snapshot carries no workflowId (Refine/Mix
+// results) or the import is no longer installed.
+function resultEngineName(params) {
+  var wid = params && params.workflowId ? String(params.workflowId) : '';
+  if (!wid) return '';
+  try {
+    var rec = (typeof fullRecordCache !== 'undefined' && fullRecordCache && fullRecordCache[wid]) || null;
+    if (!rec && typeof allImportsList !== 'undefined' && Array.isArray(allImportsList)) {
+      rec = allImportsList.filter(function (imp) { return imp && String(imp.id) === wid; })[0] || null;
+    }
+    return rec ? String(rec.name || rec.id || '') : '';
+  } catch (_) { return ''; }
+}
+
+async function applyParamsSnapshot(params) {
   if (!params || typeof params !== 'object') return;
   try {
+    // ── Engine ──
+    // The snapshot remembers the import it was generated with (workflowId).
+    // Restoring prompts and quantization into a different engine made "Apply
+    // params" silently keep whatever the picker showed, so a card from a
+    // three-engine batch could not be reproduced. Select that engine first
+    // (the single-engine picker; Custom mode's multi-list is the user's own),
+    // and wait for its record so the advanced fields below land in it.
+    var _wid = params.workflowId ? String(params.workflowId) : '';
+    if (_wid && typeof selectedImportId !== 'undefined' && _wid !== String(selectedImportId || '') &&
+        typeof selectImportById === 'function' && !(typeof getMode === 'function' && getMode() === 'advanced')) {
+      var _sel = document.getElementById('ncf-workflow-select');
+      if (_sel && Array.prototype.some.call(_sel.options, function (o) { return o.value === _wid; })) _sel.value = _wid;
+      await selectImportById(_wid, null);
+    }
     // ── Prompt(s) ──
     var promptsObj  = params.prompts || null;
     var singlePrompt = params.prompt || params.promptText || params.positive || '';

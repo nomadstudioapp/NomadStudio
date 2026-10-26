@@ -244,6 +244,7 @@ Los campos `label`, `placeholder`, `hint`, `note`, `description` y las `label` d
 - Formato **API de ComfyUI** (el que hoy guarda `app/workflows/`).
 - Las rutas en `workflow_file` son **relativas al paquete** (`workflows/x.json`). El importador las reescribe al instalar; el flow nunca apunta a `app/workflows/`.
 - Un workflow PUEDE declarar los modelos que necesita (§8.2).
+- Un flow PUEDE correr el workflow de **otro paquete** en vez de llevar una copia: `workflow_file` empieza por el id de ese paquete (`nomad.core-refine/workflows/refine/refine_qwen_edit.json`) y el paquete lo declara en `requires.packages` (§8.4). El importador no reescribe esas rutas.
 
 ### 5.3 Workflows con `flow_data` (tipo B)
 
@@ -386,7 +387,7 @@ Por paquete: `languages` (idiomas con textos presentes) y `translation_status` p
 ```json
 "requires": {
   "engines":  [{ "category": "image" }, { "id": "nomad.engine.qwen-image-edit-2511" }],
-  "packages": [{ "id": "nomad.edge-defringe", "version": ">=1.0.0" }],
+  "packages": [{ "id": "nomad.core-refine", "name": "Core Refine", "min_version": "0.1.8" }],
   "capabilities": ["edge-defringe"],
   "models": [
     { "file": "qwen_image_edit_2511_fp8mixed.safetensors", "folder": "diffusion_models/qwen_image",
@@ -410,7 +411,7 @@ Por paquete: `languages` (idiomas con textos presentes) y `translation_status` p
 | Clave | Significado | Qué hace el importador si falta |
 |---|---|---|
 | `engines` | Motor por categoría o por id de paquete | Instala y marca `missing_requirements` |
-| `packages` | Otro paquete con rango de versión | Instala y marca `missing_requirements` |
+| `packages` | Otro paquete cuyos workflows corre (§8.4): `id`, `min_version` y `name` para los avisos | **Rechaza** si no está instalado o es más antiguo (sus flows apuntarían a un grafo que no existe) |
 | `capabilities` | Capacidad que aporta algún addon (§9.2) | Instala y marca `missing_requirements` |
 | `models` | Ficheros de modelo de ComfyUI (§8.2) | Instala. Al abrir un flow, la app compara con ComfyUI y ofrece descargar lo que falte (dirección: catálogo, §8.2.2) |
 | `comfy_nodes` | Packs de nodos personalizados de ComfyUI: `id`, `repo` y `classes` que aporta | Instala. Al abrir un flow, si ComfyUI no conoce una clase, enseña el pack con su repo y el comando de instalación |
@@ -420,7 +421,7 @@ Por paquete: `languages` (idiomas con textos presentes) y `translation_status` p
 | `python_downloads` | Nivel 3: descarga opcional con pip (§9.5) | Pide confirmación; si no se acepta o no hay red, instala y marca `missing_requirements` |
 | `llm`, `vision` | Necesita LM Studio / modelo de visión | Avisa |
 
-Regla: lo que no se puede resolver instalando otras cosas (Python, librerías de la base, wheels del paquete) rechaza. Lo que sí (motores, paquetes, modelos, descargas de nivel 3) instala el paquete y lo marca como pendiente, con la card visible y deshabilitada explicando qué falta.
+Regla: lo que no se puede resolver instalando otras cosas (Python, librerías de la base, wheels del paquete) rechaza. Lo que sí (motores, modelos, descargas de nivel 3) instala el paquete y lo marca como pendiente, con la card visible y deshabilitada explicando qué falta. Excepción: `packages` rechaza, y la pantalla de instalación lo avisa antes; si el paquete requerido viene en la misma tanda, se instala primero.
 
 ### 8.1 Motores como paquetes
 
@@ -511,6 +512,18 @@ Para cada fichero que ComfyUI no tiene, en este orden:
 Etiquetas: `windows-x64`, `windows-arm64`, `macos-arm64`, `macos-x64`, `linux-x64`, `linux-arm64`. `windows-x64` cubre Intel y AMD. Si el paquete tiene wheels compilados o descargas de nivel 3, `platforms` es obligatorio y DEBE coincidir con las plataformas para las que existen.
 
 ---
+
+### 8.4 Paquetes que corren grafos de otro (en capas)
+
+Un grafo que comparten muchos packs vive en **un solo paquete** (el núcleo) y los demás lo usan desde allí. Así, cambiar el grafo del núcleo (modelos, variaciones, cuantización, sampler) llega a todos los packs sin reconstruirlos. Hoy: el grafo de edición Qwen (`refine_qwen_edit.json`) es de Core Refine, y Extract, Presets Core, Background Tools, Creator Pack, Photo Editing, Portrait Fix, Film & Shadow, Open Air y Styling lo corren desde allí (2026-10-26).
+
+- **Contrato**: los **ids de nodo** del grafo del núcleo. Los packs escriben en ellos (`13.prompt`, `13.negative_prompt`, `15.steps`, `25.width`…). Cambiar un id o quitar un nodo rompe a los packs: eso exige una ruta nueva y subir `min_version`.
+- **Lo que NO viaja**: los campos de la interfaz son de cada flow. Un campo nuevo en el flow del núcleo (p. ej. el prompt negativo de Edit Qwen 2.1) no aparece en los packs hasta reconstruirlos.
+- **Build**: `CORE_LINKED_GRAPHS` en `build_packages.py`. `write_zip` quita la copia del pack solo si es idéntica a la del núcleo (una copia modificada se queda en el pack y se avisa), reescribe sus `workflow_file` y añade `requires.packages`. Los modelos los declara el núcleo (`requires.models`), y el panel de ficheros los busca en el paquete dueño del grafo.
+- **Instalar**: rechaza sin el núcleo o con uno más antiguo (`code: requires-package`), y comprueba que el fichero enlazado exista en el núcleo instalado (`linked-file-missing`). Los incluidos con la app se instalan con el núcleo antes que los packs.
+- **Desinstalar el núcleo**: rechazado mientras haya paquetes que lo requieran (`code: required-by`, HTTP 409), nombrándolos. El índice guarda `requires_packages` de cada paquete.
+- **Rutas antiguas**: Sessions y paquetes antiguos guardan `<pack>/workflows/refine/refine_qwen_2511_edit.json`; si esa ruta ya no existe, `refine_routes._load_workflow_file` carga la del núcleo.
+- Los errores llevan `code` + `params` y la pantalla de paquetes los muestra traducidos (`settings.packages.err.<code>`).
 
 ## 9. Addons
 
@@ -821,7 +834,7 @@ Errores (rechazan el paquete):
 - JSON inválido en un flow, workflow o motor.
 - Flow sin `id`, sin `category`, con prefijo que no coincide, sin `card.label`, o con id repetido (§5.5).
 - `default_lang` sin textos en `name` o en algún `card.label`.
-- `workflow_file` que no apunta a un workflow del paquete.
+- `workflow_file` que no apunta a un workflow del paquete ni de un paquete de `requires.packages` (§8.4).
 - `entry` de addon que no existe.
 - `step_types` (§9.8): `script` que no existe, `type` con formato inválido o repetido dentro del paquete, o flow que usa un tipo de paquete sin declararlo en `requires.packages` ni aportarlo él mismo.
 - Dependencias (§9.5): rango de `python_packages` incompatible con la base; wheel o descarga de una librería que ya está en la base; falta el wheel de nivel 2 para la plataforma; wheel compilado por encima del límite de tamaño; `python_downloads` sin versión exacta.
@@ -1082,7 +1095,7 @@ Al terminar, un resumen: *Portrait Fix 1.2.0 actualizado · 13 flows en Refine �
 
 - **Actualizar**: importar un ZIP con el mismo `id` y otra `version` (§13.1). Mismo proceso (§11.1). La versión anterior queda en `.previous/` hasta la siguiente actualización, y desde la lista de paquetes se puede volver a ella.
 - **Desactivar**: el paquete sigue instalado; sus flows desaparecen del hub y sus rutas dejan de responder.
-- **Desinstalar**: si otro paquete lo requiere, avisar y nombrarlo. Desactivar, borrar `packages/<id>/` y sus assets públicos, actualizar el índice.
+- **Desinstalar**: si otro paquete lo requiere (`requires.packages`), se rechaza nombrándolo; primero hay que desinstalar ese (§8.4). Si no, desactivar, borrar `packages/<id>/` y sus assets públicos, actualizar el índice.
 - **Nunca se borran datos del usuario**: imágenes generadas, historial, Sessions y Album quedan intactos, aunque referencien un flow desinstalado (§13.4).
 
 ### 13.4 Sessions y Album con flows que no están instalados

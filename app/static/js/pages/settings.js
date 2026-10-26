@@ -1465,10 +1465,20 @@ function t(key, fallback, vars) {
     else if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
     const res = await fetch(url, opts);
     const json = await res.json().catch(() => ({}));
-    if (!res.ok || json.ok === false) throw new Error(json.error || ('HTTP ' + res.status));
+    if (!res.ok || json.ok === false) {
+      // A coded error (package_service.PackageError.code) in the user's language.
+      throw new Error(json.code
+        ? t('settings.packages.err.' + json.code, json.error, json.params || {})
+        : (json.error || ('HTTP ' + res.status)));
+    }
     return json;
   }
+  function missingPackages(p) {
+    return (p.requiresMissing || []).filter((m) => m.package);
+  }
   function stateLabel(p) {
+    const needs = missingPackages(p)[0];
+    if (needs) return t('settings.packages.stateNeedsPackage', 'Needs {package}', { package: needs.name || needs.package });
     if (p.state === 'missing_requirements') return t('settings.packages.stateMissing', 'Needs an image engine');
     if (p.state === 'broken') return t('settings.packages.stateBroken', 'Broken');
     return t('settings.packages.stateActive', 'Active');
@@ -1486,9 +1496,11 @@ function t(key, fallback, vars) {
   }
 
   // Engines first, so a flow that needs an image engine finds the one
-  // arriving in the same batch.
+  // arriving in the same batch; then packages others depend on (Core Refine
+  // before the packs that run its graphs — install refuses them otherwise).
   function installOrder(items) {
-    return items.slice().sort((a, b) => ((b.package.engines || []).length ? 1 : 0) - ((a.package.engines || []).length ? 1 : 0));
+    const rank = (x) => ((x.package.engines || []).length ? 0 : 2) + ((x.package.requiresPackages || []).length ? 1 : 0);
+    return items.slice().sort((a, b) => rank(a) - rank(b));
   }
 
   function renderReview() {
@@ -1508,13 +1520,18 @@ function t(key, fallback, vars) {
         : p.operation === 'reinstall' ? t('settings.packages.opReinstall', 'Reinstall {version}', { version: p.version })
         : t('settings.packages.opInstall', 'Install {version}', { version: p.version });
       // A missing image engine that another selected package provides is not missing.
-      const stillMissing = (p.requiresMissing || []).filter((m) => !(m.engineCategory && batchEngineCats.has(m.engineCategory)));
+      const stillMissing = (p.requiresMissing || []).filter((m) => !m.package && !(m.engineCategory && batchEngineCats.has(m.engineCategory)));
+      // A required package counts as there when this same batch brings it.
+      const needsPkg = missingPackages(p).filter((m) => !ok.some((o) => o.package.id === m.package));
       return '<div class="settings-backup-item"><div class="settings-backup-info">' +
         '<span class="settings-backup-date">' + esc(p.name) + ' <small>' + esc(p.id) + '</small></span>' +
         (p.summary ? '<span class="settings-backup-meta">' + esc(p.summary) + '</span>' : '') +
         '<span class="settings-backup-meta">' + esc(op) + ' · ' + esc(t('settings.packages.author', 'by {name}', { name: p.author || '—' })) + '</span>' +
         contentsHtml(p) +
         (stillMissing.length ? '<span class="settings-backup-meta">' + esc(t('settings.packages.needsEngine', 'Needs an image engine to work. You can install it now and add an engine package afterwards.')) + '</span>' : '') +
+        needsPkg.map((m) => '<span class="settings-backup-meta status-error">' +
+          esc(t('settings.packages.needsPackage', 'Needs {package} {version} or newer. Install or update it first.',
+            { package: m.name || m.package, version: m.minVersion || '' })) + '</span>').join('') +
         '</div></div>';
     }).join('');
     reviewEl.hidden = false;

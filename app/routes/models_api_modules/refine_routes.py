@@ -47,10 +47,13 @@ def _drop_unloadable_model_files(options: list[str]) -> list[str]:
     return [o for o in options if not str(o).lower().endswith(_UNLOADABLE_MODEL_EXTENSIONS)]
 
 
-# Graphs a package renamed (old basename -> new): sessions and older installs
-# still store the old path, so a miss retries with the new name.
-_RENAMED_WORKFLOW_FILES = {
-    "refine_qwen_2511_edit.json": "refine_qwen_edit.json",
+# Graphs that now live only in a core package (renamed, and dropped from the
+# packs that run them via requires.packages): sessions and older installs
+# still store "<any pack>/workflows/refine/refine_qwen_2511_edit.json", so a
+# miss on one of these names loads the core's copy instead.
+_CORE_WORKFLOW_FILES = {
+    "refine_qwen_2511_edit.json": "nomad.core-refine/workflows/refine/refine_qwen_edit.json",
+    "refine_qwen_edit.json": "nomad.core-refine/workflows/refine/refine_qwen_edit.json",
 }
 
 
@@ -58,11 +61,10 @@ def _load_workflow_file(relative_path: str) -> dict:
     try:
         return _load_workflow_file_exact(relative_path)
     except ValueError:
-        path = Path(relative_path)
-        renamed = _RENAMED_WORKFLOW_FILES.get(path.name)
-        if not renamed:
+        core = _CORE_WORKFLOW_FILES.get(Path(relative_path).name)
+        if not core or core == Path(relative_path).as_posix():
             raise
-        return _load_workflow_file_exact((path.parent / renamed).as_posix())
+        return _load_workflow_file_exact(core)
 
 
 def _load_workflow_file_exact(relative_path: str) -> dict:

@@ -190,7 +190,7 @@ def inspect_package():
     try:
         token, path = package_service.save_upload(DATA_DIR, upload.stream, upload.filename)
     except PackageError as exc:
-        return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify(_package_error(exc)), 400
     index = package_service.read_index(DATA_DIR)
     builtin = _builtin_flow_ids()
     official = official_hashes()
@@ -200,7 +200,7 @@ def inspect_package():
             item = _inspect_one(token, path, index, builtin, official)
         except PackageError as exc:
             package_service.discard_upload(DATA_DIR, token)
-            return jsonify({"ok": False, "error": str(exc)}), 400
+            return jsonify(_package_error(exc)), 400
         return jsonify({"ok": True, "token": token, "package": item["package"], "packages": [item]})
     # Bundle: each inner zip becomes an upload of its own, inspected (and
     # later installed) exactly like a package dropped on its own.
@@ -217,10 +217,19 @@ def inspect_package():
     except PackageError as exc:
         for item in items:
             package_service.discard_upload(DATA_DIR, item["token"])
-        return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify(_package_error(exc)), 400
     finally:
         package_service.discard_upload(DATA_DIR, token)
     return jsonify({"ok": True, "packages": items, "bundle": True})
+
+
+def _package_error(exc: PackageError) -> dict:
+    """Error body; `code`/`params` let the page show it in the user's language."""
+    body = {"ok": False, "error": str(exc)}
+    if getattr(exc, "code", None):
+        body["code"] = exc.code
+        body["params"] = exc.params
+    return body
 
 
 @packages_bp.post("/api/packages/install")
@@ -240,7 +249,7 @@ def install_package():
         package_service.write_index(DATA_DIR, index)
         _sync_contents(result)
     except PackageError as exc:
-        return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify(_package_error(exc)), 400
     finally:
         package_service.discard_upload(DATA_DIR, token)
         _lock.release()
@@ -296,7 +305,7 @@ def uninstall_package(pkg_id: str):
         remove_package_styles(pkg_id)
         remove_package_template_packs(pkg_id)
     except PackageError as exc:
-        return jsonify({"ok": False, "error": str(exc)}), 404
+        return jsonify(_package_error(exc)), 409 if exc.code == "required-by" else 404
     finally:
         _lock.release()
     return jsonify({"ok": True})

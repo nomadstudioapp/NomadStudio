@@ -60,7 +60,26 @@ TOKEN_TTL_S = 3600
 
 
 class PackageError(ValueError):
-    """A package that cannot be installed; the message is shown to the user."""
+    """A package that cannot be installed; the message is shown to the user.
+    `code` + `params`, when set, let the UI show it in the user's language
+    (settings.packages.err.<code>); the message is the English fallback."""
+
+    def __init__(self, message: str, code: str | None = None, params: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.code = code
+        self.params = params or {}
+
+
+def required_packages(manifest: dict[str, Any]) -> dict[str, str]:
+    """requires.packages as {package id: minimum version ("" = any)}: other
+    packages whose graphs this one runs (workflow_file "<id>/workflows/…")
+    instead of shipping its own copy — e.g. the Refine packs on Core Refine's
+    Qwen edit graph, so an update of the core reaches all of them."""
+    out: dict[str, str] = {}
+    for req in (manifest.get("requires") or {}).get("packages") or []:
+        if isinstance(req, dict) and req.get("id"):
+            out[str(req["id"])] = str(req.get("min_version") or "")
+    return out
 
 
 # ── Locations ───────────────────────────────────────────────────────────────
@@ -224,6 +243,13 @@ def validate_manifest(manifest: dict[str, Any], files: set[str]) -> list[str]:
         for rel in items:
             if rel not in files:
                 raise PackageError(f"contributes.{key}: file not found (check letter case): {rel}")
+    for req in (manifest.get("requires") or {}).get("packages") or []:
+        if not isinstance(req, dict) or not ID_RE.match(str(req.get("id", ""))):
+            raise PackageError("requires.packages: each entry needs a package id")
+        if req["id"] == pkg_id:
+            raise PackageError("requires.packages: a package cannot require itself")
+        if req.get("min_version") and not SEMVER_RE.match(str(req["min_version"])):
+            raise PackageError(f"requires.packages: min_version must be SemVer ({req['id']})")
     if len(contributes.get("engines", [])) > 1:
         raise PackageError("A package can contribute one engine (its id is the package id)")
     # contributes.addon (§9 PACKAGE_FORMAT.md, minimal slice — no ctx API,
@@ -313,7 +339,12 @@ def validate_engine(engine: Any, rel: str) -> None:
         raise PackageError(f"{rel}: analysis is required")
 
 
-def validate_flow(flow: Any, rel: str, files: set[str]) -> None:
+def _is_linked_ref(path: str, linked: Any) -> bool:
+    """A workflow_file inside a required package ("nomad.core-refine/workflows/…")."""
+    return any(path.startswith(pkg + "/") for pkg in linked or ())
+
+
+def validate_flow(flow: Any, rel: str, files: set[str], linked: Any = ()) -> None:
     if not isinstance(flow, dict):
         raise PackageError(f"{rel}: a flow must be a JSON object")
     flow_id = str(flow.get("id", ""))
@@ -328,7 +359,7 @@ def validate_flow(flow: Any, rel: str, files: set[str]) -> None:
         raise PackageError(f"{rel}: steps are required")
     for step in flow["steps"]:
         wf = step.get("workflow_file") if isinstance(step, dict) else None
-        if wf and wf not in files:
+        if wf and wf not in files and not _is_linked_ref(wf, linked):
             raise PackageError(f"{rel}: workflow_file not in the package: {wf}")
 
 
@@ -501,7 +532,7 @@ def _workflow_derived_flows(
     return out
 
 
-def _prefix_workflow_file_paths(node: Any, pkg_id: str) -> None:
+def _prefix_workflow_file_paths(node: Any, pkg_id: str, linked: Any = ()) -> None:
     """In place: every `workflow_file` value and every `file=...` inside an
     `options_src` URL gets the installed package's id prefixed on — e.g.
     "workflows/x.json" -> "nomad.core-refine/workflows/x.json". Those bare
@@ -510,23 +541,24 @@ def _prefix_workflow_file_paths(node: Any, pkg_id: str) -> None:
     `<data>/packages/<pkg_id>/`, `refine_routes.py::_load_workflow_file`
     needs the pkg_id on the front to know which package's copy to read —
     two installed refine packages can otherwise share the exact same bare
-    filename with no way to tell them apart."""
+    filename with no way to tell them apart. Paths into a required package
+    (`linked`, requires.packages) already name their owner and stay as-is."""
     if isinstance(node, dict):
         for key, value in node.items():
             if key == "workflow_file" and isinstance(value, str) and value and "/" in value:
-                if not value.startswith(pkg_id + "/"):
+                if not value.startswith(pkg_id + "/") and not _is_linked_ref(value, linked):
                     node[key] = f"{pkg_id}/{value}"
             elif key == "options_src" and isinstance(value, str) and "file=" in value:
                 prefix, _, rest = value.partition("file=")
                 file_val, sep, tail = rest.partition("&")
-                if file_val and not file_val.startswith(pkg_id + "/"):
+                if file_val and not file_val.startswith(pkg_id + "/") and not _is_linked_ref(file_val, linked):
                     file_val = f"{pkg_id}/{file_val}"
                 node[key] = f"{prefix}file={file_val}{sep}{tail}"
             else:
-                _prefix_workflow_file_paths(value, pkg_id)
+                _prefix_workflow_file_paths(value, pkg_id, linked)
     elif isinstance(node, list):
         for item in node:
-            _prefix_workflow_file_paths(item, pkg_id)
+            _prefix_workflow_file_paths(item, pkg_id, linked)
 
 
 def card_fields(flow: dict[str, Any], lang: str, default_lang: str = "en") -> dict[str, Any]:
@@ -669,6 +701,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
     default_lang = manifest["default_lang"]
     # A package that replaces older ones (regrouped packs) may take over their flow ids.
     replaced = replaced_packages(manifest)
+    linked = set(required_packages(manifest))
 
     engines: list[dict[str, Any]] = []
     flows: list[dict[str, Any]] = []
@@ -682,7 +715,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
                 raise PackageError(f"{rel}: a workflow must be a JSON object")
         for rel in contributes.get("flows", []):
             flow = _load_json_member(zf, rel)
-            validate_flow(flow, rel, files)
+            validate_flow(flow, rel, files, linked)
             owner = (index.get("flows", {}).get(flow["id"]) or {}).get("package")
             if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id and owner not in replaced):
                 raise PackageError(f"Flow id already in use: {flow['id']}")
@@ -690,7 +723,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
             flows.append({"id": flow["id"], "category": flow["category"], "label": card["label"], "desc": card["desc"]})
         static_flow_ids = {f["id"] for f in flows}
         for rel, flow in _workflow_derived_flows(zf, contributes.get("workflows", []), skip_ids=static_flow_ids):
-            validate_flow(flow, rel, files)
+            validate_flow(flow, rel, files, linked)
             owner = (index.get("flows", {}).get(flow["id"]) or {}).get("package")
             if flow["id"] in builtin_flow_ids or (owner and owner != pkg_id and owner not in replaced):
                 raise PackageError(f"Flow id already in use: {flow['id']}")
@@ -739,6 +772,7 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
         "styles": style_count,
         "templates": template_count,
         "requiresMissing": missing,
+        "requiresPackages": sorted(linked),
         "warnings": warnings,
         "sizeBytes": zip_path.stat().st_size,
         # Optional install order for packages shipped with the app (lower
@@ -750,6 +784,15 @@ def inspect_zip(zip_path: Path, index: dict[str, Any], builtin_flow_ids: set[str
 def _missing_requirements(manifest: dict[str, Any], index: dict[str, Any], own_engines: list[dict[str, Any]]) -> list[dict[str, Any]]:
     missing = []
     installed_engines = {**index.get("engines", {}), **{e["id"]: {"category": e["category"]} for e in own_engines}}
+    packages = index.get("packages", {})
+    declared = {str(r.get("id")): r for r in (manifest.get("requires") or {}).get("packages") or [] if isinstance(r, dict)}
+    for req_id, min_version in required_packages(manifest).items():
+        have = (packages.get(req_id) or {}).get("version")
+        if have is None or (min_version and _version_tuple(have) < _version_tuple(min_version)):
+            # Its own name once installed, else the one the requiring package gives it.
+            name = (packages.get(req_id) or {}).get("name") or declared.get(req_id, {}).get("name")
+            missing.append({"package": req_id, "minVersion": min_version or None, "installedVersion": have,
+                            "name": text_for(name, "en") or None})
     for req in (manifest.get("requires") or {}).get("engines", []) or []:
         if not isinstance(req, dict):
             continue
@@ -813,6 +856,17 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
     summary = inspect_zip(zip_path, index, builtin_flow_ids)
     manifest, members = _read_container(zip_path)
     pkg_id = manifest["id"]
+    # A missing engine only leaves the package waiting (state
+    # missing_requirements); a missing required package would leave flows
+    # pointing at graphs that are not there, so it stops the install.
+    for req in summary["requiresMissing"]:
+        if "package" in req:
+            label = req.get("name") or req["package"]
+            version = req.get("minVersion") or ""
+            raise PackageError(
+                f"Needs {label} {version} or newer installed first".replace("  ", " "),
+                code="requires-package", params={"package": label, "version": version})
+    linked = set(required_packages(manifest))
     base = packages_dir(data_dir)
     stage = _staging(data_dir) / f"{pkg_id}-{uuid.uuid4().hex[:6]}"
     try:
@@ -850,7 +904,11 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         # PACKAGES_DIR, so every flow — authored or just-generated — gets
         # rewritten and (re)written to disk before the package goes live.
         for rel, flow in zip(flow_rels, flows):
-            _prefix_workflow_file_paths(flow, pkg_id)
+            _prefix_workflow_file_paths(flow, pkg_id, linked)
+            for ref in _linked_refs(flow, linked):
+                if not (base / ref).is_file():
+                    raise PackageError(f"{rel}: {ref} is not in the installed package",
+                                       code="linked-file-missing", params={"file": ref})
             target = stage / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps(flow, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -912,9 +970,31 @@ def install(data_dir: Path, zip_path: Path, index: dict[str, Any], builtin_flow_
         "styles": summary["styles"],
         "templates": summary["templates"],
         "has_code": bool(manifest["contributes"].get("addon")),
+        "requires_packages": sorted(linked),
         "bundled": was_bundled,
     }
     return {"manifest": manifest, "engine": engine, "flows": flows, "summary": summary, "replaced": replaced}
+
+
+def _linked_refs(node: Any, linked: Any) -> list[str]:
+    """Every workflow_file of a flow that lives in a required package."""
+    out: list[str] = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "workflow_file" and isinstance(value, str) and _is_linked_ref(value, linked):
+                out.append(value)
+            else:
+                out.extend(_linked_refs(value, linked))
+    elif isinstance(node, list):
+        for item in node:
+            out.extend(_linked_refs(item, linked))
+    return out
+
+
+def dependents_of(index: dict[str, Any], pkg_id: str) -> list[str]:
+    """Installed packages that run graphs of `pkg_id` (their requires.packages)."""
+    return sorted(p for p, info in index.get("packages", {}).items()
+                  if p != pkg_id and pkg_id in (info.get("requires_packages") or []))
 
 
 def _group_id(manifest: dict[str, Any], flow: dict[str, Any]) -> str:
@@ -927,6 +1007,11 @@ def _group_id(manifest: dict[str, Any], flow: dict[str, Any]) -> str:
 def uninstall(data_dir: Path, pkg_id: str, index: dict[str, Any]) -> dict[str, Any]:
     if pkg_id not in index.get("packages", {}):
         raise PackageError(f"Package not installed: {pkg_id}")
+    dependents = dependents_of(index, pkg_id)
+    if dependents:
+        names = ", ".join(text_for(index["packages"][d].get("name"), "en") or d for d in dependents)
+        raise PackageError(f"Other packages use it: {names}. Uninstall them first.",
+                           code="required-by", params={"packages": names, "ids": dependents})
     info = index["packages"].pop(pkg_id)
     # A package that ships with the app and the user removes on purpose must
     # not come back on the next start (install_bundled).
@@ -978,7 +1063,10 @@ def plan_bundled(folder: Path, index: dict[str, Any], builtin_flow_ids: set[str]
             action = "update"
         else:
             continue
-        plan.append(((0 if summary["engines"] else 1, summary["order"], zip_path.name), zip_path, action))
+        # Engines first, then packages others build on (Core Refine before
+        # the packs that run its graphs).
+        plan.append(((0 if summary["engines"] else 1, 1 if summary["requiresPackages"] else 0,
+                      summary["order"], zip_path.name), zip_path, action))
     return [(p, a) for _, p, a in sorted(plan, key=lambda x: x[0])]
 
 

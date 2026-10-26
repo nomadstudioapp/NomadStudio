@@ -614,6 +614,55 @@ INCLUDED_FREE = {
 }
 
 
+def _link_core_graphs(name: str, files: dict[str, object]) -> None:
+    """CORE_LINKED_GRAPHS (defined next to each graph) — in place, for every package but the graph's owner: drops its copy of a
+    CORE_LINKED_GRAPHS graph, points its flows at the owner's file and adds
+    the owner to requires.packages. A copy changed on its way here (a pack
+    that edits the graph) is not the core's graph and stays in the package."""
+    manifest = files.get("manifest.json")
+    if not isinstance(manifest, dict):
+        return
+    for rel, core in CORE_LINKED_GRAPHS.items():
+        if name == core["package"] or not isinstance(files.get(rel), dict):
+            continue
+        mine, theirs = copy.deepcopy(files[rel]), core["graph"]()
+        _strip_foreign_flow_data(mine)
+        _strip_foreign_flow_data(theirs)
+        if mine != theirs:
+            print(f"  {name}: {rel} differs from {core['package']}'s, kept in the package")
+            continue
+        del files[rel]
+        target = f"{core['package']}/{rel}"
+        for flow_rel, flow in files.items():
+            if flow_rel.startswith("flows/") and isinstance(flow, dict):
+                _repoint_workflow_file(flow, rel, target)
+        contributes = manifest.get("contributes") or {}
+        if rel in (contributes.get("workflows") or []):
+            contributes["workflows"] = [w for w in contributes["workflows"] if w != rel]
+            if not contributes["workflows"]:
+                del contributes["workflows"]
+        required = manifest.setdefault("requires", {}).setdefault("packages", [])
+        entry = next((r for r in required if r.get("id") == core["package"]), None)
+        if entry is None:
+            required.append({"id": core["package"], "name": core["name"], "min_version": core["min_version"]})
+        elif package_service._version_tuple(entry.get("min_version") or "0") < package_service._version_tuple(core["min_version"]):
+            entry["min_version"] = core["min_version"]
+
+
+def _repoint_workflow_file(node, old: str, new: str) -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "workflow_file" and value == old:
+                node[key] = new
+            elif key == "options_src" and isinstance(value, str) and f"file={old}" in value:
+                node[key] = value.replace(f"file={old}", f"file={new}")
+            else:
+                _repoint_workflow_file(value, old, new)
+    elif isinstance(node, list):
+        for item in node:
+            _repoint_workflow_file(item, old, new)
+
+
 def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
     if name in INCLUDED_FREE:
         dest = DIST
@@ -622,6 +671,7 @@ def write_zip(name: str, files: dict[str, object], dest: Path = DIST) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{name}.zip"
     path.unlink(missing_ok=True)
+    _link_core_graphs(name, files)
     _swap_default_models(files)
     _add_requirements(name, files)
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -772,6 +822,16 @@ def _qwen_image_21_workflow() -> dict:
 # flows still point at the old 2511 file, renamed on load (flow_from_source).
 QWEN_EDIT_WORKFLOW_REL = "workflows/refine/refine_qwen_edit.json"
 _SOURCE_WORKFLOW_RENAMES = {"workflows/refine/refine_qwen_2511_edit.json": QWEN_EDIT_WORKFLOW_REL}
+
+# Graphs a core package owns and other packages run from it instead of
+# shipping a copy (requires.packages, PACKAGE_FORMAT.md): editing the core's
+# graph reaches every pack with no rebuild. The node ids are the contract —
+# packs write "13.prompt", "15.steps"… into it. min_version = the core
+# release that first shipped the graph under this path.
+CORE_LINKED_GRAPHS = {
+    QWEN_EDIT_WORKFLOW_REL: {"package": "nomad.core-refine", "name": "Core Refine", "min_version": "0.1.8",
+                             "graph": lambda: _qwen_image_21_edit_workflow()},
+}
 
 
 def _rename_source_workflow_refs(node):

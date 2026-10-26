@@ -1375,7 +1375,14 @@
       "sectionFlows": "Flows",
       "sectionOther": "Other",
       "bundled": "Included with Nomad Studio",
-      "official": "Official Nomad Studio pack: it matches the one in the shop."
+      "official": "Official Nomad Studio pack: it matches the one in the shop.",
+      "needsPackage": "Needs {package} {version} or newer. Install or update it first.",
+      "stateNeedsPackage": "Needs {package}",
+      "err": {
+        "requires-package": "Needs {package} {version} or newer installed first.",
+        "linked-file-missing": "The package it depends on is missing a file ({file}). Update it and try again.",
+        "required-by": "Other packages use it: {packages}. Uninstall them first."
+      }
     },
     "agents": {
       "navName": "Agents",

@@ -1758,7 +1758,14 @@
       "sectionFlows": "流程",
       "sectionOther": "其他",
       "bundled": "Nomad Studio 自带",
-      "official": "Nomad Studio 官方资源包：与商店中的版本一致。"
+      "official": "Nomad Studio 官方资源包：与商店中的版本一致。",
+      "needsPackage": "需要 {package} {version} 或更高版本。请先安装或更新它。",
+      "stateNeedsPackage": "需要 {package}",
+      "err": {
+        "requires-package": "需要先安装 {package} {version} 或更高版本。",
+        "linked-file-missing": "它所依赖的包缺少一个文件（{file}）。请更新该包后重试。",
+        "required-by": "其他包正在使用它：{packages}。请先卸载它们。"
+      }
     },
     "agents": {
       "navName": "智能体",

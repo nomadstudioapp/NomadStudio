@@ -1758,7 +1758,14 @@
       "sectionFlows": "흐름",
       "sectionOther": "기타",
       "bundled": "Nomad Studio 기본 포함",
-      "official": "Nomad Studio 공식 팩: 상점의 팩과 일치합니다."
+      "official": "Nomad Studio 공식 팩: 상점의 팩과 일치합니다.",
+      "needsPackage": "{package} {version} 이상이 필요합니다. 먼저 설치하거나 업데이트하세요.",
+      "stateNeedsPackage": "{package} 필요",
+      "err": {
+        "requires-package": "먼저 {package} {version} 이상을 설치해야 합니다.",
+        "linked-file-missing": "의존하는 패키지에 파일이 없습니다({file}). 업데이트한 뒤 다시 시도하세요.",
+        "required-by": "다른 패키지가 사용 중입니다: {packages}. 먼저 그 패키지들을 제거하세요."
+      }
     },
     "agents": {
       "navName": "에이전트",

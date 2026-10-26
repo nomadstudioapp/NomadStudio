@@ -2516,8 +2516,13 @@ REFINE_PILOT_STEPS_FIELD_OVERRIDES = {
 # the GetImageSize(source) -> latent link; a ratio makes the server write
 # 25.width/25.height with the source's pixel count in the new shape
 # (refine_routes._apply_output_aspect) — e.g. a 9:16 portrait recomposed 16:9.
+# Negative prompt: TextEncodeQwenImage21 (node 13) carries its own
+# negative_prompt input, which the source flow never exposed — same Advanced
+# textarea Outpaint already has for its Qwen engine.
 REFINE_PILOT_EXTRA_FIELDS = {
     "refine.edit_qwen_2511_basic": [
+        {"id": "negative", "adv_key": "13.negative_prompt", "label": "NEGATIVE PROMPT", "type": "textarea",
+         "rows": 2, "block": True, "advanced": True, "default": ""},
         {"id": "output_aspect", "type": "output_aspect", "default": "original",
          "adv_keys": {"width": "25.width", "height": "25.height"}},
     ],
@@ -2536,7 +2541,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.6"  # 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
+REFINE_PILOT_VERSION = "0.1.7"  # 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/

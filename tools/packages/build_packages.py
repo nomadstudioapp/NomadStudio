@@ -830,8 +830,43 @@ _SOURCE_WORKFLOW_RENAMES = {"workflows/refine/refine_qwen_2511_edit.json": QWEN_
 # release that first shipped the graph under this path.
 CORE_LINKED_GRAPHS = {
     QWEN_EDIT_WORKFLOW_REL: {"package": "nomad.core-refine", "name": "Core Refine", "min_version": "0.1.8",
-                             "graph": lambda: _qwen_image_21_edit_workflow()},
+                             "graph": lambda: _qwen_edit_packaged_workflow()},
 }
+
+# Field contract of the packaged Qwen edit graph (config.fields, read by
+# flow-step-workflow-params.js): a flow field with one of these ids writes
+# where the GRAPH says, whatever adv_key the flow carries — the flows' own
+# engine_select copies still said "14.prompt" for the negative, a node the
+# 2.1 graph does not have, so every preset negative was dropped (found
+# 2026-10-26). The flow keeps its texts (prompt, negative, labels); `add`
+# brings a field the flow lacks. key_aliases rewrite old keys server-side
+# (refine_routes._apply_config_key_aliases) for callers that never read the
+# contract: older app versions, MCP, sessions replayed as-is.
+QWEN_EDIT_FIELD_CONTRACT = {
+    "fields": {
+        "prompt": {"adv_key": "13.prompt"},
+        "negative": {"adv_key": "13.negative_prompt",
+                     "add": {"type": "textarea", "label": "Negative prompt", "rows": 2, "block": True,
+                             "advanced": True, "default": ""}},
+        "steps": {"adv_key": "15.steps", "min": 1, "max": 25, "quick_options": [8, 16, 25]},
+        "cfg": {"adv_key": "15.cfg"},
+        "seed": {"adv_key": "15.seed"},
+    },
+    "key_aliases": {"14.prompt": "13.negative_prompt"},
+}
+
+
+def _qwen_edit_packaged_workflow() -> dict:
+    """The edit graph as packaged at QWEN_EDIT_WORKFLOW_REL: the base graph
+    plus its field contract. The contract is added here, not in
+    _qwen_image_21_edit_workflow, because the graphs derived from that one
+    (multi-reference, style transfer, smart fill, camera) rewire its nodes
+    and must not claim the same fields."""
+    graph = _qwen_image_21_edit_workflow()
+    config = json.loads(graph["config"]["inputs"]["value"])
+    config.update(copy.deepcopy(QWEN_EDIT_FIELD_CONTRACT))
+    graph["config"]["inputs"]["value"] = json.dumps(config)
+    return graph
 
 
 def _rename_source_workflow_refs(node):
@@ -2620,7 +2655,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.8"  # 0.1.8: graph renamed refine_qwen_edit.json; 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
+REFINE_PILOT_VERSION = "0.1.9"  # 0.1.9: Qwen edit graph declares its fields (config.fields); 0.1.8: graph renamed refine_qwen_edit.json; 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/
@@ -2744,7 +2779,7 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
     Qwen 2.1 replacement for the refs that have one (see their own comments
     for why), otherwise straight from OPENHIKER, same as always."""
     if ref == QWEN_EDIT_WORKFLOW_REL:
-        return _qwen_image_21_edit_workflow()
+        return _qwen_edit_packaged_workflow()
     if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
         return _qwen_image_21_outpaint_workflow()
     if ref == MIX_MULTI_REFERENCE_WORKFLOW_REL:

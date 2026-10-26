@@ -134,7 +134,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
           if (seq !== _quantLoadSeqRW) return;
-          _setQuantAnalysisRW(res && res.analysis);
+          _setQuantAnalysisRW(res && res.analysis, file);
           var hasQuant = !!selectedQuantizationValues;
           if (hasQuant) advRowRW.style.display = '';
         })
@@ -187,9 +187,70 @@ function renderWorkflowParams(stepDef, el, stepNum) {
     }
   }
 
+  // ── Field contract (config.fields of the graph, PACKAGE_FORMAT.md §8.4) ──
+  // A graph shared by many packs (Core Refine's Qwen edit) says where each
+  // of its standard fields writes: a field with that id follows the graph,
+  // whatever adv_key the flow carries, and a field the flow lacks comes in
+  // when the graph marks it `add`. The flow keeps its own texts. Contracts
+  // are cached by graph file so an engine switch re-applies the keys right
+  // away (esApplyEngine) instead of flashing the flow's own ones.
+  var _contractByFileRW = {};
+  var _CONTRACT_KEYS_RW = ['adv_key', 'min', 'max', 'step', 'quick_options'];
+
+  function _contractOf(analysis) {
+    var fieldsSpec = analysis && analysis.configNode && analysis.configNode.fields;
+    return (fieldsSpec && typeof fieldsSpec === 'object') ? fieldsSpec : null;
+  }
+
+  // Bindings only (keys/limits) — safe mid-render. Returns true if any changed.
+  function _bindContractRW(contract) {
+    var changed = false;
+    if (!contract) return changed;
+    fields.forEach(function (f) {
+      var c = f.type !== 'engine_select' && contract[f.id];
+      if (!c) return;
+      _CONTRACT_KEYS_RW.forEach(function (k) {
+        if (c[k] !== undefined && JSON.stringify(f[k]) !== JSON.stringify(c[k])) { f[k] = c[k]; changed = true; }
+      });
+    });
+    return changed;
+  }
+
+  // Full apply (bindings + fields the graph adds or no longer offers), when a
+  // graph's analysis arrives. Returns true if the field list needs a repaint.
+  function _applyContractRW(contract) {
+    var changed = false;
+    for (var i = fields.length - 1; i >= 0; i--) {
+      var own = fields[i];
+      if (own._inherited && !(contract && contract[own.id] && contract[own.id].add)) {
+        fields.splice(i, 1);
+        changed = true;
+      }
+    }
+    if (contract) {
+      Object.keys(contract).forEach(function (id) {
+        var c = contract[id];
+        if (!c || !c.add || fields.some(function (f) { return f.id === id; })) return;
+        var added = Object.assign({ id: id }, c.add, { adv_key: c.adv_key, _inherited: true });
+        if (added.label) added.label = tF(added.label);
+        // After the last advanced field (the Advanced panel's order), else at the end.
+        var at = fields.length;
+        for (var j = fields.length - 1; j >= 0; j--) { if (fields[j].advanced) { at = j + 1; break; } }
+        fields.splice(at, 0, added);
+        changed = true;
+      });
+    }
+    return _bindContractRW(contract) || changed;
+  }
+
   // A new graph analysis arrived (initial load or engine switch): rebuild
   // Variation, then Quantization from the selected variation's precisions.
-  function _setQuantAnalysisRW(analysis) {
+  function _setQuantAnalysisRW(analysis, file) {
+    var contract = _contractOf(analysis);
+    if (file) _contractByFileRW[file] = contract;
+    // Repaint with the graph's fields (an engine_select re-fetches during the
+    // repaint; that second answer finds nothing left to change).
+    if (_applyContractRW(contract)) renderFields();
     _quantInfoRW = (analysis && analysis.quantization) || null;
     _variationRW = buildVariationList(_quantInfoRW, variationListElRW,
       getVal(stepDef.id, 'variation_id'), function (v) { _applyVariationRW(v, true); });
@@ -462,6 +523,9 @@ function renderWorkflowParams(stepDef, el, stepNum) {
               other.default = eng.steps_default;
             }
           });
+          // The graph's own contract (if already known) wins over the keys
+          // the flow copied into its engine list.
+          _bindContractRW(_contractByFileRW[eng.workflow_file]);
 
           // A pills set built for the PREVIOUS engine is now stale — only
           // the fields themselves were mutated above, nothing re-rendered
@@ -478,7 +542,7 @@ function renderWorkflowParams(stepDef, el, stepNum) {
             fetch('/api/models/workflow-file/analysis?file=' + encodeURIComponent(eng.workflow_file))
               .then(function (r) { return r.ok ? r.json() : null; })
               .then(function (res) {
-                _setQuantAnalysisRW(res && res.analysis);
+                _setQuantAnalysisRW(res && res.analysis, eng.workflow_file);
                 triggerPreviewUpdate();
               })
               .catch(function () { buildAdv(); triggerPreviewUpdate(); });

@@ -401,7 +401,27 @@ def _apply_preprocess(
     return padded, "image/png"
 
 
+def _config_key_aliases(workflow: dict) -> dict:
+    """config.key_aliases of a graph ({"14.prompt": "13.negative_prompt"}):
+    keys an older flow still sends for an input the graph now has elsewhere."""
+    node = workflow.get("config") if isinstance(workflow, dict) else None
+    raw = ((node or {}).get("inputs") or {}).get("value") if isinstance(node, dict) else None
+    try:
+        aliases = json.loads(raw).get("key_aliases") if isinstance(raw, str) else None
+    except (ValueError, AttributeError):
+        return {}
+    return aliases if isinstance(aliases, dict) else {}
+
+
 def _apply_advanced_values(workflow: dict, advanced_values: dict) -> None:
+    aliases = _config_key_aliases(workflow)
+    if aliases:
+        # The new key wins when a caller already sends both.
+        advanced_values = {
+            (aliases[k] if k in aliases and aliases[k] not in advanced_values else k): v
+            for k, v in advanced_values.items()
+            if not (k in aliases and aliases[k] in advanced_values)
+        }
     for dot_key, value in advanced_values.items():
         parts = str(dot_key).split(".", 1)
         if len(parts) != 2:

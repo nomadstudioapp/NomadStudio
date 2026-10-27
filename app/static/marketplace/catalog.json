@@ -23,8 +23,14 @@
    },
    "cover": "covers/bundle.studio-pro.webp",
    "sha256": [
-    "b265cfd03c2d9232a1f3ff50c0b990b7eafea6754541c7a3c1dd6aa85600dc9e",
+    "b58677703b1c5ebdd3ac53ead2f48a871b5230a903fdf6fca50548ab952fdd96",
     "393602c954b95e843407869e0ef35fe491908206c59beda9d169de55dc7b1258",
+    "d45e54e93df16b5313ac9dc90c1adc4d83475f84a9fe03e2255b447ada0c8322",
+    "b59fb076a2519f43d1ec3a874cd97219bad010eefdd668da4f7d6e0bb6a81991",
+    "4f94ef1cca00449a407292ecbe636308a512399caefa39421cd8d065f013b3f3",
+    "c740eee8b25cee9275353bf686e088c455228555a784f13798a762ca124e5cc4",
+    "562e229e8c34fffbabd5d9d92ee0ef5c8d6dba0d088e82140bab295a4b3265f3",
+    "b265cfd03c2d9232a1f3ff50c0b990b7eafea6754541c7a3c1dd6aa85600dc9e",
     "071f912794b6a7de3dca171b2a5d2b08d02d8421c34ed47e340ae12e73cf0a1d",
     "05551afac02361616433a92baffb49b89ab24206ff9ac3b0a768d0f517f550d5",
     "846d82196a5ddc3cfb8f602f8ce6452aa0bd5200a367143875735b8d3ac131ce",
@@ -3456,6 +3462,7 @@
    },
    "cover": "covers/nomad.refine-background-tools.webp",
    "sha256": [
+    "d45e54e93df16b5313ac9dc90c1adc4d83475f84a9fe03e2255b447ada0c8322",
     "071f912794b6a7de3dca171b2a5d2b08d02d8421c34ed47e340ae12e73cf0a1d",
     "1f7ea9aca610c10da074f531416c6a3f7c0f783627f134eaee48d57035bbc56a"
    ],
@@ -3465,7 +3472,7 @@
     "zh": "背景工具",
     "ko": "배경 도구"
    },
-   "version": "0.1.9",
+   "version": "0.1.10",
    "inside": {
     "type": "flows",
     "items": [
@@ -3589,6 +3596,7 @@
    },
    "cover": "covers/nomad.refine-creator-pack.webp",
    "sha256": [
+    "b59fb076a2519f43d1ec3a874cd97219bad010eefdd668da4f7d6e0bb6a81991",
     "05551afac02361616433a92baffb49b89ab24206ff9ac3b0a768d0f517f550d5",
     "143984c23346b517fdfde721963bf8b44371a583f63ff831dbda88c3e586fe6d"
    ],
@@ -3598,7 +3606,7 @@
     "zh": "创作者礼包",
     "ko": "크리에이터 팩"
    },
-   "version": "0.1.9",
+   "version": "0.1.10",
    "inside": {
     "type": "flows",
     "items": [
@@ -3750,6 +3758,7 @@
    },
    "cover": "covers/nomad.refine-presets-film-shadow.webp",
    "sha256": [
+    "3d9d8740b97e7571cc7cf092c212ecb86ca57f8f6bb8a905dd239c929878f250",
     "ada8dd2510804d3a864a33d449dd010ec804b8f486de13d316547899dc649e68",
     "82a996174666603c5fa5e0f4efa20f9dfc8062066d6acba88192b1600dbb422e"
    ],
@@ -3759,7 +3768,7 @@
     "zh": "Film & Shadow",
     "ko": "Film & Shadow"
    },
-   "version": "0.1.10",
+   "version": "0.1.11",
    "inside": {
     "type": "flows",
     "items": [
@@ -4079,6 +4088,7 @@
    },
    "cover": "covers/nomad.refine-presets-open-air.webp",
    "sha256": [
+    "f6383dc80a536986f2990bd0a7fb94eefccf287e168c9ffa09975ab37b685d7f",
     "c6af4cc6e55f111672b0c69823040d15624421e51eb3ada21441659b01b0b0b7",
     "c0046c5504e1667d8aa9c2bd29d7a8a07536caf00257a82ad365ddb96aabbdd3"
    ],
@@ -4088,7 +4098,7 @@
     "zh": "Open Air",
     "ko": "Open Air"
    },
-   "version": "0.1.10",
+   "version": "0.1.11",
    "inside": {
     "type": "flows",
     "items": [
@@ -4408,6 +4418,7 @@
    },
    "cover": "covers/nomad.refine-photo-editing.webp",
    "sha256": [
+    "4f94ef1cca00449a407292ecbe636308a512399caefa39421cd8d065f013b3f3",
     "846d82196a5ddc3cfb8f602f8ce6452aa0bd5200a367143875735b8d3ac131ce",
     "e8e9a406775bc8772bc919ddda7b93317bb287a444879e225ed0c0ba367ca09d"
    ],
@@ -4417,7 +4428,7 @@
     "zh": "照片编辑",
     "ko": "사진 편집"
    },
-   "version": "0.2.1",
+   "version": "0.2.2",
    "inside": {
     "type": "flows",
     "items": [
@@ -4765,6 +4776,7 @@
    },
    "cover": "covers/nomad.refine-portrait-fix.webp",
    "sha256": [
+    "c740eee8b25cee9275353bf686e088c455228555a784f13798a762ca124e5cc4",
     "d234017d709d051c0c2ee59ca7da4426c8bf9e7d44376c4c42f926ce49b01e63",
     "9ad290f864866b4f539085d0dd5bdc05ae477cb61e9dfa2e2b60a444fd6e0968"
    ],
@@ -4774,7 +4786,7 @@
     "zh": "人像修饰",
     "ko": "인물 보정"
    },
-   "version": "0.2.1",
+   "version": "0.2.2",
    "inside": {
     "type": "flows",
     "items": [
@@ -4968,6 +4980,7 @@
    },
    "cover": "covers/nomad.refine-styling.webp",
    "sha256": [
+    "562e229e8c34fffbabd5d9d92ee0ef5c8d6dba0d088e82140bab295a4b3265f3",
     "133815fd98ff0f61c5ebd839a326882a3f7b0fb56228f86bad9b92a073ad4b82",
     "7ac0cb69ab34e9ba7d82d7f3c7af2b21df0a25a5a155fb80d3310aa96bf55969"
    ],
@@ -4977,7 +4990,7 @@
     "zh": "风格化",
     "ko": "스타일링"
    },
-   "version": "0.1.10",
+   "version": "0.1.11",
    "inside": {
     "type": "flows",
     "items": [

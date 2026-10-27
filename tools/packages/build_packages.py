@@ -862,7 +862,13 @@ def _qwen_edit_packaged_workflow() -> dict:
     _qwen_image_21_edit_workflow, because the graphs derived from that one
     (multi-reference, style transfer, smart fill, camera) rewire its nodes
     and must not claim the same fields."""
-    graph = _qwen_image_21_edit_workflow()
+    return _with_field_contract(_qwen_image_21_edit_workflow())
+
+
+def _with_field_contract(graph: dict) -> dict:
+    """QWEN_EDIT_FIELD_CONTRACT into a graph's config — for graphs with the
+    same encoder/sampler node ids (13/15) as the edit graph: the edit graph
+    itself and Outpaint (whose engine list also sent the negative to 14)."""
     config = json.loads(graph["config"]["inputs"]["value"])
     config.update(copy.deepcopy(QWEN_EDIT_FIELD_CONTRACT))
     graph["config"]["inputs"]["value"] = json.dumps(config)
@@ -2655,7 +2661,7 @@ REFINE_PILOT_WORKFLOW_ONLY_FILES = [
     "app/workflows/upscale/upscale_qwen_2511.json",
     "app/workflows/upscale/refine_upscale_seedvr2.json",
 ]
-REFINE_PILOT_VERSION = "0.1.9"  # 0.1.9: Qwen edit graph declares its fields (config.fields); 0.1.8: graph renamed refine_qwen_edit.json; 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
+REFINE_PILOT_VERSION = "0.1.10"  # 0.1.10: Outpaint (Qwen) graph gets the same field contract; 0.1.9: Qwen edit graph declares its fields (config.fields); 0.1.8: graph renamed refine_qwen_edit.json; 0.1.7: Edit Qwen 2.1 negative prompt; 0.1.6: Qwen 2.1 Turbo variation, Edit output aspect ratio; 0.1.5: Essentials marks, Upscale output models (#34); 0.1.3: "Qwen Image 2.1 Edit" label; 0.1.1: Klein 9B defaults to INT8 (#11); 0.1.2: flow texts in ES/ZH/KO (#1)
 
 
 # Applied unconditionally to every flow build_refine_pilot/
@@ -2781,7 +2787,7 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
     if ref == QWEN_EDIT_WORKFLOW_REL:
         return _qwen_edit_packaged_workflow()
     if ref == QWEN_2511_OUTPAINT_WORKFLOW_REL:
-        return _qwen_image_21_outpaint_workflow()
+        return _with_field_contract(_qwen_image_21_outpaint_workflow())
     if ref == MIX_MULTI_REFERENCE_WORKFLOW_REL:
         return _qwen_image_21_multi_reference_workflow()
     if ref == MIX_MULTI_COMPOSER_WORKFLOW_REL:

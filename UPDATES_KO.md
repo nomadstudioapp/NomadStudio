@@ -4,6 +4,15 @@
 
 최신 항목이 맨 위에 있습니다. 각 버전의 다운로드와 체크섬은 [Releases](https://github.com/nomadstudioapp/NomadStudio/releases)에 있습니다. 새 버전이 나오면 앱이 직접 알려 줍니다("다시 시작하고 업데이트").
 
+## 2026-10-27 · 1.1.4
+
+- **모든 Qwen 2.1 편집 flow에 네거티브 프롬프트.** Edit Qwen 2.1은 **고급**에 있고, Qwen 2.1 엔진을 쓰는 Photo Editing, Portrait Fix, Creator Pack, Background Tools, Extract, Styling의 모든 flow에도 표시됩니다.
+- **룩의 네거티브 프롬프트가 이제 Qwen Image 2.1에서 적용됩니다.** Photo Looks Starter, Film & Shadow, Open Air는 룩마다 자체 네거티브를 갖고 있지만, Qwen 엔진에서는 2.1 그래프에 더 이상 없는 노드로 보내져 ComfyUI에 전달되지 않았습니다. 이제 전달되며 Outpaint도 마찬가지입니다. Flux Klein에서는 원래 동작했습니다.
+- **Create: 각 카드에 생성한 엔진이 표시되고,** **파라미터 적용**은 나머지를 복원하기 전에 그 엔진으로 전환하므로 여러 엔진으로 만든 배치의 이미지를 다시 만들 수 있습니다.
+- **Sessions는 단계를 다시 열 때 각 이미지의 생성 시간을 유지합니다.**
+- **코어 위에 만든 팩.** Refine 팩은 더 이상 Qwen 2.1 편집 엔진의 사본을 따로 갖지 않습니다. Core Refine의 엔진을 사용하고 필드(프롬프트, 네거티브, 스텝…)도 그것에서 가져옵니다. Core Refine이 개선되면 새로 내려받지 않아도 함께 개선됩니다. Core Refine 없이 설치하면 알려 주며, 다른 팩이 사용 중이면 Core Refine을 제거할 수 없습니다.
+- **팩:** Core Refine 0.1.10, Extract 0.1.15, Photo Looks Starter 0.1.11이 앱에 포함됩니다. Qwen 2.1 편집 엔진을 쓰는 Ko-fi 팩은 새 버전이 있으며(Photo Editing 0.2.2, Portrait Fix 0.2.2, Creator Pack 0.1.10, Background Tools 0.1.10, Styling 0.1.11, Film & Shadow 0.1.11, Open Air 0.1.11, Studio Pro), 이 버전의 앱이 필요합니다.
+
 ## 2026-10-19 · 1.1.3
 
 - **스마트 선택: 여러 객체를 한 번에.** 쉼표로 구분해 입력하면(`crow, pig, girl`) 객체마다 마스크와 컷아웃이 하나씩 생성되고, 각 객체를 고유 색상과 범례로 표시한 합성 이미지도 함께 만들어져 한눈에 확인할 수 있습니다. MCP에서도 사용할 수 있습니다.

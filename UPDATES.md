@@ -4,6 +4,15 @@ English · [Español](UPDATES_ES.md) · [中文](UPDATES_ZH.md) · [한국어](U
 
 Newest first. Downloads and checksums for each version are in [Releases](https://github.com/nomadstudioapp/NomadStudio/releases). The app offers each new version by itself ("Restart and update").
 
+## 2026-10-27 · 1.1.4
+
+- **Negative prompt in every Qwen 2.1 edit flow.** Edit Qwen 2.1 has it in **Advanced**, and every Photo Editing, Portrait Fix, Creator Pack, Background Tools, Extract and Styling flow on the Qwen 2.1 engine shows it too.
+- **The negative prompts of the looks now apply with Qwen Image 2.1.** Photo Looks Starter, Film & Shadow and Open Air carry their own negative for each look, but on the Qwen engine it went to a node the 2.1 graph no longer has, so it never reached ComfyUI. It does now, and Outpaint's too. On Flux Klein it already worked.
+- **Create: each card says which engine made it,** and **Apply params** switches to that engine before restoring the rest, so an image from a batch with several engines can be repeated.
+- **Sessions keep each image's generation time** when a step is opened again.
+- **Packs built on the core.** The Refine packs no longer carry their own copy of the Qwen 2.1 edit engine: they use the one in Core Refine, and take its fields (prompt, negative, steps…) from it. When Core Refine improves, they improve with it, with no new download. Installing one without Core Refine says so, and Core Refine cannot be uninstalled while other packs use it.
+- **Packs:** Core Refine 0.1.10, Extract 0.1.15 and Photo Looks Starter 0.1.11 come with the app. The Ko-fi packs on the Qwen 2.1 edit engine have new versions (Photo Editing 0.2.2, Portrait Fix 0.2.2, Creator Pack 0.1.10, Background Tools 0.1.10, Styling 0.1.11, Film & Shadow 0.1.11, Open Air 0.1.11, and Studio Pro); they need this version of the app.
+
 ## 2026-10-19 · 1.1.3
 
 - **Smart Selection: several objects at once.** Write them separated by commas (`crow, pig, girl`) and you get one mask and one cutout per object, plus a composite image with each object in its own colour and a legend to check them at a glance. Also through the MCP.

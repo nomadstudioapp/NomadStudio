@@ -4,6 +4,15 @@
 
 最新的在最上面。每个版本的下载和校验和见 [Releases](https://github.com/nomadstudioapp/NomadStudio/releases)。应用会自动提示每个新版本（"重启并更新"）。
 
+## 2026-10-27 · 1.1.4
+
+- **所有 Qwen 2.1 编辑 flow 都有负面提示词。** Edit Qwen 2.1 在 **高级** 中提供，基于 Qwen 2.1 引擎的 Photo Editing、Portrait Fix、Creator Pack、Background Tools、Extract 和 Styling 的所有 flow 也会显示。
+- **风格预设的负面提示词现在在 Qwen Image 2.1 上生效。** Photo Looks Starter、Film & Shadow 和 Open Air 的每个风格都带有自己的负面提示词，但在 Qwen 引擎上它被发送到 2.1 图中已不存在的节点，因此从未到达 ComfyUI。现在可以了，Outpaint 的也一样。在 Flux Klein 上本来就正常。
+- **Create：每张卡片会显示生成它的引擎，** **应用参数** 会先切换到该引擎再恢复其余参数，便于重现多引擎批次中的某张图。
+- **再次打开步骤时，Sessions 会保留每张图的生成时间。**
+- **基于核心构建的扩展包。** Refine 扩展包不再自带一份 Qwen 2.1 编辑引擎：它们使用 Core Refine 中的引擎，并从中获取字段（提示词、负面提示词、步数……）。Core Refine 改进时，它们随之改进，无需重新下载。在没有 Core Refine 时安装会给出提示；有其他扩展包使用时，Core Refine 无法卸载。
+- **扩展包：** Core Refine 0.1.10、Extract 0.1.15 和 Photo Looks Starter 0.1.11 随应用提供。基于 Qwen 2.1 编辑引擎的 Ko-fi 扩展包有新版本（Photo Editing 0.2.2、Portrait Fix 0.2.2、Creator Pack 0.1.10、Background Tools 0.1.10、Styling 0.1.11、Film & Shadow 0.1.11、Open Air 0.1.11 以及 Studio Pro），需要此版本的应用。
+
 ## 2026-10-19 · 1.1.3
 
 - **智能选区：一次选择多个物体。** 用逗号分隔（`crow, pig, girl`），每个物体都会得到一张遮罩和一张抠图，另外还有一张合成图，每个物体用不同颜色标出并附有图例，方便一眼检查。也可通过 MCP 使用。

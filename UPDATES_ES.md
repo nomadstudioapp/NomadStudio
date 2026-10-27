@@ -4,6 +4,15 @@
 
 Lo más reciente, arriba. Las descargas y sumas de comprobación de cada versión están en [Releases](https://github.com/nomadstudioapp/NomadStudio/releases). La app te ofrece cada versión nueva por sí sola ("Reiniciar y actualizar").
 
+## 2026-10-27 · 1.1.4
+
+- **Prompt negativo en todos los flows de edición con Qwen 2.1.** Edit Qwen 2.1 lo tiene en **Avanzado**, y también aparece en todos los flows de Photo Editing, Portrait Fix, Creator Pack, Background Tools, Extract y Styling que usan el motor Qwen 2.1.
+- **Los prompts negativos de los looks ya se aplican con Qwen Image 2.1.** Photo Looks Starter, Film & Shadow y Open Air llevan un negativo propio en cada look, pero con el motor Qwen iba a un nodo que el grafo 2.1 ya no tiene, así que nunca llegaba a ComfyUI. Ahora sí, y el de Outpaint también. Con Flux Klein ya funcionaba.
+- **Create: cada tarjeta dice qué motor la generó,** y **Aplicar parámetros** cambia a ese motor antes de restaurar el resto, para repetir una imagen de una tanda con varios motores.
+- **Las Sessions guardan el tiempo de generación de cada imagen** al volver a abrir un paso.
+- **Packs construidos sobre el núcleo.** Los packs de Refine ya no llevan su propia copia del motor de edición Qwen 2.1: usan el de Core Refine y toman de él sus campos (prompt, negativo, pasos…). Cuando Core Refine mejora, mejoran con él, sin descargar nada nuevo. Si instalas uno sin Core Refine, te lo avisa, y Core Refine no se puede desinstalar mientras otros packs lo usen.
+- **Packs:** Core Refine 0.1.10, Extract 0.1.15 y Photo Looks Starter 0.1.11 vienen con la app. Los packs de Ko-fi con el motor de edición Qwen 2.1 tienen versión nueva (Photo Editing 0.2.2, Portrait Fix 0.2.2, Creator Pack 0.1.10, Background Tools 0.1.10, Styling 0.1.11, Film & Shadow 0.1.11, Open Air 0.1.11 y Studio Pro); necesitan esta versión de la app.
+
 ## 2026-10-19 · 1.1.3
 
 - **Selección inteligente: varios objetos a la vez.** Escríbelos separados por comas (`crow, pig, girl`) y obtienes una máscara y un recorte por objeto, más una imagen compuesta con cada objeto en su color y una leyenda para revisarlos de un vistazo. También por el MCP.

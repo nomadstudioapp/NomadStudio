@@ -1967,6 +1967,92 @@ def _multi_composer_flow() -> dict:
     }
 
 
+# ── Edit with reference (Qwen 2.1) — the generic image + image Mix: image 1 is
+# the picture being edited (it sizes the output, GetImageSize 24 -> latent 25,
+# and keeps its composition), image 2 is whatever the prompt says it is for —
+# detail, style, light, an object. The Edit Qwen 2.1 graph with a second
+# reference, so it has the same Turbo variation.
+MIX_EDIT_REFERENCE_WORKFLOW_REL = "workflows/mix/edit_with_reference_qwen21.json"
+
+
+def _qwen_image_21_edit_reference_workflow() -> dict:
+    graph = _qwen_image_21_edit_workflow()
+    graph["7"]["_meta"]["title"] = "Load Image (image to edit)"
+    graph["8"] = {"inputs": {"image": "oj-mix-placeholder-2.png"}, "class_type": "LoadImage",
+                  "_meta": {"title": "Load Image (reference)"}}
+    graph["13"]["inputs"]["images.image_2"] = ["8", 0]
+    # Both references resized to about 1 MP: at their own size (0) a large
+    # reference outweighs a small image 1 — a 5 MP plate against a 0.2 MP
+    # strip made Qwen redraw the plate (2026-10-29).
+    graph["13"]["inputs"]["resolution"] = 1024
+    graph["21"]["inputs"]["filename_prefix"] = "qwen-image-2.1-edit-reference"
+    # Output size = image 1 times a factor, snapped to /16: the references go
+    # in at their own size (resolution 0) and Qwen draws the larger canvas
+    # itself, so "x2" upscales with new detail instead of enlarging pixels.
+    graph["26"] = {"inputs": {"value": 1.0}, "class_type": "PrimitiveFloat", "_meta": {"title": "output scale"}}
+    for node_id, axis, title in (("27", 0, "output width"), ("28", 1, "output height")):
+        graph[node_id] = {"inputs": {"expression": "max(64, round(a * b / 16) * 16)", "values.a": ["24", axis],
+                                     "values.b": ["26", 0]},
+                          "class_type": "ComfyMathExpression", "_meta": {"title": title}}
+    graph["25"]["inputs"].update({"width": ["27", 1], "height": ["28", 1]})
+    return graph
+
+
+EDIT_REFERENCE_PRESETS = [
+    {"label": "Redraw with the detail of the reference",
+     "text": "Redraw <image1> in high detail and sharp focus, with the same painting style, textures, brushwork "
+             "and lighting as <image2>. Keep the composition, objects and layout of <image1> exactly the same. "
+             "<image2> is only a style reference: do not copy any objects, furniture or layout from <image2>."},
+    {"label": "Style of the reference",
+     "text": "Restyle <image1> in the artistic style, palette and rendering technique of <image2>. Keep the "
+             "composition, subjects and layout of <image1> unchanged, and do not copy any objects from <image2>."},
+    {"label": "Light and colour of the reference",
+     "text": "Keep <image1> exactly as it is and only relight and recolor it with the lighting, time of day and "
+             "color palette of <image2>. Do not copy any objects from <image2>."},
+    {"label": "Add something from the reference",
+     "text": "Add the object from <image2> to <image1>, placed naturally in the scene with matching scale, "
+             "perspective and lighting. Keep everything else in <image1> unchanged."},
+]
+
+
+def _edit_reference_flow() -> dict:
+    from app.services.flow_engine import _build_mix_flow_definition
+
+    meta = {
+        "id": "mix.edit_with_reference_qwen2",
+        "category": "mix",
+        "label": "Edit with Reference (Qwen 2.1)",
+        "description": "Edit one image with the help of another: image 1 keeps its size and composition, image 2 is "
+                       "the reference the prompt talks about — detail to copy, a style, the light, an object. "
+                       "Qwen Image 2.1's multi-image editing.",
+        "card_desc": "Edit image 1 using image 2 as a reference: its detail, style, light or an object.",
+        "card_tags": ["Qwen", "2.1", "Mix"],
+        "card_css_modifier": "edit-qwen-2511",
+        "image_node": "7",
+        "image_node_2": "8",
+        "no_subject_input": True,
+        "image_label": "Image to edit (image 1)",
+        "image_2_label": "Reference (image 2)",
+        "prompt_presets": EDIT_REFERENCE_PRESETS,
+        "params": [
+            {"id": "prompt", "key": "13.prompt", "label": "Edit prompt", "type": "text",
+             "default": EDIT_REFERENCE_PRESETS[0]["text"]},
+            {"id": "scale", "key": "26.value", "label": "Output size (× image 1)", "type": "number", "default": 1,
+             "min": 1, "max": 4, "step": 0.5, "quick_options": [1, 1.5, 2, 3],
+             "tooltip": "Qwen draws the result this many times larger than image 1, adding detail as it goes. "
+                        "Keep the result under about 4 megapixels."},
+            {"id": "steps", "key": "15.steps", "label": "Steps", "type": "number", "default": 25, "min": 1,
+             "max": 40, "step": 1, "quick_options": [8, 25], "advanced": True},
+            {"id": "seed", "key": "15.seed", "label": "Visual similarity", "type": "seed",
+             "seed_mode": "similarity", "advanced": True},
+        ],
+    }
+    flow = _build_mix_flow_definition(meta, MIX_EDIT_REFERENCE_WORKFLOW_REL)
+    flow["entry_category"] = "Mix"
+    flow["entry_model"] = "Qwen Image 2.1 Edit"
+    return flow
+
+
 def _multi_reference_flows(table: dict) -> list[dict]:
     """Multi-Reference Compose, its Quick variant and MultiComposer (Qwen Image 2.1)."""
 
@@ -2792,6 +2878,8 @@ def _load_workflow_ref(source: Path, ref: str) -> dict:
         return _qwen_image_21_multi_reference_workflow()
     if ref == MIX_MULTI_COMPOSER_WORKFLOW_REL:
         return _qwen_image_21_multi_composer_workflow()
+    if ref == MIX_EDIT_REFERENCE_WORKFLOW_REL:
+        return _qwen_image_21_edit_reference_workflow()
     if ref == STYLE_TRANSFER_QWEN21_WORKFLOW_REL:
         return _qwen_image_21_style_transfer_workflow()
     if ref == ANIMA_STYLE_WORKFLOW_REL:
@@ -4045,7 +4133,8 @@ def build_mix_studio(source: Path, version: str) -> Path:
     table = load_translations(source)
     for text, langs in STYLE_TRANSFER_UI_TEXTS.items():  # only fills gaps
         table.setdefault(text, {}).update({k: v for k, v in langs.items() if k not in table.get(text, {})})
-    flows = _multi_reference_flows(table) + _style_transfer_mix_flows(source, table)
+    flows = (_multi_reference_flows(table) + [add_card_texts(_edit_reference_flow(), table)]
+             + _style_transfer_mix_flows(source, table))
     files: dict[str, object] = {}
     workflow_refs: set[str] = set()
     for flow in flows:

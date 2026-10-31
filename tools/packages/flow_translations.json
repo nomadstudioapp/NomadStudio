@@ -1870,9 +1870,9 @@
     "zh": "要编辑的图片"
   },
   "Image to edit (image 1)": {
-    "es": "Imagen que editar (imagen 1)",
+    "es": "Imagen a editar (imagen 1)",
     "ko": "편집할 이미지 (이미지 1)",
-    "zh": "要编辑的图片（图片 1）"
+    "zh": "要编辑的图像（图像 1）"
   },
   "Image-to-image editing with Flux 2 Klein 9B. Prompt-driven scene and background replacement at original resolution.": {
     "es": "Edición imagen a imagen con Flux 2 Klein 9B. Sustitución de escena y fondo guiada por el prompt a la resolución original.",
@@ -4278,5 +4278,55 @@
     "es": "Cámara",
     "zh": "相机",
     "ko": "카메라"
+  },
+  "Edit with Reference (Qwen 2.1)": {
+    "es": "Editar con referencia (Qwen 2.1)",
+    "zh": "参考图编辑（Qwen 2.1）",
+    "ko": "참조 이미지로 편집 (Qwen 2.1)"
+  },
+  "Edit image 1 using image 2 as a reference: its detail, style, light or an object.": {
+    "es": "Edita la imagen 1 usando la imagen 2 como referencia: su detalle, su estilo, su luz o un objeto.",
+    "zh": "以图像 2 为参考编辑图像 1：借用它的细节、风格、光线或某个物体。",
+    "ko": "이미지 2를 참조로 이미지 1을 편집합니다: 디테일, 스타일, 빛 또는 오브젝트."
+  },
+  "Edit one image with the help of another: image 1 keeps its size and composition, image 2 is the reference the prompt talks about — detail to copy, a style, the light, an object. Qwen Image 2.1's multi-image editing.": {
+    "es": "Edita una imagen con ayuda de otra: la imagen 1 conserva su tamaño y su composición, y la imagen 2 es la referencia de la que habla el prompt — el detalle que copiar, un estilo, la luz, un objeto. Edición con varias imágenes de Qwen Image 2.1.",
+    "zh": "借助另一张图像编辑图像：图像 1 保持其尺寸与构图，图像 2 是提示词所指的参考——要借用的细节、风格、光线或物体。使用 Qwen Image 2.1 的多图编辑。",
+    "ko": "다른 이미지의 도움으로 이미지를 편집합니다: 이미지 1은 크기와 구도를 유지하고, 이미지 2는 프롬프트가 말하는 참조입니다 — 가져올 디테일, 스타일, 빛, 오브젝트. Qwen Image 2.1의 다중 이미지 편집."
+  },
+  "Reference (image 2)": {
+    "es": "Referencia (imagen 2)",
+    "zh": "参考图（图像 2）",
+    "ko": "참조 (이미지 2)"
+  },
+  "Redraw with the detail of the reference": {
+    "es": "Redibujar con el detalle de la referencia",
+    "zh": "以参考图的细节重绘",
+    "ko": "참조의 디테일로 다시 그리기"
+  },
+  "Style of the reference": {
+    "es": "Estilo de la referencia",
+    "zh": "参考图的风格",
+    "ko": "참조의 스타일"
+  },
+  "Light and colour of the reference": {
+    "es": "Luz y color de la referencia",
+    "zh": "参考图的光线与色彩",
+    "ko": "참조의 빛과 색"
+  },
+  "Add something from the reference": {
+    "es": "Añadir algo de la referencia",
+    "zh": "加入参考图中的物体",
+    "ko": "참조에서 무언가 추가"
+  },
+  "Output size (× image 1)": {
+    "es": "Tamaño de salida (× imagen 1)",
+    "zh": "输出尺寸（× 图像 1）",
+    "ko": "출력 크기 (× 이미지 1)"
+  },
+  "Qwen draws the result this many times larger than image 1, adding detail as it goes. Keep the result under about 4 megapixels.": {
+    "es": "Qwen dibuja el resultado tantas veces más grande que la imagen 1, añadiendo detalle. Mantén el resultado por debajo de unos 4 megapíxeles.",
+    "zh": "Qwen 会以图像 1 的这一倍数绘制结果，并在过程中补充细节。请让结果保持在约 400 万像素以内。",
+    "ko": "Qwen이 이미지 1보다 이 배수만큼 크게 결과를 그리며 디테일을 더합니다. 결과는 약 4메가픽셀 이하로 유지하세요."
   }
 }

@@ -2719,11 +2719,13 @@ FLUX3_KLEIN_OBJECT_SHEET_PROMPT = (
     "Keep {name}'s shape, proportions, materials, colours, wear and art style exactly as in the first image: the "
     "same drawing style and finish, not photorealistic unless the first image is. "
     "A thin title bar across the top reads \"{NAME} - OBJECT SHEET\" in dark charcoal condensed capitals. "
-    "Below it, from left to right, the whole object at eye level: seen from the front; turned three-quarters to the "
-    "left; in left side view; seen from the back. On the far right, a view from directly above at the top and, below "
-    "it, two close-up details of {name}. The four views are the same size and scale, the same object with the same "
-    "details in every view. Nobody in it, no hands, no people. Flat even studio light, no shadows on the ground, no "
-    "scenery, no other text."
+    "Below it, the left three quarters of the sheet are a two-by-two grid of four equal wide landscape panels, each "
+    "showing the whole object at eye level with room around it: top left, seen from the front; top right, turned "
+    "three-quarters to the left; bottom left, in left side view, full length; bottom right, seen from the back. "
+    "The right quarter is a tall column: a view of {name} from directly above at the top and, below it, two close-up "
+    "details. The four views are the same scale, the same object with the same proportions and details in every "
+    "view, never squeezed or shortened to fit. Nobody in it, no hands, no people. Flat even studio light, no shadows "
+    "on the ground, no scenery, no other text."
 )
 
 FLUX3_KLEIN_OBJECT_SHEET_SYSTEM = (

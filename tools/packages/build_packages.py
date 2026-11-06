@@ -127,7 +127,7 @@ ENGINES_OPTIONAL = {
 ENGINE_SLUGS = {
     "krea-2-turbo": "krea", "z-image-turbo": "zimage", "flux-klein": "klein", "ideogram-4": "ideogram",
     "z-anime": "anime", "krea2-monaco": "monaco", "krea2-roma": "roma", "qwen-image": "qwen",
-    "qwen-image-turbo": "qwenturbo",
+    "qwen-image-turbo": "qwenturbo", "flux3-klein": "klein3",
 }
 
 # Downloads the source workflows do not declare (vault: "Modelos - Descargas").
@@ -2278,6 +2278,343 @@ def build_qwen_image_21_turbo_engine(version: str) -> Path:
         "contributes": {"engines": [file_rel]},
     }
     return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT})
+
+
+# ── FLUX 3 Image Klein (Black Forest Labs, open weights 2026-10-15) ──────────
+# One 5.6B model for text-to-image, editing and up to 10 references; this is
+# the distilled checkpoint (16 steps, no CFG). Files and graph from BFL's own
+# ComfyUI repo (black-forest-labs/flux-3-image-klein-comfy, gated) and its
+# int8 templates, flattened out of their subgraphs: UNETLoader ->
+# ModelSamplingFlux with both shifts at log(alpha 16) = 2.77259 -> KSampler
+# euler/simple, CLIPLoader type "flux3" (Qwen3-VL 4B), the FLUX.2 VAE (the
+# Comfy-Org file the Klein 2 engine already uses: same VAE, so it is
+# downloaded once), references through ReferenceMultiLatent. The templates'
+# prompt upsampler (a 9B Qwen3.5, 6.7 GB more) is left out: the app has its
+# own prompt help, and loading it on every run doesn't fit a 16 GB card well.
+# Needs ComfyUI >= 0.41. License: FLUX Kommunity (non-commercial, outputs
+# commercially only for businesses under US$5M a year) — noted in the
+# models catalog, so it is never a default engine.
+FLUX3_KLEIN_ID = "nomad.engine.flux3-klein"
+FLUX3_KLEIN_QUANTIZATION = {
+    "int8": {"unet_name": "flux3-image-klein-int8-convrot.safetensors",
+             "clip_name": "qwen3vl_4b_int8_convrot.safetensors", "label": "INT8"},
+    "bf16": {"unet_name": "flux3-image-klein-bf16.safetensors",
+             "clip_name": "qwen3vl_4b_bf16.safetensors", "label": "BF16"},
+}
+FLUX3_KLEIN_SHIFT = 2.77259  # log(16), what the templates' "alpha" 16 becomes
+FLUX3_KLEIN_REFINE_WORKFLOW_REL = "workflows/refine/edit_flux3_klein.json"
+FLUX3_KLEIN_MIX_WORKFLOW_REL = "workflows/mix/multi_reference_flux3_klein.json"
+
+
+def _flux3_klein_base_nodes(model: str, clip: str, vae: str, prompt_node: str, negative_node: str,
+                            sampler: str, sampling_node: str) -> dict:
+    """Loaders, ModelSamplingFlux, the two text encodes and the sampler — the
+    part every Flux 3 Klein graph shares (each passes its own node ids)."""
+    return {
+        "config": _qwen_image_21_config_node(FLUX3_KLEIN_QUANTIZATION, name="Flux 3 Klein", downloads=""),
+        model: {"inputs": {"unet_name": FLUX3_KLEIN_QUANTIZATION["int8"]["unet_name"], "weight_dtype": "default"},
+                "class_type": "UNETLoader", "_meta": {"title": "Load Diffusion Model"}},
+        clip: {"inputs": {"clip_name": FLUX3_KLEIN_QUANTIZATION["int8"]["clip_name"], "type": "flux3",
+                          "device": "default"},
+               "class_type": "CLIPLoader", "_meta": {"title": "Load CLIP"}},
+        vae: {"inputs": {"vae_name": "flux2-vae.safetensors"}, "class_type": "VAELoader",
+              "_meta": {"title": "Load VAE"}},
+        sampling_node: {"inputs": {"max_shift": FLUX3_KLEIN_SHIFT, "base_shift": FLUX3_KLEIN_SHIFT, "width": 1024,
+                                   "height": 1024, "model": [model, 0]},
+                        "class_type": "ModelSamplingFlux", "_meta": {"title": "ModelSamplingFlux"}},
+        prompt_node: {"inputs": {"text": "a small red fox sitting in snow, studio photo", "clip": [clip, 0]},
+                      "class_type": "CLIPTextEncode", "_meta": {"title": "CLIP Text Encode (Prompt)"}},
+        # Distilled, CFG 1: the negative is never used, but KSampler wants one.
+        negative_node: {"inputs": {"text": "", "clip": [clip, 0]}, "class_type": "CLIPTextEncode",
+                        "_meta": {"title": "CLIP Text Encode (Negative)"}},
+        sampler: {"inputs": {"seed": 758781618552631, "steps": 16, "cfg": 1, "sampler_name": "euler",
+                             "scheduler": "simple", "denoise": 1, "model": [sampling_node, 0]},
+                  "class_type": "KSampler", "_meta": {"title": "KSampler"}},
+    }
+
+
+def _flux3_klein_workflow() -> dict:
+    """Create: text to image. Same node ids as the other Create engines."""
+    graph = _flux3_klein_base_nodes("55", "56", "57", "51", "76", "53", "58")
+    graph["53"]["inputs"].update({"positive": ["51", 0], "negative": ["76", 0], "latent_image": ["71", 0]})
+    graph["71"] = {"inputs": {"width": 1024, "height": 1024, "batch_size": 1},
+                   "class_type": "EmptyFlux2LatentImage", "_meta": {"title": "Empty Flux 2 Latent"}}
+    graph["54"] = {"inputs": {"samples": ["53", 0], "vae": ["57", 0]}, "class_type": "VAEDecode",
+                   "_meta": {"title": "VAE Decode"}}
+    graph["29"] = {"inputs": {"filename_prefix": "flux3-klein-create", "images": ["54", 0]},
+                   "class_type": "SaveImage", "_meta": {"title": "Save Image"}}
+    return graph
+
+
+def _flux3_klein_edit_workflow() -> dict:
+    """Refine: one image + a prompt. The source is first brought to a size
+    the model handles (node 23, megapixels in Advanced, multiples of 16) and
+    the result has that size and the source's aspect ratio (24 -> 25). The
+    scaled image is the reference, at that same size ("keep resolution")."""
+    graph = _flux3_klein_base_nodes("6", "3", "2", "12", "14", "15", "5")
+    graph["7"] = {"inputs": {"image": "oj-refine-placeholder.png"}, "class_type": "LoadImage",
+                  "_meta": {"title": "Load Image"}}
+    graph["23"] = {"inputs": {"upscale_method": "lanczos", "megapixels": 1.5, "resolution_steps": 16,
+                              "image": ["7", 0]},
+                   "class_type": "ImageScaleToTotalPixels", "_meta": {"title": "Scale to working size"}}
+    graph["13"] = {"inputs": {"resolution": "keep resolution", "positive": ["12", 0], "negative": ["14", 0],
+                              "vae": ["2", 0], "images.image0": ["23", 0]},
+                   "class_type": "ReferenceMultiLatent", "_meta": {"title": "Set Reference Multi Latent"}}
+    graph["24"] = {"inputs": {"image": ["23", 0]}, "class_type": "GetImageSize", "_meta": {"title": "Get Image Size"}}
+    graph["25"] = {"inputs": {"width": ["24", 0], "height": ["24", 1], "batch_size": 1},
+                   "class_type": "EmptyFlux2LatentImage", "_meta": {"title": "Empty Flux 2 Latent"}}
+    graph["15"]["inputs"].update({"positive": ["13", 0], "negative": ["13", 1], "latent_image": ["25", 0]})
+    graph["17"] = {"inputs": {"samples": ["15", 0], "vae": ["2", 0]}, "class_type": "VAEDecode",
+                   "_meta": {"title": "VAE Decode"}}
+    graph["21"] = {"inputs": {"filename_prefix": "flux3-klein-edit", "images": ["17", 0]},
+                   "class_type": "SaveImage", "_meta": {"title": "Save Image"}}
+    return graph
+
+
+def _flux3_klein_multi_reference_workflow() -> dict:
+    """Mix: 2-4 references (nodes 7-10, in prompt order: the first image, the
+    second…) + a prompt, output size from the flow's aspect ratio (node 25).
+    Each reference is resized to about 1 MP: every reference adds its tokens
+    to every step, and a large one would also outweigh the others. An empty
+    optional slot is dropped from the graph (refine_routes._prepare_mix), so
+    it adds nothing — ReferenceMultiLatent takes any number of images."""
+    graph = _flux3_klein_edit_workflow()
+    for node_id in ("23", "24"):
+        del graph[node_id]
+    for node_id, filename in (("8", "oj-mix-placeholder-2.png"), ("9", "oj-mix-placeholder-3.png"),
+                              ("10", "oj-mix-placeholder-4.png")):
+        graph[node_id] = {"inputs": {"image": filename}, "class_type": "LoadImage", "_meta": {"title": "Load Image"}}
+    graph["13"]["inputs"] = {"resolution": "resize", "resolution.megapixels": 1.0, "positive": ["12", 0],
+                             "negative": ["14", 0], "vae": ["2", 0], "images.image0": ["7", 0],
+                             "images.image1": ["8", 0], "images.image2": ["9", 0], "images.image3": ["10", 0]}
+    graph["25"]["inputs"] = {"width": 1024, "height": 1024, "batch_size": 1}
+    graph["21"]["inputs"]["filename_prefix"] = "flux3-klein-multi-ref"
+    return graph
+
+
+FLUX3_KLEIN_EDIT_PRESETS = [
+    {"label": "Change the background",
+     "text": "Replace the background with a quiet beach at sunset. Keep the people, their faces, clothes and "
+             "poses exactly the same, and match the light on them to the new background."},
+    {"label": "Change the light",
+     "text": "Relight the scene as a warm evening with soft golden light from the window. Keep everything else "
+             "in the image exactly the same."},
+    {"label": "Change an object",
+     "text": "Change the color of the jacket to deep red. Keep everything else exactly the same."},
+    {"label": "Same scene, new moment",
+     "text": "The same characters in the same room and the same art style, now laughing together at the table. "
+             "Keep their faces, clothes and the room unchanged."},
+]
+
+FLUX3_KLEIN_MIX_PRESETS = [
+    {"label": "Character in a place",
+     "text": "The character from the first image standing in the room from the second image, in the art style of "
+             "the second image. Keep the face, hair and clothes of the character exactly the same."},
+    {"label": "Two characters together",
+     "text": "The character from the first image and the character from the second image sitting together at a "
+             "table, talking. Keep both faces, hairstyles and outfits exactly the same, in the art style of the "
+             "first image."},
+    {"label": "Characters in a scene",
+     "text": "The character from the first image and the character from the second image standing in the scene "
+             "from the third image, in its style and light. Keep both characters' faces and clothes exactly the "
+             "same."},
+    {"label": "Wear the object",
+     "text": "The person from the first image wearing the clothing from the second image. Keep the face, pose and "
+             "background of the first image exactly the same."},
+]
+
+
+def _flux3_klein_edit_flow() -> dict:
+    return {
+        "id": "refine.edit_flux3_klein",
+        "label": "Edit Flux 3 Klein",
+        "category": "refine",
+        "group": "edit",
+        "description": "Image editing with FLUX 3 Klein: describe the change and it keeps the style, the place and "
+                       "the characters of the picture.",
+        "card_desc": "Edit with FLUX 3 Klein — change one thing, keep the style, the place and the characters.",
+        "card_tags": ["Flux 3", "Klein", "Edit", "Prompt"],
+        "card_css_modifier": "edit-fluxklein",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Source image", "required": True},
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": FLUX3_KLEIN_REFINE_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {"id": "prompt", "adv_key": "12.text", "label": "Edit prompt", "type": "textarea", "rows": 4,
+                     "block": True, "default": FLUX3_KLEIN_EDIT_PRESETS[0]["text"],
+                     "presets": FLUX3_KLEIN_EDIT_PRESETS,
+                     "tooltip": "Say what changes and what stays the same."},
+                    {"id": "megapixels", "adv_key": "23.megapixels", "label": "Working size (megapixels)",
+                     "type": "number", "default": 1.5, "min": 0.5, "max": 4, "step": 0.5,
+                     "quick_options": [1, 1.5, 2, 4], "advanced": True,
+                     "tooltip": "The image is edited at this size, keeping its aspect ratio. Larger is slower."},
+                    {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 16,
+                     "min": 4, "max": 16, "step": 1, "quick_options": [4, 8, 16], "advanced": True},
+                    {"id": "seed", "adv_key": "15.seed", "label": "Visual similarity", "type": "seed",
+                     "seed_mode": "similarity", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_refine",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "imageDataUrl": "steps.image.output.image_data_url",
+                    "advancedValues": "steps.params.output.adv_values",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Refine",
+        "entry_model": "Flux 3 Klein",
+    }
+
+
+def _flux3_klein_mix_flow() -> dict:
+    def image_step(step_id: str, label: str, required: bool, hint: str | None = None) -> dict:
+        step: dict = {"id": step_id, "type": "image_picker", "label": label, "required": required}
+        if not required:
+            step["optional"] = True
+        if hint:
+            step["hint"] = hint
+        return step
+
+    return {
+        "id": "mix.multi_reference_flux3_klein",
+        "label": "Multi-Reference — Flux 3 Klein",
+        "category": "mix",
+        "group": "mix-studio",
+        "description": "Combine 2-4 reference images into a new picture with FLUX 3 Klein: put your characters in a "
+                       "place, together, in a new moment — keeping their faces, clothes and the style.",
+        "card_desc": "Characters, places and styles from 2-4 images in one new picture, with FLUX 3 Klein.",
+        "card_tags": ["Flux 3", "Klein", "Mix", "Compose"],
+        "card_css_modifier": "mix-compose",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            image_step("image", "First image", True),
+            image_step("image_2", "Second image", True),
+            image_step("image_3", "Third image (optional)", False,
+                       "Optional — a third reference: another character, a place, a style."),
+            image_step("image_4", "Fourth image (optional)", False, "Optional — a fourth reference."),
+            {
+                "id": "prompt",
+                "type": "prompt_input",
+                "label": "What to make",
+                "placeholder": "Refer to the pictures as the first image, the second image… and say what to keep "
+                               "from each one.",
+                "default": FLUX3_KLEIN_MIX_PRESETS[0]["text"],
+                "presets": FLUX3_KLEIN_MIX_PRESETS,
+                "rows": 5,
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": FLUX3_KLEIN_MIX_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {"id": "aspect_ratio", "type": "aspect_ratio", "label": "Output aspect ratio",
+                     "default": "r16x9", "resolution": "md",
+                     "adv_keys": {"width": "25.width", "height": "25.height"}},
+                    {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 16,
+                     "min": 4, "max": 16, "step": 1, "quick_options": [4, 8, 16], "advanced": True},
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_mix",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "images": [
+                        {"dataUrl": "steps.image.output.image_data_url", "nodeId": "7"},
+                        {"dataUrl": "steps.image_2.output.image_data_url", "nodeId": "8"},
+                        {"dataUrl": "steps.image_3.output.image_data_url", "nodeId": "9", "optional": True},
+                        {"dataUrl": "steps.image_4.output.image_data_url", "nodeId": "10", "optional": True},
+                    ],
+                    "advancedValues": "steps.params.output.adv_values",
+                    "promptKey": "12.text",
+                    "promptValue": "steps.prompt.output.prompt_text",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Mix",
+        "entry_model": "Flux 3 Klein",
+    }
+
+
+def build_flux3_klein_engine(source: Path, version: str) -> Path:
+    """The engine (Create) plus its Refine and Mix flows, in one package:
+    installing Flux 3 Klein puts it in all three places."""
+    from app.services.workflow_service import _analyze_workflow
+
+    table = load_translations(source)
+    workflow = _flux3_klein_workflow()
+    analysis = _analyze_workflow(workflow)
+    engine = {
+        "category": "image",
+        "name": "Flux 3 Klein",
+        "slug": ENGINE_SLUGS["flux3-klein"],
+        "workflow": workflow,
+        "analysis": analysis,
+        "basicValues": analysis.get("basicValues", {}),
+        "advancedValues": {p["key"]: p["value"] for p in analysis.get("advancedParameters", []) if not p.get("isLinked")},
+        "annotation": {"downloads": [], "loras": [], "optionalSubgraphs": []},
+    }
+    flows = [add_card_texts(_flux3_klein_edit_flow(), table), add_card_texts(_flux3_klein_mix_flow(), table)]
+    files: dict[str, object] = {
+        FLUX3_KLEIN_REFINE_WORKFLOW_REL: _flux3_klein_edit_workflow(),
+        FLUX3_KLEIN_MIX_WORKFLOW_REL: _flux3_klein_multi_reference_workflow(),
+    }
+    for flow in flows:
+        _upgrade_seed_fields_to_similarity(flow)
+        files[f"flows/{flow['id'].split('.', 1)[1]}.json"] = flow
+    i18n, counts = flow_i18n(flows, table)
+    file_rel = "engines/flux3_klein.json"
+    manifest = {
+        "schema_version": 1,
+        "id": FLUX3_KLEIN_ID,
+        "version": version,
+        "default_lang": "en",
+        "name": {lang: "Flux 3 Klein" for lang in ("en", *LANGS)},
+        "summary": {
+            "en": "FLUX 3 Image Klein (distilled, 16 steps): text-to-image in Create, editing in Refine and up to "
+                  "four references in Mix. Non-commercial license; businesses under US$5M a year may use the "
+                  "images commercially.",
+            "es": "FLUX 3 Image Klein (destilado, 16 pasos): de texto a imagen en Create, edición en Refine y hasta "
+                  "cuatro referencias en Mix. Licencia no comercial; las empresas que facturan menos de 5 M USD "
+                  "al año pueden usar las imágenes comercialmente.",
+            "zh": "FLUX 3 Image Klein（蒸馏版，16 步）：在 Create 中文生图，在 Refine 中编辑，在 Mix 中最多使用四张参考图。"
+                  "非商业许可；年收入低于 500 万美元的企业可将生成的图像用于商业用途。",
+            "ko": "FLUX 3 Image Klein (증류 모델, 16단계): Create에서 텍스트-이미지, Refine에서 편집, Mix에서 최대 4장의 "
+                  "참조 이미지. 비상업 라이선스이며, 연 매출 500만 달러 미만 기업은 생성 이미지를 상업적으로 사용할 수 "
+                  "있습니다.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "order": 50,
+        "languages": ["en", *(lang for lang in LANGS if i18n[lang])],
+        "contributes": {
+            "engines": [file_rel],
+            "flows": [f"flows/{flow['id'].split('.', 1)[1]}.json" for flow in flows],
+            "workflows": [FLUX3_KLEIN_REFINE_WORKFLOW_REL, FLUX3_KLEIN_MIX_WORKFLOW_REL],
+        },
+    }
+    print(f"  flux3-klein texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))
+    return write_zip(FLUX3_KLEIN_ID, {"manifest.json": manifest, file_rel: engine, **files, "LICENSE": LICENSE_TEXT,
+                                      **{f"i18n/{lang}.json": i18n[lang] for lang in LANGS if i18n[lang]}})
 
 
 def build_engine(source: Path, version: str, name: str, catalog: dict = ENGINES, dest: Path = DIST) -> Path:
@@ -4924,6 +5261,7 @@ def main() -> None:
     ap.add_argument("--refine-pilot", action="store_true")
     ap.add_argument("--refine-groups", action="store_true")
     ap.add_argument("--camera", action="store_true")   # the Camera angle pack only (QMA LoRA)
+    ap.add_argument("--flux3-klein", action="store_true")   # the Flux 3 Klein package only
     # Style packs only (they don't depend on the rest): skips engines/flows.
     ap.add_argument("--style-packs", action="store_true")
     # Just the Styling (Refine) + Mix Studio (Mix) packages.
@@ -4939,6 +5277,12 @@ def main() -> None:
             print(f"{path.name:40} {path.stat().st_size / 1024:5.0f} KB · {summary['id']} {summary['version']}"
                   f" · flows={[f['id'] for f in summary['flows']]}")
         return
+    if args.flux3_klein:
+        path = build_flux3_klein_engine(args.source, args.version)
+        summary = validate(path)
+        print(f"{path.name}: engines={[e['name'] for e in summary['engines']]}"
+              f" flows={[f['id'] for f in summary['flows']]}")
+        return
     if args.camera:
         path = build_camera_pack(args.source, args.version)
         summary = validate(path)
@@ -4952,6 +5296,7 @@ def main() -> None:
         return
     paths = [build_engine(args.source, args.version, name) for name in ENGINES] + [
         build_qwen_image_21_engine(args.version), build_qwen_image_21_turbo_engine(args.version),
+        build_flux3_klein_engine(args.source, args.version),
         build_core_create(args.source, args.version), build_create_layout(args.source, args.version),
         build_core_civitai(args.source, args.version)]
     if args.optional:

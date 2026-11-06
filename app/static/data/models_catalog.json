@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25",
+  "updated": "2026-11-06",
   "models": [
     {
       "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
@@ -1172,6 +1172,88 @@
       "license": {
         "name": "Apache-2.0",
         "url": "https://huggingface.co/gribbliest/qwen-image-2.1-qma-camera-angles"
+      }
+    },
+    {
+      "sha256": "847d8933548afd93df4af2cac2498e70891bf28d9dae06d695f536992e168fe2",
+      "size": 5827874779,
+      "names": [
+        "flux3-image-klein-int8-convrot.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy/resolve/main/diffusion_models/flux3-image-klein-int8-convrot.safetensors",
+          "host": "huggingface",
+          "gated": true,
+          "license_url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy"
+        }
+      ],
+      "license": {
+        "name": "FLUX Kommunity License v1.0 (non-commercial; commercial use of outputs only for businesses under US$5M yearly revenue)",
+        "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "c3e9813cdd049c831c836b2e9db61150e49a93fc1a4c63b256494642fee0bd7c",
+      "size": 11097404512,
+      "names": [
+        "flux3-image-klein-bf16.safetensors"
+      ],
+      "folder": "diffusion_models",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy/resolve/main/diffusion_models/flux3-image-klein-bf16.safetensors",
+          "host": "huggingface",
+          "gated": true,
+          "license_url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy"
+        }
+      ],
+      "license": {
+        "name": "FLUX Kommunity License v1.0 (non-commercial; commercial use of outputs only for businesses under US$5M yearly revenue)",
+        "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy/blob/main/LICENSE.md",
+        "non_commercial": true
+      }
+    },
+    {
+      "sha256": "32de113cbf8282b02cbff0794b637b9d6676da09314a1db5a30bcea9bf4ee01c",
+      "size": 4858559240,
+      "names": [
+        "qwen3vl_4b_int8_convrot.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy/resolve/main/text_encoders/qwen3vl_4b_int8_convrot.safetensors",
+          "host": "huggingface",
+          "gated": true,
+          "license_url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy"
+        }
+      ],
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct"
+      }
+    },
+    {
+      "sha256": "f0b24fc5c8d7c0ea6ca909da14c20af5cac53f22506be942c6c956f838b9630f",
+      "size": 8875719408,
+      "names": [
+        "qwen3vl_4b_bf16.safetensors"
+      ],
+      "folder": "text_encoders",
+      "sources": [
+        {
+          "url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy/resolve/main/text_encoders/qwen3vl_4b_bf16.safetensors",
+          "host": "huggingface",
+          "gated": true,
+          "license_url": "https://huggingface.co/black-forest-labs/flux-3-image-klein-comfy"
+        }
+      ],
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct"
       }
     }
   ]

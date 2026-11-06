@@ -4328,5 +4328,130 @@
     "es": "Qwen dibuja el resultado tantas veces más grande que la imagen 1, añadiendo detalle. Mantén el resultado por debajo de unos 4 megapíxeles.",
     "zh": "Qwen 会以图像 1 的这一倍数绘制结果，并在过程中补充细节。请让结果保持在约 400 万像素以内。",
     "ko": "Qwen이 이미지 1보다 이 배수만큼 크게 결과를 그리며 디테일을 더합니다. 결과는 약 4메가픽셀 이하로 유지하세요."
+  },
+  "Edit Flux 3 Klein": {
+    "es": "Editar Flux 3 Klein",
+    "zh": "编辑 Flux 3 Klein",
+    "ko": "편집 Flux 3 Klein"
+  },
+  "Image editing with FLUX 3 Klein: describe the change and it keeps the style, the place and the characters of the picture.": {
+    "es": "Edición de imágenes con FLUX 3 Klein: describe el cambio y conserva el estilo, el lugar y los personajes de la imagen.",
+    "zh": "使用 FLUX 3 Klein 编辑图像：描述要改的地方，它会保留画面的风格、场景和角色。",
+    "ko": "FLUX 3 Klein으로 이미지 편집: 바꿀 내용을 설명하면 그림의 스타일, 장소, 캐릭터를 유지합니다."
+  },
+  "Edit with FLUX 3 Klein — change one thing, keep the style, the place and the characters.": {
+    "es": "Edita con FLUX 3 Klein — cambia una cosa y conserva el estilo, el lugar y los personajes.",
+    "zh": "用 FLUX 3 Klein 编辑——只改一处，保留风格、场景和角色。",
+    "ko": "FLUX 3 Klein으로 편집 — 한 가지만 바꾸고 스타일, 장소, 캐릭터는 유지합니다."
+  },
+  "Say what changes and what stays the same.": {
+    "es": "Di qué cambia y qué se queda igual.",
+    "zh": "说明哪些要改、哪些保持不变。",
+    "ko": "무엇을 바꾸고 무엇을 그대로 둘지 적어 주세요."
+  },
+  "Working size (megapixels)": {
+    "es": "Tamaño de trabajo (megapíxeles)",
+    "zh": "处理尺寸（百万像素）",
+    "ko": "작업 크기 (메가픽셀)"
+  },
+  "The image is edited at this size, keeping its aspect ratio. Larger is slower.": {
+    "es": "La imagen se edita a este tamaño, conservando su proporción. Más grande es más lento.",
+    "zh": "图像按此尺寸编辑并保持宽高比。越大越慢。",
+    "ko": "이미지를 이 크기로 편집하며 비율은 유지합니다. 클수록 느립니다."
+  },
+  "Change the background": {
+    "es": "Cambiar el fondo",
+    "zh": "更换背景",
+    "ko": "배경 바꾸기"
+  },
+  "Change the light": {
+    "es": "Cambiar la luz",
+    "zh": "改变光线",
+    "ko": "빛 바꾸기"
+  },
+  "Change an object": {
+    "es": "Cambiar un objeto",
+    "zh": "更改物体",
+    "ko": "오브젝트 바꾸기"
+  },
+  "Same scene, new moment": {
+    "es": "Misma escena, otro momento",
+    "zh": "同一场景，新的瞬间",
+    "ko": "같은 장면, 새로운 순간"
+  },
+  "Multi-Reference — Flux 3 Klein": {
+    "es": "Multi-referencia — Flux 3 Klein",
+    "zh": "多参考图 — Flux 3 Klein",
+    "ko": "다중 참조 — Flux 3 Klein"
+  },
+  "Combine 2-4 reference images into a new picture with FLUX 3 Klein: put your characters in a place, together, in a new moment — keeping their faces, clothes and the style.": {
+    "es": "Combina de 2 a 4 imágenes de referencia en una imagen nueva con FLUX 3 Klein: pon a tus personajes en un lugar, juntos, en otro momento — conservando sus caras, su ropa y el estilo.",
+    "zh": "用 FLUX 3 Klein 将 2 到 4 张参考图合成为一张新图：把你的角色放进某个场景、放在一起、放进新的瞬间——保留他们的面孔、服装和画风。",
+    "ko": "FLUX 3 Klein으로 참조 이미지 2~4장을 새 그림으로 합성: 캐릭터를 어떤 장소에, 함께, 새로운 순간에 — 얼굴, 옷, 스타일은 그대로 유지합니다."
+  },
+  "Characters, places and styles from 2-4 images in one new picture, with FLUX 3 Klein.": {
+    "es": "Personajes, lugares y estilos de 2 a 4 imágenes en una imagen nueva, con FLUX 3 Klein.",
+    "zh": "用 FLUX 3 Klein 将 2 到 4 张图中的角色、场景和风格合成为一张新图。",
+    "ko": "FLUX 3 Klein으로 2~4장 이미지의 캐릭터, 장소, 스타일을 한 장의 새 그림에."
+  },
+  "First image": {
+    "es": "Primera imagen",
+    "zh": "第一张图像",
+    "ko": "첫 번째 이미지"
+  },
+  "Second image": {
+    "es": "Segunda imagen",
+    "zh": "第二张图像",
+    "ko": "두 번째 이미지"
+  },
+  "Third image (optional)": {
+    "es": "Tercera imagen (opcional)",
+    "zh": "第三张图像（可选）",
+    "ko": "세 번째 이미지 (선택)"
+  },
+  "Fourth image (optional)": {
+    "es": "Cuarta imagen (opcional)",
+    "zh": "第四张图像（可选）",
+    "ko": "네 번째 이미지 (선택)"
+  },
+  "Optional — a third reference: another character, a place, a style.": {
+    "es": "Opcional — una tercera referencia: otro personaje, un lugar, un estilo.",
+    "zh": "可选——第三张参考图：另一个角色、一个场景或一种风格。",
+    "ko": "선택 — 세 번째 참조: 다른 캐릭터, 장소, 스타일."
+  },
+  "Optional — a fourth reference.": {
+    "es": "Opcional — una cuarta referencia.",
+    "zh": "可选——第四张参考图。",
+    "ko": "선택 — 네 번째 참조."
+  },
+  "What to make": {
+    "es": "Qué crear",
+    "zh": "要生成什么",
+    "ko": "만들 내용"
+  },
+  "Refer to the pictures as the first image, the second image… and say what to keep from each one.": {
+    "es": "Nombra las imágenes como la primera imagen, la segunda imagen… y di qué conservar de cada una.",
+    "zh": "用“第一张图像”“第二张图像”……指代图片，并说明每张要保留什么。",
+    "ko": "그림을 첫 번째 이미지, 두 번째 이미지…로 부르고 각각에서 무엇을 유지할지 적어 주세요."
+  },
+  "Character in a place": {
+    "es": "Personaje en un lugar",
+    "zh": "角色置于场景中",
+    "ko": "장소 속 캐릭터"
+  },
+  "Two characters together": {
+    "es": "Dos personajes juntos",
+    "zh": "两个角色同框",
+    "ko": "두 캐릭터 함께"
+  },
+  "Characters in a scene": {
+    "es": "Personajes en una escena",
+    "zh": "角色置于一个场景",
+    "ko": "장면 속 캐릭터들"
+  },
+  "Wear the object": {
+    "es": "Ponerse la prenda",
+    "zh": "穿戴物品",
+    "ko": "옷 입히기"
   }
 }

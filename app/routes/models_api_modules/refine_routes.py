@@ -481,6 +481,28 @@ def _neutral_placeholder_png() -> bytes:
     return _PLACEHOLDER_PNG_CACHE
 
 
+# Nodes that take any number of reference images ("images.imageN", Autogrow)
+# and skip a missing one, so an empty optional slot can leave the graph
+# instead of adding a gray reference (Flux 3 Klein's multi-reference Mix).
+_VARIADIC_REFERENCE_NODES = {"ReferenceMultiLatent"}
+
+
+def _drop_unused_reference(workflow: dict, node_id: str) -> bool:
+    """Remove an empty optional LoadImage node when its only use is an
+    "images.*" input of a _VARIADIC_REFERENCE_NODES node. False (nothing
+    touched) if anything else reads it — then the gray placeholder stays."""
+    uses = [(node, key) for node in workflow.values() if isinstance(node, dict)
+            for key, value in (node.get("inputs") or {}).items()
+            if isinstance(value, list) and value and str(value[0]) == node_id]
+    if not uses or not all(node.get("class_type") in _VARIADIC_REFERENCE_NODES and key.startswith("images.")
+                           for node, key in uses):
+        return False
+    for node, key in uses:
+        del node["inputs"][key]
+    workflow.pop(node_id, None)
+    return True
+
+
 @models_api_bp.post("/models/quantization/presence")
 def quantization_presence():
     """Which precision options (analysis.quantization.options) ComfyUI has the
@@ -675,6 +697,8 @@ def _prepare_mix(payload: dict):
         node_id = str(img_entry.get("nodeId", "")).strip() or None
         if not data_url:
             if not node_id:
+                continue
+            if _drop_unused_reference(prepared_workflow, node_id):
                 continue
             # Optional image slot left empty (e.g. Clothes Mix run text-only,
             # no reference photo) — the node still needs SOME uploaded image

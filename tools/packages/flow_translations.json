@@ -4453,5 +4453,60 @@
     "es": "Ponerse la prenda",
     "zh": "穿戴物品",
     "ko": "옷 입히기"
+  },
+  "Character Sheet from Image — Flux 3 Klein": {
+    "es": "Hoja de personaje desde imagen — Flux 3 Klein",
+    "zh": "从图片生成角色设定图 — Flux 3 Klein",
+    "ko": "이미지로 캐릭터 시트 만들기 — Flux 3 Klein"
+  },
+  "Character image": {
+    "es": "Imagen del personaje",
+    "zh": "角色图片",
+    "ko": "캐릭터 이미지"
+  },
+  "Name and notes": {
+    "es": "Nombre y notas",
+    "zh": "名字和备注",
+    "ko": "이름과 메모"
+  },
+  "One clear picture of the character, ideally full body.": {
+    "es": "Una imagen clara del personaje, mejor de cuerpo entero.",
+    "zh": "一张清晰的角色图片，最好是全身。",
+    "ko": "캐릭터가 잘 보이는 그림 한 장, 가능하면 전신."
+  },
+  "One picture of a character in, a full reference sheet out — 4 views + face + items, same style.": {
+    "es": "Entra una imagen del personaje y sale una hoja de referencia completa: 4 vistas + cara + objetos, con el mismo estilo.",
+    "zh": "输入一张角色图片，输出完整设定图：4 个视角 + 面部 + 物品，画风不变。",
+    "ko": "캐릭터 그림 한 장으로 완전한 참조 시트를 — 4방향 + 얼굴 + 소지품, 같은 화풍으로."
+  },
+  "Optional — another view of the same character, or their outfit. Mention it in the sheet as the second image.": {
+    "es": "Opcional: otra vista del mismo personaje o su ropa. Menciónala en la hoja como «the second image».",
+    "zh": "可选——同一角色的另一个角度，或其服装。在设定文字中称它为 “the second image”。",
+    "ko": "선택 — 같은 캐릭터의 다른 모습이나 의상. 시트 문장에서 “the second image”로 언급하세요."
+  },
+  "Second image (optional)": {
+    "es": "Segunda imagen (opcional)",
+    "zh": "第二张图片（可选）",
+    "ko": "두 번째 이미지 (선택)"
+  },
+  "The name goes in the title bar. Leave the look to the picture.": {
+    "es": "El nombre va en la barra del título. El aspecto lo pone la imagen.",
+    "zh": "名字会出现在标题栏。外观交给图片决定。",
+    "ko": "이름은 제목 줄에 들어갑니다. 생김새는 그림에 맡기세요."
+  },
+  "This is what goes to the engine. It works as it is; Compose sheet adds the name and the items.": {
+    "es": "Esto es lo que va al motor. Funciona tal cual; «Componer hoja» añade el nombre y los objetos.",
+    "zh": "这就是发送给引擎的内容。直接使用也可以；“生成设定文字”会加上名字和物品。",
+    "ko": "이 내용이 엔진으로 전달됩니다. 그대로도 작동하며, ‘시트 구성’은 이름과 소지품을 추가합니다."
+  },
+  "Turn one picture of a character into a full reference sheet with FLUX 3 Klein: front, three-quarter, side and back views, a face portrait and their items, in the picture's own style. Same layout as Create › Character Sheet.": {
+    "es": "Convierte una imagen de un personaje en una hoja de referencia completa con FLUX 3 Klein: vistas de frente, tres cuartos, perfil y espalda, un retrato de la cara y sus objetos, con el estilo de la propia imagen. Misma composición que Create › Hoja de personaje.",
+    "zh": "用 FLUX 3 Klein 把一张角色图片变成完整的设定图：正面、四分之三侧面、侧面和背面，外加面部特写和随身物品，保持原图的画风。版式与 Create › 角色设定图相同。",
+    "ko": "FLUX 3 Klein으로 캐릭터 그림 한 장을 완전한 참조 시트로 만듭니다: 정면, 3/4, 측면, 뒷면, 얼굴 초상화와 소지품까지, 원본 그림의 화풍 그대로. Create › 캐릭터 시트와 같은 구성입니다."
+  },
+  "e.g. Mateo. He carries a steel thermos and a small carving knife; a calm half smile.": {
+    "es": "p. ej. Mateo. Lleva un termo de acero y una navaja de tallar; media sonrisa tranquila.",
+    "zh": "例如：Mateo。他带着一个钢制保温壶和一把小雕刻刀；平静的浅笑。",
+    "ko": "예: Mateo. 스테인리스 보온병과 작은 조각칼을 들고 다닌다; 차분한 옅은 미소."
   }
 }

@@ -2295,6 +2295,7 @@ def build_qwen_image_21_turbo_engine(version: str) -> Path:
 # commercially only for businesses under US$5M a year) — noted in the
 # models catalog, so it is never a default engine.
 FLUX3_KLEIN_ID = "nomad.engine.flux3-klein"
+FLUX3_KLEIN_VERSION = "0.1.1"  # 0.1.1: Character Sheet from Image flow
 FLUX3_KLEIN_QUANTIZATION = {
     "int8": {"unet_name": "flux3-image-klein-int8-convrot.safetensors",
              "clip_name": "qwen3vl_4b_int8_convrot.safetensors", "label": "INT8"},
@@ -2555,6 +2556,128 @@ def _flux3_klein_mix_flow() -> dict:
     }
 
 
+# Character Sheet from an image: the layout of Create › Character Sheet (four
+# full-body views, face, gear, title bar), but the character comes from a
+# picture instead of words. Flux 3 Klein can't read bboxes, so the LLM writes
+# the layout in plain words (same lesson as Layout Assist, NomadStudio#18),
+# and everything about the character's look is left to "the first image":
+# describing it again in words only invites the model to drift from it.
+FLUX3_KLEIN_SHEET_PROMPT = (
+    "Character reference sheet of {name}, the character in the first image, on a plain white background, "
+    "2:1 landscape. Keep {name}'s face, hair, body, outfit, colours and art style exactly as in the first image: "
+    "the same drawing style and finish, not photorealistic unless the first image is. "
+    "A thin title bar across the top reads \"{NAME} - CHARACTER SHEET\" in dark charcoal condensed capitals. "
+    "Below it, from left to right: {name} full body seen from the front, standing upright in a relaxed A-pose; "
+    "full body turned three-quarters to the left; full body in left profile; full body seen from behind. "
+    "On the far right, a large frontal head-and-shoulders portrait of {name} at the top and, below it, "
+    "{name}'s everyday items laid out flat with no person. The four bodies are the same height and scale, "
+    "the same person wearing exactly the same clothes in every view. Flat even studio light, no shadows on the "
+    "ground, no scenery, no other text."
+)
+
+FLUX3_KLEIN_SHEET_SYSTEM = (
+    "You write the prompt for an image model that draws a character reference sheet from a reference picture. "
+    "The model sees the picture as \"the first image\"; you cannot see it. The user gives you the character's name "
+    "and, maybe, a few notes (what they carry, an expression, something to change).\n\n"
+    "Return this text, filled in, as one paragraph — keep every sentence, replace {name} with the character's name "
+    "and {NAME} with the name in capitals:\n\n" + FLUX3_KLEIN_SHEET_PROMPT + "\n\n"
+    "Then add one or two sentences from the user's notes: the items for the flat-lay (name them), the portrait's "
+    "expression, anything they asked to change. Never describe the character's face, hair, clothes or colours "
+    "unless the user asked for a change — the picture already says it, and words would fight it. "
+    "If the user gave no name, use \"the character\" and the title \"CHARACTER SHEET\". "
+    "Write in English. Output only the prompt, no quotes, no headings, no markdown."
+)
+
+
+def _flux3_klein_character_sheet_flow() -> dict:
+    return {
+        "id": "mix.character_sheet_flux3_klein",
+        "label": "Character Sheet from Image — Flux 3 Klein",
+        "category": "mix",
+        "group": "mix-studio",
+        "description": "Turn one picture of a character into a full reference sheet with FLUX 3 Klein: front, "
+                       "three-quarter, side and back views, a face portrait and their items, in the picture's own "
+                       "style. Same layout as Create › Character Sheet.",
+        "card_desc": "One picture of a character in, a full reference sheet out — 4 views + face + items, same style.",
+        "card_tags": ["Character", "Sheet", "Flux 3", "Reference"],
+        "card_css_modifier": "character",
+        "llm_required": False,
+        "comfyui_required": True,
+        "steps": [
+            {"id": "image", "type": "image_picker", "label": "Character image", "required": True,
+             "hint": "One clear picture of the character, ideally full body."},
+            {"id": "image_2", "type": "image_picker", "label": "Second image (optional)", "required": False,
+             "optional": True,
+             "hint": "Optional — another view of the same character, or their outfit. Mention it in the sheet "
+                     "as the second image."},
+            {
+                "id": "idea",
+                "type": "prompt_input",
+                "label": "Name and notes",
+                "rows": 3,
+                "placeholder": "e.g. Mateo. He carries a steel thermos and a small carving knife; a calm half smile.",
+                "note": "The name goes in the title bar. Leave the look to the picture.",
+            },
+            {
+                "id": "compose",
+                "type": "llm_transform",
+                "label": "Compose sheet",
+                "calls": "llm.studio_enhance",
+                "input_from": "steps.idea.output.prompt_text",
+                "output_to": "sheet",
+                "system_prompts": {level: FLUX3_KLEIN_SHEET_SYSTEM for level in ("quick", "style", "scene", "master")},
+            },
+            {
+                "id": "sheet",
+                "type": "prompt_input",
+                "label": "Sheet",
+                "required": True,
+                "rows": 10,
+                "prefill_from": "steps.compose.output.transformed_text",
+                "default": FLUX3_KLEIN_SHEET_PROMPT.format(name="the character", NAME="THE CHARACTER"),
+                "copy_button": True,
+                "note": "This is what goes to the engine. It works as it is; Compose sheet adds the name and the items.",
+            },
+            {
+                "id": "params",
+                "type": "workflow_params",
+                "label": "Parameters",
+                "workflow_file": FLUX3_KLEIN_MIX_WORKFLOW_REL,
+                "image_node": "7",
+                "fields": [
+                    {"id": "aspect_ratio", "type": "aspect_ratio", "label": "Output aspect ratio",
+                     "default": "r2x1", "resolution": "hd",
+                     "adv_keys": {"width": "25.width", "height": "25.height"}},
+                    {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 16,
+                     "min": 4, "max": 16, "step": 1, "quick_options": [4, 8, 16], "advanced": True},
+                    {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
+                ],
+            },
+            {
+                "id": "generate",
+                "type": "action",
+                "label": "Generate",
+                "calls": "generation.submit_mix",
+                "input_map": {
+                    "workflowFile": "steps.params.output.workflow_file",
+                    "images": [
+                        {"dataUrl": "steps.image.output.image_data_url", "nodeId": "7"},
+                        {"dataUrl": "steps.image_2.output.image_data_url", "nodeId": "8", "optional": True},
+                        {"dataUrl": "", "nodeId": "9", "optional": True},
+                        {"dataUrl": "", "nodeId": "10", "optional": True},
+                    ],
+                    "advancedValues": "steps.params.output.adv_values",
+                    "promptKey": "12.text",
+                    "promptValue": "steps.sheet.output.prompt_text",
+                },
+            },
+            {"id": "result", "type": "result_view", "label": "Result"},
+        ],
+        "entry_category": "Mix",
+        "entry_model": "Flux 3 Klein",
+    }
+
+
 def build_flux3_klein_engine(source: Path, version: str) -> Path:
     """The engine (Create) plus its Refine and Mix flows, in one package:
     installing Flux 3 Klein puts it in all three places."""
@@ -2573,7 +2696,8 @@ def build_flux3_klein_engine(source: Path, version: str) -> Path:
         "advancedValues": {p["key"]: p["value"] for p in analysis.get("advancedParameters", []) if not p.get("isLinked")},
         "annotation": {"downloads": [], "loras": [], "optionalSubgraphs": []},
     }
-    flows = [add_card_texts(_flux3_klein_edit_flow(), table), add_card_texts(_flux3_klein_mix_flow(), table)]
+    flows = [add_card_texts(_flux3_klein_edit_flow(), table), add_card_texts(_flux3_klein_mix_flow(), table),
+             add_card_texts(_flux3_klein_character_sheet_flow(), table)]
     files: dict[str, object] = {
         FLUX3_KLEIN_REFINE_WORKFLOW_REL: _flux3_klein_edit_workflow(),
         FLUX3_KLEIN_MIX_WORKFLOW_REL: _flux3_klein_multi_reference_workflow(),
@@ -2586,7 +2710,7 @@ def build_flux3_klein_engine(source: Path, version: str) -> Path:
     manifest = {
         "schema_version": 1,
         "id": FLUX3_KLEIN_ID,
-        "version": version,
+        "version": FLUX3_KLEIN_VERSION,
         "default_lang": "en",
         "name": {lang: "Flux 3 Klein" for lang in ("en", *LANGS)},
         "summary": {

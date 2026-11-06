@@ -4508,5 +4508,10 @@
     "es": "p. ej. Mateo. Lleva un termo de acero y una navaja de tallar; media sonrisa tranquila.",
     "zh": "例如：Mateo。他带着一个钢制保温壶和一把小雕刻刀；平静的浅笑。",
     "ko": "예: Mateo. 스테인리스 보온병과 작은 조각칼을 들고 다닌다; 차분한 옅은 미소."
+  },
+  "Engine": {
+    "es": "Motor",
+    "zh": "引擎",
+    "ko": "엔진"
   }
 }

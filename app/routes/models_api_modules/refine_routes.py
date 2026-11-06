@@ -483,8 +483,9 @@ def _neutral_placeholder_png() -> bytes:
 
 # Nodes that take any number of reference images ("images.imageN", Autogrow)
 # and skip a missing one, so an empty optional slot can leave the graph
-# instead of adding a gray reference (Flux 3 Klein's multi-reference Mix).
-_VARIADIC_REFERENCE_NODES = {"ReferenceMultiLatent"}
+# instead of adding a gray reference (Flux 3 Klein's multi-reference Mix,
+# Qwen Image 2.1's images.image_N).
+_VARIADIC_REFERENCE_NODES = {"ReferenceMultiLatent", "TextEncodeQwenImage21"}
 
 
 def _drop_unused_reference(workflow: dict, node_id: str) -> bool:
@@ -696,7 +697,9 @@ def _prepare_mix(payload: dict):
         data_url = str(img_entry.get("dataUrl", "")).strip()
         node_id = str(img_entry.get("nodeId", "")).strip() or None
         if not data_url:
-            if not node_id:
+            # An empty slot for a node this graph doesn't have (a flow whose
+            # engines take different numbers of references) is nothing to fill.
+            if not node_id or node_id not in prepared_workflow:
                 continue
             if _drop_unused_reference(prepared_workflow, node_id):
                 continue

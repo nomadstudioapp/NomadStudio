@@ -2295,7 +2295,7 @@ def build_qwen_image_21_turbo_engine(version: str) -> Path:
 # commercially only for businesses under US$5M a year) — noted in the
 # models catalog, so it is never a default engine.
 FLUX3_KLEIN_ID = "nomad.engine.flux3-klein"
-FLUX3_KLEIN_VERSION = "0.1.1"  # 0.1.1: Character Sheet from Image flow
+FLUX3_KLEIN_VERSION = "0.1.2"  # 0.1.2: Character Sheet on Qwen Image 2.1 too; 0.1.1: Character Sheet from Image flow
 FLUX3_KLEIN_QUANTIZATION = {
     "int8": {"unet_name": "flux3-image-klein-int8-convrot.safetensors",
              "clip_name": "qwen3vl_4b_int8_convrot.safetensors", "label": "INT8"},
@@ -2589,6 +2589,29 @@ FLUX3_KLEIN_SHEET_SYSTEM = (
 )
 
 
+FLUX3_KLEIN_SHEET_QWEN_WORKFLOW_REL = "workflows/mix/character_sheet_qwen21.json"
+
+
+def _qwen_image_21_character_sheet_workflow() -> dict:
+    """The same sheet on Qwen Image 2.1 Edit (it ships with Core Refine, so
+    nothing new to download): the character is image_1, an optional second
+    view image_2, both at about 1 MP, on a fixed canvas (node 25, set by the
+    flow's aspect ratio). Node ids match the Flux 3 Klein Mix graph — 7/8
+    images, 15 sampler, 25 canvas — and config.key_aliases sends the flow's
+    12.text to Qwen's prompt, so one flow drives both engines."""
+    graph = _qwen_image_21_edit_workflow()
+    config = json.loads(graph["config"]["inputs"]["value"])
+    config["key_aliases"] = {**config.get("key_aliases", {}), "12.text": "13.prompt"}
+    graph["config"]["inputs"]["value"] = json.dumps(config)
+    graph["8"] = {"inputs": {"image": "oj-mix-placeholder-2.png"}, "class_type": "LoadImage",
+                  "_meta": {"title": "Load Image (second view)"}}
+    graph["13"]["inputs"].update({"resolution": 1024, "images.image_2": ["8", 0]})
+    graph.pop("24", None)
+    graph["25"]["inputs"].update({"width": 2176, "height": 1088})
+    graph["21"]["inputs"]["filename_prefix"] = "qwen-image-2.1-character-sheet"
+    return graph
+
+
 def _flux3_klein_character_sheet_flow() -> dict:
     return {
         "id": "mix.character_sheet_flux3_klein",
@@ -2645,11 +2668,21 @@ def _flux3_klein_character_sheet_flow() -> dict:
                 "workflow_file": FLUX3_KLEIN_MIX_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
+                    {"id": "engine", "type": "engine_select", "label": "Engine", "default": "flux3_klein",
+                     "adv_key": "",
+                     "engines": [
+                         {"id": "flux3_klein", "label": "Flux 3 Klein",
+                          "workflow_file": f"{FLUX3_KLEIN_ID}/{FLUX3_KLEIN_MIX_WORKFLOW_REL}", "image_node": "7",
+                          "steps_quick_options": [4, 8, 16], "steps_default": 16},
+                         {"id": "qwen21", "label": "Qwen Image 2.1 Edit",
+                          "workflow_file": f"{FLUX3_KLEIN_ID}/{FLUX3_KLEIN_SHEET_QWEN_WORKFLOW_REL}",
+                          "image_node": "7", "steps_quick_options": [8, 16, 25], "steps_default": 25},
+                     ]},
                     {"id": "aspect_ratio", "type": "aspect_ratio", "label": "Output aspect ratio",
                      "default": "r2x1", "resolution": "hd",
                      "adv_keys": {"width": "25.width", "height": "25.height"}},
                     {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 16,
-                     "min": 4, "max": 16, "step": 1, "quick_options": [4, 8, 16], "advanced": True},
+                     "min": 4, "max": 25, "step": 1, "quick_options": [4, 8, 16], "advanced": True},
                     {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
                 ],
             },
@@ -2701,6 +2734,7 @@ def build_flux3_klein_engine(source: Path, version: str) -> Path:
     files: dict[str, object] = {
         FLUX3_KLEIN_REFINE_WORKFLOW_REL: _flux3_klein_edit_workflow(),
         FLUX3_KLEIN_MIX_WORKFLOW_REL: _flux3_klein_multi_reference_workflow(),
+        FLUX3_KLEIN_SHEET_QWEN_WORKFLOW_REL: _qwen_image_21_character_sheet_workflow(),
     }
     for flow in flows:
         _upgrade_seed_fields_to_similarity(flow)
@@ -2733,7 +2767,8 @@ def build_flux3_klein_engine(source: Path, version: str) -> Path:
         "contributes": {
             "engines": [file_rel],
             "flows": [f"flows/{flow['id'].split('.', 1)[1]}.json" for flow in flows],
-            "workflows": [FLUX3_KLEIN_REFINE_WORKFLOW_REL, FLUX3_KLEIN_MIX_WORKFLOW_REL],
+            "workflows": [FLUX3_KLEIN_REFINE_WORKFLOW_REL, FLUX3_KLEIN_MIX_WORKFLOW_REL,
+                          FLUX3_KLEIN_SHEET_QWEN_WORKFLOW_REL],
         },
     }
     print(f"  flux3-klein texts: {counts['total']} · " + " ".join(f"{lang} {counts[lang]}" for lang in LANGS))

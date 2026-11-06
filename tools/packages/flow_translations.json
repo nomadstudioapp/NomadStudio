@@ -4513,5 +4513,55 @@
     "es": "Motor",
     "zh": "引擎",
     "ko": "엔진"
+  },
+  "Character Sheet from Image": {
+    "es": "Hoja de personaje desde imagen",
+    "zh": "从图片生成角色设定图",
+    "ko": "이미지로 캐릭터 시트 만들기"
+  },
+  "Turn one picture of a character into a full reference sheet: front, three-quarter, side and back views, a face portrait and their items, in the picture's own style. Same layout as Create › Character Sheet. On Qwen Image 2.1 Edit (closest to the picture) or Flux 3 Klein (faster).": {
+    "es": "Convierte una imagen de un personaje en una hoja de referencia completa: vistas de frente, tres cuartos, perfil y espalda, un retrato de la cara y sus objetos, con el estilo de la propia imagen. Misma composición que Create › Hoja de personaje. Con Qwen Image 2.1 Edit (el más fiel a la imagen) o Flux 3 Klein (más rápido).",
+    "zh": "把一张角色图片变成完整的设定图：正面、四分之三侧面、侧面和背面，外加面部特写和随身物品，保持原图的画风。版式与 Create › 角色设定图相同。可用 Qwen Image 2.1 Edit（最贴近原图）或 Flux 3 Klein（更快）。",
+    "ko": "캐릭터 그림 한 장을 완전한 참조 시트로 만듭니다: 정면, 3/4, 측면, 뒷면, 얼굴 초상화와 소지품까지, 원본 그림의 화풍 그대로. Create › 캐릭터 시트와 같은 구성입니다. Qwen Image 2.1 Edit(원본에 가장 충실) 또는 Flux 3 Klein(더 빠름)으로."
+  },
+  "Object Sheet from Image": {
+    "es": "Hoja de objeto desde imagen",
+    "zh": "从图片生成物品设定图",
+    "ko": "이미지로 오브젝트 시트 만들기"
+  },
+  "Turn one picture of an object — a car, a boat, a radio — into a reference sheet: front, three-quarter, side and back views at one scale, a top view and two details, in the picture's own style. On Qwen Image 2.1 Edit or Flux 3 Klein.": {
+    "es": "Convierte una imagen de un objeto (un coche, un barco, una radio) en una hoja de referencia: vistas de frente, tres cuartos, perfil y trasera a la misma escala, una vista cenital y dos detalles, con el estilo de la propia imagen. Con Qwen Image 2.1 Edit o Flux 3 Klein.",
+    "zh": "把一张物品图片（汽车、船、收音机）变成设定图：同一比例的正面、四分之三、侧面和背面视图，外加俯视图和两处细节特写，保持原图的画风。可用 Qwen Image 2.1 Edit 或 Flux 3 Klein。",
+    "ko": "사물 그림 한 장(자동차, 배, 라디오)을 참조 시트로 만듭니다: 같은 축척의 정면, 3/4, 측면, 뒷면, 위에서 본 모습과 디테일 두 곳을 원본 그림의 화풍 그대로. Qwen Image 2.1 Edit 또는 Flux 3 Klein으로."
+  },
+  "One picture of a prop or vehicle in, a reference sheet out — 4 views + top + details, same style.": {
+    "es": "Entra una imagen de un objeto o vehículo y sale una hoja de referencia: 4 vistas + cenital + detalles, con el mismo estilo.",
+    "zh": "输入一张道具或载具图片，输出设定图：4 个视角 + 俯视 + 细节，画风不变。",
+    "ko": "소품이나 탈것 그림 한 장으로 참조 시트를 — 4방향 + 위에서 본 모습 + 디테일, 같은 화풍으로."
+  },
+  "Object image": {
+    "es": "Imagen del objeto",
+    "zh": "物品图片",
+    "ko": "오브젝트 이미지"
+  },
+  "One clear picture of the object, whole and unhidden.": {
+    "es": "Una imagen clara del objeto, entero y sin nada delante.",
+    "zh": "一张清晰的物品图片，完整、无遮挡。",
+    "ko": "오브젝트가 온전히, 가리지 않고 잘 보이는 그림 한 장."
+  },
+  "Optional — another view of the same object. Mention it in the sheet as the second image.": {
+    "es": "Opcional: otra vista del mismo objeto. Menciónala en la hoja como «the second image».",
+    "zh": "可选——同一物品的另一个角度。在设定文字中称它为 “the second image”。",
+    "ko": "선택 — 같은 오브젝트의 다른 모습. 시트 문장에서 “the second image”로 언급하세요."
+  },
+  "e.g. The blue car. Details: the dashboard radio and the worn driver's seat.": {
+    "es": "p. ej. El coche azul. Detalles: la radio del salpicadero y el asiento del conductor gastado.",
+    "zh": "例如：蓝色汽车。细节：仪表台上的收音机和磨旧的驾驶座。",
+    "ko": "예: 파란 자동차. 디테일: 대시보드의 라디오와 닳은 운전석."
+  },
+  "This is what goes to the engine. It works as it is; Compose sheet adds the name and the details.": {
+    "es": "Esto es lo que va al motor. Funciona tal cual; «Componer la hoja» añade el nombre y los detalles.",
+    "zh": "这就是发送给引擎的内容。直接使用也可以；“生成设定图”会加上名字和细节。",
+    "ko": "이 내용이 엔진으로 전달됩니다. 그대로도 작동하며, ‘시트 구성’은 이름과 디테일을 추가합니다."
   }
 }

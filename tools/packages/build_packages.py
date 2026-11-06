@@ -2295,7 +2295,7 @@ def build_qwen_image_21_turbo_engine(version: str) -> Path:
 # commercially only for businesses under US$5M a year) — noted in the
 # models catalog, so it is never a default engine.
 FLUX3_KLEIN_ID = "nomad.engine.flux3-klein"
-FLUX3_KLEIN_VERSION = "0.1.2"  # 0.1.2: Character Sheet on Qwen Image 2.1 too; 0.1.1: Character Sheet from Image flow
+FLUX3_KLEIN_VERSION = "0.1.3"  # 0.1.3: Object Sheet from Image, Qwen default for sheets; 0.1.2: Character Sheet on Qwen Image 2.1 too; 0.1.1: Character Sheet from Image flow
 FLUX3_KLEIN_QUANTIZATION = {
     "int8": {"unet_name": "flux3-image-klein-int8-convrot.safetensors",
              "clip_name": "qwen3vl_4b_int8_convrot.safetensors", "label": "INT8"},
@@ -2615,12 +2615,13 @@ def _qwen_image_21_character_sheet_workflow() -> dict:
 def _flux3_klein_character_sheet_flow() -> dict:
     return {
         "id": "mix.character_sheet_flux3_klein",
-        "label": "Character Sheet from Image — Flux 3 Klein",
+        "label": "Character Sheet from Image",
         "category": "mix",
         "group": "mix-studio",
-        "description": "Turn one picture of a character into a full reference sheet with FLUX 3 Klein: front, "
-                       "three-quarter, side and back views, a face portrait and their items, in the picture's own "
-                       "style. Same layout as Create › Character Sheet.",
+        "description": "Turn one picture of a character into a full reference sheet: front, three-quarter, side and "
+                       "back views, a face portrait and their items, in the picture's own style. Same layout as "
+                       "Create › Character Sheet. On Qwen Image 2.1 Edit (closest to the picture) or Flux 3 Klein "
+                       "(faster).",
         "card_desc": "One picture of a character in, a full reference sheet out — 4 views + face + items, same style.",
         "card_tags": ["Character", "Sheet", "Flux 3", "Reference"],
         "card_css_modifier": "character",
@@ -2665,10 +2666,10 @@ def _flux3_klein_character_sheet_flow() -> dict:
                 "id": "params",
                 "type": "workflow_params",
                 "label": "Parameters",
-                "workflow_file": FLUX3_KLEIN_MIX_WORKFLOW_REL,
+                "workflow_file": FLUX3_KLEIN_SHEET_QWEN_WORKFLOW_REL,
                 "image_node": "7",
                 "fields": [
-                    {"id": "engine", "type": "engine_select", "label": "Engine", "default": "flux3_klein",
+                    {"id": "engine", "type": "engine_select", "label": "Engine", "default": "qwen21",
                      "adv_key": "",
                      "engines": [
                          {"id": "flux3_klein", "label": "Flux 3 Klein",
@@ -2681,8 +2682,8 @@ def _flux3_klein_character_sheet_flow() -> dict:
                     {"id": "aspect_ratio", "type": "aspect_ratio", "label": "Output aspect ratio",
                      "default": "r2x1", "resolution": "hd",
                      "adv_keys": {"width": "25.width", "height": "25.height"}},
-                    {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 16,
-                     "min": 4, "max": 25, "step": 1, "quick_options": [4, 8, 16], "advanced": True},
+                    {"id": "steps", "adv_key": "15.steps", "label": "Steps", "type": "number", "default": 25,
+                     "min": 4, "max": 25, "step": 1, "quick_options": [8, 16, 25], "advanced": True},
                     {"id": "seed", "adv_key": "15.seed", "label": "Seed", "type": "seed", "advanced": True},
                 ],
             },
@@ -2711,6 +2712,58 @@ def _flux3_klein_character_sheet_flow() -> dict:
     }
 
 
+# The same sheet for a story's props and vehicles (a car, a boat, a radio):
+# four views at one scale, a top view and two details, nobody in frame.
+FLUX3_KLEIN_OBJECT_SHEET_PROMPT = (
+    "Object reference sheet of {name}, the object in the first image, on a plain white background, 2:1 landscape. "
+    "Keep {name}'s shape, proportions, materials, colours, wear and art style exactly as in the first image: the "
+    "same drawing style and finish, not photorealistic unless the first image is. "
+    "A thin title bar across the top reads \"{NAME} - OBJECT SHEET\" in dark charcoal condensed capitals. "
+    "Below it, from left to right, the whole object at eye level: seen from the front; turned three-quarters to the "
+    "left; in left side view; seen from the back. On the far right, a view from directly above at the top and, below "
+    "it, two close-up details of {name}. The four views are the same size and scale, the same object with the same "
+    "details in every view. Nobody in it, no hands, no people. Flat even studio light, no shadows on the ground, no "
+    "scenery, no other text."
+)
+
+FLUX3_KLEIN_OBJECT_SHEET_SYSTEM = (
+    "You write the prompt for an image model that draws an object reference sheet (a vehicle, a prop, a machine) "
+    "from a reference picture. The model sees the picture as \"the first image\"; you cannot see it. The user gives "
+    "you the object's name and, maybe, a few notes (which details matter, something to change).\n\n"
+    "Return this text, filled in, as one paragraph — keep every sentence, replace {name} with the object's name "
+    "(\"the blue car\") and {NAME} with a short title in capitals (\"BLUE CAR\"):\n\n"
+    + FLUX3_KLEIN_OBJECT_SHEET_PROMPT + "\n\n"
+    "Then add one or two sentences from the user's notes: name the two close-up details, and anything they asked "
+    "to change. Never describe the object's shape, colours or materials unless the user asked for a change — the "
+    "picture already says it, and words would fight it. If the user gave no name, use \"the object\" and the title "
+    "\"OBJECT SHEET\". Write in English. Output only the prompt, no quotes, no headings, no markdown."
+)
+
+
+def _flux3_klein_object_sheet_flow() -> dict:
+    flow = _flux3_klein_character_sheet_flow()
+    flow.update({
+        "id": "mix.object_sheet_flux3_klein",
+        "label": "Object Sheet from Image",
+        "description": "Turn one picture of an object — a car, a boat, a radio — into a reference sheet: front, "
+                       "three-quarter, side and back views at one scale, a top view and two details, in the picture's "
+                       "own style. On Qwen Image 2.1 Edit or Flux 3 Klein.",
+        "card_desc": "One picture of a prop or vehicle in, a reference sheet out — 4 views + top + details, same style.",
+        "card_tags": ["Object", "Sheet", "Prop", "Reference"],
+    })
+    steps = {s["id"]: s for s in flow["steps"]}
+    steps["image"].update({"label": "Object image", "hint": "One clear picture of the object, whole and unhidden."})
+    steps["image_2"]["hint"] = "Optional — another view of the same object. Mention it in the sheet as the second image."
+    steps["idea"].update({"placeholder": "e.g. The blue car. Details: the dashboard radio and the worn driver's seat.",
+                          "note": "The name goes in the title bar. Leave the look to the picture."})
+    steps["compose"]["system_prompts"] = {level: FLUX3_KLEIN_OBJECT_SHEET_SYSTEM
+                                          for level in ("quick", "style", "scene", "master")}
+    steps["sheet"].update({"default": FLUX3_KLEIN_OBJECT_SHEET_PROMPT.format(name="the object", NAME="THE OBJECT"),
+                           "note": "This is what goes to the engine. It works as it is; Compose sheet adds the name "
+                                   "and the details."})
+    return flow
+
+
 def build_flux3_klein_engine(source: Path, version: str) -> Path:
     """The engine (Create) plus its Refine and Mix flows, in one package:
     installing Flux 3 Klein puts it in all three places."""
@@ -2730,7 +2783,8 @@ def build_flux3_klein_engine(source: Path, version: str) -> Path:
         "annotation": {"downloads": [], "loras": [], "optionalSubgraphs": []},
     }
     flows = [add_card_texts(_flux3_klein_edit_flow(), table), add_card_texts(_flux3_klein_mix_flow(), table),
-             add_card_texts(_flux3_klein_character_sheet_flow(), table)]
+             add_card_texts(_flux3_klein_character_sheet_flow(), table),
+             add_card_texts(_flux3_klein_object_sheet_flow(), table)]
     files: dict[str, object] = {
         FLUX3_KLEIN_REFINE_WORKFLOW_REL: _flux3_klein_edit_workflow(),
         FLUX3_KLEIN_MIX_WORKFLOW_REL: _flux3_klein_multi_reference_workflow(),

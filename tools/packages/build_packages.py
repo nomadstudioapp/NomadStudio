@@ -127,7 +127,7 @@ ENGINES_OPTIONAL = {
 ENGINE_SLUGS = {
     "krea-2-turbo": "krea", "z-image-turbo": "zimage", "flux-klein": "klein", "ideogram-4": "ideogram",
     "z-anime": "anime", "krea2-monaco": "monaco", "krea2-roma": "roma", "qwen-image": "qwen",
-    "qwen-image-turbo": "qwenturbo", "flux3-klein": "klein3",
+    "qwen-image-turbo": "qwenturbo", "flux3-klein": "klein3", "krea-earle": "earle",
 }
 
 # Downloads the source workflows do not declare (vault: "Modelos - Descargas").
@@ -2854,6 +2854,90 @@ def build_engine(source: Path, version: str, name: str, catalog: dict = ENGINES,
     return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT}, dest=dest)
 
 
+# ── Krea Earle: Krea 2 (the Monaco checkpoint) + the "Sleeping Beauty 1959"
+# style LoRA (RKRRa, CivitAI 2883119) — Eyvind Earle's flat, vertical,
+# jewel-coloured backgrounds. Private pack (DIST_OPTIONAL): the LoRA needs a
+# CivitAI login to download and allows no derivatives / no resale.
+# Trigger word "slpbty" declared in annotation.loras, so the app prepends it
+# to the prompt at generation time (workflow_service._prefix_lora_trigger_words).
+EARLE_LORA = "sleeping-beauty-1959.safetensors"
+EARLE_NEGATIVE = ("photo, photorealistic, 3d render, cgi, text, letters, watermark, logo, signature, frame, border, "
+                  "blurry, deformed hands, extra fingers, nudity")
+EARLE_SAMPLE = ("wide shot, eye level, background sharp. Two teenagers stand at the tip of a stone pier, small in the "
+                "lower left, looking up at a monumental black cliff crowned with a town of tall narrow houses with curved "
+                "slate roofs, wooden suspension bridges, windmills with white sails and a golden lighthouse lantern. "
+                "Storm clouds breaking, a shaft of sunlight, foam against the rocks. It is daytime.")
+
+
+def build_krea_earle_engine(source: Path, version: str) -> Path:
+    import copy
+    base = engine_from_registry(source, "Krea2 Monaco")
+    engine = copy.deepcopy(base)
+    engine["name"] = "Krea Earle"
+    engine["slug"] = ENGINE_SLUGS["krea-earle"]
+    wf = engine["workflow"]
+    # One LoRA instead of Monaco's two: 78 becomes the Earle LoRA, 158
+    # (UltraReal, photographic skin) goes and the sampler reads 78 directly.
+    wf["78"]["inputs"]["lora_name"] = f"krea2\\{EARLE_LORA}"
+    wf["78"]["inputs"]["strength_model"] = 1.0
+    wf["78"]["_meta"] = {"title": "Sleeping Beauty 1959 LoRA"}
+    wf.pop("158", None)
+    wf["53"]["inputs"]["model"] = ["78", 0]
+    wf["150"]["inputs"]["filename_prefix"] = "earle/level-01-quick"
+    wf["51"]["inputs"]["text"] = EARLE_SAMPLE
+    wf["76"]["inputs"]["text"] = EARLE_NEGATIVE
+    analysis = engine["analysis"]
+    analysis["advancedParameters"] = [p for p in analysis["advancedParameters"] if not p["key"].startswith("158.")]
+    for p in analysis["advancedParameters"]:
+        if p["key"] == "78.lora_name":
+            p["value"] = f"krea2\\{EARLE_LORA}"
+        elif p["key"] == "78.strength_model":
+            p["value"] = 1.0
+        elif p["key"] == "150.filename_prefix":
+            p["value"] = "earle/level-01-quick"
+    for p in analysis["basicParameters"]:
+        if p["key"] == "positive":
+            p["value"] = EARLE_SAMPLE
+        elif p["key"] == "negative":
+            p["value"] = EARLE_NEGATIVE
+    analysis["basicValues"] = {**analysis.get("basicValues", {}), "positive": EARLE_SAMPLE, "negative": EARLE_NEGATIVE}
+    engine["basicValues"] = analysis["basicValues"]
+    engine["advancedValues"] = {p["key"]: p["value"] for p in analysis["advancedParameters"] if not p.get("isLinked")}
+    ann = engine["annotation"]
+    ann["downloads"] = [d for d in ann["downloads"] if d["filename"] not in ("KREA_MIDJ_1.safetensors", "ultra_real_krea2_v2.safetensors")]
+    ann["downloads"].append({
+        "subfolder": "loras/krea2", "filename": EARLE_LORA,
+        "url": "https://civitai.com/api/download/models/3258854?fileId=3142159",
+        "sha256": "FCD037E22079A9B26A0435A935DE718271D5DB1854A0BA340C1C9DDD774C46DF",
+        "sizeBytes": 228587280, "needsCivitaiKey": True,
+        "source": {"name": "Sleeping Beauty 1959 Movie Lora Style v1.0", "author": "RKRRa",
+                   "page": "https://civitai.com/models/2883119",
+                   "credit": False, "commercial": ["Image", "RentCivit", "Rent"], "derivatives": False}})
+    ann["loras"] = [{"fileName": EARLE_LORA, "name": "Sleeping Beauty 1959 (Eyvind Earle style)", "triggerWords": "slpbty",
+                     "uri": "https://civitai.com/models/2883119", "classification": "style",
+                     "notes": "Weight 1 recommended; lower weights blend more naturally."}]
+    pkg_id = "nomad.engine.krea-earle"
+    file_rel = "engines/krea_earle.json"
+    manifest = {
+        "schema_version": 1,
+        "id": pkg_id,
+        "version": version,
+        "default_lang": "en",
+        "name": {lang: "Krea Earle" for lang in ("en", "es", "zh", "ko")},
+        "summary": {
+            "en": "Krea 2 with the Sleeping Beauty 1959 style LoRA: Eyvind Earle's flat, vertical, jewel-coloured backgrounds. The LoRA is downloaded from its author on CivitAI (login required) under its own terms.",
+            "es": "Krea 2 con la LoRA de estilo Sleeping Beauty 1959: los fondos planos, verticales y de colores joya de Eyvind Earle. La LoRA se descarga de su autor en CivitAI (requiere cuenta) con sus propios términos.",
+            "zh": "搭配 Sleeping Beauty 1959 风格 LoRA 的 Krea 2：Eyvind Earle 式的平面、竖向、宝石色背景。LoRA 需登录 CivitAI 从作者处下载，并遵循其条款。",
+            "ko": "Sleeping Beauty 1959 스타일 LoRA가 포함된 Krea 2: Eyvind Earle의 평면적이고 수직적인 보석빛 배경. LoRA는 CivitAI(로그인 필요)에서 제작자의 약관에 따라 다운로드합니다.",
+        },
+        "author": AUTHOR,
+        "license": "proprietary",
+        "order": 50,
+        "contributes": {"engines": [file_rel]},
+    }
+    return write_zip(pkg_id, {"manifest.json": manifest, file_rel: engine, "LICENSE": LICENSE_TEXT}, dest=DIST_OPTIONAL)
+
+
 # Create › core flows shipped with the app. They only need an image engine,
 # plus LM Studio for the LLM ones. Left out: the CivitAI flows (their own free
 # pack, build_core_civitai below) and the unfinished ones (Character, From
@@ -5476,6 +5560,7 @@ def main() -> None:
     ap.add_argument("--refine-pilot", action="store_true")
     ap.add_argument("--refine-groups", action="store_true")
     ap.add_argument("--camera", action="store_true")   # the Camera angle pack only (QMA LoRA)
+    ap.add_argument("--krea-earle", action="store_true")   # the Krea Earle engine only (Sleeping Beauty 1959 LoRA)
     ap.add_argument("--flux3-klein", action="store_true")   # the Flux 3 Klein package only
     # Style packs only (they don't depend on the rest): skips engines/flows.
     ap.add_argument("--style-packs", action="store_true")
@@ -5497,6 +5582,11 @@ def main() -> None:
         summary = validate(path)
         print(f"{path.name}: engines={[e['name'] for e in summary['engines']]}"
               f" flows={[f['id'] for f in summary['flows']]}")
+        return
+    if args.krea_earle:
+        path = build_krea_earle_engine(args.source, args.version)
+        summary = validate(path)
+        print(f"{path.name}: engines={[e['name'] for e in summary['engines']]} · models={summary.get('models')}")
         return
     if args.camera:
         path = build_camera_pack(args.source, args.version)

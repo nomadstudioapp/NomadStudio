@@ -1255,6 +1255,20 @@
         "name": "Apache-2.0",
         "url": "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct"
       }
+    },
+    {
+      "sha256": "fcd037e22079a9b26a0435a935de718271d5db1854a0ba340c1c9ddd774c46df",
+      "size": 228587280,
+      "names": [
+        "sleeping-beauty-1959.safetensors"
+      ],
+      "folder": "loras/krea2",
+      "sources": [
+        {
+          "url": "https://civitai.com/api/download/models/3258854?fileId=3142159",
+          "host": "civitai"
+        }
+      ]
     }
   ]
 }
